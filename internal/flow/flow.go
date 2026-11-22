@@ -89,36 +89,10 @@ func parse(path string, data []byte, depth int) (*Flow, error) {
 	}
 	f := &Flow{Path: path, Name: flowName(path), Env: map[string]string{}}
 	p := &reader{path: path, depth: depth}
-	err := pairs(docs[0], func(key, v *yaml.Node) (err error) {
-		switch key.Value {
-		case "appId":
-			f.App = v.Value
-		case "name":
-			f.Name = v.Value
-		case "tags":
-			err = v.Decode(&f.Tags)
-		case "env":
-			if f.Env, err = variablesIn(v); err != nil {
-				err = problem(path, v.Line, "env: %v", err)
-			}
-		case "mock":
-			f.Mock, err = p.mocks(v)
-		case "record":
-			if f.Recording, err = ReadRecording(v); err != nil {
-				err = problem(path, v.Line, "%v", err)
-			}
-		case "onFlowStart":
-			f.OnStart, err = p.steps(v)
-		case "onFlowComplete":
-			f.OnComplete, err = p.steps(v)
-		default:
-			err = problem(path, key.Line, "unknown key %q", key.Value)
-		}
-		return err
-	})
-	if err != nil {
+	if err := p.readHeader(f, docs[0]); err != nil {
 		return nil, err
 	}
+	var err error
 	f.Steps, err = p.steps(docs[1])
 	return f, err
 }

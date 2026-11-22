@@ -7,14 +7,14 @@ help tapOn
 tapOn: Waits until the element is on screen, enabled and still, then taps it
 
 keys:
-  point                  point        Of the screen; with a selector, of the element in %
+  point                  point        Alone, of the screen; with a selector, of the element in %
   repeat                 number       Taps (1)
   delay                  time         Between taps (100)
 
 selector:
-  id                     text         The resource id, a regular expression
-  text                   text         The text, description or hint, a regular expression (short form)
-  index                  number       The n-th match, from 0; negative counts from the end
+  id                     text         The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole
+  text                   text         The text, description or hint. A regular expression of the whole (short form)
+  index                  number       The n-th match, from 0, top to bottom and left to right; negative counts from the end
   enabled                true/false   Whether it is enabled
   checked                true/false   Whether it is checked
   focused                true/false   Whether it has the focus

@@ -18,6 +18,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/flow"
 	"github.com/nanihadesuka/rayo/internal/live"
 	"github.com/nanihadesuka/rayo/internal/report"
+	"github.com/nanihadesuka/rayo/internal/schema"
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
@@ -83,9 +84,11 @@ func run(ctx context.Context, command string, args []string) error {
 			fmt.Print(help())
 			return nil
 		}
-		text, err := flow.Help(args[0])
+		text, err := helpOn(args[0])
 		fmt.Print(text)
 		return err
+	case "schema":
+		return printSchema(args)
 	}
 	return fmt.Errorf("unknown command %q, see rayo help", command)
 }
@@ -309,4 +312,29 @@ func runDo(args []string) error {
 		err = errShown
 	}
 	return err
+}
+
+// helpOn explains a command, of flows or rayo's own, or a kind of file.
+func helpOn(name string) (string, error) {
+	switch name {
+	case "flow":
+		return "A flow begins with a header, then ---, then a list of commands. The header:\n\n" + flow.HeaderHelp() +
+			"\nCommands: " + strings.Join(flow.Commands(), ", ") + "\n", nil
+	case "suite":
+		return "A suite, *.rayo.yaml:\n\n" + schema.Help(suite.Fields) + "\nflows, when not only a file:\n\n" + schema.Help(suite.FlowFields) +
+			"\napp:\n\n" + schema.Help(suite.AppFields) + "\ndevice:\n\n" + schema.Help(suite.DeviceFields), nil
+	}
+	if text := helpOf(name); text != "" {
+		return text, nil
+	}
+	return flow.Help(name)
+}
+
+func printSchema(args []string) error {
+	makers := map[string]func() []byte{"flow": flow.Schema, "suite": suite.Schema, "results": report.Schema}
+	if len(args) == 1 && makers[args[0]] != nil {
+		_, err := os.Stdout.Write(makers[args[0]]())
+		return err
+	}
+	return errors.New("rayo schema takes flow, suite or results")
 }

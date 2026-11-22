@@ -21,11 +21,11 @@ type Recording struct {
 	Path string // empty for the default
 }
 
-// ReadRecording reads true, false or a path.
-func ReadRecording(n *yaml.Node) (*Recording, error) {
+// readRecording reads true, false or a path.
+func readRecording(n *yaml.Node) (*Recording, error) {
 	switch {
 	case n.Kind != yaml.ScalarNode || n.Value == "":
-		return nil, errors.New("record takes true, false or a path")
+		return nil, errors.New("takes true, false or a path")
 	case n.ShortTag() == "!!bool":
 		var on bool
 		err := n.Decode(&on)

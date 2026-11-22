@@ -9,4 +9,4 @@ record: [x]
 -- exit --
 1
 -- stderr --
-error: a.yaml:2: record takes true, false or a path
+error: a.yaml:2: record: takes true, false or a path

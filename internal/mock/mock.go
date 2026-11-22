@@ -73,13 +73,16 @@ func (c *Call) UnmarshalJSON(data []byte) error {
 
 const callTime = "2006-01-02T15:04:05.000Z"
 
+// Shown is how it is written.
+func (c Call) Shown() any { return jsonCall{} }
+
 type jsonCall struct {
-	At      string `json:"at"`
-	Method  string `json:"method"`
-	URI     string `json:"uri"`
-	Outcome string `json:"outcome"`
-	Mocked  bool   `json:"mocked"`
-	Body    string `json:"body"`
+	At      string `json:"at" about:"In UTC"`
+	Method  string `json:"method" about:""`
+	URI     string `json:"uri" about:""`
+	Outcome string `json:"outcome" about:"The status, or what happened"`
+	Mocked  bool   `json:"mocked" about:"Whether a mock fitted"`
+	Body    string `json:"body" about:"Only in a requests.json"`
 }
 
 func (c Call) String() string {

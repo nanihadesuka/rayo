@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml: line 1: a flow takes file and retries, not "retry"
+error: s.rayo.yaml:1: flows: unknown key "retry" (it takes file, retries)

@@ -10,19 +10,21 @@ import (
 
 	"github.com/nanihadesuka/rayo/internal/agent"
 	"github.com/nanihadesuka/rayo/internal/mock"
+	"github.com/nanihadesuka/rayo/internal/schema"
 	"gopkg.in/yaml.v3"
 )
 
 // kind is what a key takes. The same function checks a value and reads it, so they always agree.
 type kind[T any] struct {
 	name  string
+	shape func() schema.S // its JSON Schema, without ${...}
 	read  func(n *yaml.Node) (T, error)
 	check func(p *reader, key string, n *yaml.Node) error // for those with keys inside; nil if reading is enough
 }
 
 // plain is a kind written as a single value.
-func plain[T any](name string, read func(text string) (T, error)) kind[T] {
-	return kind[T]{name: name, read: func(n *yaml.Node) (T, error) {
+func plain[T any](name string, shape schema.S, read func(text string) (T, error)) kind[T] {
+	return kind[T]{name: name, shape: shapeOf(shape), read: func(n *yaml.Node) (T, error) {
 		if n.Kind != yaml.ScalarNode {
 			var zero T
 			return zero, errors.New("takes a single value")
@@ -31,9 +33,25 @@ func plain[T any](name string, read func(text string) (T, error)) kind[T] {
 	}}
 }
 
+func shapeOf(s schema.S) func() schema.S { return func() schema.S { return s } }
+
 // oneOf takes one of some words, in any case.
 func oneOf[T any](words []string, values []T) kind[T] {
-	return plain(strings.Join(words, "/"), func(text string) (T, error) {
+	var shape []any
+	for _, w := range words {
+		switch w {
+		case "true":
+			shape = append(shape, true)
+		case "false":
+			shape = append(shape, false)
+		default:
+			shape = append(shape, w)
+			if lower := strings.ToLower(w); lower != w {
+				shape = append(shape, lower)
+			}
+		}
+	}
+	return plain(strings.Join(words, "/"), schema.Enum(shape...), func(text string) (T, error) {
 		for i, w := range words {
 			if strings.EqualFold(w, text) {
 				return values[i], nil
@@ -45,13 +63,13 @@ func oneOf[T any](words []string, values []T) kind[T] {
 }
 
 // raw is YAML that the command reads itself.
-func raw(name string) kind[*yaml.Node] {
-	return kind[*yaml.Node]{name: name, read: func(n *yaml.Node) (*yaml.Node, error) { return n, nil }}
+func raw(name string, shape schema.S) kind[*yaml.Node] {
+	return kind[*yaml.Node]{name: name, shape: shapeOf(shape), read: func(n *yaml.Node) (*yaml.Node, error) { return n, nil }}
 }
 
 // mappingOf is YAML that the command reads itself, with each value checked.
-func mappingOf(name string, each func(v *yaml.Node) error) kind[*yaml.Node] {
-	return kind[*yaml.Node]{name: name, read: raw(name).read, check: func(p *reader, key string, n *yaml.Node) error {
+func mappingOf(name string, shape schema.S, each func(v *yaml.Node) error) kind[*yaml.Node] {
+	return kind[*yaml.Node]{name: name, shape: shapeOf(schema.Map(shape)), read: raw(name, nil).read, check: func(p *reader, key string, n *yaml.Node) error {
 		if n.Kind != yaml.MappingNode {
 			return p.fail(n, "%s: takes a mapping", key)
 		}
@@ -70,37 +88,37 @@ func mappingOf(name string, each func(v *yaml.Node) error) kind[*yaml.Node] {
 func asWritten(text string) (string, error) { return text, nil }
 
 var (
-	aText    = plain("text", asWritten)
-	aScript  = plain("JavaScript", asWritten)
-	aTime    = plain("time", duration)
-	aPoint   = plain("point", point)
-	aKeyCode = plain("key", keyCode)
+	aText    = plain("text", schema.Text(), asWritten)
+	aScript  = plain("JavaScript", schema.Text(), asWritten)
+	aTime    = plain("time", schema.AnyOf(schema.S{"type": "integer", "minimum": 0}, schema.Pattern(`^[0-9_.]+(ms|s|m|h)?([0-9.]+(ms|s|m))*$`)), duration)
+	aPoint   = plain("point", schema.Pattern(`^\s*[0-9.]+%?\s*,\s*[0-9.]+%?\s*$`), point)
+	aKeyCode = plain("key", schema.Type("string", "integer"), keyCode)
 	aFlag    = oneOf([]string{"true", "false"}, []bool{true, false})
 	onOff    = oneOf([]string{"enabled", "disabled", "true", "false"}, []bool{true, false, true, false})
 	aState   = oneOf([]string{"offline", "online"}, []bool{true, false}) // whether it is offline
-	aNumber  = plain("number", func(text string) (int, error) {
+	aNumber  = plain("number", schema.Type("integer"), func(text string) (int, error) {
 		n, err := strconv.Atoi(strings.TrimSpace(text))
 		if err != nil {
 			return 0, fmt.Errorf("not a whole number: %q", text)
 		}
 		return n, nil
 	})
-	aDecimal = plain("number", decimal)
-	aSpeed   = plain("number", func(text string) (float64, error) {
+	aDecimal = plain("number", schema.Type("number"), decimal)
+	aSpeed   = plain("number", schema.S{"type": "number", "exclusiveMinimum": 0}, func(text string) (float64, error) {
 		n, err := decimal(text)
 		if err != nil || n <= 0 {
 			return 0, fmt.Errorf("not a speed: %q", text)
 		}
 		return n, nil
 	})
-	aStatus = plain("400 to 599", func(text string) (int, error) {
+	aStatus = plain("400 to 599", schema.S{"type": "integer", "minimum": 400, "maximum": 599}, func(text string) (int, error) {
 		n, err := strconv.Atoi(text)
 		if err != nil || n < 400 || n > 599 {
 			return 0, fmt.Errorf("not a status from 400 to 599: %q", text)
 		}
 		return n, nil
 	})
-	aPattern = plain("pattern", func(text string) (*regexp.Regexp, error) {
+	aPattern = plain("pattern", schema.S{"type": "string", "minLength": 1}, func(text string) (*regexp.Regexp, error) {
 		if text == "" {
 			return nil, errors.New("is empty")
 		}
@@ -108,11 +126,11 @@ var (
 	})
 	aDirection = oneOf([]string{"UP", "DOWN", "LEFT", "RIGHT"}, []Direction{{0, -1}, {0, 1}, {-1, 0}, {1, 0}})
 
-	anElement = kind[agent.Args]{name: "selector",
+	anElement = kind[agent.Args]{name: "selector", shape: shapeOf(schema.Ref("selector")),
 		read:  func(n *yaml.Node) (agent.Args, error) { return selector(n), nil },
 		check: func(p *reader, _ string, n *yaml.Node) error { return p.selector(n) },
 	}
-	elements = kind[[]agent.Args]{name: "selectors", read: func(n *yaml.Node) (list []agent.Args, err error) {
+	elements = kind[[]agent.Args]{name: "selectors", shape: shapeOf(schema.List(schema.Ref("selector"))), read: func(n *yaml.Node) (list []agent.Args, err error) {
 		for _, c := range n.Content {
 			list = append(list, selector(c))
 		}
@@ -128,13 +146,13 @@ var (
 		}
 		return nil
 	}}
-	conditions = kind[*yaml.Node]{name: "conditions", read: raw("").read, check: func(p *reader, key string, n *yaml.Node) error {
+	conditions = kind[*yaml.Node]{name: "conditions", shape: shapeOf(schema.Ref("when")), read: raw("", nil).read, check: func(p *reader, key string, n *yaml.Node) error {
 		later := *p
 		later.filled = false // conditions are filled in when they are looked at
 		return later.mapping(n, key, whenKeys, nil)
 	}}
-	variables = kind[map[string]string]{name: "values", read: variablesIn}
-	places    = kind[[]Place]{name: "locations", read: func(n *yaml.Node) (list []Place, err error) {
+	variables = kind[map[string]string]{name: "values", shape: shapeOf(schema.Map(schema.Text())), read: variablesIn}
+	places    = kind[[]Place]{name: "locations", shape: shapeOf(schema.List(schema.Type("string"))), read: func(n *yaml.Node) (list []Place, err error) {
 		for _, c := range n.Content {
 			p, err := place(c.Value)
 			if err != nil {
@@ -156,8 +174,8 @@ var (
 	}}
 	aPlatform   = oneOf([]string{"Android", "iOS", "Web"}, []bool{true, false, false})
 	aPermission = oneOf([]string{"allow", "deny", "unset"}, []bool{true, false, false})
-	arguments   = mappingOf("values", func(*yaml.Node) error { return nil })
-	permissions = mappingOf("permissions", func(v *yaml.Node) error {
+	arguments   = mappingOf("values", schema.Text(), func(*yaml.Node) error { return nil })
+	permissions = mappingOf("permissions", schema.Dynamic(schema.Enum("allow", "deny", "unset")), func(v *yaml.Node) error {
 		_, err := aPermission.read(v)
 		return err
 	})

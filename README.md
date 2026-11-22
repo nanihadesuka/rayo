@@ -31,7 +31,8 @@ rayo - runs flows on Android, fast
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
-  rayo help <command>                              what a command of a flow takes
+  rayo help <command>                              what a command takes, of a flow or of rayo; also flow and suite
+  rayo schema flow, suite or results               its JSON Schema, for editors and programs
   rayo version
 
 Options of test, live and hierarchy
@@ -244,6 +245,7 @@ the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
 | `  run.go` | Runs all the flows, losing none |
 | `internal/suite` | Which flows, also those of a suite |
 | `internal/report` | How a run went: on the screen, as text, JSON and JUnit |
+| `internal/schema` | What a table of keys is, and all that is made from one |
 | `internal/live` | Live sessions, and how `do` reaches them |
 | `internal/flow` | Flows: reading, checking and running them |
 | `  keys.go`, `kinds.go` | Every key a flow may use; the kinds of value, each checked and read by one function |
@@ -253,6 +255,10 @@ the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
 | `internal/mock` | The mock backend, on its own; `capture.go` and `convert.go` make mocks from a real one |
 | `internal/agent` | Starts the device part (`java/`) and talks to it |
 | `internal/adb` | Talks to the adb server, sets up the device, and talks to the emulator's console |
+
+What files and commands may hold is said once, in tables of the code (`options.go`, `keys.go`,
+`commands.go`, `flow/schema.go`, `suite/fields.go`). From them come the checks, `rayo help`, the JSON Schemas
+in `schema/` and the tables of the reference; a test fails if any is out of date.
 
 `test/` runs the real rayo against a pretend device and compares all that comes out, also every
 trip to the device: `go test ./test` (5 s), `-update` to accept a change. What only a real one can tell:

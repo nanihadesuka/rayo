@@ -1,0 +1,313 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "began": {
+      "description": "In UTC",
+      "type": "string"
+    },
+    "device": {
+      "description": "Its serial",
+      "type": "string"
+    },
+    "failed": {
+      "description": "",
+      "type": "integer"
+    },
+    "flows": {
+      "description": "See below",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "cause": {
+            "description": "Of a flow that failed, or empty",
+            "enum": [
+              "test",
+              "app",
+              "device",
+              ""
+            ]
+          },
+          "failures": {
+            "description": "One for each try that failed, also of a flow that passed at last",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "because": {
+                  "description": "What shows that it isn't the test",
+                  "type": "string"
+                },
+                "before": {
+                  "description": "The last 3 steps that passed",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "calls": {
+                  "description": "The last 5 to the mock",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "at": {
+                        "description": "In UTC",
+                        "type": "string"
+                      },
+                      "body": {
+                        "description": "Only in a requests.json",
+                        "type": "string"
+                      },
+                      "method": {
+                        "description": "",
+                        "type": "string"
+                      },
+                      "mocked": {
+                        "description": "Whether a mock fitted",
+                        "type": "boolean"
+                      },
+                      "outcome": {
+                        "description": "The status, or what happened",
+                        "type": "string"
+                      },
+                      "uri": {
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "at",
+                      "method",
+                      "uri",
+                      "outcome",
+                      "mocked",
+                      "body"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "cause": {
+                  "description": "test, app or device",
+                  "enum": [
+                    "test",
+                    "app",
+                    "device"
+                  ]
+                },
+                "crash": {
+                  "description": "The app crashed or hung during the flow: what the device log says",
+                  "type": "string"
+                },
+                "file": {
+                  "description": "Where it is written",
+                  "type": "string"
+                },
+                "from": {
+                  "description": "The step that ran that flow, and so on outwards",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "file": {
+                        "description": "",
+                        "type": "string"
+                      },
+                      "line": {
+                        "description": "",
+                        "type": "integer"
+                      },
+                      "step": {
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "step",
+                      "file",
+                      "line"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "line": {
+                  "description": "",
+                  "type": "integer"
+                },
+                "saved": {
+                  "description": "The folder with the rest",
+                  "type": "string"
+                },
+                "screen": {
+                  "description": "The elements on it",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "step": {
+                  "description": "The step that failed",
+                  "type": "string"
+                },
+                "try": {
+                  "description": "From 1",
+                  "type": "integer"
+                },
+                "why": {
+                  "description": "The error",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "try",
+                "why",
+                "cause",
+                "because",
+                "step",
+                "file",
+                "line",
+                "from",
+                "before",
+                "calls",
+                "screen",
+                "crash",
+                "saved"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "file": {
+            "description": "The flow's",
+            "type": "string"
+          },
+          "name": {
+            "description": "The flow's",
+            "type": "string"
+          },
+          "notRunReason": {
+            "description": "If it is NOT_RUN",
+            "type": "string"
+          },
+          "recordings": {
+            "description": "Videos",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "retries": {
+            "description": "Those allowed",
+            "type": "integer"
+          },
+          "seconds": {
+            "description": "All its tries",
+            "type": "number"
+          },
+          "status": {
+            "description": "One of the outcomes",
+            "enum": [
+              "PASS",
+              "FAIL",
+              "INTERRUPTED",
+              "NOT_RUN"
+            ]
+          },
+          "timesFailed": {
+            "description": "Of those",
+            "type": "integer"
+          },
+          "tries": {
+            "description": "Those it took",
+            "type": "integer"
+          },
+          "warnings": {
+            "description": "What may explain this, or the next flow",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "file",
+          "status",
+          "cause",
+          "seconds",
+          "tries",
+          "timesFailed",
+          "retries",
+          "notRunReason",
+          "warnings",
+          "recordings",
+          "failures"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "interrupted": {
+      "description": "",
+      "type": "integer"
+    },
+    "notRun": {
+      "description": "",
+      "type": "integer"
+    },
+    "ok": {
+      "description": "Nothing failed, was interrupted or didn't run: as the exit code",
+      "type": "boolean"
+    },
+    "order": {
+      "description": "--shuffle=<seed>, if shuffled",
+      "type": "string"
+    },
+    "passed": {
+      "description": "Also those that failed first",
+      "type": "integer"
+    },
+    "retried": {
+      "description": "Flows tried more than once, whether they passed or not",
+      "type": "integer"
+    },
+    "run": {
+      "description": "The suite's name, or what was run",
+      "type": "string"
+    },
+    "seconds": {
+      "description": "All of it",
+      "type": "number"
+    },
+    "stopped": {
+      "description": "Why, if it stopped before the end",
+      "type": "string"
+    },
+    "total": {
+      "description": "Flows",
+      "type": "integer"
+    },
+    "version": {
+      "description": "Changes if the meaning of a key does",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "version",
+    "run",
+    "device",
+    "began",
+    "seconds",
+    "order",
+    "stopped",
+    "ok",
+    "total",
+    "passed",
+    "failed",
+    "interrupted",
+    "notRun",
+    "retried",
+    "flows"
+  ],
+  "title": "Results of rayo",
+  "type": "object"
+}

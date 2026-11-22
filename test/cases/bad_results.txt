@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: results go to a .txt, .json or .xml (JUnit) file, not "out.html"
+error: --results takes a .txt, .json or .xml (JUnit) file, not "out.html"

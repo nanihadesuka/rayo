@@ -10,5 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml: yaml: unmarshal errors:
-  line 1: field flow not found in type suite.Suite
+error: s.rayo.yaml:1: unknown key "flow" (it takes name, flows, retries, app, device, output, results, record, recordFolder)

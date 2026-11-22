@@ -301,7 +301,11 @@ func (r *Runner) evidence(ctx context.Context) {
 		}
 	}
 	png, err := r.screenshot()
-	save("failure.png", png, err)
+	if small, e := shrink(png); err == nil && e == nil {
+		save("failure.jpg", small, nil)
+	} else { // as it is, if it can't be read
+		save("failure.png", png, err)
+	}
 	if r.agent.Dead() == nil {
 		a, err := r.agent.Do(ctx, "tree", nil, 5*time.Second)
 		save("screen.txt", []byte(a.Out), err)
@@ -323,7 +327,7 @@ func (r *Runner) evidence(ctx context.Context) {
 	r.reporter.Note(1, "saved in "+dir)
 }
 
-var evidenceFiles = []string{"failure.png", "screen.txt", "logcat.txt", "requests.txt", "requests.json"}
+var evidenceFiles = []string{"failure.jpg", "failure.png", "screen.txt", "logcat.txt", "requests.txt", "requests.json"}
 
 // FolderName is a flow's, for what is saved of it.
 func FolderName(name string) string { return unsafe.ReplaceAllString(name, "_") }

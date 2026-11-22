@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "app": {
+      "additionalProperties": false,
+      "description": "Installed before the flows",
+      "properties": {
+        "apk": {
+          "description": "What to install, if the device has another. rayo doesn't build it (required)",
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "id": {
+          "description": "The app's (required)",
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "apk"
+      ],
+      "type": "object"
+    },
+    "device": {
+      "additionalProperties": false,
+      "description": "How it is while the flows run",
+      "properties": {
+        "darkMode": {
+          "description": "The dark theme",
+          "type": "boolean"
+        },
+        "dpi": {
+          "description": "Its density. With size, it says how many dp there are: 1080 pixels at 420 dpi are 411 dp",
+          "maximum": 1000,
+          "minimum": 72,
+          "type": "integer"
+        },
+        "fontScale": {
+          "description": "Of the text; 1 is normal",
+          "maximum": 3,
+          "minimum": 0.5,
+          "type": "number"
+        },
+        "size": {
+          "description": "Of the screen",
+          "pattern": "^[1-9]\\d{2,3}x[1-9]\\d{2,3}$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "flows": {
+      "description": "Files, run in this order; or mappings with file and retries (required)",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "file": {
+                "description": "The flow (required)",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ]
+              },
+              "retries": {
+                "description": "How many times it is tried again if it fails (default: the suite's)",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "file"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "name": {
+      "description": "Shown in the results (default: the file)",
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "output": {
+      "description": "As --output, which wins (default: .rayo where rayo runs)",
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "record": {
+      "description": "A video of each flow that doesn't say (default: false)",
+      "type": "boolean"
+    },
+    "recordFolder": {
+      "description": "Where the videos go; needs record: true (default: each flow's, in output)",
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "results": {
+      "anyOf": [
+        {
+          "pattern": "\\.(txt|json|xml)$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "pattern": "\\.(txt|json|xml)$",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "As --results, which wins over all of them: .txt, .json or .xml (JUnit)"
+    },
+    "retries": {
+      "description": "How many times a flow that fails is tried again (default: 1)",
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "flows"
+  ],
+  "title": "A rayo suite, *.rayo.yaml",
+  "type": "object"
+}

@@ -12,26 +12,14 @@ import (
 
 // Setup is how a device should be while flows run. What is nil or empty stays as it is.
 type Setup struct {
-	Size      string   `yaml:"size"`
-	DPI       int      `yaml:"dpi"`
-	FontScale *float64 `yaml:"fontScale"`
-	DarkMode  *bool    `yaml:"darkMode"`
+	Size      string
+	DPI       int
+	FontScale *float64
+	DarkMode  *bool
 }
 
-var screenSize = regexp.MustCompile(`^[1-9]\d{2,3}x[1-9]\d{2,3}$`)
-
-// Check says what is wrong with it.
-func (s *Setup) Check() error {
-	switch {
-	case s.Size != "" && !screenSize.MatchString(s.Size):
-		return fmt.Errorf("size is in pixels, such as 1080x2400, not %q", s.Size)
-	case s.DPI != 0 && (s.DPI < 72 || s.DPI > 1000):
-		return fmt.Errorf("dpi goes from 72 to 1000, not %d", s.DPI)
-	case s.FontScale != nil && (*s.FontScale < 0.5 || *s.FontScale > 3):
-		return fmt.Errorf("fontScale goes from 0.5 to 3, not %v", *s.FontScale)
-	}
-	return nil
-}
+// ScreenSize is how a size is written.
+var ScreenSize = regexp.MustCompile(`^[1-9]\d{2,3}x[1-9]\d{2,3}$`)
 
 // Apply changes the device, and returns what undoes it. The device itself undoes it if the connection
 // closes, however this process died.

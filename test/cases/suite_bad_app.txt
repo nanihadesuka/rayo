@@ -11,4 +11,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml: app needs id and apk
+error: s.rayo.yaml:2: app: needs id

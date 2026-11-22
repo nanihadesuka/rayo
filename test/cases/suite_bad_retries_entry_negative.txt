@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml: a.yaml: retries can't be -1
+error: s.rayo.yaml:1: flows: retries: takes a number from 0, not -1

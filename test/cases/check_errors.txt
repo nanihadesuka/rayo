@@ -248,7 +248,7 @@ error: flows/a01.yaml:3: unknown command "tapOm", did you mean tapOn?
        flows/a09.yaml:3: timeout: not a time: "soon" (use 500 or 10s)
        flows/a10.yaml:3: back doesn't take a plain value
        flows/a11.yaml:3: a command is one action, such as '- tapOn: Login'
-       flows/a12.yaml:2: unknown key "bogus"
+       flows/a12.yaml:2: unknown key "bogus" (it takes appId, name, tags, env, mock, record, onFlowStart, onFlowComplete)
        flows/a13.yaml: expected 'appId: ...', then '---', then a list of commands
        flows/a14.yaml: yaml: line 1: did not find expected node content
        flows/b01.yaml:3: no file flows/nope.yaml

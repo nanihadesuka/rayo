@@ -5,6 +5,9 @@ Every command and feature. To install or build, see the
 
 🧪 not tested on a device yet. `rayo help <command>` shows what one takes.
 
+The tables between `generated` marks come from the code, as do `rayo help` and the JSON Schemas
+(`rayo schema flow`, `suite` or `results`; also in [schema/](schema)). `go test ./test -update` writes them.
+
 ## Index
 
 | Topic | |
@@ -22,7 +25,7 @@ Every command and feature. To install or build, see the
 | [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [Capture](#capture) |
 | [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Causes](#causes) · [Outcomes](#outcomes) · [Results](#results) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
-| [Features](#features) | [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
+| [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
 | [Default times](#default-times) | |
 
 ---
@@ -40,26 +43,30 @@ appId: com.example.app
 
 ### Header
 
-| Key | |
-|---|---|
-| `appId` | The app's package |
-| `name` | Shown in the output. By default the file name, or the test's folder for `flow.yaml` |
-| `tags` | A list, see [Tags](#tags) |
-| `env` | See [Variables](#variables) |
-| `mock` | A path or a list, see [Mock](#mock) |
-| `record` | `true`, `false` or a file, see [Recording a whole flow](#recording-a-whole-flow) |
-| `onFlowStart` | Commands run first |
-| `onFlowComplete` | Commands run last, also after a failure |
+<!-- generated: header -->
+| Key | Takes | |
+|---|---|---|
+| `appId` | package | The app's |
+| `name` | text | Shown in the output (default: the file's, or the folder's for `flow.yaml`) |
+| `tags` | a list | To choose flows, see [Tags](#tags) |
+| `env` | values | Variables for it, see [Variables](#variables) |
+| `mock` | a path or a list | Who answers as the backend, see [Mock](#mock) |
+| `record` | `true`, `false` or a file | A video of the flow, see [Recording a whole flow](#recording-a-whole-flow) (default: the suite's) |
+| `onFlowStart` | commands | Run first |
+| `onFlowComplete` | commands | Run last, also after a failure |
+<!-- end -->
 
 ### Common options
 
 Accepted by every command that takes a mapping.
 
-| Option | |
-|---|---|
-| `label` | What to show in the output instead of the command |
-| `optional: true` | A failure doesn't fail the flow |
-| `timeout` | How long it may take, see [Default times](#default-times) |
+<!-- generated: options -->
+| Key | Takes | |
+|---|---|---|
+| `label` | text | What to show instead of the command |
+| `optional` | true/false | A failure doesn't fail the flow |
+| `timeout` | time | How long it may take |
+<!-- end -->
 
 ### Values
 
@@ -79,12 +86,24 @@ see what is on screen.
 
 ### Conditions
 
-| Key | Matches |
-|---|---|
-| `id` | The resource id, whole or after `:id/`; in Compose, a `testTag` with `testTagsAsResourceId` |
-| `text` | The text, description or hint |
-| `enabled` `checked` `focused` `selected` | `true` or `false` |
-| `index` | The n-th match, from 0, top to bottom and left to right. Negative counts from the end |
+<!-- generated: selector -->
+| Key | Takes | |
+|---|---|---|
+| `id` | text | The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole |
+| `text` | text | The text, description or hint. A regular expression of the whole |
+| `index` | number | The n-th match, from 0, top to bottom and left to right; negative counts from the end |
+| `enabled` | true/false | Whether it is enabled |
+| `checked` | true/false | Whether it is checked |
+| `focused` | true/false | Whether it has the focus |
+| `selected` | true/false | Whether it is selected |
+| `below` | selector | Entirely below another |
+| `above` | selector | Entirely above another |
+| `leftOf` | selector | Entirely to the left of another |
+| `rightOf` | selector | Entirely to the right of another |
+| `containsChild` | selector | The direct parent of another |
+| `childOf` | selector | Anywhere inside another |
+| `containsDescendants` | selectors | Around all of these |
+<!-- end -->
 
 `id` and `text` are regular expressions that must match the **whole** value, ignoring case. An
 exact value always matches too, so `Price (€)` needs no escaping.
@@ -95,13 +114,6 @@ another, the inner one wins.
 ### Relations
 
 🧪 Each takes another selector.
-
-| Key | The element is |
-|---|---|
-| `below` `above` `leftOf` `rightOf` | Entirely on that side of the other |
-| `containsChild` | Its direct parent |
-| `containsDescendants` | Around all of a list of elements |
-| `childOf` | Anywhere inside it |
 
 ```yaml
 - tapOn: { text: Delete, below: { id: row_title, text: Invoice 7 } }
@@ -115,13 +127,15 @@ another, the inner one wins.
 
 Opens the app and waits until Android has it in front.
 
-| Key | Default | |
+<!-- generated: keys launchApp -->
+| Key | Takes | |
 |---|---|---|
-| `appId` | The header's | Another app |
-| `clearState` | `false` | Erase its data first |
-| `stopApp` | `true` | Close it first; `false` brings it back as it was |
-| `permissions` | `{ all: allow }` with `clearState`, otherwise unchanged | Name → `allow`, `deny` or `unset`. Fails if the app has no such permission |
-| `arguments` | | Intent extras; booleans, integers and decimals keep their type |
+| `appId` | text | The app; by default the header's. Short form |
+| `clearState` | true/false | Erase its data first (false) |
+| `stopApp` | true/false | Close it first (true); false brings it back as it was |
+| `permissions` | permissions | Name: allow, deny or unset. With clearState, all are allowed if not said |
+| `arguments` | values | Intent extras; booleans, integers and decimals keep their type |
+<!-- end -->
 
 Permission names: `all`, `location`, `camera`, `notifications`, `contacts`, `microphone`,
 `bluetooth`, `storage`, `phone`, `calendar`, `sms`, `medialibrary`, or Android's own, such as
@@ -135,15 +149,34 @@ Permission names: `all`, `location`, `camera`, `notifications`, `contacts`, `mic
 
 🧪 Both close the app. Short form: the package.
 
+<!-- generated: keys stopApp -->
+| Key | Takes | |
+|---|---|---|
+| `appId` | text | The app; by default the header's. Short form |
+<!-- end -->
+
 ### clearState
 
 🧪 Erases the app's data. Short form: the package.
+
+<!-- generated: keys clearState -->
+| Key | Takes | |
+|---|---|---|
+| `appId` | text | The app; by default the header's. Short form |
+<!-- end -->
 
 ### setPermissions
 
 Changes permissions without opening the app, in the order given. Takes `permissions`, as in
 [launchApp](#launchapp), and `appId`. Fails if the app has no such permission. Android closes a
 running app when it loses one.
+
+<!-- generated: keys setPermissions -->
+| Key | Takes | |
+|---|---|---|
+| `appId` | text | The app; by default the header's |
+| `permissions` | permissions | Name: allow, deny or unset. With clearState, all are allowed if not said |
+<!-- end -->
 
 ```yaml
 - setPermissions: { permissions: { all: deny, camera: allow } }
@@ -152,6 +185,12 @@ running app when it loses one.
 ### openLink
 
 🧪 Opens a link in whichever app handles it.
+
+<!-- generated: keys openLink -->
+| Key | Takes | |
+|---|---|---|
+| `link` | text | What to open. Short form |
+<!-- end -->
 
 ```yaml
 - openLink: https://example.com/item/7
@@ -165,11 +204,13 @@ running app when it loses one.
 
 Waits until the element is on screen, enabled and not moving, then taps its centre.
 
-| Key | |
-|---|---|
-| A [selector](#selectors) | What to tap |
-| `point` | Alone: a point of the screen. With a selector: a point of the element, in % 🧪 |
-| `repeat`, `delay` | Taps, and the time between them (100 ms) 🧪 |
+<!-- generated: keys tapOn -->
+| Key | Takes | |
+|---|---|---|
+| `point` | point | Alone, of the screen; with a selector, of the element in % |
+| `repeat` | number | Taps (1) |
+| `delay` | time | Between taps (100) |
+<!-- end -->
 
 ```yaml
 - tapOn: { id: save }
@@ -180,20 +221,36 @@ Waits until the element is on screen, enabled and not moving, then taps its cent
 
 🧪 Like `tapOn`, twice. `delay` is 100 ms by default.
 
+<!-- generated: keys doubleTapOn -->
+| Key | Takes | |
+|---|---|---|
+| `point` | point | Alone, of the screen; with a selector, of the element in % |
+| `delay` | time | Between taps (100) |
+<!-- end -->
+
 ### longPressOn
 
 🧪 Like `tapOn`, held for a second.
+
+<!-- generated: keys longPressOn -->
+| Key | Takes | |
+|---|---|---|
+| `point` | point | Alone, of the screen; with a selector, of the element in % |
+<!-- end -->
 
 ### swipe
 
 🧪
 
-| Key | |
-|---|---|
-| `direction` | `UP`, `DOWN`, `LEFT`, `RIGHT`: where the finger goes |
-| `from` | Start on this element; with `direction` |
-| `start`, `end` | Points, instead of `direction` |
-| `duration` | 250 ms by default |
+<!-- generated: keys swipe -->
+| Key | Takes | |
+|---|---|---|
+| `direction` | UP/DOWN/LEFT/RIGHT | Where the finger or the search goes (DOWN when searching) |
+| `start` | point | Where the finger goes down, instead of direction |
+| `end` | point | Where it goes up |
+| `duration` | time | Of the swipe (250) |
+| `from` | selector | Start on this element; with direction |
+<!-- end -->
 
 ### scroll
 
@@ -203,10 +260,12 @@ Waits until the element is on screen, enabled and not moving, then taps its cent
 
 🧪 Scrolls until the element is on screen.
 
-| Key | Default | |
+<!-- generated: keys scrollUntilVisible -->
+| Key | Takes | |
 |---|---|---|
-| `element` | | A [selector](#selectors) |
-| `direction` | `DOWN` | Where the hidden content is |
+| `element` | selector | What to look for |
+| `direction` | UP/DOWN/LEFT/RIGHT | Where the finger or the search goes (DOWN when searching) |
+<!-- end -->
 
 ---
 
@@ -217,6 +276,12 @@ Waits until the element is on screen, enabled and not moving, then taps its cent
 Replaces the text of a field at once, without focus or keyboard. The quickest way to fill a
 form; `pressKey: Enter` won't follow it, as the field isn't focused.
 
+<!-- generated: keys type -->
+| Key | Takes | |
+|---|---|---|
+| `value` | text | The new text |
+<!-- end -->
+
 ```yaml
 - type: { id: email, value: me@example.com }
 ```
@@ -224,6 +289,12 @@ form; `pressKey: Enter` won't follow it, as the field isn't focused.
 ### inputText
 
 Adds text to the focused field, waiting for one to be focused.
+
+<!-- generated: keys inputText -->
+| Key | Takes | |
+|---|---|---|
+| `text` | text | The text to add. Short form |
+<!-- end -->
 
 ```yaml
 - tapOn: { id: email }
@@ -245,6 +316,12 @@ Adds text to the focused field, waiting for one to be focused.
 
 🧪 Deletes characters from the end of the focused field: 50, or the number given.
 
+<!-- generated: keys eraseText -->
+| Key | Takes | |
+|---|---|---|
+| `charactersToErase` | number | How many (50). Short form |
+<!-- end -->
+
 ### copyTextFrom, pasteText
 
 🧪 `copyTextFrom` keeps an element's text, or its description if it has none, in
@@ -260,11 +337,17 @@ Adds text to the focused field, waiting for one to be focused.
 `Recents`, `Power`, `Lock`, `Volume Up`, `Volume Down`, `Remote Dpad …`, `Remote Media …`, or an
 Android key code. Only `Home` and `Enter` have been tested.
 
+<!-- generated: keys pressKey -->
+| Key | Takes | |
+|---|---|---|
+| `key` | key | A name, such as Enter, or an Android key code. Short form |
+<!-- end -->
+
 `Home` also waits until the app has really stopped, so that opening it again counts.
 
 ### back
 
-🧪 `pressKey: Back`.
+`pressKey: Back`.
 
 ---
 
@@ -284,6 +367,13 @@ Each returns as soon as it holds; none needs a fixed pause.
 
 The same two, usually with a longer `timeout`.
 
+<!-- generated: keys extendedWaitUntil -->
+| Key | Takes | |
+|---|---|---|
+| `visible` | selector | On screen |
+| `notVisible` | selector | Not on screen |
+<!-- end -->
+
 ```yaml
 - extendedWaitUntil: { visible: { id: home }, timeout: 20s }
 - extendedWaitUntil: { notVisible: Loading.* }
@@ -292,6 +382,12 @@ The same two, usually with a longer `timeout`.
 ### assertTrue
 
 🧪 An [expression](#expressions) is true.
+
+<!-- generated: keys assertTrue -->
+| Key | Takes | |
+|---|---|---|
+| `condition` | JavaScript | An expression. Short form |
+<!-- end -->
 
 ```yaml
 - assertTrue: ${output.total == 3}
@@ -307,12 +403,14 @@ The same two, usually with a longer `timeout`.
 
 ### runFlow
 
-| Key | |
-|---|---|
-| `file` | Another flow, relative to this one |
-| `commands` | Or commands right here 🧪 |
-| `env` | Variables for it; they win over the file's own 🧪 |
-| `when` | See [when](#when) 🧪 |
+<!-- generated: keys runFlow -->
+| Key | Takes | |
+|---|---|---|
+| `file` | text | A path relative to this flow. Short form |
+| `env` | values | Variables for it |
+| `when` | conditions | Only if these hold |
+| `commands` | commands | What to run |
+<!-- end -->
 
 ```yaml
 - runFlow: ../shared/login.yaml
@@ -322,19 +420,39 @@ The same two, usually with a longer `timeout`.
 
 🧪 Runs `commands` again, up to `times`, while [`while`](#when) holds. One of the two is required.
 
+<!-- generated: keys repeat -->
+| Key | Takes | |
+|---|---|---|
+| `times` | number | At most |
+| `while` | conditions | As long as these hold |
+| `commands` | commands | What to run |
+<!-- end -->
+
 ### retry
 
 🧪 Runs `commands` or a `file`, again if it fails, up to `retries` (1) more times.
+
+<!-- generated: keys retry -->
+| Key | Takes | |
+|---|---|---|
+| `retries` | number | How many more times (1) |
+| `commands` | commands | What to run |
+| `file` | text | A path relative to this flow |
+| `env` | values | Variables for it |
+<!-- end -->
 
 ### when
 
 🧪 A condition for `runFlow`, `runScript` and, as `while`, `repeat`. All must hold.
 
-| Key | |
-|---|---|
-| `visible`, `notVisible` | A [selector](#selectors), with a short wait |
-| `true` | An [expression](#expressions) |
-| `platform` | `Android` |
+<!-- generated: when -->
+| Key | Takes | |
+|---|---|---|
+| `visible` | selector | On screen |
+| `notVisible` | selector | Not on screen |
+| `platform` | Android/iOS/Web | Android |
+| `true` | JavaScript | An expression that holds |
+<!-- end -->
 
 ---
 
@@ -353,6 +471,14 @@ The same two, usually with a longer `timeout`.
 
 Runs a file. `env` gives it variables. What it declares stays inside: share through `output`.
 
+<!-- generated: keys runScript -->
+| Key | Takes | |
+|---|---|---|
+| `file` | text | A path relative to this flow. Short form |
+| `env` | values | Variables for it |
+| `when` | conditions | Only if these hold |
+<!-- end -->
+
 ```yaml
 - runScript: { file: create_user.js, env: { NAME: Ana } }
 ```
@@ -360,6 +486,12 @@ Runs a file. `env` gives it variables. What it declares stays inside: share thro
 ### evalScript
 
 🧪 Runs a line.
+
+<!-- generated: keys evalScript -->
+| Key | Takes | |
+|---|---|---|
+| `script` | JavaScript | A line of it. Short form |
+<!-- end -->
 
 ```yaml
 - evalScript: ${output.count = 1}
@@ -386,6 +518,13 @@ Only `http.put` has been tested. A script may take up to 60 seconds. There is no
 Stays at a place, sending a fix every second like a real GPS, until the flow ends. Needs
 Android 12.
 
+<!-- generated: keys setLocation -->
+| Key | Takes | |
+|---|---|---|
+| `latitude` | number | In degrees |
+| `longitude` | number | In degrees |
+<!-- end -->
+
 ```yaml
 - setLocation: { latitude: 41.3785, longitude: 2.1765 }
 ```
@@ -393,6 +532,13 @@ Android 12.
 ### travel
 
 🧪 Moves along `points` at `speed` metres per second (7 by default), then stays at the last.
+
+<!-- generated: keys travel -->
+| Key | Takes | |
+|---|---|---|
+| `points` | locations | A list of 'latitude,longitude' |
+| `speed` | number | Metres per second (7) |
+<!-- end -->
 
 ```yaml
 - travel: { points: ["41.3785,2.1765", "41.3805,2.1748"], speed: 6 }
@@ -402,14 +548,32 @@ Android 12.
 
 🧪 `enabled` or `disabled`. The end of the flow puts it back as it was.
 
+<!-- generated: keys setAirplaneMode -->
+| Key | Takes | |
+|---|---|---|
+| `value` | enabled/disabled/true/false | enabled or disabled. Short form |
+<!-- end -->
+
 ### takeScreenshot
 
 🧪 Saves `<output>/<flow>/<name>.png`.
+
+<!-- generated: keys takeScreenshot -->
+| Key | Takes | |
+|---|---|---|
+| `path` | text | The file, in the debug output. Short form |
+<!-- end -->
 
 ### startRecording, stopRecording
 
 Records the screen as an mp4. The recording ends with `stopRecording` or with the flow, also if it
 fails. Without a path it has the flow's name.
+
+<!-- generated: keys startRecording -->
+| Key | Takes | |
+|---|---|---|
+| `path` | text | The file, in the debug output; by default the flow's name. Short form |
+<!-- end -->
 
 ```yaml
 - startRecording                      # <output>/<flow>/<flow>.mp4
@@ -441,6 +605,12 @@ Hangs a picture on the wall of the emulator's virtual room and walks up to it, s
 scan. The walk starts 3 seconds later, while the flow goes on, so use it early. `none` puts the
 room back, and so does the end of the flow.
 
+<!-- generated: keys camera -->
+| Key | Takes | |
+|---|---|---|
+| `image` | text | What it sees, a path relative to this flow; or none. Short form |
+<!-- end -->
+
 ```yaml
 - camera: device/qr.png
 ```
@@ -451,6 +621,12 @@ doesn't answer, the step says so and passes.
 ### shell
 
 Runs a command on the device as the shell user. Fails if its exit code isn't 0.
+
+<!-- generated: keys shell -->
+| Key | Takes | |
+|---|---|---|
+| `command` | text | Run as the shell user. Short form |
+<!-- end -->
 
 ```yaml
 - shell: am broadcast -a com.example.REFRESH -p com.example.app
@@ -464,12 +640,14 @@ Runs a command on the device as the shell user. Fails if its exit code isn't 0.
 
 🧪 Calls a server from the computer, not the device.
 
-| Key | Default | |
+<!-- generated: keys http -->
+| Key | Takes | |
 |---|---|---|
-| `url` | | |
-| `method` | `GET` | |
-| `json` | | The body |
-| `expect` | Below 300 | The status |
+| `method` | text | Such as POST (GET) |
+| `url` | text | What to call, from the computer. Short form |
+| `json` | values | The body |
+| `expect` | number | The status (any below 300) |
+<!-- end -->
 
 ```yaml
 - http: { method: PUT, url: "http://127.0.0.1:8080/state", json: { state: docked } }
@@ -519,6 +697,20 @@ Regular expressions are Go's and match the whole value, except in `regexExtract`
 
 Adds a path, or a mapping written here. Its priority is 0 by default, so it wins over the files.
 
+<!-- generated: keys mock -->
+| Key | Takes | |
+|---|---|---|
+| `file` | text | A path relative to this flow. Short form |
+| `id` | text | A name for it |
+| `name` | text | A name for it |
+| `priority` | number | The lowest wins (0) |
+| `scenarioName` | text | The scenario it belongs to |
+| `requiredScenarioState` | text | Only in this state |
+| `newScenarioState` | text | Moves to this state |
+| `request` | values | Which calls |
+| `response` | values | What to answer |
+<!-- end -->
+
 ```yaml
 - mock: overrides.json
 - mock: { request: { method: POST, urlPathPattern: ".*/payments" }, response: { status: 503 } }
@@ -537,9 +729,26 @@ Moves scenarios to a state. A scenario or state that no mock mentions is an erro
 | `network: { fail: 503 }` | Every answer is this status |
 | `network: online` | Back to normal |
 
+<!-- generated: keys network -->
+| Key | Takes | |
+|---|---|---|
+| `state` | offline/online | online or offline. Short form |
+| `delay` | time | Every answer takes longer |
+| `fail` | 400 to 599 | Every answer is this status, 400 to 599 |
+| `path` | pattern | Only these calls, a regular expression of the whole path |
+<!-- end -->
+
 `path`, a regular expression, limits it to some calls. Each `network` replaces the one before.
 
 ### waitForRequest
+
+<!-- generated: keys waitForRequest -->
+| Key | Takes | |
+|---|---|---|
+| `method` | text | Such as POST (GET) |
+| `path` | pattern | Only these calls, a regular expression of the whole path. Short form |
+| `body` | text | A text in the body |
+<!-- end -->
 
 Waits until the app calls `path`, a regular expression of the whole path. Optional: `method`, and
 `body`, a text in it. Calls already made in this flow count, but each is matched only once.
@@ -610,16 +819,39 @@ flows:
   - tests/scan/flow.yaml
 ```
 
-| Key | |
-|---|---|
-| `flows` | Required: files, run in this order. One may be `file` and its own `retries` |
-| `retries` | How many times a flow that fails is tried again, see [Retries](#retries) |
-| `name` | Shown in the results |
-| `app` | `apk` is installed before the flows, if the device has another, as `id`. rayo doesn't build it |
-| `device` | How the device is while the flows run, see [below](#device-setup) |
-| `output` | As `--output`, which wins |
-| `record`, `recordFolder` | `true`, and where the videos go, see [Recording a whole flow](#recording-a-whole-flow) |
-| `results` | A file or a list, as `--results`, which wins over all of them |
+<!-- generated: suite -->
+| Key | Takes | |
+|---|---|---|
+| `name` | text | Shown in the results (default: the file) |
+| `flows` | a list | Files, run in this order; or mappings with file and retries, see [below](#a-flow-of-a-suite) (required) |
+| `retries` | a number from 0 | How many times a flow that fails is tried again, see [Retries](#retries) (default: 1) |
+| `app` | a mapping | Installed before the flows, see [below](#the-app-of-a-suite) |
+| `device` | a mapping | How it is while the flows run, see [Device setup](#device-setup) |
+| `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
+| `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
+| `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
+| `recordFolder` | folder | Where the videos go; needs `record: true` (default: each flow's, in `output`) |
+<!-- end -->
+
+#### A flow of a suite
+
+<!-- generated: suite flow -->
+| Key | Takes | |
+|---|---|---|
+| `file` | file | The flow (required) |
+| `retries` | a number from 0 | How many times it is tried again if it fails (default: the suite's) |
+<!-- end -->
+
+#### The app of a suite
+
+<!-- generated: suite app -->
+| Key | Takes | |
+|---|---|---|
+| `id` | package | The app's (required) |
+| `apk` | file | What to install, if the device has another. rayo doesn't build it (required) |
+<!-- end -->
+
+#### What goes where
 
 Mocks, shared steps and permissions belong in each flow, so that it can be read and run alone. The
 device is chosen as always: use `--emulator` if the flows must never run on a real one.
@@ -636,12 +868,14 @@ device:
   darkMode: true
 ```
 
-| Key | |
-|---|---|
-| `size` | Of the screen, in pixels |
-| `dpi` | Its density, 72 to 1000. With `size`, it says how many dp there are: 1080 pixels at 420 dpi are 411 dp |
-| `fontScale` | 0.5 to 3; 1 is the normal text |
-| `darkMode` | `true` or `false` |
+<!-- generated: device -->
+| Key | Takes | |
+|---|---|---|
+| `size` | pixels, such as `1080x2400` | Of the screen |
+| `dpi` | 72 to 1000 | Its density. With `size`, it says how many dp there are: 1080 pixels at 420 dpi are 411 dp |
+| `fontScale` | 0.5 to 3 | Of the text; 1 is normal |
+| `darkMode` | `true` or `false` | The dark theme |
+<!-- end -->
 
 What isn't said stays as it is. It is only for a suite: all its flows run on the same device, and
 one flow alone runs on the device as it is. To run the same flows on two, write two suites.
@@ -856,13 +1090,66 @@ In a `.json`, every key is always there: what there is none of is `""`, `0` or `
 }
 ```
 
-| Key | |
-|---|---|
-| `version` | Changes if the meaning of a key does |
-| `order` | `--shuffle=<seed>`, if shuffled |
-| `ok` | Nothing failed, was interrupted or didn't run: as the exit code |
-| `status` | One of the [outcomes](#outcomes) |
-| `failures` | One for each try that failed, also of a flow that passed at last. `screen` is whole; a call's `body` is only in `requests.json` |
+The run:
+
+<!-- generated: results -->
+| Key | | |
+|---|---|---|
+| `version` | number | Changes if the meaning of a key does |
+| `run` | text | The suite's name, or what was run |
+| `device` | text | Its serial |
+| `began` | text | In UTC |
+| `seconds` | number | All of it |
+| `order` | text | `--shuffle=<seed>`, if shuffled |
+| `stopped` | text | Why, if it stopped before the end, see [Causes](#causes) |
+| `ok` | true or false | Nothing failed, was interrupted or didn't run: as the exit code |
+| `total` | number | Flows |
+| `passed` | number | Also those that failed first |
+| `failed` | number |  |
+| `interrupted` | number |  |
+| `notRun` | number |  |
+| `retried` | number | Flows tried more than once, whether they passed or not |
+| `flows` | list | See below |
+<!-- end -->
+
+Each of `flows`:
+
+<!-- generated: results flow -->
+| Key | | |
+|---|---|---|
+| `name` | text | The flow's |
+| `file` | text | The flow's |
+| `status` | text | One of the [outcomes](#outcomes) |
+| `cause` | text | Of a flow that failed, or empty, see [Causes](#causes) |
+| `seconds` | number | All its tries |
+| `tries` | number | Those it took |
+| `timesFailed` | number | Of those |
+| `retries` | number | Those allowed |
+| `notRunReason` | text | If it is `NOT_RUN` |
+| `warnings` | list | What may explain this, or the next flow |
+| `recordings` | list | Videos |
+| `failures` | list | One for each try that failed, also of a flow that passed at last |
+<!-- end -->
+
+Each of `failures`:
+
+<!-- generated: results failure -->
+| Key | | |
+|---|---|---|
+| `try` | number | From 1 |
+| `why` | text | The error |
+| `cause` | text | `test`, `app` or `device`, see [Causes](#causes) |
+| `because` | text | What shows that it isn't the test |
+| `step` | text | The step that failed |
+| `file` | text | Where it is written |
+| `line` | number |  |
+| `from` | list | The step that ran that flow, and so on outwards |
+| `before` | list | The last 3 steps that passed |
+| `calls` | list | The last 5 to the mock |
+| `screen` | list | The elements on it |
+| `crash` | text | The app crashed or hung during the flow: what the device log says |
+| `saved` | text | The folder with the rest, see [Failures](#failures) |
+<!-- end -->
 
 ```
 jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].why)"' results.json
@@ -940,6 +1227,18 @@ Only this computer can use a session, with a token kept in `<output>/live.json`.
 
 ## Features
 
+### Schemas
+
+For editors to complete and check what is written, and for programs to know what is valid. At the
+top of a file, for those that understand it (such as VS Code with the YAML extension):
+
+```yaml
+# yaml-language-server: $schema=../../rayo/schema/flow.json
+```
+
+They know the keys and values. What depends on other files, or on several keys at once, only
+`rayo check` tells.
+
 ### Variables
 
 Used as `${NAME}`. The first that has it wins:
@@ -964,7 +1263,7 @@ first in `<flow>_retry1` and so on. Those of an earlier run are removed when the
 
 | File | |
 |---|---|
-| `failure.png` | The screen |
+| `failure.jpg` | The screen, small: 480 pixels on the short side |
 | `screen.txt` | The elements on it, as `rayo hierarchy` shows them |
 | `logcat.txt` | The end of the device log |
 | `requests.txt` | Every call the app made to the [mock](#mock), with its body; `requests.json`, a list like `calls`, if the results are also written to a `.json`. The last five are printed |

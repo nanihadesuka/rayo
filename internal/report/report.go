@@ -321,7 +321,7 @@ func FormatOf(path string) (string, error) {
 	case ".xml":
 		return JUnit, nil
 	}
-	return "", fmt.Errorf("results go to a .txt, .json or .xml (JUnit) file, not %q", filepath.ToSlash(path))
+	return "", fmt.Errorf("takes a .txt, .json or .xml (JUnit) file, not %q", filepath.ToSlash(path))
 }
 
 // Write saves the results, in the format of the file.

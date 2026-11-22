@@ -156,8 +156,10 @@ var sections = []section{
 		flag("verbose", "every step (always, for a single flow)", func(o *options) *bool { return &o.verbose }).withShort("v"),
 		{name: "results", value: "file", about: "write the results: .txt, .json or .xml (JUnit); may be repeated", set: func(o *options, v string) error {
 			o.results = append(o.results, v)
-			_, err := report.FormatOf(v)
-			return err
+			if _, err := report.FormatOf(v); err != nil {
+				return fmt.Errorf("--results %w", err)
+			}
+			return nil
 		}},
 		flag("failures-only", "leave the flows that passed out of the results", func(o *options) *bool { return &o.failuresOnly }),
 	}},
@@ -185,7 +187,8 @@ const usage = `rayo - runs flows on Android, fast
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
-  rayo help <command>                              what a command of a flow takes
+  rayo help <command>                              what a command takes, of a flow or of rayo; also flow and suite
+  rayo schema flow, suite or results               its JSON Schema, for editors and programs
   rayo version
 `
 
@@ -204,20 +207,40 @@ func help() string {
 		}
 		b.WriteString("\n")
 		for _, p := range s.options {
-			name := "--" + p.name
-			switch {
-			case p.optional:
-				name += "[=" + p.value + "]"
-			case p.value != "":
-				name += " <" + p.value + ">"
-			}
-			if p.short != "" {
-				name = "-" + p.short + ", " + name
-			}
-			fmt.Fprintf(&b, "  %-26s %s\n", name, p.about)
+			b.WriteString(p.help())
 		}
 	}
 	return b.String()
+}
+
+// helpOf is the options of a command; empty if it has none.
+func helpOf(command string) string {
+	var b strings.Builder
+	for _, s := range sections {
+		if slices.Contains(s.commands, command) {
+			for _, p := range s.options {
+				b.WriteString(p.help())
+			}
+		}
+	}
+	if b.Len() == 0 {
+		return ""
+	}
+	return "Options of " + command + ":\n" + b.String()
+}
+
+func (p option) help() string {
+	name := "--" + p.name
+	switch {
+	case p.optional:
+		name += "[=" + p.value + "]"
+	case p.value != "":
+		name += " <" + p.value + ">"
+	}
+	if p.short != "" {
+		name = "-" + p.short + ", " + name
+	}
+	return fmt.Sprintf("  %-26s %s\n", name, p.about)
 }
 
 // find is the option with a name as written, if the command takes it.

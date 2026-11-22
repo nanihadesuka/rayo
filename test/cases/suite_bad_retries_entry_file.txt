@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml: line 1: a flow needs its file
+error: s.rayo.yaml:1: flows: needs file

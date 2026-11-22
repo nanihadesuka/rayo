@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml: no such flow: no.yaml
+error: s.rayo.yaml:1: no such flow: no.yaml

@@ -11,4 +11,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml: results go to a .txt, .json or .xml (JUnit) file, not "out.yaml"
+error: s.rayo.yaml:2: results: takes a .txt, .json or .xml (JUnit) file, not "out.yaml"

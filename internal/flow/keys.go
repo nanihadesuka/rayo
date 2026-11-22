@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/nanihadesuka/rayo/internal/schema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -23,11 +24,14 @@ type anyKey interface {
 	describe() string
 	check(p *reader, n *yaml.Node) error
 	value(n *yaml.Node) any
+	schema() schema.S
 }
 
 func (k *Key[T]) title() string    { return k.name }
 func (k *Key[T]) takes() string    { return k.kind.name }
 func (k *Key[T]) describe() string { return k.about }
+
+func (k *Key[T]) schema() schema.S { return schema.Dynamic(k.kind.shape()) }
 
 func (k *Key[T]) value(n *yaml.Node) any {
 	v, err := k.kind.read(n)
@@ -75,9 +79,9 @@ var (
 
 // Selectors.
 var (
-	keyID    = newKey("id", aText, "The resource id, a regular expression")
-	keyText  = newKey("text", aText, "The text, description or hint, a regular expression")
-	keyIndex = newKey("index", aNumber, "The n-th match, from 0; negative counts from the end")
+	keyID    = newKey("id", aText, "The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole")
+	keyText  = newKey("text", aText, "The text, description or hint. A regular expression of the whole")
+	keyIndex = newKey("index", aNumber, "The n-th match, from 0, top to bottom and left to right; negative counts from the end")
 )
 
 // Filled in here because selectors hold selectors.
@@ -112,23 +116,23 @@ var (
 // Apps.
 var (
 	keyAppID       = newKey("appId", aText, "The app; by default the header's")
-	keyClearState  = newKey("clearState", aFlag, "Erase its data first")
-	keyStopApp     = newKey("stopApp", aFlag, "Close it first (true)")
-	keyPermissions = newKey("permissions", permissions, "Name: allow, deny or unset")
-	keyArguments   = newKey("arguments", arguments, "Intent extras")
+	keyClearState  = newKey("clearState", aFlag, "Erase its data first (false)")
+	keyStopApp     = newKey("stopApp", aFlag, "Close it first (true); false brings it back as it was")
+	keyPermissions = newKey("permissions", permissions, "Name: allow, deny or unset. With clearState, all are allowed if not said")
+	keyArguments   = newKey("arguments", arguments, "Intent extras; booleans, integers and decimals keep their type")
 	keyLink        = newKey("link", aText, "What to open")
 )
 
 // Touch.
 var (
-	keyPoint     = newKey("point", aPoint, "Of the screen; with a selector, of the element in %")
+	keyPoint     = newKey("point", aPoint, "Alone, of the screen; with a selector, of the element in %")
 	keyRepeat    = newKey("repeat", aNumber, "Taps (1)")
 	keyTapDelay  = newKey("delay", aTime, "Between taps (100)")
-	keyDirection = newKey("direction", aDirection, "Where to")
-	keyStart     = newKey("start", aPoint, "Where the finger goes down")
+	keyDirection = newKey("direction", aDirection, "Where the finger or the search goes (DOWN when searching)")
+	keyStart     = newKey("start", aPoint, "Where the finger goes down, instead of direction")
 	keyEnd       = newKey("end", aPoint, "Where it goes up")
 	keyDuration  = newKey("duration", aTime, "Of the swipe (250)")
-	keyFrom      = newKey("from", anElement, "Start on this element")
+	keyFrom      = newKey("from", anElement, "Start on this element; with direction")
 	keyElement   = newKey("element", anElement, "What to look for")
 )
 
@@ -147,7 +151,7 @@ var (
 	keyEnv       = newKey("env", variables, "Variables for it")
 	keyWhen      = newKey("when", conditions, "Only if these hold")
 	keyWhile     = newKey("while", conditions, "As long as these hold")
-	keyCommands  = newKey("commands", raw("commands"), "What to run")
+	keyCommands  = newKey("commands", raw("commands", schema.Ref("commands")), "What to run")
 	keyTimes     = newKey("times", aNumber, "At most")
 	keyRetries   = newKey("retries", aNumber, "How many more times (1)")
 	keyCondition = newKey("condition", aScript, "An expression")
@@ -169,10 +173,10 @@ var (
 
 // Server.
 var (
-	keyMethod = newKey("method", aText, "Such as POST")
+	keyMethod = newKey("method", aText, "Such as POST (GET)")
 	keyURL    = newKey("url", aText, "What to call, from the computer")
-	keyJSON   = newKey("json", raw("values"), "The body")
-	keyExpect = newKey("expect", aNumber, "The status (below 300)")
+	keyJSON   = newKey("json", raw("values", schema.S{}), "The body")
+	keyExpect = newKey("expect", aNumber, "The status (any below 300)")
 )
 
 // Mock.
@@ -183,8 +187,8 @@ var (
 	keyScenario = newKey("scenarioName", aText, "The scenario it belongs to")
 	keyRequired = newKey("requiredScenarioState", aText, "Only in this state")
 	keyNewState = newKey("newScenarioState", aText, "Moves to this state")
-	keyRequest  = newKey("request", raw("values"), "Which calls")
-	keyResponse = newKey("response", raw("values"), "What to answer")
+	keyRequest  = newKey("request", raw("values", schema.S{}), "Which calls")
+	keyResponse = newKey("response", raw("values", schema.S{}), "What to answer")
 	keyState    = newKey("state", aState, "online or offline")
 	keyDelay    = newKey("delay", aTime, "Every answer takes longer")
 	keyFail     = newKey("fail", aStatus, "Every answer is this status, 400 to 599")
