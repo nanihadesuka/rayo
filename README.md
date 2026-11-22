@@ -87,4 +87,4 @@ device: { size: 1080x2400, dpi: 420, darkMode: true }
 
 ## More
 
-[Guide](GUIDE.md) · [Reference](REFERENCE.md) · [Mocking](MOCKING.md) · [Working on rayo](CONTRIBUTING.md)
+[Guide](GUIDE.md) · [Full example](EXAMPLE.md) · [Reference](REFERENCE.md) · [Mocking](MOCKING.md) · [Working on rayo](CONTRIBUTING.md)

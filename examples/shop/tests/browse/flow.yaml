@@ -1,0 +1,8 @@
+appId: com.example.shop
+mock: ../../mock
+tags: [smoke]
+---
+- runFlow: ../../steps/login.yaml
+- scrollUntilVisible: { element: { text: Red bike } }
+- tapOn: Red bike
+- assertVisible: { id: price, text: 249.00.* }

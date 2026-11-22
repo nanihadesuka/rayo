@@ -1,0 +1,8 @@
+appId: com.example.shop
+mock: [../../mock, declined.json]     # the normal answers, and the one that differs
+---
+- runFlow: ../../steps/login.yaml
+- tapOn: Red bike
+- tapOn: { id: buy }
+- assertVisible: Your card was declined
+- assertNotVisible: Preparing your order

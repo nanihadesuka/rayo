@@ -46,6 +46,6 @@ animations and the real location, and exits.
 
 ## The documentation's page
 
-`docs/` is a page for GitHub Pages, without anything to build: `data.js` holds `GUIDE.md`, `REFERENCE.md`,
-`MOCKING.md`, this file and `rayo help json`. Change those, and run `go test ./test -update`. To see it,
+`docs/` is a page for GitHub Pages, without anything to build: `data.js` holds `GUIDE.md`, `EXAMPLE.md`,
+`REFERENCE.md`, `MOCKING.md`, this file and `rayo help json`. `app.js` says which section goes on which page. Change those, and run `go test ./test -update`. To see it,
 open `docs/index.html`.

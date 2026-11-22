@@ -1,0 +1,9 @@
+appId: com.example.shop
+env: { EMAIL: me@example.com }
+---
+# Begins clean, against the mock, and logs in.
+- launchApp: { clearState: true, permissions: { all: allow }, arguments: { mock: true } }
+- type: { id: login_email, value: "${EMAIL}" }
+- type: { id: login_password, value: secret }
+- tapOn: { id: login_button }
+- extendedWaitUntil: { visible: { id: products }, timeout: 20s }

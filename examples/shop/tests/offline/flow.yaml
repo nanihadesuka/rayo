@@ -1,0 +1,10 @@
+appId: com.example.shop
+mock: ../../mock
+---
+- runFlow: ../../steps/login.yaml
+- network: offline
+- tapOn: { id: refresh }
+- assertVisible: You are offline
+- network: online
+- tapOn: Try again
+- assertVisible: Red bike

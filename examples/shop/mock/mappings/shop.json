@@ -1,0 +1,27 @@
+{
+  "mappings": [
+    {
+      "request": { "method": "POST", "urlPath": "/login" },
+      "response": { "status": 200, "jsonBody": { "token": "a-token" } }
+    },
+    {
+      "request": { "method": "GET", "urlPath": "/products" },
+      "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "products.json" }
+    },
+    {
+      "scenarioName": "order", "requiredScenarioState": "Started", "newScenarioState": "paid",
+      "request": { "method": "POST", "urlPath": "/orders" },
+      "response": { "status": 201, "jsonBody": { "id": 7 } }
+    },
+    {
+      "scenarioName": "order", "requiredScenarioState": "paid",
+      "request": { "method": "GET", "urlPath": "/orders/7" },
+      "response": { "status": 200, "jsonBody": { "id": 7, "state": "preparing" } }
+    },
+    {
+      "scenarioName": "order", "requiredScenarioState": "shipped",
+      "request": { "method": "GET", "urlPath": "/orders/7" },
+      "response": { "status": 200, "jsonBody": { "id": 7, "state": "shipped" } }
+    }
+  ]
+}

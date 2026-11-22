@@ -44,30 +44,27 @@ code, pre, kbd { font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, C
 #found .none { padding: 14px; color: var(--soft) }
 mark { background: var(--mark); color: inherit; border-radius: 3px }
 
-.columns { display: grid; grid-template-columns: var(--side) minmax(0, 1fr) 220px; max-width: 1360px; margin: 0 auto }
-#side { position: sticky; top: var(--bar); height: calc(100vh - var(--bar)); overflow: auto; padding: 18px 12px 40px 20px; border-right: 1px solid var(--line); font-size: .93rem }
-#side details { margin-bottom: 4px }
-#side summary { padding: 6px 10px; border-radius: 8px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between }
+.columns { display: grid; grid-template-columns: var(--side) minmax(0, 1fr); max-width: 1240px; margin: 0 auto }
+#side { position: sticky; top: var(--bar); height: calc(100vh - var(--bar)); overflow: auto; padding: 18px 14px 40px 20px; border-right: 1px solid var(--line); font-size: .94rem; scrollbar-width: thin }
+#side .page { margin-bottom: 2px }
+#side .page > a, #side summary a { display: block; padding: 6px 10px; border-radius: 8px; color: var(--text); font-weight: 600; flex: 1 }
+#side summary { display: flex; align-items: center; cursor: pointer; list-style: none; border-radius: 8px }
 #side summary::-webkit-details-marker { display: none }
-#side summary::after { content: "›"; color: var(--soft); transition: transform .15s }
+#side summary::after { content: "›"; color: var(--soft); padding: 0 10px; transition: transform .15s }
 #side details[open] > summary::after { transform: rotate(90deg) }
-#side summary:hover, #side li a:hover { background: var(--panel); text-decoration: none }
-#side ul { margin: 2px 0 8px 10px; padding: 0 0 0 8px; list-style: none; border-left: 1px solid var(--line) }
-#side li a { display: block; padding: 4px 10px; border-radius: 7px; color: var(--soft) }
-#side li a[aria-current] { background: var(--panel); color: var(--accent); font-weight: 600 }
-#toc { position: sticky; top: var(--bar); height: calc(100vh - var(--bar)); overflow: auto; padding: 34px 16px; font-size: .86rem }
-#toc b { display: block; margin-bottom: 6px }
-#toc a { display: block; padding: 2px 0; color: var(--soft) }
-#toc a.deep { padding-left: 12px }
+#side a:hover { background: var(--panel); text-decoration: none }
+#side a[aria-current] { color: var(--accent) }
+#side ul { margin: 2px 0 8px 12px; padding: 0; list-style: none; border-left: 1px solid var(--line) }
+#side li a { display: block; padding: 3px 10px 3px 14px; margin-left: -1px; color: var(--soft); border-left: 2px solid transparent; border-radius: 0 7px 7px 0 }
+#side li a.reading { color: var(--accent); border-left-color: var(--accent) }
 
 main { padding: 30px 44px 100px; min-width: 0; outline: 0 }
-main > * { max-width: 780px }
+main > * { max-width: 840px }
 h1 { font-size: 2.1rem; line-height: 1.2; margin: 6px 0 10px; letter-spacing: -.02em }
 h2 { font-size: 1.4rem; margin: 2.2em 0 .5em; letter-spacing: -.01em }
 h3 { font-size: 1.12rem; margin: 1.8em 0 .4em }
-h2 a.here, h3 a.here { visibility: hidden; margin-left: 8px; font-weight: 400; color: var(--soft) }
-h2:hover a.here, h3:hover a.here { visibility: visible }
-.crumbs { color: var(--soft); font-size: .86rem }
+h2 a.here { visibility: hidden; margin-left: 8px; font-weight: 400; color: var(--soft) }
+h2:hover a.here, h2 a.here:focus { visibility: visible }
 .lead { font-size: 1.13rem; color: var(--soft); margin: 0 0 1.2em }
 .badge { display: inline-block; margin-left: 10px; padding: 1px 10px; border-radius: 99px; border: 1px solid var(--line); font-size: .78rem; font-weight: 500; color: var(--soft); vertical-align: middle; letter-spacing: 0 }
 .badge.warn { color: var(--warn); border-color: currentColor }
@@ -88,21 +85,50 @@ details.more > summary { margin: 0 -16px; padding: 11px 16px; cursor: pointer; f
 details.more > summary:hover { background: var(--panel) }
 details.more[open] { padding-bottom: 10px }
 hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0 }
-.hero { text-align: center; padding: 26px 0 8px; margin: 0 auto }
+.number { display: inline-grid; place-items: center; width: 1.7em; height: 1.7em; margin-right: .5em; border-radius: 50%; background: var(--accent); color: var(--bg); font-size: .78em; vertical-align: .08em }
+.code .name { padding: 5px 16px; border: 1px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--panel); color: var(--soft); font: .82rem ui-monospace, Consolas, monospace }
+.code .name + pre { border-radius: 0 0 10px 10px }
+section { scroll-margin-top: calc(var(--bar) + 8px) }
+details.command { margin: 6px 0; border: 1px solid var(--line); border-radius: 10px; scroll-margin-top: calc(var(--bar) + 12px) }
+details.command > summary { display: flex; align-items: baseline; gap: 14px; padding: 9px 16px; cursor: pointer; list-style: none; border-radius: 10px }
+details.command > summary::-webkit-details-marker { display: none }
+details.command > summary::after { content: "›"; color: var(--soft); transition: transform .15s; margin-left: auto }
+details.command[open] > summary::after { transform: rotate(90deg) }
+details.command > summary:hover { background: var(--panel) }
+details.command > summary code { color: var(--accent); background: none; padding: 0; font-size: .95rem; min-width: 170px; flex: none }
+details.command > summary span { color: var(--soft); font-size: .95rem }
+details.recipe > summary span { color: var(--text); font-weight: 600; font-size: 1rem }
+details.command > div { padding: 0 18px 12px }
+details.command .badge { margin: 0; font-style: normal; flex: none }
+.arrived { animation: arrived 1.6s }
+@keyframes arrived { from { background: var(--mark) } }
+.hero { text-align: center; padding: 22px 0 4px; margin: 0 auto }
 .hero h1 { font-size: 3rem; margin: 8px 0 0 }
-.hero p { font-size: 1.2rem; color: var(--soft); margin: 6px 0 22px }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin: 1.2em 0; max-width: 900px }
+.hero p { font-size: 1.15rem; color: var(--soft); margin: 6px 0 22px }
+.button { display: inline-block; padding: 10px 24px; margin: 0 4px; border-radius: 10px; background: var(--accent); color: var(--bg); border: 1px solid var(--accent); font-weight: 600 }
+.button:hover { text-decoration: none; filter: brightness(1.08) }
+.button.plain { background: none; color: var(--text); border-color: var(--line) }
+.front main > * { max-width: 1000px; margin-left: auto; margin-right: auto }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 40px }
+.step h3 { margin: 0 0 8px }
+.step p { margin: 0 0 8px; color: var(--soft) }
+.step pre { font-size: .84em }
+.center { text-align: center; margin: 18px 0 30px }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 1.2em 0 }
 .card { padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; color: inherit }
-.card:hover { border-color: var(--accent); text-decoration: none }
+.card:hover, .onward:hover { border-color: var(--accent); text-decoration: none }
 .card b { display: block; color: var(--accent) }
 .card span { color: var(--soft); font-size: .92rem }
-.listing { columns: 3 190px; padding: 0; list-style: none }
-.listing li { padding: 3px 0; break-inside: avoid }
-.filter { width: 100%; max-width: 360px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit }
-.next { display: flex; justify-content: space-between; gap: 16px; margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--line) }
+.filter { width: 100%; max-width: 360px; padding: 9px 14px; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit }
+.onward { display: block; margin-top: 70px; padding: 20px 24px; border: 1px solid var(--line); border-radius: 14px; color: inherit; background: var(--panel) }
+.onward small, .onward span { display: block; color: var(--soft) }
+.onward b { display: block; font-size: 1.35rem; color: var(--accent) }
+.back { font-size: .92rem }
+#found .kind { padding: 10px 12px 4px; color: var(--soft); font-size: .76rem; text-transform: uppercase; letter-spacing: .06em }
+[hidden] { display: none !important }
 .shade { position: fixed; inset: var(--bar) 0 0; z-index: 19; background: #0008 }
 
-@media (max-width: 1140px) { .columns { grid-template-columns: var(--side) minmax(0, 1fr) } #toc { display: none } }
+@media (max-width: 1080px) { .steps { grid-template-columns: 1fr } }
 @media (max-width: 800px) {
   #menu { display: block }
   .columns { display: block }
@@ -113,6 +139,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0 }
   .repo, .brand b, .search kbd { display: none }
   h1 { font-size: 1.7rem }
   .hero h1 { font-size: 2.4rem }
+  details.command > summary { flex-wrap: wrap; gap: 2px 10px }
+  details.command > summary code { min-width: 0 }
+  details.command:not(.recipe) > summary span { order: 3; width: 100% }
+  .button { margin-bottom: 8px }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important } }
-@media print { .top, #side, #toc, .next { display: none } .columns { display: block } }
+@media print { .top, #side, .onward, .back { display: none } .columns { display: block } }

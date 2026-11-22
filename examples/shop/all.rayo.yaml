@@ -1,0 +1,23 @@
+# What runs together, in this order.
+name: Shop
+
+app:
+  id: com.example.shop
+  apk: app-debug.apk
+
+output: results
+results: [results/results.txt, results/junit.xml]
+record: true
+recordFolder: results/videos
+retries: 1
+device: { size: 1080x2400, dpi: 420, fontScale: 1.0, darkMode: false }
+
+flows:
+  # Log in and find a product.
+  - tests/browse/flow.yaml
+  # Buy it, and follow the order until it is shipped.
+  - { file: tests/pay/flow.yaml, retries: 2 }
+  # The bank refuses the card.
+  - tests/declined/flow.yaml
+  # No connection, and back.
+  - tests/offline/flow.yaml

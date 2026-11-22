@@ -1,0 +1,14 @@
+appId: com.example.shop
+mock: ../../mock
+tags: [smoke]
+---
+- runFlow: ../../steps/login.yaml
+- tapOn: Red bike
+- tapOn: { id: buy }
+- waitForRequest: { method: POST, path: /orders, body: "\"product\":1" }
+- assertVisible: Preparing your order
+
+# The shop ships it: something the backend does by itself.
+- mockState: { order: shipped }
+- tapOn: { id: refresh }
+- assertVisible: On its way

@@ -1,36 +1,137 @@
 // The documentation's page. All it says comes from data.js, which `go test ./test -update` writes: the
-// Markdown files of the repository, and the tables of the code (`rayo help json`).
+// Markdown files of the repository, the example, and the tables of the code (`rayo help json`).
 'use strict'
 
 const { markdown, rayo } = window.RAYO
+const repository = 'https://github.com/nanihadesuka/rayo'
 const $ = s => document.querySelector(s)
 const escape = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const slug = t => t.toLowerCase().replace(/[^\p{L}\p{N}_\- ]/gu, '').trim().replace(/ /g, '-')
+const remember = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)) } catch {} }
+const remembered = (key, otherwise) => { try { return JSON.parse(localStorage.getItem(key)) ?? otherwise } catch { return otherwise } }
+const commands = Object.fromEntries(rayo.flow.commands.map(c => [c.name, c]))
+
+// --- What goes where ---
+
+// Each page is read by scrolling. Its sections are those of the files, by their titles; as: another title.
+const R = (title, as) => ({ file: 'REFERENCE.md', title, as })
+const pages = [
+  { id: 'start', title: 'Get started', about: 'From nothing to a suite of tests, in seven steps.', all: 'GUIDE.md', part: 'Guide', numbered: true },
+  { id: 'example', title: 'Full example', about: 'A whole project: tests, mocks, a suite, and what comes out.', all: 'EXAMPLE.md' },
+  { id: 'recipes', title: 'Recipes', about: 'How do I… Answers to copy.', all: 'GUIDE.md', part: 'How do I...', folded: true },
+  { id: 'commands', title: 'Commands', about: 'Everything a flow can do. Each line of a flow is one of them.' },
+  { id: 'flows', title: 'Writing flows', about: 'The file, how to find elements, variables and scripts.', sections: [
+    R('Flow file', 'The file'), R('Header', 'The header'), R('Common options', 'Options of every command'), R('Values'), R('Selectors', 'Finding elements'),
+    R('Conditions', 'Selector keys'), R('Relations'), R('when', 'Conditions: when and while'), R('Variables'), R('Expressions', 'Expressions: ${…}'), R('JavaScript API'), R('Tags')] },
+  { id: 'mocking', title: 'Mocking', about: 'Answer as the backend, or capture what the real one says.', all: 'MOCKING.md',
+    sections: [R('Mock', 'In a flow'), R('Mock files', 'What a mapping can say'), R('Capture', 'Capture the real backend')] },
+  { id: 'suites', title: 'Suites and devices', about: 'Many tests together: retries, videos, and how the device is.', sections: [
+    R('Suites', 'A suite'), R('A flow of a suite'), R('The app of a suite'), R('What goes where'), R('Retries'), R('Recording a whole flow', 'Videos'), R('Device setup'), R('Clean state')] },
+  { id: 'results', title: 'Results', about: 'How a run went: on the screen, as text, JSON or JUnit.', sections: [
+    R('Results', 'What comes out'), R('Outcomes'), R('Causes', 'Causes, and when it stops'), R('Failures', 'What is saved of a failure'), R('Report', 'JUnit')] },
+  { id: 'live', title: 'Live sessions', about: 'Write a test while it runs, by hand or from another program.', sections: [
+    R('Live sessions', 'A session'), R('Live commands', 'Commands'), R('From other programs')] },
+  { id: 'cli', title: 'Command line', about: 'Every option, and what it needs around it.', sections: [
+    R('Options'), R('Continuous mode'), R('Profile'), R('Environment'), R('Schemas', 'Schemas for editors')] },
+  { id: 'help', title: 'Help', about: 'What it can’t do, how long it waits, and how it is made.', sections: [
+    R('Limitations'), R('Default times'), { file: 'CONTRIBUTING.md', title: 'Working on rayo' }] },
+]
+const commandGroups = ['Apps', 'Touch', 'Text and keys', 'Checks and waits', 'Control', 'Scripts', 'Device', 'Server', 'Mock']
+
+// sectionsOf splits a file by its headings.
+function sectionsOf(file, deepest) {
+  const list = []
+  let code = false, now = { title: '', depth: 0, lines: [] }
+  for (const line of markdown[file].split('\n')) {
+    if (line.startsWith('```')) code = !code
+    const m = !code && line.match(new RegExp(`^(#{1,${deepest}}) (.+)`))
+    if (m) { list.push(now); now = { title: m[2], depth: m[1].length, lines: [] } }
+    else now.lines.push(line)
+  }
+  list.push(now)
+  return list.filter(s => s.title).map(s => ({ file, title: s.title, depth: s.depth, id: slug(s.title), body: s.lines.join('\n').replace(/\n---\s*$/, '').trim() }))
+}
+
+const reference = sectionsOf('REFERENCE.md', 4)
+const isCommand = s => s.file === 'REFERENCE.md' && s.depth === 3 && s.title.split(', ').some(t => commands[t.replace(/ step$/, '')] || t === 'inputRandom…')
+const namesIn = s => s.title.split(', ').flatMap(t => t === 'inputRandom…' ? Object.keys(commands).filter(c => c.startsWith('inputRandom')) : commands[t.replace(/ step$/, '')] ? [t.replace(/ step$/, '')] : [])
+
+function build() {
+  const placed = new Set()
+  const pick = ({ file, title, as }) => {
+    if (file === 'CONTRIBUTING.md') return { file, title, as: title, id: slug(title), body: markdown[file].replace(/^# .*\n/, '') }
+    const s = reference.find(s => s.title === title && !isCommand(s))
+    if (!s) { console.error('no section', title); return null }
+    placed.add(s)
+    return { ...s, as: as || s.title }
+  }
+  for (const p of pages) {
+    p.list = []
+    if (p.all) {
+      let part = '', first = true
+      for (const s of sectionsOf(p.all, 2)) {
+        if (s.depth === 1) {
+          part = s.title
+          if (first && !p.part) { p.intro = s.body }
+          first = false
+        } else if (!p.part || part === p.part) p.list.push({ ...s, as: s.title })
+      }
+    }
+    p.list.push(...(p.sections || []).map(pick).filter(Boolean))
+  }
+  const page = pages.find(p => p.id === 'commands')
+  let group = ''
+  for (const s of reference) {
+    if (s.depth === 2) group = s.title
+    if (!isCommand(s)) continue
+    for (const name of namesIn(s)) page.list.push({ ...s, as: name, id: slug(name), command: commands[name], group })
+    placed.add(s)
+  }
+  // Nothing is lost: what no page asks for goes to the last one.
+  const skip = new Set(['Index', 'Running several', 'Features', ...commandGroups])
+  for (const s of reference) if (s.depth > 1 && !placed.has(s) && s.body && !skip.has(s.title)) {
+    console.error('not placed', s.title)
+    pages.at(-1).list.push({ ...s, as: s.title })
+  }
+  for (const p of pages) for (const s of p.list) s.page = p
+}
+
+const every = () => pages.flatMap(p => p.list)
+
+// place is where an anchor of a file is in this page.
+function place(file, anchor) {
+  for (const s of every()) {
+    if (s.file !== file) continue
+    if (s.id === anchor || slug(s.title) === anchor) return `#/${s.page.id}/${s.id}`
+    if ([...s.body.matchAll(/^#{2,5} (.+)$/gm)].some(m => slug(m[1]) === anchor)) return `#/${s.page.id}/${anchor}`
+  }
+}
+
+function link(to, file) {
+  if (/^https?:/.test(to)) return to
+  const [name, anchor] = to.split('#')
+  const from = name || file
+  if (anchor) {
+    const at = place(from, anchor)
+    if (at) return at
+    if (from === 'REFERENCE.md' && commandGroups.some(g => slug(g) === anchor)) return `#/commands/group-${anchor}`
+    if (from === 'REFERENCE.md') return anchor === 'running-several' ? '#/suites' : '#/flows'
+  }
+  const whole = pages.find(p => p.all === from && !p.part) || (from === 'GUIDE.md' && pages[0]) || (from === 'REFERENCE.md' && pages.find(p => p.id === 'commands'))
+  return whole ? `#/${whole.id}` : from === 'README.md' ? '#/' : `${repository}/tree/main/${from}`
+}
 
 // --- Markdown: what the files of the repository use of it ---
 
-function inline(text, page) {
+function inline(text, file) {
   const kept = []
   const keep = html => `\u0000${kept.push(html) - 1}\u0000`
   text = text.replace(/`([^`]+)`/g, (_, c) => keep(`<code>${escape(c)}</code>`))
   text = escape(text)
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, to) => keep(`<a href="${link(to, page)}">`) + label + keep('</a>'))
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, to) => keep(`<a href="${link(to, file)}">`) + label + keep('</a>'))
     .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
     .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, '$1<i>$2</i>')
   return text.replace(/\u0000(\d+)\u0000/g, (_, i) => kept[i])
-}
-
-// link turns one of a file into one of this page.
-function link(to, page) {
-  if (/^https?:/.test(to)) return to
-  const [file, anchor] = to.split('#')
-  const from = file || page
-  if (anchor) {
-    const found = topics.find(t => t.file === from && t.anchors.includes(anchor))
-    if (found) return found.slug === anchor ? `#/${found.path}` : `#/${found.path}/${anchor}`
-  }
-  const first = topics.find(t => t.file === from)
-  return first ? `#/${first.path}` : `https://github.com/nanihadesuka/rayo/blob/main/${file}`
 }
 
 function highlight(code, language) {
@@ -49,37 +150,43 @@ function highlight(code, language) {
   return escape(code).replace(/(^|\s)(#.*)$/gm, '$1<span class="c">$2</span>')
 }
 
-const codeBlock = (code, language) =>
-  `<div class="code"><pre tabindex="0"><code>${highlight(code, language)}</code></pre><button type="button">Copy</button></div>`
+const codeBlock = (code, language, name) =>
+  `<div class="code">${name ? `<div class="name">${escape(name)}</div>` : ''}<pre tabindex="0"><code>${highlight(code, language)}</code></pre><button type="button">Copy</button></div>`
+const languageOf = (code, said) => said || (/^\{/.test(code) ? 'json' : '')
+const more = (title, html, open) => `<details class="more"${open ? ' open' : ''}><summary>${title}</summary>${html}</details>`
+const tableTitles = { results: 'Every key of the run', 'results flow': 'Every key of a flow', 'results failure': 'Every key of a failure' }
 
-// languageOf guesses, as the files don't always say.
-const languageOf = (code, said) => said || (/^\s*[{[]\s*$|^\{/.test(code) ? 'json' : '')
-
-function render(text, page) {
+function render(text, file) {
   const lines = text.split('\n')
-  let html = '', i = 0
+  let html = '', i = 0, fold = ''
   const paragraph = []
-  const flush = () => { if (paragraph.length) html += `<p>${inline(paragraph.join(' '), page)}</p>`; paragraph.length = 0 }
-  while (i < lines.length) {
+  const flush = () => { if (paragraph.length) html += `<p>${inline(paragraph.join(' '), file)}</p>`; paragraph.length = 0 }
+  for (; i < lines.length; i++) {
     const line = lines[i]
     let m
     if ((m = line.match(/^(\s*)```(\w*)/))) {
       flush()
       const code = []
       for (i++; i < lines.length && !lines[i].trim().startsWith('```'); i++) code.push(lines[i].slice(m[1].length))
-      html += codeBlock(code.join('\n'), languageOf(code.join('\n'), m[2]))
-    } else if ((m = line.match(/^(#{2,5}) (.+)/))) {
+      const text = code.join('\n'), block = codeBlock(text, languageOf(text, m[2]))
+      html += code.length > 34 && file === 'REFERENCE.md' ? more('Show it whole', block) : block
+    } else if ((m = line.match(/^<!-- file: (.+?) -->$/))) {
       flush()
-      const level = Math.min(m[1].length, 3)
-      html += `<h${level} id="${slug(m[2])}">${inline(m[2], page)}<a class="here" href="#" data-anchor="${slug(m[2])}" aria-label="Link to this">#</a></h${level}>`
+      html += codeBlock(markdown[m[1]].trimEnd(), m[1].endsWith('.json') ? 'json' : 'yaml', m[1].replace('examples/shop/', ''))
+    } else if ((m = line.match(/^<!-- generated: (.+?) -->$/))) { flush(); fold = tableTitles[m[1]] || '' }
+    else if ((m = line.match(/^(#{2,5}) (.+)/))) {
+      flush()
+      html += `<h3 id="${slug(m[2])}">${inline(m[2], file)}</h3>`
     } else if (/^\|/.test(line)) {
       flush()
       const rows = []
       for (; i < lines.length && /^\|/.test(lines[i]); i++) rows.push(lines[i].split(/(?<!\\)\|/).slice(1, -1).map(c => c.trim().replace(/\\\|/g, '|')))
       i--
       const [head, , ...body] = rows
-      html += '<div class="table" tabindex="0"><table>' + (head.some(Boolean) ? `<tr>${head.map(c => `<th>${inline(c, page)}</th>`).join('')}</tr>` : '') +
-        body.map(r => `<tr>${r.map(c => `<td>${inline(c, page)}</td>`).join('')}</tr>`).join('') + '</table></div>'
+      const table = '<div class="table" tabindex="0"><table>' + (head.some(Boolean) ? `<tr>${head.map(c => `<th>${inline(c, file)}</th>`).join('')}</tr>` : '') +
+        body.map(r => `<tr>${r.map(c => `<td>${inline(c, file)}</td>`).join('')}</tr>`).join('') + '</table></div>'
+      html += fold ? more(`${fold} (${body.length})`, table) : table
+      fold = ''
     } else if (/^(- |\d+\. )/.test(line)) {
       flush()
       const ordered = /^\d/.test(line)
@@ -90,203 +197,172 @@ function render(text, page) {
         else break
       }
       i--
-      html += `<${ordered ? 'ol' : 'ul'}>${items.map(t => `<li>${t.length > 1 && t.some(l => l.startsWith('```')) ? render(t.join('\n'), page) : inline(t.join(' '), page)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`
+      html += `<${ordered ? 'ol' : 'ul'}>${items.map(t => `<li>${t.some(l => l.startsWith('```')) ? render(t.join('\n'), file) : inline(t.join(' '), file)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`
     } else if (line === '---') { flush(); html += '<hr>' }
     else if (line.trim() === '' || /^<!--.*-->$/.test(line)) flush()
     else paragraph.push(line.trim())
-    i++
   }
   flush()
   return html
 }
 
-// --- Topics: each is a page here ---
+// --- Pages ---
 
-const commands = Object.fromEntries(rayo.flow.commands.map(c => [c.name, c]))
-const commandOf = title => title.split(', ').map(t => t.replace(/ step$/, '')).filter(t => commands[t] || t.startsWith('inputRandom'))
-const topics = []
-
-// sections splits a file by its headings of some level.
-function sections(text, level) {
-  const list = []
-  let code = false, now = { title: '', lines: [] }
-  for (const line of text.split('\n')) {
-    if (line.startsWith('```')) code = !code
-    const m = !code && line.match(new RegExp(`^#{1,${level}} (.+)`))
-    if (m) { list.push(now); now = { title: m[1], depth: line.indexOf(' '), lines: [] } }
-    else now.lines.push(line)
-  }
-  list.push(now)
-  return list.filter(s => s.title)
-}
-
-function topic(group, title, file, body) {
-  const anchors = [slug(title)]
-  for (const m of body.matchAll(/^#{2,5} (.+)$/gm)) anchors.push(slug(m[1]))
-  topics.push({ group, title, file, body: body.trim(), slug: slug(title), path: '', anchors, commands: file === 'REFERENCE.md' ? commandOf(title) : [] })
-}
-
-function build() {
-  let group = 'Start'
-  for (const s of sections(markdown['GUIDE.md'], 2)) {
-    if (s.depth === 1) { group = s.title === 'Guide' ? 'Start' : 'How do I…'; continue }
-    topic(group, s.title, 'GUIDE.md', s.lines.join('\n'))
-  }
-  topic('Mocking', 'Mocking', 'MOCKING.md', markdown['MOCKING.md'].replace(/^# .*\n/, ''))
-  const skip = ['Index']
-  let intro = null
-  for (const s of sections(markdown['REFERENCE.md'], 3)) {
-    if (s.depth === 1 || skip.includes(s.title)) continue
-    const body = s.lines.join('\n').replace(/\n---\n*$/, '\n').trim()
-    if (s.depth === 2) {
-      group = s.title
-      intro = null
-      if (body) { topic(group, s.title, 'REFERENCE.md', body); intro = topics.at(-1) }
-      else topics.push({ group, title: s.title, file: 'REFERENCE.md', body: '', slug: slug(s.title), path: '', anchors: [slug(s.title)], commands: [], list: true })
-    } else topic(group, s.title, 'REFERENCE.md', body)
-  }
-  topic('Working on rayo', 'Working on rayo', 'CONTRIBUTING.md', markdown['CONTRIBUTING.md'].replace(/^# .*\n/, ''))
-  const used = {}
-  for (const t of topics) {
-    let path = slug(t.group) === t.slug ? t.slug : `${slug(t.group)}/${t.slug}`
-    if (used[path]) path += '-' + ++used[path]
-    used[path] = 1
-    t.path = path
-  }
-}
-
-// --- What a page shows ---
-
-const keyRows = (keys, prefix) => keys.map(k =>
-  `<tr id="${prefix}${k.name}"><td><code>${escape(k.name)}</code>${k.short ? ' <span class="badge">short form</span>' : ''}</td>` +
-  `<td>${k.values && k.values.length ? k.values.map(v => `<code>${escape(v)}</code>`).join(' ') : escape(k.takes)}</td><td>${inline(k.about, 'REFERENCE.md')}</td></tr>`).join('')
-const keyTable = (keys, prefix) => `<div class="table" tabindex="0"><table><tr><th>Key</th><th>Takes</th><th></th></tr>${keyRows(keys, prefix)}</table></div>`
-const more = (title, html, open) => `<details class="more"${open ? ' open' : ''}><summary>${title}</summary>${html}</details>`
+const keyTable = (keys, prefix) => `<div class="table" tabindex="0"><table><tr><th>Key</th><th>Takes</th><th></th></tr>${keys.map(k =>
+  `<tr${prefix ? ` id="${prefix}${k.name.toLowerCase()}"` : ''}><td><code>${escape(k.name)}</code>${k.short ? ' <span class="badge">short form</span>' : ''}</td>` +
+  `<td>${k.values && k.values.length ? k.values.map(v => `<code>${escape(v)}</code>`).join(' ') : escape(k.takes)}</td><td>${inline(k.about, 'REFERENCE.md')}</td></tr>`).join('')}</table></div>`
 
 // skeleton is the whole form of a command, to copy and cut down.
 function skeleton(c) {
-  const all = [...(c.element ? rayo.flow.selector.slice(0, 3) : []), ...c.keys.filter(k => !(c.element && rayo.flow.selector.slice(0, 3).some(s => s.name === k.name))), ...rayo.flow.options]
-  const value = k => k.values && k.values.length ? k.values[0] : ({ number: 1, time: '10s', point: '"50%, 50%"', 'true/false': true, selector: '{ id: an_id }', selectors: '[{ id: an_id }]', conditions: '{ visible: { id: an_id } }', commands: '[ back ]', values: '{ name: value }', permissions: '{ all: allow }', locations: '["41.4,2.2"]', JavaScript: '"${true}"', pattern: '".*"' }[k.takes] ?? `a_${k.takes.replace(/\W+/g, '_')}`)
+  const some = c.element ? rayo.flow.selector.slice(0, 3) : []
+  const all = [...some, ...c.keys.filter(k => !some.some(s => s.name === k.name)), ...rayo.flow.options]
+  const value = k => k.values && k.values.length ? k.values[0] : ({ number: 1, time: '10s', point: '"50%, 50%"', selector: '{ id: an_id }', selectors: '[{ id: an_id }]', conditions: '{ visible: { id: an_id } }', commands: '[ back ]', values: '{ name: value }', permissions: '{ all: allow }', locations: '["41.4,2.2"]', JavaScript: '"${true}"', pattern: '".*"', '400 to 599': 503 }[k.takes] ?? `a_${k.takes.replace(/\W+/g, '_')}`)
   const width = Math.max(...all.map(k => `${k.name}: ${value(k)}`.length)) + 2
   return `- ${c.name}:\n` + all.map(k => `    ${`${k.name}: ${value(k)}`.padEnd(width)}# ${k.about}`).join('\n')
 }
 
-function commandPage(t) {
-  const list = t.commands.flatMap(n => commands[n] ? [n] : Object.keys(commands).filter(c => c.startsWith('inputRandom')))
-  const details = t.body.replace(/<!-- generated: keys[^>]*-->[\s\S]*?<!-- end -->/g, '').replace(/^🧪 ?/, '').trim()
-  let html = ''
-  for (const name of list) {
-    const c = commands[name]
-    if (list.length > 1) html += `<h2 id="${slug(name)}">${name}${c.tested ? '' : ' <span class="badge warn">not tested on a device</span>'}</h2>`
-    html += `<p class="${list.length > 1 ? '' : 'lead'}">${escape(c.about)}.</p>` + codeBlock(c.example, 'yaml')
-    if (c.alone) html += '<p>Works without a value.</p>'
-    if (c.keys.length) html += (list.length > 1 ? '' : '<h2 id="keys">Keys</h2>') + keyTable(c.keys, list.length > 1 ? slug(name) + '-' : 'key-')
-    if (c.element) html += more('Which element: selector keys', keyTable(rayo.flow.selector, 'selector-') + `<p><a href="${link('#selectors', 'REFERENCE.md')}">All about selectors</a></p>`)
-    html += more('Options of every command', keyTable(rayo.flow.options, 'option-'))
-    html += more('Every key, as YAML', codeBlock(skeleton(c), 'yaml') + '<p>Not all go together: copy what you need. <code>rayo check</code> says what is wrong.</p>')
-  }
-  if (details) html += '<h2 id="details">Details</h2>' + render(details, t.file)
-  return html
+// detailsOf is what the reference says of a command besides its keys and examples: its first words are
+// the introduction.
+function detailsOf(s) {
+  const body = s.body.replace(/<!-- generated: keys[^>]*-->[\s\S]*?<!-- end -->/g, '').replace(/```yaml\n[\s\S]*?```\n?/g, '').replace(/^🧪 ?/, '').trim()
+  const [first, ...rest] = body.split('\n\n')
+  const prose = first && !/^[|<#-]/.test(first) && s.title.split(', ').length === 1 && s.title !== 'inputRandom…'
+  return { intro: prose ? inline(first.replace(/\n/g, ' '), s.file) : escape(s.command.about) + '.', rest: (prose ? rest : s.title === 'inputRandom…' ? [] : [first, ...rest].filter(Boolean)).join('\n\n').trim() }
 }
 
-const related = t => {
-  const mine = new Set([...t.body.matchAll(/\]\(([^)]*#[^)]+)\)/g)].map(m => link(m[1], t.file)))
-  const same = topics.filter(o => o.group === t.group && o !== t && o.commands.length).slice(0, 8)
-  const list = [...topics.filter(o => mine.has(`#/${o.path}`)), ...(t.commands.length ? same : [])]
-  return list.length ? `<h2 id="see-also">See also</h2><ul class="listing">${[...new Set(list)].map(o => `<li><a href="#/${o.path}">${escape(o.title)}</a></li>`).join('')}</ul>` : ''
+function commandEntry(s) {
+  const c = s.command, { intro, rest } = detailsOf(s)
+  return `<details class="command" id="${s.id}" data-text="${escape(`${c.name} ${c.about} ${c.keys.map(k => k.name).join(' ')}`.toLowerCase())}">` +
+    `<summary><code>${c.name}</code><span>${escape(c.about)}</span>${c.tested ? '' : '<i class="badge warn" title="Not tested on a device yet">untested</i>'}</summary><div>` +
+    `<p>${intro}${c.alone ? ' Works without a value.' : ''}${c.element ? ' Takes the <a href="#/commands/selector">selector keys</a>.' : ''}</p>` + codeBlock(c.example, 'yaml') +
+    (c.keys.length ? keyTable(c.keys, `${s.id}-`) : '') + (rest ? render(rest, s.file) : '') +
+    more('Every key, as YAML', codeBlock(skeleton(c), 'yaml') + '<p>Not all go together: copy what you need. <code>rayo check</code> says what is wrong.</p>') + '</div></details>'
 }
 
-const groupTitles = () => [...new Set(topics.map(t => t.group))]
-const aboutOf = t => t.commands.length ? commands[t.commands[0]]?.about ?? 'Adds something random'
-  : t.body.replace(/<!--[\s\S]*?-->|```[\s\S]*?```|^\|.*$/gm, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[`*🧪]/gu, '').trim().split('\n\n')[0].replace(/\n/g, ' ').replace(/^#+ .*/, '')
+const filter = label => `<input class="filter" type="search" placeholder="Filter" aria-label="${label}">`
+
+function commandsPage(p) {
+  const intro = g => reference.find(s => s.depth === 2 && s.title === g && g === 'Checks and waits')
+  return filter('Filter the commands') +
+    `<div id="selector">${more('Selector keys: for the commands that take an element', keyTable(rayo.flow.selector) + `<p><a href="#/flows/selectors">All about finding elements</a></p>`)}</div>` +
+    `<div id="common-keys">${more('Options of every command', keyTable(rayo.flow.options))}</div>` +
+    commandGroups.map(g => [g, p.list.filter(s => s.group === g)]).filter(([, l]) => l.length).map(([g, list]) =>
+      `<section class="group" id="group-${slug(g)}"><h2>${escape(g)}</h2>${intro(g) ? render(intro(g).body, 'REFERENCE.md') : ''}${list.map(commandEntry).join('')}</section>`).join('')
+}
+
+function sectionHtml(s, n) {
+  const p = s.page
+  if (p.folded) return `<details class="command recipe" id="${s.id}" data-text="${escape((s.as + ' ' + s.body).toLowerCase())}"><summary><span>${escape(s.as)}</span></summary><div>${render(s.body, s.file)}</div></details>`
+  let html = `<section id="${s.id}"><h2>${p.numbered ? `<span class="number">${n + 1}</span>` : ''}${escape(s.as)}<a class="here" href="#/${p.id}/${s.id}" aria-label="Link to this">#</a></h2>${render(s.body, s.file)}`
+  const schema = { Suites: 'suite', Header: 'flow', Results: 'results' }[s.title]
+  if (schema && s.file === 'REFERENCE.md') html += more(`JSON Schema: <code>${schema}.json</code>`, `<p><code>rayo schema ${schema}</code> prints it. It is also in the <a href="${repository}/tree/main/schema">repository</a>.</p>` + (markdown[`schema/${schema}.json`] ? codeBlock(markdown[`schema/${schema}.json`], 'json') : ''))
+  return html + '</section>'
+}
+
+function pageHtml(p) {
+  const next = pages[pages.indexOf(p) + 1], before = pages[pages.indexOf(p) - 1]
+  return `<h1>${escape(p.title)}</h1><p class="lead">${escape(p.about)}</p>` + (p.intro ? render(p.intro, p.all) : '') +
+    (p.folded ? filter('Filter the recipes') : '') + (p.id === 'commands' ? commandsPage(p) : p.list.map(sectionHtml).join('')) +
+    (next ? `<a class="onward" href="#/${next.id}"><small>Next</small><b>${escape(next.title)} →</b><span>${escape(next.about)}</span></a>` : '') +
+    (before ? `<p class="back"><a href="#/${before.id}">← ${escape(before.title)}</a></p>` : '')
+}
 
 function home() {
-  const card = (path, title, text) => `<a class="card" href="#/${path}"><b>${title}</b><span>${text}</span></a>`
-  const of = (file, title) => topics.find(t => t.file === file && t.title === title).path
-  return `<div class="hero"><img src="icon.svg" width="120" height="120" alt=""><h1>rayo</h1><p>End-to-end tests for Android, fast as lightning.<br>Android only. One portable executable. Mocking, capture and videos built in.</p></div>` +
-    codeBlock('appId: com.example.app\nmock: mock\n---\n- launchApp: { clearState: true, arguments: { mock: true } }\n- tapOn: { id: login }\n- inputText: me@example.com\n- extendedWaitUntil: { visible: { id: home }, timeout: 20s }\n- waitForRequest: { method: POST, path: ".*/session" }', 'yaml') +
-    `<div class="cards">${[
-      card(of('GUIDE.md', 'Install'), 'Start', 'Install it and write your first test'),
-      card('commands', 'Commands', `All ${rayo.flow.commands.length}, with examples and keys`),
-      card(of('REFERENCE.md', 'Suites'), 'Suites', 'Run many tests, with retries and videos'),
-      card(of('MOCKING.md', 'Mocking'), 'Mocking', 'Answer as the backend'),
-      card(of('REFERENCE.md', 'Results'), 'Results', 'What a failure tells, as text, JSON or JUnit'),
-      card(of('REFERENCE.md', 'Live sessions'), 'Live', 'Write a test while it runs, also from another program'),
-      card(of('GUIDE.md', 'Log in before each test'), 'How do I…', 'Answers to copy'),
-      card(of('REFERENCE.md', 'Options'), 'Options', 'Of the command line'),
+  const feature = (to, title, text) => `<a class="card" href="${to}"><b>${title}</b><span>${text}</span></a>`
+  const step = (n, title, html) => `<div class="step"><h3><span class="number">${n}</span>${title}</h3>${html}</div>`
+  return `<div class="hero"><img src="icon.svg" width="120" height="120" alt=""><h1>rayo</h1>
+    <p>End-to-end tests for Android, fast as lightning.<br>One portable executable. Nothing to install on the device.</p>
+    <a class="button" href="#/start">Get started</a> <a class="button plain" href="${repository}/releases/latest">Download</a></div>` +
+    '<div class="steps">' +
+    step(1, 'Download', '<p>One file for Windows, macOS or Linux. It only needs adb.</p>' + codeBlock('rayo devices', '') + '<p>Then see what is on screen:</p>' + codeBlock('rayo hierarchy', '')) +
+    step(2, 'Write', codeBlock('appId: com.example.app\n---\n- launchApp: { clearState: true }\n- tapOn: Log in\n- inputText: me@example.com\n- assertVisible: "Welcome.*"', 'yaml', 'login.yaml')) +
+    step(3, 'Run', codeBlock('$ rayo test --emulator login.yaml\n  ✓ launchApp clearState  812 ms\n  ✓ tapOn Log in  95 ms\n  ✓ inputText me@example.com  41 ms\n  ✓ assertVisible Welcome.*  388 ms\n[1/1] PASS login  1.4 s', '')) +
+    `</div><p class="center"><a href="#/example">See a full example: tests, mocks, a suite and its results →</a></p><div class="cards">${[
+      feature('#/mocking', 'Mock backend', 'Built in: states, slow or broken networks. Or capture the real one'),
+      feature(place('REFERENCE.md', 'setlocation'), 'Location and trips', 'Put the device anywhere, or move it along a route'),
+      feature('#/suites', 'Suites', 'Many tests together, with retries and screen sizes'),
+      feature('#/suites/recording-a-whole-flow', 'Videos', 'A small one of each test, or of some steps'),
+      feature('#/results', 'Honest results', 'Why, where, the screen, the calls and the crash'),
+      feature('#/live', 'Live', 'Write a test while it runs'),
     ].join('')}</div>`
 }
 
-function commandsPage() {
-  const groups = groupTitles().map(g => [g, topics.filter(t => t.group === g && t.commands.length)]).filter(([, l]) => l.length)
-  return `<h1>Commands</h1><p class="lead">Everything a flow can do. Each line of a flow is one of them.</p>
-    <input class="filter" type="search" placeholder="Filter" aria-label="Filter the commands">` +
-    groups.map(([g, list]) => `<section><h2 id="${slug(g)}">${escape(g)}</h2><div class="table"><table>` +
-      list.map(t => `<tr data-text="${escape((t.title + ' ' + aboutOf(t)).toLowerCase())}"><td><a href="#/${t.path}"><code>${escape(t.title)}</code></a></td><td>${escape(aboutOf(t))}</td></tr>`).join('') + '</table></div></section>').join('')
-}
+// --- Moving around ---
 
-function topicPage(t) {
-  const untested = t.commands.length === 1 && commands[t.commands[0]] && !commands[t.commands[0]].tested
-  let html = `<div class="crumbs">${escape(t.group)}</div><h1 id="${t.slug}">${escape(t.title)}${untested ? ' <span class="badge warn">not tested on a device</span>' : ''}</h1>`
-  if (t.list) html += `<div class="table"><table>${topics.filter(o => o.group === t.group && o !== t).map(o => `<tr><td><a href="#/${o.path}">${escape(o.title)}</a></td><td>${escape(aboutOf(o))}</td></tr>`).join('')}</table></div>`
-  else if (t.commands.length) html += commandPage(t)
-  else html += render(t.body, t.file)
-  for (const [title, file] of [['Suites', 'suite'], ['Header', 'flow'], ['Results', 'results']]) {
-    if (t.title === title && t.file === 'REFERENCE.md') html += more(`JSON Schema: <code>${file}.json</code>`, `<p><code>rayo schema ${file}</code> prints it, and it is in the <a href="https://github.com/nanihadesuka/rayo/tree/main/schema">repository</a>.</p>` + (markdown[`schema/${file}.json`] ? codeBlock(markdown[`schema/${file}.json`], 'json') : ''))
-  }
-  html += related(t)
-  const shown = topics.filter(o => !o.list)
-  const at = shown.indexOf(t)
-  if (at >= 0) {
-    const way = (o, text) => o ? `<a href="#/${o.path}">${text(escape(o.title))}</a>` : '<span></span>'
-    html += `<div class="next">${way(shown[at - 1], x => '← ' + x)}${way(shown[at + 1], x => x + ' →')}</div>`
-  }
-  return html
-}
-
-// --- The page itself ---
+let shown = null
 
 function side() {
-  let html = `<ul style="border:0;margin-left:0;padding:0"><li><a href="#/commands" data-path="commands"><b>All commands</b></a></li></ul>`
-  for (const g of groupTitles()) {
-    const list = topics.filter(t => t.group === g)
-    if (list.length === 1) { html += `<ul style="border:0;margin-left:0;padding:0"><li><a href="#/${list[0].path}" data-path="${list[0].path}">${escape(g)}</a></li></ul>`; continue }
-    html += `<details data-group="${escape(g)}"><summary>${escape(g)}</summary><ul>${list.map(t => `<li><a href="#/${t.path}" data-path="${t.path}">${escape(t.list || t.title === g ? 'Overview' : t.title)}</a></li>`).join('')}</ul></details>`
+  const open = remembered('open', ['start'])
+  $('#side').innerHTML = pages.map(p => {
+    const links = p.id === 'commands' ? commandGroups.map(g => [`group-${slug(g)}`, g]) : p.folded ? [] : p.list.map(s => [s.id, s.as])
+    if (!links.length) return `<div class="page"><a href="#/${p.id}" data-page="${p.id}">${escape(p.title)}</a></div>`
+    return `<details class="page" data-id="${p.id}"${open.includes(p.id) ? ' open' : ''}><summary><a href="#/${p.id}" data-page="${p.id}">${escape(p.title)}</a></summary>` +
+      `<ul>${links.map(([id, title]) => `<li><a href="#/${p.id}/${id}" data-section="${p.id}/${id}">${escape(title)}</a></li>`).join('')}</ul></details>`
+  }).join('')
+  for (const d of document.querySelectorAll('#side details')) d.addEventListener('toggle', () =>
+    remember('open', [...document.querySelectorAll('#side details[open]')].map(d => d.dataset.id)))
+}
+
+// where is the page and the section of an address, also of one from before.
+function where(hash) {
+  let path
+  try { path = decodeURIComponent(hash.replace(/^#\/?/, '')) } catch { path = '' }
+  if (!path) return {}
+  const [first, ...rest] = path.split('/')
+  const p = pages.find(p => p.id === first)
+  if (p) {
+    const anchor = rest.join('/').toLowerCase()
+    return { page: p, anchor }
   }
-  $('#side').innerHTML = html
+  const last = path.split('/').filter(x => !x.startsWith('key-')).at(-1).toLowerCase()
+  const s = every().find(s => s.id === last || slug(s.title) === last)
+  if (s) return { page: s.page, anchor: s.id, moved: true }
+  if (commandGroups.some(g => slug(g) === last)) return { page: pages.find(p => p.id === 'commands'), anchor: `group-${last}`, moved: true }
+  return { lost: path }
 }
 
 function show() {
-  let path
-  try { path = decodeURIComponent(location.hash.replace(/^#\/?/, '')) } catch { path = '' }
-  let anchor = '', found = topics.find(t => t.path === path)
-  if (!found && path && path !== 'commands') {
-    const cut = path.lastIndexOf('/')
-    found = topics.find(t => t.path === path.slice(0, cut))
-    anchor = path.slice(cut + 1)
-  }
-  const page = $('#page')
-  page.innerHTML = found ? topicPage(found) : path === 'commands' ? commandsPage()
-    : path ? `<h1>Nothing here</h1><p>There is no page <code>${escape(path)}</code>. Try the search, or <a href="#/">begin again</a>.</p>` : home()
-  document.title = found ? `${found.title} · rayo` : path === 'commands' ? 'Commands · rayo' : 'rayo'
-  for (const a of document.querySelectorAll('#side a')) {
-    const here = a.dataset.path === (found ? found.path : path)
-    a.toggleAttribute('aria-current', here)
-    if (here) { a.setAttribute('aria-current', 'page'); const d = a.closest('details'); if (d) d.open = true }
-  }
-  if (!found && !path) { const d = $('#side details'); if (d) d.open = true }
-  const base = found ? found.path : path
-  for (const a of page.querySelectorAll('a.here')) a.href = `#/${base}/${a.dataset.anchor}`
-  const heads = [...page.querySelectorAll('h2[id], h3[id]')].filter(h => !h.closest('details'))
-  $('#toc').innerHTML = heads.length > 1 ? '<b>On this page</b>' + heads.map(h =>
-    `<a class="${h.tagName === 'H3' ? 'deep' : ''}" href="#/${base}/${h.id}">${escape(h.firstChild.textContent)}</a>`).join('') : ''
-  closeMenu()
-  const target = anchor && document.getElementById(anchor)
-  if (target) {
-    const d = target.closest('details')
+  const at = where(location.hash)
+  if (at.moved) return location.replace(`#/${at.page.id}${at.anchor ? '/' + at.anchor : ''}`)
+  const key = at.page ? at.page.id : at.lost ? 'lost' : 'home'
+  if (shown !== key) {
+    $('#page').innerHTML = at.page ? pageHtml(at.page) : at.lost
+      ? `<h1>Nothing here</h1><p>There is no page <code>${escape(at.lost)}</code>. Try the search, or <a href="#/">begin again</a>.</p>` : home()
+    document.body.classList.toggle('front', key === 'home')
+    document.title = at.page ? `${at.page.title} · rayo` : 'rayo'
+    for (const a of document.querySelectorAll('#side a[data-page]')) a.dataset.page === key ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')
+    const d = $(`#side details[data-id="${key}"]`)
     if (d) d.open = true
+    shown = key
+    scrollTo(0, 0)
+    spy()
+  }
+  closeMenu()
+  const target = at.anchor && document.getElementById(at.anchor)
+  if (target) {
+    for (let d = target.closest('details'); d; d = d.parentElement.closest('details')) d.open = true
+    if (target.id === 'selector' || target.id === 'common-keys') target.querySelector('details').open = true
     target.scrollIntoView()
-  } else window.scrollTo(0, 0)
+    target.classList.add('arrived')
+    setTimeout(() => target.classList.remove('arrived'), 1600)
+  } else if (at.page && !at.anchor) scrollTo(0, 0)
+  mark()
+}
+
+// The left bar says which section is being read.
+let parts = []
+function spy() { parts = [...document.querySelectorAll('#page section[id]')] }
+function mark() {
+  const at = innerHeight * 0.3
+  let now = parts.filter(s => s.getBoundingClientRect().top <= at).at(-1) || parts[0]
+  if (parts.length && innerHeight + scrollY >= document.documentElement.scrollHeight - 4 && scrollY > 0) now = parts.at(-1)
+  for (const a of document.querySelectorAll('#side a[data-section]')) {
+    const here = !!now && a.dataset.section === `${shown}/${now.id}`
+    if (here !== a.classList.contains('reading')) {
+      a.classList.toggle('reading', here)
+      if (here) a.scrollIntoView({ block: 'nearest' })
+    }
+  }
 }
 
 function closeMenu() {
@@ -297,40 +373,51 @@ function closeMenu() {
 
 // --- Search ---
 
-let index = []
+const index = []
+const kinds = ['Recipes', 'Commands', 'Documentation', 'Keys and options']
+
 function buildIndex() {
-  for (const t of topics) {
-    if (t.list) continue
-    index.push({ title: t.title, where: t.group, text: aboutOf(t), body: t.body.replace(/[`*|#]|<!--.*?-->/g, ' '), path: t.path, weight: t.commands.length ? 3 : 2 })
-    for (const m of t.body.matchAll(/^#{2,5} (.+)$/gm)) index.push({ title: m[1], where: t.title, text: '', body: '', path: `${t.path}/${slug(m[1])}`, weight: 1.5 })
-    if (t.commands.length === 1 && commands[t.commands[0]]) for (const k of commands[t.commands[0]].keys)
-      index.push({ title: k.name, where: t.title, text: `${k.takes}. ${k.about}`, body: (k.values || []).join(' '), path: `${t.path}/key-${k.name}`, weight: 1 })
+  const plain = s => s.body.replace(/<!--[\s\S]*?-->|```[\s\S]*?```|^\|.*$/gm, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[`*#🧪]/gu, '').trim()
+  for (const s of every()) {
+    const kind = s.page.folded ? 'Recipes' : s.command ? 'Commands' : 'Documentation'
+    index.push({ kind, title: s.as, where: s.command ? s.group : s.page.title, text: s.command ? s.command.about : plain(s).split('\n\n')[0].replace(/\n/g, ' '), body: s.body, path: `${s.page.id}/${s.id}`, weight: { Recipes: 14, Commands: 16, Documentation: 8 }[kind] })
+    if (s.command) for (const k of s.command.keys) index.push({ kind: 'Keys and options', title: k.name, where: s.as, text: `${k.takes}. ${k.about}`, body: (k.values || []).join(' '), path: `${s.page.id}/${s.id}-${k.name.toLowerCase()}`, weight: 0 })
+    else for (const m of s.body.matchAll(/^#{2,5} (.+)$/gm)) index.push({ kind, title: m[1], where: s.as, text: '', body: '', path: `${s.page.id}/${slug(m[1])}`, weight: 4 })
   }
-  const of = title => topics.find(t => t.file === 'REFERENCE.md' && t.title === title)
-  const keys = (list, title) => { const t = of(title); if (t) for (const k of list) index.push({ title: k.name, where: title, text: `${k.takes}. ${k.about}`, body: '', path: t.path, weight: 1 }) }
-  keys(rayo.flow.selector, 'Conditions')
-  keys(rayo.suite, 'Suites')
-  keys(rayo.device, 'Device setup')
-  keys(rayo.header, 'Header')
-  for (const o of rayo.options) index.push({ title: `--${o.name}`, where: `rayo ${o.commands.join(', ')}`, text: o.about, body: o.short ? `-${o.short}` : '', path: of('Options').path, weight: 1.5 })
+  for (const p of pages) index.push({ kind: 'Documentation', title: p.title, where: '', text: p.about, body: '', path: p.id, weight: 12 })
+  const keys = (list, where, path) => { for (const k of list) index.push({ kind: 'Keys and options', title: k.name, where, text: `${k.takes}. ${k.about}`, body: '', path, weight: 0 }) }
+  keys(rayo.flow.selector, 'Selector', 'commands/selector')
+  keys(rayo.flow.options, 'Every command', 'commands/common-keys')
+  keys(rayo.suite, 'Suite', 'suites/suites')
+  keys(rayo.device, 'Device setup', 'suites/device-setup')
+  keys(rayo.header, 'Flow header', 'flows/header')
+  for (const o of rayo.options) index.push({ kind: 'Keys and options', title: `--${o.name}`, where: `rayo ${o.commands.join(', ')}`, text: o.about, body: o.short ? `-${o.short}` : '', path: 'cli/options', weight: 2 })
 }
 
+// find ranks, and groups by kind: the group with the best comes first.
 function find(query) {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean)
   if (!words.length) return []
   const scored = []
   for (const e of index) {
-    const title = e.title.toLowerCase(), text = e.text.toLowerCase(), body = e.body.toLowerCase(), where = e.where.toLowerCase()
+    const title = e.title.toLowerCase(), text = e.text.toLowerCase(), body = e.body.toLowerCase(), place = e.where.toLowerCase()
     let score = 0
     for (const w of words) {
-      const s = title === w || title === '--' + w ? 100 : title.startsWith(w) || title.startsWith('--' + w) ? 60 : title.includes(w) ? 40 : where.includes(w) ? 18 : text.includes(w) ? 14 : body.includes(w) ? 5 : 0
+      const s = title === w || title === '--' + w ? 100 : title.startsWith(w) || title.startsWith('--' + w) ? 60 : title.includes(w) ? 42 : title.replace(/ /g, '').includes(w) ? 40 : place.includes(w) ? 16 : text.includes(w) ? 18 : body.includes(w) ? 8 : 0
       if (!s) { score = 0; break }
       score += s
     }
-    if (score) scored.push([score + e.weight * 4 - e.title.length / 20, e])
+    if (score) scored.push({ ...e, score: score / words.length + e.weight - e.title.length / 20 })
   }
-  const seen = new Set()
-  return scored.sort((a, b) => b[0] - a[0]).map(s => s[1]).filter(e => !seen.has(e.path + e.title) && seen.add(e.path + e.title)).slice(0, 14)
+  scored.sort((a, b) => b.score - a.score)
+  const seen = new Set(), groups = {}
+  for (const e of scored) {
+    if (seen.has(e.path + e.title)) continue
+    seen.add(e.path + e.title)
+    const list = groups[e.kind] ??= []
+    if (list.length < 5) list.push(e)
+  }
+  return kinds.filter(k => groups[k]).map(k => [k, groups[k]]).sort((a, b) => b[1][0].score - a[1][0].score)
 }
 
 function marked(text, query) {
@@ -353,12 +440,15 @@ function setUpSearch() {
   const update = () => {
     const q = input.value.trim()
     if (!q) return close()
-    const list = find(q)
-    found.innerHTML = list.length ? list.map((e, i) => `<li role="option" id="found-${i}" aria-selected="false"><a href="#/${e.path}" tabindex="-1"><span class="where">${escape(e.where)}</span><b>${marked(e.title, q)}</b><small>${marked(e.text, q)}</small></a></li>`).join('')
+    const groups = find(q)
+    let n = 0
+    found.innerHTML = groups.length ? groups.map(([kind, list]) => `<li class="kind" role="presentation">${kind}</li>` + list.map(e =>
+      `<li role="option" id="found-${n++}" aria-selected="false"><a href="#/${e.path}" tabindex="-1"><span class="where">${escape(e.where)}</span><b>${marked(e.title, q)}</b><small>${marked(e.text, q)}</small></a></li>`).join('')).join('')
       : `<li class="none">Nothing about “${escape(q)}”</li>`
     found.hidden = false
     input.setAttribute('aria-expanded', 'true')
     choose(0)
+    found.scrollTop = 0
   }
   input.addEventListener('input', update)
   input.addEventListener('focus', update)
@@ -376,6 +466,8 @@ function setUpSearch() {
   })
 }
 
+// --- Begin ---
+
 build()
 buildIndex()
 side()
@@ -392,17 +484,31 @@ $('#theme').addEventListener('click', () => {
   root.dataset.theme = dark ? 'light' : 'dark'
   try { localStorage.setItem('theme', root.dataset.theme) } catch {}
 })
-$('#page').addEventListener('click', async e => {
+document.addEventListener('click', async e => {
   const button = e.target.closest('.code button')
-  if (!button) return
-  try { await navigator.clipboard.writeText(button.parentElement.querySelector('code').textContent); button.textContent = 'Copied' } catch { button.textContent = 'Select it' }
-  setTimeout(() => { button.textContent = 'Copy' }, 1500)
+  if (button) {
+    try { await navigator.clipboard.writeText(button.parentElement.querySelector('code').textContent); button.textContent = 'Copied' } catch { button.textContent = 'Select it' }
+    setTimeout(() => { button.textContent = 'Copy' }, 1500)
+    return
+  }
+  // A link to where one already is still goes there.
+  const a = e.target.closest('a[href^="#/"]')
+  if (a && a.getAttribute('href') === location.hash) show()
 })
 $('#page').addEventListener('input', e => {
   if (!e.target.matches('.filter')) return
-  const q = e.target.value.toLowerCase()
-  for (const row of document.querySelectorAll('tr[data-text]')) row.hidden = !row.dataset.text.includes(q)
-  for (const s of document.querySelectorAll('#page section')) s.hidden = !s.querySelector('tr:not([hidden])')
+  const q = e.target.value.toLowerCase().trim()
+  const all = [...document.querySelectorAll('#page details[data-text]')]
+  for (const d of all) d.hidden = !d.dataset.text.includes(q)
+  const left = all.filter(d => !d.hidden)
+  if (q && left.length === 1) left[0].open = true
+  for (const s of document.querySelectorAll('#page .group')) s.hidden = !s.querySelector('details[data-text]:not([hidden])')
 })
+let waiting = false
+addEventListener('scroll', () => {
+  if (waiting) return
+  waiting = true
+  requestAnimationFrame(() => { waiting = false; mark() })
+}, { passive: true })
 addEventListener('hashchange', show)
 show()

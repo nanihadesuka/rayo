@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"io/fs"
 	"maps"
 	"os"
 	"os/exec"
@@ -98,7 +99,15 @@ func TestPage(t *testing.T) {
 		t.Fatal(err)
 	}
 	files := map[string]string{}
-	for _, name := range []string{"GUIDE.md", "REFERENCE.md", "MOCKING.md", "CONTRIBUTING.md", "schema/suite.json", "schema/results.json"} {
+	names := []string{"GUIDE.md", "EXAMPLE.md", "REFERENCE.md", "MOCKING.md", "CONTRIBUTING.md", "schema/suite.json", "schema/results.json"}
+	example, err := os.ReadFile("../EXAMPLE.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range regexp.MustCompile("<!-- file: (.+?) -->").FindAllStringSubmatch(unix(example), -1) {
+		names = append(names, m[1])
+	}
+	for _, name := range names {
 		data, err := os.ReadFile("../" + name)
 		if err != nil {
 			t.Fatal(err)
@@ -112,6 +121,28 @@ func TestPage(t *testing.T) {
 		t.Fatal(err)
 	}
 	generated(t, "../docs/data.js", "// Written by go test ./test -update\nwindow.RAYO = "+b.String())
+}
+
+// The full example is right, and all its files are told of.
+func TestFullExample(t *testing.T) {
+	for _, what := range []string{"../examples/shop/all.rayo.yaml", "../examples"} {
+		if out, err := exec.Command(rayo, "check", what).CombinedOutput(); err != nil {
+			t.Errorf("%s", out)
+		}
+	}
+	example, err := os.ReadFile("../EXAMPLE.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = filepath.WalkDir("../examples", func(path string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && !strings.Contains(string(example), filepath.ToSlash(strings.TrimPrefix(path, ".."+string(filepath.Separator)))) {
+			t.Errorf("EXAMPLE.md doesn't show %s", path)
+		}
+		return err
+	})
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 // Every example can be copied: rayo accepts it.
