@@ -4,6 +4,11 @@
 
 const { markdown, rayo } = window.RAYO
 const repository = 'https://github.com/nanihadesuka/rayo'
+// The marks of the reference are for who works on rayo.
+markdown['REFERENCE.md'] = markdown['REFERENCE.md'].replace(/^- What is marked 🧪[\s\S]*?(?=
+- |
+
+|$(?![\s\S]))/m, '').replace(/ ?🧪 ?/gu, '')
 const $ = s => document.querySelector(s)
 const escape = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const slug = t => t.toLowerCase().replace(/[^\p{L}\p{N}_\- ]/gu, '').trim().replace(/ /g, '-')
@@ -233,7 +238,7 @@ function detailsOf(s) {
 function commandEntry(s) {
   const c = s.command, { intro, rest } = detailsOf(s)
   return `<details class="command" id="${s.id}" data-text="${escape(`${c.name} ${c.about} ${c.keys.map(k => k.name).join(' ')}`.toLowerCase())}">` +
-    `<summary><code>${c.name}</code><span>${escape(c.about)}</span>${c.tested ? '' : '<i class="badge warn" title="Not tested on a device yet">untested</i>'}</summary><div>` +
+    `<summary><code>${c.name}</code><span>${escape(c.about)}</span></summary><div>` +
     `<p>${intro}${c.alone ? ' Works without a value.' : ''}${c.element ? ' Takes the <a href="#/commands/selector">selector keys</a>.' : ''}</p>` + codeBlock(c.example, 'yaml') +
     (c.keys.length ? keyTable(c.keys, `${s.id}-`) : '') + (rest ? render(rest, s.file) : '') +
     more('Every key, as YAML', codeBlock(skeleton(c), 'yaml') + '<p>Not all go together: copy what you need. <code>rayo check</code> says what is wrong.</p>') + '</div></details>'
