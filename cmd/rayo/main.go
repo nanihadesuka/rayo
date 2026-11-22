@@ -116,6 +116,7 @@ func test(ctx context.Context, args []string) (err error) {
 	if err != nil {
 		return err
 	}
+	o.suite = group
 	title := strings.Join(o.paths, " ")
 	if group != nil {
 		if group.Name != "" {
@@ -197,8 +198,9 @@ func test(ctx context.Context, args []string) (err error) {
 			if err := watch.await(ctx, flows); err != nil {
 				return err
 			}
-			again, _, err := load(o.paths)
+			again, changed, err := load(o.paths)
 			if err == nil {
+				o.suite = changed
 				again, err = o.choose(again)
 			}
 			if err == nil {

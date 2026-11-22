@@ -148,7 +148,7 @@ func backend(t *testing.T) string {
 func run(t *testing.T, input string) string {
 	dir := filepath.Join(t.TempDir(), "case")
 	os.Mkdir(dir, 0o755)
-	args, devices, empty, silent, console := "test flow.yaml", "emulator-5554\tdevice\n", false, false, ""
+	args, devices, empty, silent, retries, console, health := "test flow.yaml", "emulator-5554\tdevice\n", false, false, false, "", ""
 	inputs := map[string]string{}
 	for _, f := range split(input) {
 		switch f.name {
@@ -160,6 +160,10 @@ func run(t *testing.T, input string) string {
 			console = strings.TrimSpace(f.text)
 		case "device without recorder":
 			silent = true
+		case "with retries":
+			retries = true
+		case "health":
+			health = f.text
 		case "device without agent":
 			empty = true
 		default:
@@ -174,9 +178,16 @@ func run(t *testing.T, input string) string {
 	}
 	d.mu.Lock()
 	d.silent, d.devices = silent, devices
+	if health != "" {
+		d.health = health
+	}
 	d.mu.Unlock()
 	args = strings.ReplaceAll(args, "$BACKEND", backend(t))
-	cmd := d.command(dir, strings.Fields(args)...)
+	words := strings.Fields(args)
+	if words[0] == "test" && !strings.Contains(args, "--retries") && !retries { // most cases aren't about them
+		words = append(words, "--retries", "0")
+	}
+	cmd := d.command(dir, words...)
 	var out, errs bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errs
 	err := cmd.Run()

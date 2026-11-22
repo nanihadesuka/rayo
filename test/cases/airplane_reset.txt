@@ -15,6 +15,7 @@ appId: a.b
 -- stdout --
 [1/2] FAIL a  # s
   why: not on screen: missing
+  cause: test
   step: tapOn missing
   at: a.yaml:4
   before:
@@ -42,6 +43,7 @@ adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:cmd connectivity airplane-mode disable
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 key {"code":4,"timeout":15000}
 bye {"timeout":5000}
 -- file .rayo/a/failure.png --

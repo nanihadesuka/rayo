@@ -23,6 +23,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   why: the app called what isn't mocked:
         GET /late
+  cause: test
   before:
     tapOn GET /a
     tapOn GET /late
@@ -45,6 +46,7 @@ adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/failure.png --
 PNG...

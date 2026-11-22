@@ -24,6 +24,7 @@ emulator-5554, ready in # ms
   ✓ tapOn cleanup  # ms
 [1/1] FAIL case  # s
   why: not on screen: missing
+  cause: test
   step: Open it
   at: sub.yaml:3
   from: sub.yaml:3 retry maxRetries: 1
@@ -44,6 +45,7 @@ adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 tap {"delay":100,"repeat":1,"sel":{"text":"cleanup"},"timeout":15000}
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/failure.png --
 PNG...

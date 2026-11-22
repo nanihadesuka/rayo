@@ -1,0 +1,13 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+flows: [{ retries: 1 }]
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: x }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: line 1: a flow needs its file

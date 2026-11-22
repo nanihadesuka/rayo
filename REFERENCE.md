@@ -20,7 +20,7 @@ Every command and feature. To install or build, see the
 | [Device](#device) | [setLocation](#setlocation) · [travel](#travel) · [setAirplaneMode](#setairplanemode) · [takeScreenshot](#takescreenshot) · [startRecording](#startrecording-stoprecording) · [stopRecording](#startrecording-stoprecording) · [camera](#camera) · [shell](#shell) |
 | [Server](#server) | [http](#http) |
 | [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [Capture](#capture) |
-| [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Outcomes](#outcomes) · [Results](#results) |
+| [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Causes](#causes) · [Outcomes](#outcomes) · [Results](#results) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
 | [Features](#features) | [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
 | [Default times](#default-times) | |
@@ -495,7 +495,8 @@ mock:
 - network: offline
 ```
 
-An included flow's mocks are added when it runs.
+An included flow's mocks are added when it runs. How mocks work, with examples:
+[Mocking](README.md#mocking).
 
 ### Mock files
 
@@ -610,7 +611,8 @@ flows:
 
 | Key | |
 |---|---|
-| `flows` | Required: files, run in this order |
+| `flows` | Required: files, run in this order. One may be `file` and its own `retries` |
+| `retries` | How many times a flow that fails is tried again, see [Retries](#retries) |
 | `name` | Shown in the results |
 | `app` | `apk` is installed before the flows, if the device has another, as `id`. rayo doesn't build it |
 | `device` | How the device is while the flows run, see [below](#device-setup) |
@@ -657,23 +659,91 @@ affected. The app's data and permissions stay: begin with `launchApp: { clearSta
 `--shuffle` finds flows that depend on others. The order is printed as `--shuffle=<seed>`, which
 repeats it.
 
+### Retries
+
+A flow that fails can be run again, whole, after the [clean state](#clean-state). The suite says how
+many times, for all its flows and for each:
+
+```yaml
+retries: 1                          # all, if they don't say
+flows:
+  - tests/book/flow.yaml            # 1
+  - file: tests/scan/flow.yaml      # 3
+    retries: 3
+  - { file: tests/pay/flow.yaml, retries: 0 }   # never
+```
+
+`--retries <n>` wins over both. **Without any of them it is 1**, also for flows without a suite;
+`--retries 0` turns it off. With `-c` and no suite it is 0. It is retried at once, before the next flow. `NOT_RUN` and `INTERRUPTED` aren't, nor when capturing.
+
+If it passes at last it is a `PASS`, as any other, with a note of where each try failed, its
+[cause](#causes) and the folder with the rest. Each has its own video too.
+
+```
+[2/3] PASS scan  31.0 s  (failed once, then passed)
+  try 1: tests/scan/flow.yaml:12: tapOn scan: not on screen: scan  (test)  .results/scan
+[3/3] FAIL pay  27.2 s  (failed 3 times)
+  try: 1
+  ...
+
+TOTAL 3: 2 passed, 1 failed, 2 retried  78.1 s
+```
+
+| | |
+|---|---|
+| `retried` | Flows tried more than once, whether they passed or not |
+| JSON | `retried` of the run; of a flow, `tries`, `timesFailed`, `retries` allowed, and a failure for each failed try |
+| JUnit | One that passed at last passes, with its failed tries in `system-out` |
+| `--failures-only` | Keeps those that failed at first |
+
+To run only some steps again, use [retry](#retry).
+
+### Causes
+
+Not every failure is the test's. Each has a `cause`:
+
+| Cause | When |
+|---|---|
+| `app` | The app crashed or hung during the flow, or isn't installed |
+| `device` | It doesn't answer, is starting, restarted, its interface hung, or the connection was lost |
+| `test` | Anything else. It is only `app` or `device` if there is proof of it, so something slow is `test` |
+
+The run stops, so as not to waste time on flows that would fail the same, when:
+
+| | |
+|---|---|
+| The device can't be used: it doesn't answer, is starting, or Android isn't running | At once, always |
+| 2 failures in a row are `device` | Unless `--keep-going` |
+| 3 different flows in a row fail with `app`, and the same crash | Unless `--keep-going` |
+
+For `device`, each try counts. A failure that is the test's, or a pass, starts the count again. The rest are `NOT_RUN`, and the results say why the run stopped:
+
+```
+[3/9] FAIL pay  4.1 s
+  why: not on screen: home
+  cause: app, the app crashed: java.lang.IllegalStateException: oops
+  ...
+[4/9] NOT_RUN scan  (app: 3 flows in a row, the app crashed: ...)
+
+STOPPED app: 3 flows in a row, the app crashed: java.lang.IllegalStateException: oops
+TOTAL 9: 0 passed, 3 failed, 6 not run, of those failed 3 app  14.0 s
+```
+
+JSON has `stopped` for the run, `cause` for a flow that failed, and `cause` and `because` for each failure.
+
 ### Outcomes
 
 Every flow asked for has one; none is left out of the count.
 
 | | | Exit code |
 |---|---|---|
-| `PASS` | | 0 |
-| `FLAKY` | Failed, then passed with `--retries` | 0 |
+| `PASS` | Also if it failed first, and passed when [retried](#retries) | 0 |
 | `FAIL` | | 1 |
 | `INTERRUPTED` | Ctrl-C while it ran | 130 |
-| `NOT_RUN` | With the reason: interrupted, `--fail-fast`, the device was lost | 1 |
+| `NOT_RUN` | With the reason: interrupted, `--fail-fast`, or the run [stopped](#causes) | 1 |
 
-If the device is lost, the flow fails and the next goes on with a new connection; lost twice in a
-row, the rest don't run. `--rerun-failed` runs what is in `<debug output>/failed.json`: what
+If the connection is lost, the flow fails and the next goes on with a new one. `--rerun-failed` runs what is in `<debug output>/failed.json`: what
 failed, was interrupted or didn't run, until it passes.
-
-Retries are evidence of a problem, not a cure: the failed tries are always shown.
 
 ### Results
 
@@ -709,6 +779,7 @@ The list at the end is only there if something didn't pass. Under a failure:
 |---|---|
 | `try` | Which, if there were several |
 | `why` | The error |
+| `cause` | `test`, `app` or `device`, see [Causes](#causes) |
 | `step`, `at` | The step that failed, and where it is written |
 | `from` | The step that ran that flow, and so on outwards |
 | `crash` | The app crashed or hung during the flow: what the device log says |
@@ -742,15 +813,19 @@ In `json`, every key is always there: what there is none of is `""`, `0` or `[]`
   "began": "2026-11-22T21:11:18Z",
   "seconds": 27.402,
   "order": "",
+  "stopped": "",
   "ok": false,
-  "total": 3, "passed": 1, "flaky": 0, "failed": 1, "interrupted": 0, "notRun": 1,
+  "total": 3, "passed": 1, "failed": 1, "interrupted": 0, "notRun": 1, "retried": 0,
   "flows": [
     {
       "name": "scan",
       "file": "tests/scan/flow.yaml",
       "status": "FAIL",
+      "cause": "test",
       "seconds": 9.114,
       "tries": 1,
+      "timesFailed": 1,
+      "retries": 0,
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
@@ -758,6 +833,8 @@ In `json`, every key is always there: what there is none of is `""`, `0` or `[]`
         {
           "try": 1,
           "why": "not on screen: finished_close",
+          "cause": "test",
+          "because": "",
           "step": "tapOn finished_close",
           "file": "shared/flows/dock.yaml",
           "line": 8,
@@ -780,7 +857,7 @@ In `json`, every key is always there: what there is none of is `""`, `0` or `[]`
 | `order` | `--shuffle=<seed>`, if shuffled |
 | `ok` | Nothing failed, was interrupted or didn't run: as the exit code |
 | `status` | One of the [outcomes](#outcomes) |
-| `failures` | One for each try that failed, also of a `FLAKY` flow. `screen` is whole; a call's `body` is only in `requests.json` |
+| `failures` | One for each try that failed, also of a flow that passed at last. `screen` is whole; a call's `body` is only in `requests.json` |
 
 ```
 jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].why)"' results.json
@@ -912,7 +989,7 @@ first in `<flow>_retry1` and so on. Those of an earlier run are removed when the
 ### Report
 
 `--format junit --output report.xml`, besides the [results](#results) or as their format. What didn't run is `skipped`, what was interrupted is an `error`,
-and a flaky flow has its failed tries in `system-out`.
+and a flow that failed first has its failed tries in `system-out`.
 
 ### Environment
 

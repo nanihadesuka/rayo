@@ -59,9 +59,11 @@ func writeJUnit(path string, sum *summary) error {
 			c.Error = &text
 		case notRun:
 			c.Skipped = &junitSkipped{o.why}
-		case flaky:
-			text = "flaky\n" + text
-			c.Out = &text
+		case passed:
+			if o.timesFailed() > 0 {
+				text = plain(o.line() + "\n" + o.details(true))
+				c.Out = &text
+			}
 		}
 		s.Cases = append(s.Cases, c)
 	}

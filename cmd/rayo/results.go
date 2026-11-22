@@ -16,7 +16,6 @@ type status string
 
 const (
 	passed      status = "PASS"
-	flaky       status = "FLAKY" // passed, but not the first time
 	failed      status = "FAIL"
 	interrupted status = "INTERRUPTED"
 	notRun      status = "NOT_RUN"
@@ -24,21 +23,18 @@ const (
 
 func (s status) String() string { return string(s) }
 
-func (s status) good() bool { return s == passed || s == flaky }
-
 // outcome is a flow's, after all its tries.
 type outcome struct {
 	flow.Result // of the last try
 	flow        *flow.Flow
 	status      status
 	tries       []flow.Result
+	retries     int    // allowed
 	why         string // it didn't run
 }
 
 func (o *outcome) judge(ctx context.Context) status {
 	switch {
-	case o.Err == nil && len(o.tries) > 1:
-		return flaky
 	case o.Err == nil:
 		return passed
 	case ctx.Err() != nil:
@@ -54,14 +50,25 @@ func (o *outcome) took() (total time.Duration) {
 	return total
 }
 
+func (o *outcome) timesFailed() int {
+	n := 0
+	for _, t := range o.tries {
+		if t.Err != nil {
+			n++
+		}
+	}
+	return n
+}
+
 // line is one line: the status is its first word.
 func (o *outcome) line() string {
 	if o.status == notRun {
 		return fmt.Sprintf("%s %s  (%s)", o.status, o.flow.Name, o.why)
 	}
 	line := fmt.Sprintf("%s %s  %.1f s", o.status, o.flow.Name, o.took().Seconds())
-	if len(o.tries) > 1 {
-		line += fmt.Sprintf("  (%d tries)", len(o.tries))
+	if n := o.timesFailed(); len(o.tries) > 1 {
+		times := map[bool]string{true: "once", false: fmt.Sprintf("%d times", n)}[n == 1]
+		line += "  (failed " + times + map[bool]string{true: ", then passed"}[o.status == passed] + ")"
 	}
 	return line
 }
@@ -93,6 +100,7 @@ func (o *outcome) details(full bool) string {
 		var step *flow.StepError
 		if errors.As(t.Err, &step) {
 			add("why", step.Err.Error())
+			o.addCause(add, t)
 			add("step", step.Step.Text())
 			add("at", step.Step.Place())
 			for _, from := range step.From {
@@ -100,6 +108,7 @@ func (o *outcome) details(full bool) string {
 			}
 		} else {
 			add("why", t.Err.Error())
+			o.addCause(add, t)
 		}
 		f := t.Failure
 		if f == nil {
@@ -124,11 +133,46 @@ func (o *outcome) details(full bool) string {
 		}
 		add("saved", f.Saved)
 	}
-	if !o.status.good() {
+	if o.status != passed {
 		b.WriteString(o.videos())
 	}
+	b.WriteString(o.warnings())
+	return b.String()
+}
+
+func (o *outcome) addCause(add func(key, value string), t flow.Result) {
+	if f := t.Failure; f != nil && f.Cause != "" {
+		because := string(f.Cause)
+		if f.Because != "" {
+			because += ", " + f.Because
+		}
+		add("cause", because)
+	}
+}
+
+func (o *outcome) warnings() string {
+	text := ""
 	for _, w := range o.Warnings {
-		add("warning", w)
+		text += "  warning: " + strings.ReplaceAll(strings.TrimSpace(w), "\n", "\n    ") + "\n"
+	}
+	return text
+}
+
+// notes is a line for each failed try of a flow that passed at last: where it failed, and why.
+func (o *outcome) notes() string {
+	var b strings.Builder
+	for i, t := range o.tries {
+		if t.Err == nil || o.status != passed {
+			continue
+		}
+		fmt.Fprintf(&b, "  try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " "))
+		if f := t.Failure; f != nil {
+			fmt.Fprintf(&b, "  (%s)", f.Cause)
+			if f.Saved != "" {
+				fmt.Fprintf(&b, "  %s", f.Saved)
+			}
+		}
+		b.WriteString("\n")
 	}
 	return b.String()
 }
@@ -147,6 +191,7 @@ func (o *outcome) videos() string {
 // summary is how a run went.
 type summary struct {
 	title, device, order string
+	stopped              string // why, if the rest didn't run for it
 	began                time.Time
 	took                 time.Duration
 	outcomes             []outcome
@@ -156,6 +201,35 @@ func (s *summary) count(is status) int {
 	n := 0
 	for _, o := range s.outcomes {
 		if o.status == is {
+			n++
+		}
+	}
+	return n
+}
+
+// cause is of the last try of a flow that failed.
+func (o *outcome) cause() flow.Cause {
+	if o.status == failed && o.Failure != nil {
+		return o.Failure.Cause
+	}
+	return ""
+}
+
+func (s *summary) caused(by flow.Cause) int {
+	n := 0
+	for _, o := range s.outcomes {
+		if o.cause() == by {
+			n++
+		}
+	}
+	return n
+}
+
+// retried is how many flows were tried again, whether they passed or not.
+func (s *summary) retried() int {
+	n := 0
+	for _, o := range s.outcomes {
+		if len(o.tries) > 1 {
 			n++
 		}
 	}
@@ -174,16 +248,20 @@ func (s *summary) text(failuresOnly, brief bool) string {
 	}
 	if !brief || len(s.outcomes) > 1 && s.count(passed) < len(s.outcomes) { // or it would only repeat
 		for _, o := range s.outcomes {
-			if failuresOnly && o.status == passed {
+			if failuresOnly && o.status == passed && o.timesFailed() == 0 {
 				continue
 			}
 			b.WriteString(o.line() + "\n")
 			if !brief {
 				fmt.Fprintf(&b, "  file: %s\n", filepath.ToSlash(o.flow.Path))
-				if o.status.good() { // or it is among the details
+				if o.status == passed { // or it is among the details
 					b.WriteString(o.videos())
 				}
-				b.WriteString(o.details(true))
+				if o.status == passed {
+					b.WriteString(o.notes() + o.warnings())
+				} else {
+					b.WriteString(o.details(true))
+				}
 			}
 		}
 		b.WriteString("\n")
@@ -192,10 +270,25 @@ func (s *summary) text(failuresOnly, brief bool) string {
 	for _, c := range []struct {
 		status status
 		name   string
-	}{{passed, "passed"}, {flaky, "flaky"}, {failed, "failed"}, {interrupted, "interrupted"}, {notRun, "not run"}} {
+	}{{passed, "passed"}, {failed, "failed"}, {interrupted, "interrupted"}, {notRun, "not run"}} {
 		if n := s.count(c.status); n > 0 || c.status == passed || c.status == failed {
 			parts = append(parts, fmt.Sprintf("%d %s", n, c.name))
 		}
+	}
+	if s.stopped != "" {
+		fmt.Fprintf(&b, "STOPPED %s\n", s.stopped)
+	}
+	var causes []string
+	for _, c := range []flow.Cause{flow.App, flow.Dev} {
+		if n := s.caused(c); n > 0 {
+			causes = append(causes, fmt.Sprintf("%d %s", n, c))
+		}
+	}
+	if len(causes) > 0 {
+		parts = append(parts, "of those failed "+strings.Join(causes, " and "))
+	}
+	if n := s.retried(); n > 0 {
+		parts = append(parts, fmt.Sprintf("%d retried", n))
 	}
 	fmt.Fprintf(&b, "TOTAL %d: %s  %.1f s\n", len(s.outcomes), strings.Join(parts, ", "), s.took.Seconds())
 	return b.String()

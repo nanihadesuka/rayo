@@ -28,6 +28,7 @@ import (
 //	GET /a          tapping it makes the app call that; a body may follow
 //	hangs           tapping it never ends
 //	app crashes     tapping it does that, and fails
+//	android hangs   tapping it does that, and fails
 //	crash           tapping it cuts the connection to the agent
 //
 // Anything else is on screen.
@@ -42,7 +43,9 @@ type fakeDevice struct {
 	taps     map[string]int
 	swipes   int
 	crashed  bool
+	health   string // whether it has started, and how long ago
 	killed   chan bool
+	hung     bool // its interface
 	silent   bool // its recorder doesn't start
 }
 
@@ -52,7 +55,7 @@ func startDevice(t *testing.T, devices string, empty bool) *fakeDevice {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { l.Close() })
-	d := &fakeDevice{devices: devices, empty: empty, forwards: map[int]int{}, taps: map[string]int{}, killed: make(chan bool, 9)}
+	d := &fakeDevice{devices: devices, empty: empty, forwards: map[int]int{}, taps: map[string]int{}, killed: make(chan bool, 9), health: "1\n2-03:04:05\n"}
 	_, d.port, _ = net.SplitHostPort(l.Addr().String())
 	go func() {
 		for {
@@ -186,6 +189,8 @@ func (d *fakeDevice) exec(c net.Conn, in *bufio.Reader, command string) {
 		d.killed <- true
 	case strings.HasPrefix(command, "cat "):
 		io.WriteString(c, "a video "+strings.Repeat(".", 100))
+	case strings.HasPrefix(command, "getprop sys.boot_completed"):
+		io.WriteString(c, d.health)
 	case strings.HasPrefix(command, "for i in"): // has the lost agent ended?
 		io.WriteString(c, "gone\n")
 	case command == "cmd connectivity airplane-mode":
@@ -194,6 +199,8 @@ func (d *fakeDevice) exec(c net.Conn, in *bufio.Reader, command string) {
 		io.WriteString(c, "Success\n")
 	case strings.HasPrefix(command, "date"):
 		io.WriteString(c, "11-22 10:00:00\n")
+	case strings.HasPrefix(command, "logcat") && d.hung:
+		io.WriteString(c, "11-22 10:00:00.000  1  1 E ActivityManager: ANR in com.android.systemui\n")
 	case strings.HasPrefix(command, "logcat") && d.crashed:
 		io.WriteString(c, `11-21 09:00:00.000  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 09:00:00.000  1  1 E AndroidRuntime: Process: a.b, PID: 1
@@ -300,6 +307,9 @@ func (d *fakeDevice) act(op string, q map[string]any) map[string]any {
 		return fail("not on screen: missing")
 	case id == "hangs" && op == "tap":
 		time.Sleep(time.Minute)
+	case id == "android hangs" && op == "tap":
+		d.hung = true
+		return fail("not on screen: home")
 	case id == "app crashes" && op == "tap":
 		d.crashed = true
 		return fail("not on screen: home")

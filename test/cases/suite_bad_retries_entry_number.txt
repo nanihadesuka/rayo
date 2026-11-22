@@ -1,0 +1,14 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+flows: [{ file: a.yaml, retries: x }]
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: x }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: yaml: unmarshal errors:
+  line 1: cannot unmarshal !!str `x` into int

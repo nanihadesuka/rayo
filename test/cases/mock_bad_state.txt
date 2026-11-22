@@ -22,6 +22,7 @@ appId: a.b
 -- stdout --
 [1/3] FAIL a  # s
   why: ride has no state "dockd" (it has Started, docked)
+  cause: test
   step: mockState ride: dockd
   at: a.yaml:4
   screen:
@@ -29,6 +30,7 @@ appId: a.b
   saved: .rayo/a
 [2/3] FAIL b  # s
   why: no mock has a scenario "ryde"
+  cause: test
   step: mockState ryde: docked
   at: b.yaml:4
   screen:
@@ -36,6 +38,7 @@ appId: a.b
   saved: .rayo/b
 [3/3] FAIL c  # s
   why: this flow has no mock
+  cause: test
   step: mockState ride: docked
   at: c.yaml:3
   screen:
@@ -59,14 +62,17 @@ adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 adb reverse:forward:tcp:8080;tcp:<free>
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/a/failure.png --
 PNG...

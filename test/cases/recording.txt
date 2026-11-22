@@ -25,6 +25,7 @@ emulator-5554, ready in # ms
   saved in .rayo/case
 [1/1] FAIL case  # s
   why: a recording is going on
+  cause: test
   step: startRecording
   at: flow.yaml:9
   before:
@@ -57,6 +58,7 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:kill -INT 4321 2>/dev/null
 adb exec:cat /data/local/tmp/rayo-<pid>.mp4; rm -f /data/local/tmp/rayo-<pid>.mp4
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/case.mp4 --
 a video ....................................................................................................

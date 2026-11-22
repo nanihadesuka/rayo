@@ -14,6 +14,7 @@ emulator-5554, ready in # ms
   saved in .rayo/case
 [1/1] FAIL case  # s
   why: the recording didn't start: EOF
+  cause: test
   saved: .rayo/case
 
 TOTAL 1: 0 passed, 1 failed  # s
@@ -28,6 +29,7 @@ adb exec:l=180; screenrecord --help 2>&1 | grep -q 'remove the time limit' && l=
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/failure.png --
 PNG...

@@ -182,12 +182,17 @@ func (d *Device) reverse(service string) error {
 
 // Exec runs a shell command and returns its raw output.
 func (d *Device) Exec(command string) ([]byte, error) {
+	return d.ExecWithin(command, 60*time.Second)
+}
+
+// ExecWithin is Exec for what should be quick.
+func (d *Device) ExecWithin(command string, limit time.Duration) ([]byte, error) {
 	c, err := d.Open("exec:" + command)
 	if err != nil {
 		return nil, err
 	}
 	defer c.Close()
-	c.SetDeadline(time.Now().Add(60 * time.Second))
+	c.SetDeadline(time.Now().Add(limit))
 	return io.ReadAll(c)
 }
 

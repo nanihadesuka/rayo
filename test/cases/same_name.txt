@@ -14,6 +14,7 @@ appId: a.b
 -- stdout --
 [1/2] FAIL x  # s
   why: not on screen: missing
+  cause: test
   step: tapOn missing
   at: a/x.yaml:3
   screen:
@@ -21,6 +22,7 @@ appId: a.b
   saved: .rayo/x
 [2/2] FAIL x  # s
   why: not on screen: missing
+  cause: test
   step: tapOn missing
   at: b/x.yaml:3
   screen:
@@ -42,10 +44,12 @@ tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/failed.json --
 {

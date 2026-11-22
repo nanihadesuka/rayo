@@ -24,13 +24,14 @@ type jsonRun struct {
 	Began       string     `json:"began"`
 	Seconds     float64    `json:"seconds"`
 	Order       string     `json:"order"`
+	Stopped     string     `json:"stopped"` // why, if it did
 	OK          bool       `json:"ok"`
 	Total       int        `json:"total"`
 	Passed      int        `json:"passed"`
-	Flaky       int        `json:"flaky"`
 	Failed      int        `json:"failed"`
 	Interrupted int        `json:"interrupted"`
 	NotRun      int        `json:"notRun"`
+	Retried     int        `json:"retried"`
 	Flows       []jsonFlow `json:"flows"`
 }
 
@@ -38,8 +39,11 @@ type jsonFlow struct {
 	Name         string        `json:"name"`
 	File         string        `json:"file"`
 	Status       status        `json:"status"`
+	Cause        flow.Cause    `json:"cause"` // if it failed
 	Seconds      float64       `json:"seconds"`
 	Tries        int           `json:"tries"`
+	TimesFailed  int           `json:"timesFailed"`
+	Retries      int           `json:"retries"` // allowed
 	NotRunReason string        `json:"notRunReason"`
 	Warnings     []string      `json:"warnings"`
 	Recordings   []string      `json:"recordings"`
@@ -47,17 +51,19 @@ type jsonFlow struct {
 }
 
 type jsonFailure struct {
-	Try    int         `json:"try"`
-	Why    string      `json:"why"`
-	Step   string      `json:"step"`
-	File   string      `json:"file"`
-	Line   int         `json:"line"`
-	From   []jsonStep  `json:"from"`
-	Before []string    `json:"before"`
-	Calls  []mock.Call `json:"calls"`
-	Screen []string    `json:"screen"`
-	Crash  string      `json:"crash"`
-	Saved  string      `json:"saved"`
+	Try     int         `json:"try"`
+	Why     string      `json:"why"`
+	Cause   flow.Cause  `json:"cause"`
+	Because string      `json:"because"`
+	Step    string      `json:"step"`
+	File    string      `json:"file"`
+	Line    int         `json:"line"`
+	From    []jsonStep  `json:"from"`
+	Before  []string    `json:"before"`
+	Calls   []mock.Call `json:"calls"`
+	Screen  []string    `json:"screen"`
+	Crash   string      `json:"crash"`
+	Saved   string      `json:"saved"`
 }
 
 type jsonStep struct {
@@ -96,6 +102,7 @@ func failureOf(err error, e *flow.Failure) jsonFailure {
 		}
 	}
 	if e != nil {
+		x.Cause, x.Because = e.Cause, e.Because
 		x.Before, x.Calls, x.Crash, x.Saved = list(e.Before), list(e.Calls), e.Crash, e.Saved
 		x.Screen = linesOf(e.Screen)
 	}
@@ -103,8 +110,8 @@ func failureOf(err error, e *flow.Failure) jsonFailure {
 }
 
 func (o *outcome) json() jsonFlow {
-	f := jsonFlow{Name: o.flow.Name, File: filepath.ToSlash(o.flow.Path), Status: o.status, Seconds: seconds(o.took()),
-		Tries: len(o.tries), NotRunReason: o.why, Warnings: list(o.Warnings), Recordings: []string{}, Failures: []jsonFailure{}}
+	f := jsonFlow{Name: o.flow.Name, File: filepath.ToSlash(o.flow.Path), Status: o.status, Cause: o.cause(), Seconds: seconds(o.took()),
+		Tries: len(o.tries), TimesFailed: o.timesFailed(), Retries: o.retries, NotRunReason: o.why, Warnings: list(o.Warnings), Recordings: []string{}, Failures: []jsonFailure{}}
 	for i, t := range o.tries {
 		f.Recordings = append(f.Recordings, t.Recordings...)
 		if t.Err == nil || o.status == interrupted {
@@ -119,10 +126,10 @@ func (o *outcome) json() jsonFlow {
 
 func (s *summary) json(failuresOnly bool) ([]byte, error) {
 	r := jsonRun{Version: resultsVersion, Run: s.title, Device: s.device, Began: s.began.UTC().Format("2006-01-02T15:04:05Z"),
-		Seconds: seconds(s.took), Order: s.order, OK: s.err() == nil, Total: len(s.outcomes), Passed: s.count(passed),
-		Flaky: s.count(flaky), Failed: s.count(failed), Interrupted: s.count(interrupted), NotRun: s.count(notRun), Flows: []jsonFlow{}}
+		Seconds: seconds(s.took), Order: s.order, Stopped: s.stopped, OK: s.err() == nil, Total: len(s.outcomes), Passed: s.count(passed),
+		Failed: s.count(failed), Interrupted: s.count(interrupted), NotRun: s.count(notRun), Retried: s.retried(), Flows: []jsonFlow{}}
 	for _, o := range s.outcomes {
-		if !failuresOnly || o.status != passed {
+		if !failuresOnly || o.status != passed || o.timesFailed() > 0 {
 			r.Flows = append(r.Flows, o.json())
 		}
 	}

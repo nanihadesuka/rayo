@@ -37,6 +37,7 @@ emulator-5554, ready in # ms
   saved in dbg/c
 [2/2] FAIL c  # s
   why: not on screen: missing
+  cause: test
   step: this & that
   at: flows/c/flow.yaml:4
   saved: dbg/c
@@ -56,6 +57,7 @@ tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file dbg/c/failure.png --
 PNG...
@@ -72,6 +74,6 @@ a screen
 <testsuite name="rayo" tests="2" failures="1" errors="0" skipped="0" time="#">
   <testcase name="First one" file="flows/a.yaml" time="#"></testcase>
   <testcase name="c" file="flows/c/flow.yaml" time="#">
-    <failure>  why: not on screen: missing&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  screen:&#xA;    a screen&#xA;  saved: dbg/c&#xA;</failure>
+    <failure>  why: not on screen: missing&#xA;  cause: test&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  screen:&#xA;    a screen&#xA;  saved: dbg/c&#xA;</failure>
   </testcase>
 </testsuite>

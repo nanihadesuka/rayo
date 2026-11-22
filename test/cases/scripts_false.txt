@@ -13,6 +13,7 @@ emulator-5554, ready in # ms
   saved in .rayo/case
 [1/1] FAIL case  # s
   why: it is false
+  cause: test
   step: assertTrue ${1 > 2}
   at: flow.yaml:3
   saved: .rayo/case
@@ -28,6 +29,7 @@ noAnimations {"timeout":10000}
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/failure.png --
 PNG...

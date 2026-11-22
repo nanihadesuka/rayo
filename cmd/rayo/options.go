@@ -33,8 +33,9 @@ Options of test:
   --exclude-tags a,b       not flows with one of these tags
   --rerun-failed           only those that haven't passed since they last failed
   --shuffle[=seed]         in a random order, or in that of an earlier run
-  --retries <n>            try again what fails; what then passes is FLAKY
+  --retries <n>            try again what fails, whatever the suite says (default 1)
   --fail-fast              stop at the first failure
+  --keep-going             don't stop when the device or the app fails over and over
 
   What comes out:
   -v, --verbose            every step (always, for a single flow)
@@ -67,16 +68,18 @@ type options struct {
 	rerunFailed, failFast  bool
 	shuffle, emulator      bool
 	noRun, serve           bool
+	keepGoing              bool
 	app                    string
 	mocks                  []string
 	seed                   uint64
-	retries                int
+	retries                int // negative if not said
+	suite                  *suite
 	runner                 flow.Options
 	paths                  []string
 }
 
 func parse(args []string) (*options, error) {
-	o := &options{output: "report.xml", runner: flow.Options{Env: map[string]string{}, MockPort: 8080}}
+	o := &options{output: "report.xml", retries: -1, runner: flow.Options{Env: map[string]string{}, MockPort: 8080}}
 	for i := 0; i < len(args); i++ {
 		name, value, joined := strings.Cut(args[i], "=")
 		if !strings.HasPrefix(args[i], "-") {
@@ -149,6 +152,8 @@ func parse(args []string) (*options, error) {
 			o.serve = true
 		case "--emulator":
 			o.emulator = true
+		case "--keep-going":
+			o.keepGoing = true
 		case "--fail-fast":
 			o.failFast = true
 		case "--failures-only":

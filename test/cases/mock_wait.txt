@@ -29,6 +29,7 @@ emulator-5554, ready in # ms
   saved in .rayo/case
 [1/1] FAIL case  # s
   why: the app didn't call it
+  cause: test
   step: waitForRequest path: /pay
   at: flow.yaml:9
   before:
@@ -54,6 +55,7 @@ adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/failure.png --
 PNG...

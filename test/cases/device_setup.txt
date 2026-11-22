@@ -18,6 +18,7 @@ emulator-5554, ready in # ms
   saved in .rayo/a
 [1/1] FAIL a  # s
   why: not on screen: missing
+  cause: test
   step: tapOn missing
   at: a.yaml:3
   saved: .rayo/a
@@ -48,6 +49,7 @@ tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
   the device is put back
 -- file .rayo/a/failure.png --

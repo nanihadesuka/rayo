@@ -19,22 +19,25 @@ appId: a.b
 [1/3] FAIL a  # s
   why: lost the device: EOF
     noise before
+  cause: device, the connection to the device was lost
   step: tapOn crash
   at: a.yaml:3
   saved: .rayo/a
 [2/3] FAIL b  # s
   why: lost the device: EOF
     noise before
+  cause: device, the connection to the device was lost
   step: tapOn crash
   at: b.yaml:3
   saved: .rayo/b
-[3/3] NOT_RUN c  (the device was lost again)
+[3/3] NOT_RUN c  (device: 2 failures in a row, the last: the connection to the device was lost)
 
 FAIL a  # s
 FAIL b  # s
-NOT_RUN c  (the device was lost again)
+NOT_RUN c  (device: 2 failures in a row, the last: the connection to the device was lost)
 
-TOTAL 3: 0 passed, 2 failed, 1 not run  # s
+STOPPED device: 2 failures in a row, the last: the connection to the device was lost
+TOTAL 3: 0 passed, 2 failed, 1 not run, of those failed 2 device  # s
 -- stderr --
 error: failed: a, b, c (not run)
 -- device --
@@ -45,6 +48,7 @@ noAnimations {"timeout":10000}
 tap {"delay":100,"repeat":1,"sel":{"id":"crash"},"timeout":15000}
 adb exec:screencap -p
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
 adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
 adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
@@ -52,6 +56,7 @@ noAnimations {"timeout":10000}
 tap {"delay":100,"repeat":1,"sel":{"id":"crash"},"timeout":15000}
 adb exec:screencap -p
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 -- file .rayo/a/failure.png --
 PNG...
 -- file .rayo/a/logcat.txt --

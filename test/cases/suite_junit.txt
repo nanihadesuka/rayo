@@ -33,9 +33,10 @@ appId: a.b
 -- exit --
 1
 -- stdout --
-[1/3] FAIL b  # s  (2 tries)
+[1/3] FAIL b  # s  (failed 2 times)
   try: 1
   why: not on screen: home
+  cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
   at: e2e/shared/sub.yaml:3
   from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml
@@ -52,6 +53,7 @@ appId: a.b
   saved: e2e/results/b
   try: 2
   why: not on screen: home
+  cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
   at: e2e/shared/sub.yaml:3
   from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml
@@ -67,23 +69,14 @@ appId: a.b
     a screen
   saved: e2e/results/b_retry1
 [2/3] PASS a  # s
-[3/3] FLAKY c  # s  (2 tries)
-  try: 1
-  why: flaked
-  step: tapOn flaky 1
-  at: e2e/c/flow.yaml:3
-  crash: FATAL EXCEPTION: main
-    Process: a.b, PID: 1
-    java.lang.IllegalStateException: oops
-  screen:
-    a screen
-  saved: e2e/results/c
+[3/3] PASS c  # s  (failed once, then passed)
+  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c
 
-FAIL b  # s  (2 tries)
+FAIL b  # s  (failed 2 times)
 PASS a  # s
-FLAKY c  # s  (2 tries)
+PASS c  # s  (failed once, then passed)
 
-TOTAL 3: 1 passed, 1 flaky, 1 failed  # s
+TOTAL 3: 2 passed, 1 failed, of those failed 1 app, 2 retried  # s
 -- stderr --
 error: failed: b
 -- device --
@@ -100,6 +93,7 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:date '+%m-%d %H:%M:%S'
 adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 adb reverse:forward:tcp:8080;tcp:<free>
 tap {"delay":100,"repeat":1,"sel":{"id":"GET /a"},"timeout":15000}
   app: GET /a -> 200  ok
@@ -109,12 +103,14 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:date '+%m-%d %H:%M:%S'
 adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 key {"code":4,"timeout":15000}
 tap {"delay":100,"repeat":1,"sel":{"id":"flaky 1"},"timeout":15000}
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:date '+%m-%d %H:%M:%S'
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 tap {"delay":100,"repeat":1,"sel":{"id":"flaky 1"},"timeout":15000}
 bye {"timeout":5000}
 -- file e2e/results/b/failure.png --
@@ -159,10 +155,10 @@ a screen
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="rayo" tests="3" failures="1" errors="0" skipped="0" time="#">
   <testcase name="b" file="e2e/b/flow.yaml" time="#">
-    <failure>  try: 1&#xA;  why: not on screen: home&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b&#xA;  try: 2&#xA;  why: not on screen: home&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b_retry1&#xA;</failure>
+    <failure>  try: 1&#xA;  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b&#xA;  try: 2&#xA;  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b_retry1&#xA;</failure>
   </testcase>
   <testcase name="a" file="e2e/a/flow.yaml" time="#"></testcase>
   <testcase name="c" file="e2e/c/flow.yaml" time="#">
-    <system-out>flaky&#xA;  try: 1&#xA;  why: flaked&#xA;  step: tapOn flaky 1&#xA;  at: e2e/c/flow.yaml:3&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/c&#xA;</system-out>
+    <system-out>PASS c  # s  (failed once, then passed)&#xA;  try: 1&#xA;  why: flaked&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn flaky 1&#xA;  at: e2e/c/flow.yaml:3&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/c&#xA;</system-out>
   </testcase>
 </testsuite>

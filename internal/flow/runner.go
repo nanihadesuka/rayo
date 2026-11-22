@@ -50,6 +50,7 @@ type Runner struct {
 	script     *script
 	recent     []string // the last steps that passed
 	failure    *Failure
+	log        string // of the device, when it failed
 	warnings   []string
 	located    bool     // a pretend location was set
 	video      *video   // being recorded
@@ -76,8 +77,11 @@ func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
 		err = errors.Join(err, e)
 	}
 	r.reset()
-	if err != nil && r.failure == nil {
-		r.failure = &Failure{}
+	if err != nil && ctx.Err() == nil {
+		if r.failure == nil {
+			r.failure = &Failure{}
+		}
+		r.diagnose(err, r.log)
 	}
 	return Result{Flow: f, Err: err, Elapsed: time.Since(start), Failure: r.failure, Warnings: r.warnings, Recordings: r.recordings}
 }
@@ -85,7 +89,8 @@ func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
 // prepare forgets the flow before.
 func (r *Runner) prepare(ctx context.Context, f *Flow, folder string) {
 	r.flow, r.began, r.folder = f, time.Now(), folder
-	r.recent, r.failure, r.warnings, r.recordings, r.located, r.airplane = nil, nil, nil, nil, false, ""
+	r.recent, r.failure, r.warnings, r.recordings = nil, nil, nil, nil
+	r.log, r.located, r.airplane = "", false, ""
 	for _, name := range evidenceFiles { // of an earlier run
 		_ = os.Remove(filepath.Join(folder, name))
 	}
@@ -305,6 +310,7 @@ func (r *Runner) evidence(ctx context.Context) {
 	}
 	log, err := r.device.Exec("logcat -d -t 2000")
 	save("logcat.txt", log, err)
+	r.log = string(log)
 	r.failure.Crash = r.crash(string(log))
 	r.failure.Saved = filepath.ToSlash(dir)
 	if r.backend.mock != nil {

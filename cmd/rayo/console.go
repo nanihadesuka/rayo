@@ -67,5 +67,9 @@ func (c *console) end(i, of int, o *outcome) {
 		c.pending = 0
 	}
 	fmt.Println(line)
+	if o.status == passed {
+		fmt.Print(o.notes() + o.warnings())
+		return
+	}
 	fmt.Print(o.details(!c.verbose)) // verbose has shown the calls, and the screen is long
 }

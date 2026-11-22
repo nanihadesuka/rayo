@@ -13,11 +13,12 @@ emulator-5554, ready in # ms
   saved in .rayo/case
 [1/1] FAIL case  # s
   why: Error: not.installed is not installed
+  cause: app, the app is not installed
   step: launchApp
   at: flow.yaml:3
   saved: .rayo/case
 
-TOTAL 1: 0 passed, 1 failed  # s
+TOTAL 1: 0 passed, 1 failed, of those failed 1 app  # s
 -- stderr --
 error: failed: case
 -- device --
@@ -29,6 +30,7 @@ shell {"command":"am force-stop not.installed\na=$(cmd package resolve-activity 
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/failure.png --
 PNG...

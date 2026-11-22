@@ -17,6 +17,7 @@ emulator-5554, ready in # ms
   saved in .rayo/case
 [1/1] FAIL case  # s
   why: adb reverse: denied
+  cause: test
   saved: .rayo/case
 
 TOTAL 1: 0 passed, 1 failed  # s
@@ -31,6 +32,7 @@ adb reverse:forward:tcp:9;tcp:<free>
 adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/failure.png --
 PNG...

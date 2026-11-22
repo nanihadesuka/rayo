@@ -50,6 +50,7 @@ emulator-5554, ready in # ms
         GET /q?a=1
         GET /q
         GET /nothing
+  cause: test
   before:
     tapOn GET /q
     tapOn GET /nothing
@@ -91,6 +92,7 @@ adb exec:screencap -p
 tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/case/failure.png --
 PNG...

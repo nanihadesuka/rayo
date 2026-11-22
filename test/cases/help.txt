@@ -27,8 +27,9 @@ Options of test:
   --exclude-tags a,b       not flows with one of these tags
   --rerun-failed           only those that haven't passed since they last failed
   --shuffle[=seed]         in a random order, or in that of an earlier run
-  --retries <n>            try again what fails; what then passes is FLAKY
+  --retries <n>            try again what fails, whatever the suite says (default 1)
   --fail-fast              stop at the first failure
+  --keep-going             don't stop when the device or the app fails over and over
 
   What comes out:
   -v, --verbose            every step (always, for a single flow)

@@ -1,0 +1,13 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+flows: [{ file: a.yaml, retries: -1 }]
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: x }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: a.yaml: retries can't be -1

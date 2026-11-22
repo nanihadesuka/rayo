@@ -22,22 +22,12 @@ startRecording: own
 -- exit --
 0
 -- stdout --
-[1/3] FLAKY a  # s  (2 tries)
-  try: 1
-  why: flaked
-  step: tapOn flaky 1
-  at: a.yaml:3
-  screen:
-    a screen
-  saved: .rayo/a
+[1/3] PASS a  # s  (failed once, then passed)
+  try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a
 [2/3] PASS b  # s
 [3/3] PASS c  # s
 
-FLAKY a  # s  (2 tries)
-PASS b  # s
-PASS c  # s
-
-TOTAL 3: 2 passed, 1 flaky, 0 failed  # s
+TOTAL 3: 3 passed, 0 failed, 1 retried  # s
 -- device --
 adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
 adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
@@ -50,6 +40,7 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:kill -INT 4321 2>/dev/null
 adb exec:cat /data/local/tmp/rayo-<pid>.mp4; rm -f /data/local/tmp/rayo-<pid>.mp4
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 adb exec:l=180; screenrecord --help 2>&1 | grep -q 'remove the time limit' && l=1800; r=$(wm size | sed -n '$s/.*: //p'); w=${r%x*}; h=${r#*x}; n=$w; [ $h -lt $n ] && n=$h; s=; [ $n -gt 480 ] && s="--size $((w*480/n/16*16))x$((h*480/n/16*16))"; echo $$; exec screenrecord $s --bit-rate 600000 --time-limit $l /data/local/tmp/rayo-<pid>.mp4 2>&1
 tap {"delay":100,"repeat":1,"sel":{"id":"flaky 1"},"timeout":15000}
 adb exec:kill -INT 4321 2>/dev/null
@@ -76,20 +67,24 @@ a video ........................................................................
   "began": "<now>",
   "seconds": #,
   "order": "",
+  "stopped": "",
   "ok": true,
   "total": 3,
-  "passed": 2,
-  "flaky": 1,
+  "passed": 3,
   "failed": 0,
   "interrupted": 0,
   "notRun": 0,
+  "retried": 1,
   "flows": [
     {
       "name": "a",
       "file": "a.yaml",
-      "status": "FLAKY",
+      "status": "PASS",
+      "cause": "",
       "seconds": #,
       "tries": 2,
+      "timesFailed": 1,
+      "retries": 1,
       "notRunReason": "",
       "warnings": [],
       "recordings": [
@@ -100,6 +95,8 @@ a video ........................................................................
         {
           "try": 1,
           "why": "flaked",
+          "cause": "test",
+          "because": "",
           "step": "tapOn flaky 1",
           "file": "a.yaml",
           "line": 3,
@@ -118,8 +115,11 @@ a video ........................................................................
       "name": "b",
       "file": "b.yaml",
       "status": "PASS",
+      "cause": "",
       "seconds": #,
       "tries": 1,
+      "timesFailed": 0,
+      "retries": 1,
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
@@ -129,8 +129,11 @@ a video ........................................................................
       "name": "c",
       "file": "c.yaml",
       "status": "PASS",
+      "cause": "",
       "seconds": #,
       "tries": 1,
+      "timesFailed": 0,
+      "retries": 1,
       "notRunReason": "",
       "warnings": [],
       "recordings": [

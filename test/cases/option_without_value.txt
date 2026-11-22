@@ -4,4 +4,4 @@ test flow.yaml --device
 -- exit --
 1
 -- stderr --
-error: --device needs a value
+error: no file flow.yaml

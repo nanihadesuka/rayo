@@ -89,6 +89,68 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 	return chosen, nil
 }
 
+// streak is the failures in a row that aren't the tests' own.
+type streak struct {
+	device int    // tries
+	app    int    // flows, as one alone may crash it by itself
+	crash  string // the app's
+	last   *flow.Flow
+}
+
+// How many in a row are enough to think that the rest would fail too.
+const (
+	deviceRow = 2
+	appRow    = 3
+)
+
+// after takes a try into account, and returns why to stop, if so.
+func (r *streak) after(o *outcome, keepGoing bool) string {
+	f := o.Failure
+	if o.Err == nil || f == nil || f.Cause == flow.Test {
+		*r = streak{}
+		return ""
+	}
+	if f.Cause == flow.Dev {
+		r.device++
+		r.app, r.crash = 0, ""
+		switch {
+		case f.Unusable:
+			return "device: " + f.Because
+		case r.device >= deviceRow && !keepGoing:
+			return fmt.Sprintf("device: %d failures in a row, the last: %s", r.device, f.Because)
+		}
+		return ""
+	}
+	if r.crash != f.Because {
+		r.app = 0
+	}
+	if r.app == 0 || r.last != o.flow {
+		r.app++
+	}
+	r.device, r.crash, r.last = 0, f.Because, o.flow
+	if r.app >= appRow && !keepGoing {
+		return fmt.Sprintf("app: %d flows in a row, %s", r.app, f.Because)
+	}
+	return ""
+}
+
+// retriesOf says how many times a flow may be tried again. A capture calls the real backend, so only once.
+func (o *options) retriesOf(f *flow.Flow) int {
+	switch {
+	case o.runner.Capture != "":
+		return 0
+	case o.retries >= 0:
+		return o.retries
+	case o.suite != nil:
+		return o.suite.retriesOf(f)
+	case o.continuous: // someone is looking, and changing it
+		return 0
+	}
+	return defaultRetries
+}
+
+const defaultRetries = 1
+
 // steps says whether to show every step, and not only how each flow went.
 func (o *options) steps(flows []*flow.Flow) bool { return o.verbose || len(flows) == 1 }
 
@@ -101,11 +163,12 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 		fmt.Println("order:", sum.order)
 	}
 	folders := map[string]int{}
-	lost, stop := 0, "" // stop is why the rest won't run
+	var row streak
+	stop := "" // why the rest won't run
 	verbose := o.steps(flows)
 	s.reporter.(*console).verbose = verbose
 	for i, f := range flows {
-		out := outcome{flow: f}
+		out := outcome{flow: f, retries: o.retriesOf(f)}
 		if stop != "" {
 			out.status, out.why = notRun, stop
 		} else {
@@ -122,21 +185,20 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 				out.Result = s.runner.Run(ctx, f, folder)
 				out.tries = append(out.tries, out.Result)
 				out.status = out.judge(ctx)
-				if s.agent.Dead() == nil {
-					lost = 0
-				} else if ctx.Err() == nil {
-					lost++
-					if lost > 1 {
-						stop = "the device was lost again"
-					} else if err := s.restart(); err != nil {
-						stop = fmt.Sprintf("the device was lost: %v", err)
+				if ctx.Err() == nil {
+					stop = row.after(&out, o.keepGoing)
+					if stop == "" && s.agent.Dead() != nil {
+						if err := s.restart(); err != nil {
+							stop = fmt.Sprintf("the device was lost: %v", err)
+						}
 					}
+					sum.stopped = stop
 				}
-				if out.status != failed || try >= o.retries || stop != "" {
+				if out.status != failed || try >= out.retries || stop != "" {
 					break
 				}
 				if verbose {
-					fmt.Printf("  failed, retry %d of %d: %v\n", try+1, o.retries, out.Err)
+					fmt.Printf("  failed, retry %d of %d: %v\n", try+1, out.retries, out.Err)
 				}
 			}
 			switch {
@@ -191,7 +253,7 @@ func (s *summary) saveLast(o *options) error {
 	}
 	before := len(last)
 	for _, out := range s.outcomes {
-		if out.status.good() {
+		if out.status == passed {
 			delete(last, identity(out.flow))
 		} else {
 			last[identity(out.flow)] = out.status.String()
