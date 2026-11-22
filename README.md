@@ -37,10 +37,12 @@ TOTAL 3: 2 passed, 1 failed, 2 retried  68.3 s
 - **[Mock backend](MOCKING.md) built in.** States, slow or broken networks; a call without a mock fails the test.
 - **[Capture](REFERENCE.md#capture).** Run once on the real backend, and its answers become mocks.
 - **[Videos](REFERENCE.md#startrecording-stoprecording)**, small, of each test or some steps.
+- **Pretend location and trips.** [`setLocation`](REFERENCE.md#setlocation) puts the device anywhere;
+  [`travel`](REFERENCE.md#travel) moves it along a route at a real speed. For any app, without changing it.
 - **[Live](REFERENCE.md#live-sessions).** Write a test while it runs, by hand, from a script or an LLM.
 - **[Honest results](REFERENCE.md#results)** as text, JSON or JUnit: why, where, the screen, the calls and the crash.
 - **[Retries](REFERENCE.md#retries)**, and it [stops early](REFERENCE.md#causes) if the device or the app is what fails.
-- **And** location and trips, QR for the camera, permissions, airplane mode, screen size and font, scripts, tags,
+- **And** QR for the camera, permissions, airplane mode, screen size and font, scripts, tags,
   random order, [schemas](schema) for your editor.
 
 ## Start
