@@ -118,7 +118,10 @@ func (d *fakeDevice) serve(c net.Conn) {
 	}
 	s := service()
 	if s == "host:devices" {
-		fmt.Fprintf(c, "OKAY%04x%s", len(d.devices), d.devices)
+		d.mu.Lock()
+		devices := d.devices
+		d.mu.Unlock()
+		fmt.Fprintf(c, "OKAY%04x%s", len(devices), devices)
 		return
 	}
 	if !strings.HasPrefix(s, "host:transport:") {

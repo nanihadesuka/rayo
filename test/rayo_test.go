@@ -95,7 +95,7 @@ var masks = []struct {
 	{regexp.MustCompile(`"value":"[a-z]{10}@example.com"`), `"value":"<email>"`},
 	{regexp.MustCompile(`"value":"[a-z]{5}"`), `"value":"<5 letters>"`},
 	{regexp.MustCompile(`"value":"[A-Z][a-z]{5} [A-Z][a-z]{7}"`), `"value":"<name>"`},
-	{regexp.MustCompile(`(open|stat|CreateFile|GetFileAttributesEx|readlink) ([^:\n]+): (The system cannot find the (file|path) specified\.|no such file or directory)`), "no file $2"},
+	{regexp.MustCompile(`(open|l?stat|CreateFile|GetFileAttributesEx|readlink) ([^:\n]+): (The system cannot find the (file|path) specified\.|no such file or directory)`), "no file $2"},
 }
 
 // slashes makes paths look the same on every system.
@@ -169,10 +169,12 @@ func run(t *testing.T, input string) string {
 		}
 	}
 	d := startDevice(t, devices, empty)
-	d.silent = silent
 	if console != "" {
-		d.devices = "emulator-" + d.startConsole(t, console) + "\tdevice\n"
+		devices = "emulator-" + d.startConsole(t, console) + "\tdevice\n"
 	}
+	d.mu.Lock()
+	d.silent, d.devices = silent, devices
+	d.mu.Unlock()
 	args = strings.ReplaceAll(args, "$BACKEND", backend(t))
 	cmd := d.command(dir, strings.Fields(args)...)
 	var out, errs bytes.Buffer
