@@ -2,6 +2,7 @@ package flow
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/nanihadesuka/rayo/internal/schema"
@@ -25,11 +26,25 @@ type anyKey interface {
 	check(p *reader, n *yaml.Node) error
 	value(n *yaml.Node) any
 	schema() schema.S
+	values() []string
 }
 
 func (k *Key[T]) title() string    { return k.name }
 func (k *Key[T]) takes() string    { return k.kind.name }
 func (k *Key[T]) describe() string { return k.about }
+
+// values are those it takes, if only some.
+func (k *Key[T]) values() []string {
+	list := []string{}
+	some, _ := k.kind.shape()["enum"].([]any)
+	for _, v := range some {
+		text := fmt.Sprint(v)
+		if !slices.ContainsFunc(list, func(o string) bool { return strings.EqualFold(o, text) }) {
+			list = append(list, text)
+		}
+	}
+	return list
+}
 
 func (k *Key[T]) schema() schema.S { return schema.Dynamic(k.kind.shape()) }
 

@@ -3,3 +3,4 @@
 /internal/agent/out/
 .rayo/
 report.xml
+/dist/

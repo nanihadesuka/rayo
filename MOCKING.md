@@ -1,0 +1,118 @@
+# Mocking
+
+rayo answers as the backend. A mock is a folder: `mappings/` says **when** to answer, and `__files/`
+holds **what** to answer. The names are fixed.
+
+```
+mock/
+├─ mappings/                 the rules: if the app calls this, answer that
+│   ├─ products.json
+│   └─ order.json
+└─ __files/                  the bodies, as the backend would send them
+    ├─ products/all.json
+    └─ order/shipped.json
+```
+
+A flow names its mocks, in order, in its header:
+
+```yaml
+mock: [../shared/mock, mock/overrides.json]
+```
+
+## In your app
+
+rayo can't reach inside an app: the app has to send its calls to `http://127.0.0.1:8080` on the device.
+With OkHttp, an interceptor does it. It can be **only in the debug build** (`src/debug`), and only on
+when a test says so, so nothing of it reaches your users.
+
+```kotlin
+/** https://host/path becomes http://127.0.0.1:8080/host/path, when a test asked for it. */
+object MockRedirect : Interceptor {
+  @Volatile var on = false
+
+  override fun intercept(chain: Interceptor.Chain): Response {
+    val request = chain.request()
+    if (!on) return chain.proceed(request)
+    val url = request.url.newBuilder()
+      .scheme("http").host("127.0.0.1").port(8080)
+      .encodedPath("/${request.url.host}${request.url.encodedPath}")
+      .build()
+    return chain.proceed(request.newBuilder().url(url).build())
+  }
+}
+```
+
+Add it to the client with `addInterceptor(MockRedirect)`, and turn it on before the first call, from
+what `launchApp: { arguments: { mock: true } }` gives:
+
+```kotlin
+MockRedirect.on = intent.getBooleanExtra("mock", false)
+```
+
+Android refuses calls that aren't HTTPS, so allow that one, also in `src/debug`, with
+`android:networkSecurityConfig="@xml/network_security_config"`:
+
+```xml
+<network-security-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="false">127.0.0.1</domain>
+  </domain-config>
+</network-security-config>
+```
+
+The host goes in the path so that several can be mocked, and so that a capture knows whom to call:
+a mapping for `https://api.example.com/products` has the path `/api.example.com/products`. An app
+with one backend may leave it out, as the examples here do; to capture it, use `--capture-from`.
+
+## What happens on a call
+
+1. The app calls `http://127.0.0.1:8080/...` on the device, which reaches rayo.
+2. rayo looks for a mapping that fits: method, address, query, headers, body and state.
+
+   ```json
+   {
+     "request": { "method": "GET", "urlPath": "/products" },
+     "response": { "status": 200, "headers": { "Content-Type": "application/json" }, "bodyFileName": "products/all.json" }
+   }
+   ```
+
+   If several fit, the lowest `priority` wins (5 by default), and then the last one loaded. So
+   `overrides.json` wins over `shared/mock`, as it comes after.
+3. It answers with `__files/products/all.json`, with what is between `{{ }}` filled in, such as
+   `{{now offset='-8 minutes'}}`.
+4. If none fits, the app gets a 404 and **the flow fails**.
+
+## State
+
+The same call can be answered differently as things advance. A mapping may belong to a scenario,
+which begins in `Started`:
+
+```json
+{ "mappings": [
+  { "scenarioName": "order", "requiredScenarioState": "Started", "newScenarioState": "paid",
+    "request": { "method": "POST", "urlPath": "/payments" },
+    "response": { "status": 200 } },
+  { "scenarioName": "order", "requiredScenarioState": "shipped",
+    "request": { "method": "GET", "urlPath": "/order" },
+    "response": { "status": 200, "bodyFileName": "order/shipped.json" } },
+  { "priority": 10,
+    "request": { "method": "GET", "urlPath": "/order" },
+    "response": { "status": 200, "jsonBody": { "state": "waiting" } } }
+] }
+```
+
+Here paying moves `order` to `paid`. What the backend does by itself, the flow says:
+`- mockState: { order: shipped }`. The last mapping is for any other state.
+
+## Why two folders
+
+- **Reuse**: several mappings can answer with the same body.
+- **Readable**: the logic isn't buried in long bodies.
+- **Easy to replace**: a body is a real answer, to paste without touching the rules.
+
+It isn't required: an answer can be in its mapping, with `body` or `jsonBody`. A few lines go there;
+what is long or shared goes in `__files/`.
+
+`rayo test --capture` writes such a folder from a real backend. All that a mapping can say, and
+the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
+[reference](REFERENCE.md#mock).

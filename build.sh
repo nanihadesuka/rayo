@@ -19,10 +19,22 @@ if [ "${1:-}" = --agent ]; then
 fi
 
 export CGO_ENABLED=0
-flags=(-trimpath -ldflags "-s -w")
+# Small: without debug data, inlining (the time goes in the device anyway) or HTTP/2 (mocks don't use it).
+flags=(-trimpath -tags nethttpomithttp2 -ldflags "-s -w -buildid=" -gcflags=all=-l)
+targets="windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64"
 mkdir -p bin
-if [ "${1:-}" = --all ]; then
-  for target in windows/amd64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
+if [ "${1:-}" = --release ]; then
+  # dist/: an archive for each system, and their hashes. The same source gives the same programs.
+  rm -rf dist && mkdir dist
+  for target in $targets; do
+    os="${target%/*}" arch="${target#*/}"
+    name="rayo-${os/darwin/macos}-$arch"
+    if [ "$os" = windows ]; then GOOS=$os GOARCH=$arch go build "${flags[@]}" -o "dist/$name/rayo.exe" ./cmd/rayo
+    else GOOS=$os GOARCH=$arch go build "${flags[@]}" -o "dist/$name/rayo" ./cmd/rayo; fi
+  done
+  go run ./internal/release dist
+elif [ "${1:-}" = --all ]; then
+  for target in $targets; do
     os="${target%/*}" arch="${target#*/}" ext=""
     [ "$os" = windows ] && ext=.exe
     GOOS=$os GOARCH=$arch go build "${flags[@]}" -o "bin/rayo-$os-$arch$ext" ./cmd/rayo
@@ -30,4 +42,4 @@ if [ "${1:-}" = --all ]; then
 else
   go build "${flags[@]}" -o "bin/rayo$(go env GOEXE)" ./cmd/rayo
 fi
-ls -l bin
+[ "${1:-}" = --release ] || ls -l bin

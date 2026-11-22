@@ -125,6 +125,9 @@ func Commands() []string {
 // Tested says whether a command has run on a device.
 func Tested(name string) bool { return !commands[name].untested }
 
+// HeaderDocs describes it.
+func HeaderDocs() []schema.Doc { return schema.Docs(headerFields) }
+
 // HeaderHelp is for the terminal.
 func HeaderHelp() string { return schema.Help(headerFields) }
 

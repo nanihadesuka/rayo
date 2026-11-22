@@ -353,3 +353,20 @@ func bare(text string) string {
 	text = links.ReplaceAllString(seeLinks.ReplaceAllString(text, ""), "$1")
 	return strings.ReplaceAll(text, "`", "")
 }
+
+// Doc is a field, for who reads about it.
+type Doc struct {
+	Name     string `json:"name"`
+	Takes    string `json:"takes"`
+	About    string `json:"about"`
+	Required bool   `json:"required"`
+}
+
+// Docs describes fields.
+func Docs[T any](fields []Field[T]) []Doc {
+	list := []Doc{}
+	for _, f := range fields {
+		list = append(list, Doc{f.Name, bare(f.Takes), bare(f.full()), f.Required})
+	}
+	return list
+}

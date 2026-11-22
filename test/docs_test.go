@@ -1,9 +1,11 @@
 package test
 
 import (
+	"encoding/json"
 	"maps"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -37,20 +39,20 @@ func TestSchemas(t *testing.T) {
 	generated(t, "../schema/results.json", string(report.Schema()))
 }
 
-func TestReadmeHasTheHelp(t *testing.T) {
+func TestReferenceHasTheHelp(t *testing.T) {
 	out, err := exec.Command(rayo, "help").Output()
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile("../README.md")
+	data, err := os.ReadFile("../REFERENCE.md")
 	if err != nil {
 		t.Fatal(err)
 	}
 	block := regexp.MustCompile("(?s)```\nrayo - runs.*?```\n")
 	if !block.Match([]byte(unix(data))) {
-		t.Fatal("README.md doesn't have the help")
+		t.Fatal("REFERENCE.md doesn't have the help")
 	}
-	generated(t, "../README.md", block.ReplaceAllLiteralString(unix(data), "```\n"+unix(out)+"```\n"))
+	generated(t, "../REFERENCE.md", block.ReplaceAllLiteralString(unix(data), "```\n"+unix(out)+"```\n"))
 }
 
 func TestReferenceTables(t *testing.T) {
@@ -86,6 +88,56 @@ func TestReferenceTables(t *testing.T) {
 		if !used[name] {
 			t.Errorf("REFERENCE.md has no table of %s", name)
 		}
+	}
+}
+
+// The documentation's page has the Markdown files and the tables of the code.
+func TestPage(t *testing.T) {
+	out, err := exec.Command(rayo, "help", "json").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := map[string]string{}
+	for _, name := range []string{"GUIDE.md", "REFERENCE.md", "MOCKING.md", "CONTRIBUTING.md", "schema/suite.json", "schema/results.json"} {
+		data, err := os.ReadFile("../" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files[name] = unix(data)
+	}
+	var b strings.Builder
+	e := json.NewEncoder(&b) // which escapes what could end a script
+	e.SetIndent("", " ")
+	if err := e.Encode(map[string]any{"markdown": files, "rayo": json.RawMessage(out)}); err != nil {
+		t.Fatal(err)
+	}
+	generated(t, "../docs/data.js", "// Written by go test ./test -update\nwindow.RAYO = "+b.String())
+}
+
+// Every example can be copied: rayo accepts it.
+func TestExamples(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "login.yaml"), "appId: a.b\n---\n- back\n")
+	write(t, filepath.Join(dir, "create_user.js"), "output.name = 1")
+	write(t, filepath.Join(dir, "qr.png"), "png")
+	write(t, filepath.Join(dir, "overrides.json"), `{"mappings":[]}`)
+	try := func(what, text string) {
+		if _, err := flow.ParseSteps(filepath.Join(dir, "example.yaml"), text); err != nil {
+			t.Errorf("%s: %v\n%s", what, err, text)
+		}
+	}
+	for _, c := range flow.Describe().Commands {
+		if !strings.Contains(c.Example, "- "+c.Name) {
+			t.Errorf("%s has no example", c.Name)
+		}
+		try(c.Name, c.Example)
+	}
+	guide, err := os.ReadFile("../GUIDE.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range regexp.MustCompile("(?s)```yaml\n(- .*?)```").FindAllStringSubmatch(unix(guide), -1) {
+		try("GUIDE.md", m[1])
 	}
 }
 

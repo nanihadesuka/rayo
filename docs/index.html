@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rayo</title>
+<meta name="description" content="End-to-end tests for Android, fast: flows in YAML, with a mock backend built in.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<script>
+  // Before anything is drawn, so that the page doesn't flash.
+  try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t } catch {}
+</script>
+</head>
+<body>
+<header class="top">
+  <button id="menu" class="icon-button" aria-label="Menu" aria-expanded="false" aria-controls="side">☰</button>
+  <a class="brand" href="#/"><img src="icon.svg" alt="" width="30" height="30"><b>rayo</b></a>
+  <div class="search" role="search">
+    <input id="search" type="search" placeholder="Search commands, keys, options…" autocomplete="off" spellcheck="false"
+      role="combobox" aria-expanded="false" aria-controls="found" aria-label="Search the documentation">
+    <kbd>/</kbd>
+    <ul id="found" role="listbox" aria-label="Results" hidden></ul>
+  </div>
+  <button id="theme" class="icon-button" aria-label="Light or dark">◐</button>
+  <a class="icon-button repo" href="https://github.com/nanihadesuka/rayo">GitHub</a>
+</header>
+<div class="shade" id="shade" hidden></div>
+<div class="columns">
+  <nav id="side" aria-label="Documentation"></nav>
+  <main id="page" tabindex="-1"><noscript>This page needs JavaScript. The same is in the repository: README.md, GUIDE.md and REFERENCE.md.</noscript></main>
+  <aside id="toc" aria-label="On this page"></aside>
+</div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

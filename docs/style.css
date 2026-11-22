@@ -1,0 +1,118 @@
+:root {
+  --bg: #fcfbff; --panel: #f4f1fb; --line: #e2dcf0; --text: #1d1833; --soft: #625b7c;
+  --accent: #5b2fd6; --mark: #ffe27a; --code: #f4f1fb; --shadow: 0 12px 40px #1d183326;
+  --key: #7a2fb8; --string: #a3410a; --comment: #6f6890; --number: #0b6b57; --warn: #9a4b00;
+  --side: 270px; --bar: 60px; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme=light]) {
+    --bg: #0f0b1e; --panel: #181231; --line: #2b2350; --text: #ece8fa; --soft: #a59cc6;
+    --accent: #ffc93c; --mark: #6b4c00; --code: #181231; --shadow: 0 12px 40px #000a;
+    --key: #c9a6ff; --string: #ffb27a; --comment: #8f86b4; --number: #7fe0c4; --warn: #ffb35c; color-scheme: dark;
+  }
+}
+:root[data-theme=dark] {
+  --bg: #0f0b1e; --panel: #181231; --line: #2b2350; --text: #ece8fa; --soft: #a59cc6;
+  --accent: #ffc93c; --mark: #6b4c00; --code: #181231; --shadow: 0 12px 40px #000a;
+  --key: #c9a6ff; --string: #ffb27a; --comment: #8f86b4; --number: #7fe0c4; --warn: #ffb35c; color-scheme: dark;
+}
+* { box-sizing: border-box }
+html { scroll-padding-top: calc(var(--bar) + 16px) }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif }
+a { color: var(--accent); text-decoration: none }
+a:hover { text-decoration: underline }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px }
+code, pre, kbd { font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace; font-size: .88em }
+
+.top { position: sticky; top: 0; z-index: 30; height: var(--bar); display: flex; align-items: center; gap: 14px; padding: 0 20px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line) }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 1.15rem }
+.brand:hover { text-decoration: none }
+.icon-button { border: 0; background: none; color: var(--soft); font: inherit; padding: 8px 10px; border-radius: 8px; cursor: pointer }
+.icon-button:hover { background: var(--panel); color: var(--text); text-decoration: none }
+#menu { display: none }
+.search { position: relative; flex: 1; max-width: 520px; margin: 0 auto }
+.search input { width: 100%; padding: 9px 40px 9px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit; font-size: .95rem }
+.search input::-webkit-search-cancel-button { display: none }
+.search kbd { position: absolute; right: 12px; top: 10px; padding: 0 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--soft); pointer-events: none }
+#found { position: absolute; left: 0; right: 0; top: 48px; max-height: min(70vh, 560px); overflow: auto; margin: 0; padding: 6px; list-style: none;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow) }
+#found a { display: block; padding: 8px 12px; border-radius: 8px; color: inherit }
+#found a:hover, #found [aria-selected=true] a { background: var(--panel); text-decoration: none }
+#found small { display: block; color: var(--soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+#found .where { float: right; color: var(--soft); font-size: .78rem; margin-left: 12px }
+#found .none { padding: 14px; color: var(--soft) }
+mark { background: var(--mark); color: inherit; border-radius: 3px }
+
+.columns { display: grid; grid-template-columns: var(--side) minmax(0, 1fr) 220px; max-width: 1360px; margin: 0 auto }
+#side { position: sticky; top: var(--bar); height: calc(100vh - var(--bar)); overflow: auto; padding: 18px 12px 40px 20px; border-right: 1px solid var(--line); font-size: .93rem }
+#side details { margin-bottom: 4px }
+#side summary { padding: 6px 10px; border-radius: 8px; font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between }
+#side summary::-webkit-details-marker { display: none }
+#side summary::after { content: "›"; color: var(--soft); transition: transform .15s }
+#side details[open] > summary::after { transform: rotate(90deg) }
+#side summary:hover, #side li a:hover { background: var(--panel); text-decoration: none }
+#side ul { margin: 2px 0 8px 10px; padding: 0 0 0 8px; list-style: none; border-left: 1px solid var(--line) }
+#side li a { display: block; padding: 4px 10px; border-radius: 7px; color: var(--soft) }
+#side li a[aria-current] { background: var(--panel); color: var(--accent); font-weight: 600 }
+#toc { position: sticky; top: var(--bar); height: calc(100vh - var(--bar)); overflow: auto; padding: 34px 16px; font-size: .86rem }
+#toc b { display: block; margin-bottom: 6px }
+#toc a { display: block; padding: 2px 0; color: var(--soft) }
+#toc a.deep { padding-left: 12px }
+
+main { padding: 30px 44px 100px; min-width: 0; outline: 0 }
+main > * { max-width: 780px }
+h1 { font-size: 2.1rem; line-height: 1.2; margin: 6px 0 10px; letter-spacing: -.02em }
+h2 { font-size: 1.4rem; margin: 2.2em 0 .5em; letter-spacing: -.01em }
+h3 { font-size: 1.12rem; margin: 1.8em 0 .4em }
+h2 a.here, h3 a.here { visibility: hidden; margin-left: 8px; font-weight: 400; color: var(--soft) }
+h2:hover a.here, h3:hover a.here { visibility: visible }
+.crumbs { color: var(--soft); font-size: .86rem }
+.lead { font-size: 1.13rem; color: var(--soft); margin: 0 0 1.2em }
+.badge { display: inline-block; margin-left: 10px; padding: 1px 10px; border-radius: 99px; border: 1px solid var(--line); font-size: .78rem; font-weight: 500; color: var(--soft); vertical-align: middle; letter-spacing: 0 }
+.badge.warn { color: var(--warn); border-color: currentColor }
+p code, li code, td code, summary code { background: var(--code); padding: 1px 6px; border-radius: 5px }
+.code { position: relative; margin: 1em 0 }
+pre { margin: 0; padding: 14px 16px; overflow: auto; background: var(--code); border: 1px solid var(--line); border-radius: 10px; line-height: 1.55 }
+.code button { position: absolute; top: 8px; right: 8px; padding: 2px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--soft); font: inherit; font-size: .78rem; cursor: pointer; opacity: 0 }
+.code:hover button, .code button:focus-visible { opacity: 1 }
+.k { color: var(--key) } .s { color: var(--string) } .c { color: var(--comment); font-style: italic } .n { color: var(--number) }
+.table { overflow-x: auto; margin: 1em 0 }
+table { border-collapse: collapse; width: 100%; font-size: .93rem }
+th, td { text-align: left; vertical-align: top; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line) }
+th { color: var(--soft); font-weight: 600; font-size: .84rem }
+td:first-child { white-space: nowrap }
+tr:target td { background: var(--mark) }
+details.more { margin: .9em 0; border: 1px solid var(--line); border-radius: 10px; padding: 0 16px }
+details.more > summary { margin: 0 -16px; padding: 11px 16px; cursor: pointer; font-weight: 600; border-radius: 10px }
+details.more > summary:hover { background: var(--panel) }
+details.more[open] { padding-bottom: 10px }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0 }
+.hero { text-align: center; padding: 26px 0 8px; margin: 0 auto }
+.hero h1 { font-size: 3rem; margin: 8px 0 0 }
+.hero p { font-size: 1.2rem; color: var(--soft); margin: 6px 0 22px }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin: 1.2em 0; max-width: 900px }
+.card { padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; color: inherit }
+.card:hover { border-color: var(--accent); text-decoration: none }
+.card b { display: block; color: var(--accent) }
+.card span { color: var(--soft); font-size: .92rem }
+.listing { columns: 3 190px; padding: 0; list-style: none }
+.listing li { padding: 3px 0; break-inside: avoid }
+.filter { width: 100%; max-width: 360px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); font: inherit }
+.next { display: flex; justify-content: space-between; gap: 16px; margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--line) }
+.shade { position: fixed; inset: var(--bar) 0 0; z-index: 19; background: #0008 }
+
+@media (max-width: 1140px) { .columns { grid-template-columns: var(--side) minmax(0, 1fr) } #toc { display: none } }
+@media (max-width: 800px) {
+  #menu { display: block }
+  .columns { display: block }
+  #side { position: fixed; left: 0; top: var(--bar); z-index: 20; width: min(86vw, 320px); background: var(--bg); transform: translateX(-105%); visibility: hidden; transition: transform .2s, visibility .2s }
+  #side.open { transform: none; visibility: visible }
+  main { padding: 20px 18px 80px }
+  .top { gap: 6px; padding: 0 10px }
+  .repo, .brand b, .search kbd { display: none }
+  h1 { font-size: 1.7rem }
+  .hero h1 { font-size: 2.4rem }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+@media print { .top, #side, #toc, .next { display: none } .columns { display: block } }

@@ -1,7 +1,6 @@
 # rayo reference
 
-Every command and feature. To install or build, see the
-[README](README.md).
+Every command and feature. To begin, see the [README](README.md).
 
 🧪 not tested on a device yet. `rayo help <command>` shows what one takes.
 
@@ -12,6 +11,7 @@ The tables between `generated` marks come from the code, as do `rayo help` and t
 
 | Topic | |
 |---|---|
+| [Options](#options) | As `rayo help` prints them |
 | [Flow file](#flow-file) | [Header](#header) · [Common options](#common-options) · [Values](#values) |
 | [Selectors](#selectors) | [Conditions](#conditions) · [Relations](#relations) |
 | [Apps](#apps) | [launchApp](#launchapp) · [stopApp](#stopapp-killapp) · [killApp](#stopapp-killapp) · [clearState](#clearstate) · [setPermissions](#setpermissions) · [openLink](#openlink) |
@@ -26,7 +26,72 @@ The tables between `generated` marks come from the code, as do `rayo help` and t
 | [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Causes](#causes) · [Outcomes](#outcomes) · [Results](#results) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
 | [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
-| [Default times](#default-times) | |
+| [Default times](#default-times) · [Limitations](#limitations) | |
+
+---
+
+## Options
+
+As `rayo help` prints them. An option of another command is an error, never ignored.
+
+```
+rayo - runs flows on Android, fast
+
+  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.rayo.yaml
+  rayo check <flow, folder or suite>...            check flows without a device
+  rayo live [options] <flow>                       write a flow as it runs, command by command
+  rayo do [options] <commands>                     send commands to the live session; rayo do .help
+  rayo hierarchy [options]                         what is on screen, and how to refer to it
+  rayo devices                                     connected devices
+  rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
+  rayo schema flow, suite or results               its JSON Schema, for editors and programs
+  rayo version
+
+Options of test, live and hierarchy
+  --device <serial>          when several are connected
+  --emulator                 never a real device, even if it is the only one
+
+Options of test, live and do
+  --output <folder>          where failures and screenshots go (default .rayo)
+
+Options of test and live
+  -e, --env <KEY=VALUE>      a variable for the flows
+  --mock-port <port>         where the app finds the mock on the device (default 8080)
+  --animations               leave the device's animations on
+  --profile                  where the time of each step went
+
+Options of test: which flows
+  --only <a,b>               only the flows with these names
+  --include-tags <a,b>       only flows with one of these tags
+  --exclude-tags <a,b>       not flows with one of these tags
+  --rerun-failed             only those that haven't passed since they last failed
+
+Options of test: how they run
+  --retries <n>              try again what fails, whatever the suite says (default 1)
+  --fail-fast                stop at the first failure
+  --keep-going               don't stop when the device or the app fails over and over
+  --shuffle[=seed]           in a random order, or in that of an earlier run
+  -c, --continuous           run again whenever a file changes
+
+Options of test: what comes out
+  -v, --verbose              every step (always, for a single flow)
+  --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
+  --failures-only            leave the flows that passed out of the results
+
+Options of test: mocks from the real backend
+  --capture <folder>         call the real backend, and write what it answers as mocks
+  --capture-from <url>       the backend, if calls don't begin with /host/
+
+Options of live
+  --app <package>            of a flow that isn't there yet
+  --mock <a,b>               its mocks, relative to it
+  --no-run                   don't begin by running the steps it has
+  --serve                    only take commands from rayo do, until .quit
+
+Options of do
+  --screen                   also what is on screen afterwards
+  --json                     for a program
+```
 
 ---
 
@@ -675,7 +740,7 @@ mock:
 ```
 
 An included flow's mocks are added when it runs. How mocks work, with examples:
-[Mocking](README.md#mocking).
+[Mocking](MOCKING.md).
 
 ### Mock files
 
@@ -1314,3 +1379,17 @@ and a flow that failed first has its failed tries in `system-out`.
 | `scrollUntilVisible` | 20 s |
 | With `optional: true` | 3 s, except the two above |
 | `when` and `while` | 0.7 s each for `visible` and `notVisible` |
+
+---
+
+## Limitations
+
+- Not supported: `assertWithAI` and the other AI commands, `addMedia`,
+  `setOrientation`, sharding across devices, a
+  `config.yaml` (see [suites](#suites)), and selectors by `css`, `width`, `height` or `traits`. An unknown command is an
+  error, never ignored.
+- `setLocation` and `travel` need Android 12 or newer.
+- WebViews show only what they expose to accessibility.
+- Only one tool can automate a device at a time: not while another runs.
+- Tested on Windows with an Android 17 emulator. What is marked 🧪 is **written but not tested on a
+  device yet**, and so are relative selectors and tags.

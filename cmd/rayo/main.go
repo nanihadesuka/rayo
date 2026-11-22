@@ -22,7 +22,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "0.1.0"
+const version = "1.0.0"
 
 // Exit codes.
 const (
@@ -317,6 +317,8 @@ func runDo(args []string) error {
 // helpOn explains a command, of flows or rayo's own, or a kind of file.
 func helpOn(name string) (string, error) {
 	switch name {
+	case "json":
+		return helpJSON()
 	case "flow":
 		return "A flow begins with a header, then ---, then a list of commands. The header:\n\n" + flow.HeaderHelp() +
 			"\nCommands: " + strings.Join(flow.Commands(), ", ") + "\n", nil
@@ -337,4 +339,30 @@ func printSchema(args []string) error {
 		return err
 	}
 	return errors.New("rayo schema takes flow, suite or results")
+}
+
+// helpJSON is all of it, for programs and the documentation's page.
+func helpJSON() (string, error) {
+	type optionDoc struct {
+		Name     string   `json:"name"`
+		Short    string   `json:"short"`
+		Takes    string   `json:"takes"`
+		About    string   `json:"about"`
+		Commands []string `json:"commands"`
+	}
+	var all []optionDoc
+	for _, s := range sections {
+		for _, p := range s.options {
+			all = append(all, optionDoc{p.name, p.short, p.value, p.about, s.commands})
+		}
+	}
+	var b strings.Builder
+	e := json.NewEncoder(&b)
+	e.SetEscapeHTML(false)
+	e.SetIndent("", " ")
+	err := e.Encode(map[string]any{
+		"options": all, "flow": flow.Describe(), "header": flow.HeaderDocs(), "suite": schema.Docs(suite.Fields),
+		"suiteFlow": schema.Docs(suite.FlowFields), "app": schema.Docs(suite.AppFields), "device": schema.Docs(suite.DeviceFields),
+	})
+	return b.String(), err
 }
