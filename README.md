@@ -5,6 +5,9 @@
 <p align="center"><b>End-to-end tests for Android, fast as lightning.</b><br>
 Android only. One portable executable. Flows in YAML.</p>
 
+<p align="center"><a href="LICENSE">MIT License</a> © 2026 <a href="https://github.com/nanihadesuka">Sergio Nettleton</a><br>
+<a href="https://nanihadesuka.github.io/rayo/">Documentation</a> · <a href="https://github.com/nanihadesuka/rayo/releases/latest">Download</a></p>
+
 ```yaml
 appId: com.example.app
 mock: mock
@@ -83,7 +86,3 @@ device: { size: 1080x2400, dpi: 420, darkMode: true }
 ## More
 
 [Guide](GUIDE.md) · [Reference](REFERENCE.md) · [Mocking](MOCKING.md) · [Working on rayo](CONTRIBUTING.md)
-
-## License
-
-[MIT](LICENSE). Copyright (c) 2026 [Sergio Nettleton](https://github.com/nanihadesuka).
