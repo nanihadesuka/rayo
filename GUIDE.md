@@ -61,7 +61,7 @@ rayo live --emulator --app com.example.app tests/login.yaml
 ```
 
 Type commands and see what each does. Those that work are kept, and `.save` writes them to the file.
-From a script or an LLM, use `rayo live --serve` and `rayo do`. See
+From a script or another program, use `rayo live --serve` and `rayo do`. See
 [Live sessions](REFERENCE.md#live-sessions).
 
 ## Mock the backend

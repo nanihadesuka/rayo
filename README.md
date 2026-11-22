@@ -39,7 +39,7 @@ TOTAL 3: 2 passed, 1 failed, 2 retried  68.3 s
 - **[Videos](REFERENCE.md#startrecording-stoprecording)**, small, of each test or some steps.
 - **Pretend location and trips.** [`setLocation`](REFERENCE.md#setlocation) puts the device anywhere;
   [`travel`](REFERENCE.md#travel) moves it along a route at a real speed. For any app, without changing it.
-- **[Live](REFERENCE.md#live-sessions).** Write a test while it runs, by hand, from a script or an LLM.
+- **[Live](REFERENCE.md#live-sessions).** Write a test while it runs, by hand or from another program.
 - **[Honest results](REFERENCE.md#results)** as text, JSON or JUnit: why, where, the screen, the calls and the crash.
 - **[Retries](REFERENCE.md#retries)**, and it [stops early](REFERENCE.md#causes) if the device or the app is what fails.
 - **And** QR for the camera, permissions, airplane mode, screen size and font, scripts, tags,
@@ -61,7 +61,7 @@ Or build it, with Go: `bash build.sh`.
 | `rayo test flow.yaml` | Run a flow, a folder or a suite |
 | `rayo check flow.yaml` | Find mistakes, without a device |
 | `rayo live new.yaml --app com.example.app` | Write a test while it runs |
-| `rayo do '- tapOn: Save'` | The same, from a script or an LLM |
+| `rayo do '- tapOn: Save'` | The same, from another program |
 | `rayo test --capture mock flow.yaml` | Make mocks from the real backend |
 | `rayo help` | Everything else |
 

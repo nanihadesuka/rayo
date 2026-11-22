@@ -1225,7 +1225,7 @@ jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].why)"' 
 
 ## Live sessions
 
-Write a test by running it, a command at a time. Good for an LLM or another tool: it sees what each
+Write a test by running it, a command at a time. Good for other programs too: they see what each
 step did before choosing the next.
 
 ```
@@ -1384,12 +1384,12 @@ and a flow that failed first has its failed tries in `system-out`.
 
 ## Limitations
 
-- Not supported: `assertWithAI` and the other AI commands, `addMedia`,
+- Not supported: `addMedia`,
   `setOrientation`, sharding across devices, a
   `config.yaml` (see [suites](#suites)), and selectors by `css`, `width`, `height` or `traits`. An unknown command is an
   error, never ignored.
 - `setLocation` and `travel` need Android 12 or newer.
 - WebViews show only what they expose to accessibility.
 - Only one tool can automate a device at a time: not while another runs.
-- Tested on Windows with an Android 17 emulator. What is marked 🧪 is **written but not tested on a
+- What is marked 🧪 is **written but not tested on a
   device yet**, and so are relative selectors and tags.

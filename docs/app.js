@@ -211,7 +211,7 @@ function home() {
       card(of('REFERENCE.md', 'Suites'), 'Suites', 'Run many tests, with retries and videos'),
       card(of('MOCKING.md', 'Mocking'), 'Mocking', 'Answer as the backend'),
       card(of('REFERENCE.md', 'Results'), 'Results', 'What a failure tells, as text, JSON or JUnit'),
-      card(of('REFERENCE.md', 'Live sessions'), 'Live', 'Write a test while it runs, also from an LLM'),
+      card(of('REFERENCE.md', 'Live sessions'), 'Live', 'Write a test while it runs, also from another program'),
       card(of('GUIDE.md', 'Log in before each test'), 'How do I…', 'Answers to copy'),
       card(of('REFERENCE.md', 'Options'), 'Options', 'Of the command line'),
     ].join('')}</div>`
