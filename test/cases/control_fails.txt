@@ -1,0 +1,57 @@
+-- flow.yaml --
+appId: a.b
+onFlowComplete:
+  - tapOn: cleanup
+---
+- runFlow: sub.yaml
+- tapOn: never
+-- sub.yaml --
+appId: a.b
+---
+- retry: { maxRetries: 1, commands: [ { tapOn: { id: missing, label: Open it } } ] }
+==== out ====
+-- exit --
+1
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ▸ runFlow sub.yaml
+    ▸ retry maxRetries: 1
+      ✗ Open it  # ms
+      ✗ Open it  # ms
+  saved in .rayo/case
+  ✓ tapOn cleanup  # ms
+[1/1] FAIL case  # s
+  why: not on screen: missing
+  step: Open it
+  at: sub.yaml:3
+  from: sub.yaml:3 retry maxRetries: 1
+  from: flow.yaml:5 runFlow sub.yaml
+  saved: .rayo/case
+
+TOTAL 1: 0 passed, 1 failed  # s
+-- stderr --
+error: failed: case
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+tap {"delay":100,"repeat":1,"sel":{"text":"cleanup"},"timeout":15000}
+bye {"timeout":5000}
+-- file .rayo/case/failure.png --
+PNG...
+-- file .rayo/case/logcat.txt --
+the log
+-- file .rayo/case/screen.txt --
+a screen
+-- file .rayo/failed.json --
+{
+  "<dir>/flow.yaml": "FAIL"
+}

@@ -1,0 +1,7 @@
+-- args --
+test --results-format xml a.yaml
+==== out ====
+-- exit --
+1
+-- stderr --
+error: unknown results format "xml" (use txt, json or junit)

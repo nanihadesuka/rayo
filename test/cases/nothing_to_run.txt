@@ -1,0 +1,7 @@
+-- args --
+test
+==== out ====
+-- exit --
+1
+-- stderr --
+error: which flow? give a file, a folder or a suite

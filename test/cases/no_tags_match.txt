@@ -1,0 +1,12 @@
+-- args --
+test --include-tags nope flow.yaml
+-- flow.yaml --
+appId: a.b
+tags: [x]
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: no flows have those tags

@@ -1,0 +1,72 @@
+-- flow.yaml --
+appId: a.b
+mock: mock.json
+---
+- tapOn: { id: "POST /pay {\"n\":1}" }
+- tapOn: { id: "POST /pay {\"n\":2}" }
+- waitForRequest: { method: post, path: /pa., body: '"n":2' }
+- waitForRequest: /pay
+- waitForRequest: { path: /pay, timeout: 100, optional: true }
+- waitForRequest: { path: /pay, timeout: 100 }
+-- mock.json --
+{"request":{"method":"POST","urlPath":"/pay"},"response":{"body":"ok"}}
+==== out ====
+-- exit --
+1
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ tapOn POST /pay {"n":1}  # ms
+  ✓ tapOn POST /pay {"n":2}  # ms
+  ✓ waitForRequest method: post, path: /pa., body: "n":2  # ms
+  ✓ waitForRequest /pay  # ms
+  – waitForRequest path: /pay  # ms (optional)
+  ✗ waitForRequest path: /pay  # ms
+  last calls:
+    <time> POST /pay -> 200
+    <time> POST /pay -> 200
+  saved in .rayo/case
+[1/1] FAIL case  # s
+  why: the app didn't call it
+  step: waitForRequest path: /pay
+  at: flow.yaml:9
+  before:
+    tapOn POST /pay {"n":2}
+    waitForRequest method: post, path: /pa., body: "n":2
+    waitForRequest /pay
+  saved: .rayo/case
+
+TOTAL 1: 0 passed, 1 failed  # s
+-- stderr --
+error: failed: case
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+adb reverse:forward:tcp:8080;tcp:<free>
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /pay {\"n\":1}"},"timeout":15000}
+  app: POST /pay {"n":1} -> 200  ok
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /pay {\"n\":2}"},"timeout":15000}
+  app: POST /pay {"n":2} -> 200  ok
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb reverse:killforward:tcp:8080
+bye {"timeout":5000}
+-- file .rayo/case/failure.png --
+PNG...
+-- file .rayo/case/logcat.txt --
+the log
+-- file .rayo/case/requests.txt --
+<time> POST /pay -> 200
+    {"n":1}
+<time> POST /pay -> 200
+    {"n":2}
+-- file .rayo/case/screen.txt --
+a screen
+-- file .rayo/failed.json --
+{
+  "<dir>/flow.yaml": "FAIL"
+}

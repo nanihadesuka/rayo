@@ -1,0 +1,15 @@
+-- args --
+test --capture got a.yaml b.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: --capture runs one flow, once

@@ -1,0 +1,24 @@
+-- args --
+test s.rayo.yaml
+-- s.rayo.yaml --
+device: { size: 999x999 }
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: missing }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: couldn't set up the device: Error: bad size
+-- device --
+adb exec:trap '' HUP PIPE
+size=$(wm size | sed -n 's/^Override size: //p')
+{ wm size 999x999; } 2>&1
+sleep 1
+echo rayo:ready
+read -r line
+{ wm size ${size:-reset}; } >/dev/null 2>&1
+echo rayo:done
+  the device is put back

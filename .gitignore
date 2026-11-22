@@ -1,0 +1,5 @@
+# Built by build.sh; internal/agent/agent.jar is committed so that Go alone can build the tool.
+/bin/
+/internal/agent/out/
+.rayo/
+report.xml

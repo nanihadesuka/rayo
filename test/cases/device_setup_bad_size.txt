@@ -1,0 +1,14 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+device: { size: 1080 }
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: missing }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: device: size is in pixels, such as 1080x2400, not "1080"

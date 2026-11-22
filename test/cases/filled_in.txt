@@ -1,0 +1,213 @@
+-- args --
+test good.yaml a.yaml b.yaml c.yaml d.yaml e.yaml f.yaml g.yaml h.yaml
+-- good.yaml --
+appId: a.b
+env: { N: "2", T: 3s, P: "10%,20%", D: down, F: "false", K: Enter }
+---
+- tapOn: { id: x, repeat: "${N}", delay: "${N}", timeout: "${T}", enabled: "${F}", index: "${N}" }
+- tapOn: { point: "${P}" }
+- swipe: { direction: "${D}", duration: "${T}" }
+- pressKey: ${K}
+- repeat: { times: "${N}", commands: [ back ] }
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: x, timeout: "${'soon'}" }
+-- b.yaml --
+appId: a.b
+---
+- repeat: { times: "${'many'}", commands: [ back ] }
+-- c.yaml --
+appId: a.b
+---
+- swipe: { direction: "${'nowhere'}" }
+-- d.yaml --
+appId: a.b
+---
+- travel: { points: ["${'1,2'}", "${'x'}"] }
+-- e.yaml --
+appId: a.b
+---
+- waitForAnimationToEnd: { optional: "${'maybe'}" }
+-- f.yaml --
+appId: a.b
+---
+- runFlow: { when: { platform: "${'Windows'}" }, commands: [ back ] }
+-- g.yaml --
+appId: a.b
+---
+- launchApp: { permissions: { camera: "${'alow'}" } }
+-- h.yaml --
+appId: a.b
+---
+- runFlow: { when: { visible: { id: x, index: "${'one'}" } }, commands: [ back ] }
+==== out ====
+-- exit --
+1
+-- stdout --
+[1/9] PASS good  # s
+[2/9] FAIL a  # s
+  why: timeout: not a time: "soon" (use 500 or 10s)
+  step: tapOn x
+  at: a.yaml:3
+  screen:
+    a screen
+  saved: .rayo/a
+[3/9] FAIL b  # s
+  why: times: not a whole number: "many"
+  step: repeat times: ${'many'}
+  at: b.yaml:3
+  screen:
+    a screen
+  saved: .rayo/b
+[4/9] FAIL c  # s
+  why: direction: not one of UP, DOWN, LEFT, RIGHT: "nowhere"
+  step: swipe ${'nowhere'}
+  at: c.yaml:3
+  screen:
+    a screen
+  saved: .rayo/c
+[5/9] FAIL d  # s
+  why: points: not a location: "x"
+  step: travel [2]
+  at: d.yaml:3
+  screen:
+    a screen
+  saved: .rayo/d
+[6/9] FAIL e  # s
+  why: optional: not one of true, false: "maybe"
+  step: waitForAnimationToEnd
+  at: e.yaml:3
+  screen:
+    a screen
+  saved: .rayo/e
+[7/9] FAIL f  # s
+  why: platform: not one of Android, iOS, Web: "Windows"
+  step: runFlow ${'Windows'}
+  at: f.yaml:3
+  screen:
+    a screen
+  saved: .rayo/f
+[8/9] FAIL g  # s
+  why: permissions: camera: not one of allow, deny, unset: "alow"
+  step: launchApp ${'alow'}
+  at: g.yaml:3
+  screen:
+    a screen
+  saved: .rayo/g
+[9/9] FAIL h  # s
+  why: index: not a whole number: "one"
+  step: runFlow x, index: ${'one'}
+  at: h.yaml:3
+  screen:
+    a screen
+  saved: .rayo/h
+
+PASS good  # s
+FAIL a  # s
+FAIL b  # s
+FAIL c  # s
+FAIL d  # s
+FAIL e  # s
+FAIL f  # s
+FAIL g  # s
+FAIL h  # s
+
+TOTAL 9: 1 passed, 8 failed  # s
+-- stderr --
+error: failed: a, b, c, d, e, f, g, h
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+tap {"delay":2,"repeat":2,"sel":{"enabled":false,"id":"x","index":2},"timeout":3000}
+tapAt {"delay":100,"percent":true,"repeat":1,"timeout":15000,"x":10,"y":20}
+swipe {"ms":3000,"percent":true,"timeout":15000,"x":50,"x2":50,"y":25,"y2":75}
+key {"code":66,"timeout":15000}
+key {"code":4,"timeout":15000}
+key {"code":4,"timeout":15000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+bye {"timeout":5000}
+-- file .rayo/a/failure.png --
+PNG...
+-- file .rayo/a/logcat.txt --
+the log
+-- file .rayo/a/screen.txt --
+a screen
+-- file .rayo/b/failure.png --
+PNG...
+-- file .rayo/b/logcat.txt --
+the log
+-- file .rayo/b/screen.txt --
+a screen
+-- file .rayo/c/failure.png --
+PNG...
+-- file .rayo/c/logcat.txt --
+the log
+-- file .rayo/c/screen.txt --
+a screen
+-- file .rayo/d/failure.png --
+PNG...
+-- file .rayo/d/logcat.txt --
+the log
+-- file .rayo/d/screen.txt --
+a screen
+-- file .rayo/e/failure.png --
+PNG...
+-- file .rayo/e/logcat.txt --
+the log
+-- file .rayo/e/screen.txt --
+a screen
+-- file .rayo/f/failure.png --
+PNG...
+-- file .rayo/f/logcat.txt --
+the log
+-- file .rayo/f/screen.txt --
+a screen
+-- file .rayo/failed.json --
+{
+  "<dir>/a.yaml": "FAIL",
+  "<dir>/b.yaml": "FAIL",
+  "<dir>/c.yaml": "FAIL",
+  "<dir>/d.yaml": "FAIL",
+  "<dir>/e.yaml": "FAIL",
+  "<dir>/f.yaml": "FAIL",
+  "<dir>/g.yaml": "FAIL",
+  "<dir>/h.yaml": "FAIL"
+}
+-- file .rayo/g/failure.png --
+PNG...
+-- file .rayo/g/logcat.txt --
+the log
+-- file .rayo/g/screen.txt --
+a screen
+-- file .rayo/h/failure.png --
+PNG...
+-- file .rayo/h/logcat.txt --
+the log
+-- file .rayo/h/screen.txt --
+a screen

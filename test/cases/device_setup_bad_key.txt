@@ -1,0 +1,15 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+device: { width: 9 }
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: missing }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: yaml: unmarshal errors:
+  line 1: field width not found in type adb.Setup

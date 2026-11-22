@@ -1,0 +1,62 @@
+-- args --
+test s.rayo.yaml
+-- s.rayo.yaml --
+device: { size: 1080x2400, dpi: 420, fontScale: 1.3, darkMode: true }
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: missing }
+==== out ====
+-- exit --
+1
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] a
+  ✗ tapOn missing  # ms
+  saved in .rayo/a
+[1/1] FAIL a  # s
+  why: not on screen: missing
+  step: tapOn missing
+  at: a.yaml:3
+  saved: .rayo/a
+
+TOTAL 1: 0 passed, 1 failed  # s
+-- stderr --
+error: failed: a
+-- device --
+adb exec:trap '' HUP PIPE
+size=$(wm size | sed -n 's/^Override size: //p')
+dpi=$(wm density | sed -n 's/^Override density: //p')
+font=$(settings get system font_scale)
+night=$(cmd uimode night | sed 's/.*: //')
+{ wm size 1080x2400; } 2>&1
+{ wm density 420; } 2>&1
+{ settings put system font_scale 1.3; } 2>&1
+{ cmd uimode night yes >/dev/null; } 2>&1
+sleep 1
+echo rayo:ready
+read -r line
+{ wm size ${size:-reset}; wm density ${dpi:-reset}; if [ "$font" = null ]; then settings delete system font_scale; else settings put system font_scale $font; fi; cmd uimode night $night; } >/dev/null 2>&1
+echo rayo:done
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+bye {"timeout":5000}
+  the device is put back
+-- file .rayo/a/failure.png --
+PNG...
+-- file .rayo/a/logcat.txt --
+the log
+-- file .rayo/a/screen.txt --
+a screen
+-- file .rayo/failed.json --
+{
+  "<dir>/a.yaml": "FAIL"
+}

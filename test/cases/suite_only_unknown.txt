@@ -1,0 +1,36 @@
+-- args --
+test e2e/all.rayo.yaml --only z
+-- e2e/all.rayo.yaml --
+name: Everything
+output: results
+results: results/results.txt
+flows:
+  - b/flow.yaml
+  - a/flow.yaml
+  - c/flow.yaml
+-- e2e/a/flow.yaml --
+appId: a.b
+---
+- back
+-- e2e/b/flow.yaml --
+appId: a.b
+mock: mock.json
+---
+- tapOn: { id: GET /a }
+- camera: none
+- runFlow: ../shared/sub.yaml
+-- e2e/b/mock.json --
+{"request":{"urlPath":"/a"},"response":{"body":"ok"}}
+-- e2e/shared/sub.yaml --
+appId: a.b
+---
+- tapOn: { id: app crashes }
+-- e2e/c/flow.yaml --
+appId: a.b
+---
+- tapOn: { id: flaky 1 }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: no flow is called z

@@ -1,0 +1,13 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+flows: [a.yaml, no.yaml]
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: no such flow: no.yaml

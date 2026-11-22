@@ -1,0 +1,57 @@
+-- flow.yaml --
+appId: a.b
+---
+- launchApp
+- launchApp: { clearState: true, arguments: { mock: true, n: 3, f: 1.5, s: "it's", quoted: "7" } }
+- launchApp: { appId: c.d, stopApp: false, permissions: { camera: allow, location: deny, READ_CONTACTS: allow, com.x.P: unset } }
+- launchApp: c.d
+- launchApp: { clearState: true, permissions: { all: deny }, timeout: 30s }
+- setPermissions: { permissions: { all: deny, camera: allow, com.x.P: unset } }
+- setPermissions: { appId: c.d, permissions: { location: allow } }
+- stopApp
+- killApp: c.d
+- clearState
+- openLink: https://example.com/a?b=it's
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ launchApp  # ms
+  ✓ launchApp clearState, mock, n: 3, f: 1.5, s: it's, quoted: 7  # ms
+  ✓ launchApp appId: c.d, stopApp: false, camera: allow, location: deny, READ_CONTACTS: allow, com.x.P: unset  # ms
+  ✓ launchApp c.d  # ms
+  ✓ launchApp clearState, deny  # ms
+  ✓ setPermissions all: deny, camera: allow, com.x.P: unset  # ms
+  ✓ setPermissions appId: c.d, allow  # ms
+  ✓ stopApp  # ms
+  ✓ killApp c.d  # ms
+  ✓ clearState  # ms
+  ✓ openLink https://example.com/a?b=it's  # ms
+[1/1] PASS case  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+shell {"command":"am force-stop a.b\na=$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER a.b | tail -n 1)\nwait\ncase $a in a.b/*) am start -n \"$a\" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER ;; *) echo 'Error: a.b is not installed or has no launcher screen' ;; esac","quiet":true,"timeout":60000}
+front {"app":"a.b","timeout":15000}
+shell {"command":"pm clear a.b \u0026\nps=$(dumpsys package a.b | sed -n '/runtime permissions:/,$p' | sed -n 's/^ *\\([A-Za-z0-9_.]*\\): granted=.*/\\1/p' | sort -u)\nwait\nfor p in $ps; do pm grant a.b $p \u003e/dev/null 2\u003e\u00261 \u0026 done\na=$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER a.b | tail -n 1)\nwait\ncase $a in a.b/*) am start -n \"$a\" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER --ez 'mock' 'true' --ei 'n' '3' --ef 'f' '1.5' --es 's' 'it'\\''s' --es 'quoted' '7' ;; *) echo 'Error: a.b is not installed or has no launcher screen' ;; esac","quiet":true,"timeout":60000}
+front {"app":"a.b","timeout":15000}
+shell {"command":"ps=$(dumpsys package c.d | sed -n '/runtime permissions:/,$p' | sed -n 's/^ *\\([A-Za-z0-9_.]*\\): granted=.*/\\1/p' | sort -u)\nwait\nwait\nok=\necho \"$ps\" | grep -qxF 'android.permission.CAMERA' \u0026\u0026 pm grant c.d 'android.permission.CAMERA' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: c.d has no permission camera that can be changed'\nwait\nok=\necho \"$ps\" | grep -qxF 'android.permission.ACCESS_FINE_LOCATION' \u0026\u0026 pm revoke c.d 'android.permission.ACCESS_FINE_LOCATION' \u0026\u0026 ok=1\necho \"$ps\" | grep -qxF 'android.permission.ACCESS_COARSE_LOCATION' \u0026\u0026 pm revoke c.d 'android.permission.ACCESS_COARSE_LOCATION' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: c.d has no permission location that can be changed'\nwait\nok=\necho \"$ps\" | grep -qxF 'android.permission.READ_CONTACTS' \u0026\u0026 pm grant c.d 'android.permission.READ_CONTACTS' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: c.d has no permission READ_CONTACTS that can be changed'\nwait\nok=\necho \"$ps\" | grep -qxF 'com.x.P' \u0026\u0026 pm revoke c.d 'com.x.P' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: c.d has no permission com.x.P that can be changed'\na=$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER c.d | tail -n 1)\nwait\ncase $a in c.d/*) am start -n \"$a\" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER ;; *) echo 'Error: c.d is not installed or has no launcher screen' ;; esac","quiet":true,"timeout":60000}
+front {"app":"c.d","timeout":15000}
+shell {"command":"am force-stop c.d\na=$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER c.d | tail -n 1)\nwait\ncase $a in c.d/*) am start -n \"$a\" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER ;; *) echo 'Error: c.d is not installed or has no launcher screen' ;; esac","quiet":true,"timeout":60000}
+front {"app":"c.d","timeout":15000}
+shell {"command":"pm clear a.b \u0026\nps=$(dumpsys package a.b | sed -n '/runtime permissions:/,$p' | sed -n 's/^ *\\([A-Za-z0-9_.]*\\): granted=.*/\\1/p' | sort -u)\nwait\nfor p in $ps; do pm revoke a.b $p \u003e/dev/null 2\u003e\u00261 \u0026 done\na=$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER a.b | tail -n 1)\nwait\ncase $a in a.b/*) am start -n \"$a\" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER ;; *) echo 'Error: a.b is not installed or has no launcher screen' ;; esac","quiet":true,"timeout":60000}
+front {"app":"a.b","timeout":30000}
+shell {"command":"pm path a.b \u003e/dev/null || { echo 'Error: a.b is not installed'; exit; }\nps=$(dumpsys package a.b | sed -n '/runtime permissions:/,$p' | sed -n 's/^ *\\([A-Za-z0-9_.]*\\): granted=.*/\\1/p' | sort -u)\nwait\nfor p in $ps; do pm revoke a.b $p \u003e/dev/null 2\u003e\u00261 \u0026 done\nwait\nok=\necho \"$ps\" | grep -qxF 'android.permission.CAMERA' \u0026\u0026 pm grant a.b 'android.permission.CAMERA' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: a.b has no permission camera that can be changed'\nwait\nok=\necho \"$ps\" | grep -qxF 'com.x.P' \u0026\u0026 pm revoke a.b 'com.x.P' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: a.b has no permission com.x.P that can be changed'\nwait","timeout":60000}
+shell {"command":"pm path c.d \u003e/dev/null || { echo 'Error: c.d is not installed'; exit; }\nps=$(dumpsys package c.d | sed -n '/runtime permissions:/,$p' | sed -n 's/^ *\\([A-Za-z0-9_.]*\\): granted=.*/\\1/p' | sort -u)\nwait\nwait\nok=\necho \"$ps\" | grep -qxF 'android.permission.ACCESS_FINE_LOCATION' \u0026\u0026 pm grant c.d 'android.permission.ACCESS_FINE_LOCATION' \u0026\u0026 ok=1\necho \"$ps\" | grep -qxF 'android.permission.ACCESS_COARSE_LOCATION' \u0026\u0026 pm grant c.d 'android.permission.ACCESS_COARSE_LOCATION' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: c.d has no permission location that can be changed'\nwait","timeout":60000}
+shell {"command":"(am force-stop a.b\n); echo \"rayo:$?\"","timeout":60000}
+shell {"command":"(am force-stop c.d\n); echo \"rayo:$?\"","timeout":60000}
+shell {"command":"(pm clear a.b\n); echo \"rayo:$?\"","timeout":60000}
+shell {"command":"(am start -a android.intent.action.VIEW -d 'https://example.com/a?b=it'\\''s'\n); echo \"rayo:$?\"","timeout":60000}
+bye {"timeout":5000}

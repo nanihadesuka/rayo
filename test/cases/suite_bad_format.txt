@@ -1,0 +1,14 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+flows: [a.yaml]
+resultsFormat: xml
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: unknown results format "xml" (use txt, json or junit)

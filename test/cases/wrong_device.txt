@@ -1,0 +1,7 @@
+-- args --
+hierarchy --device three
+==== out ====
+-- exit --
+1
+-- stderr --
+error: device three is not connected

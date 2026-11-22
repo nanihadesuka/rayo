@@ -1,0 +1,184 @@
+-- args --
+check flows
+-- flows/a01.yaml --
+appId: a.b
+mock: nope
+---
+- back
+-- flows/a02.yaml --
+appId: a.b
+mock: { a: b }
+---
+- back
+-- flows/a03.yaml --
+appId: a.b
+mock: ../bad/field.json
+---
+- back
+-- flows/a04.yaml --
+appId: a.b
+mock: ../bad/body.json
+---
+- back
+-- flows/a05.yaml --
+appId: a.b
+mock: ../bad/syntax.json
+---
+- back
+-- flows/a06.yaml --
+appId: a.b
+mock: ../bad/extra.json
+---
+- back
+-- flows/a07.yaml --
+appId: a.b
+mock: ../bad/second.json
+---
+- back
+-- flows/a08.yaml --
+appId: a.b
+mock: ../bad
+---
+- back
+-- flows/b01.yaml --
+appId: a.b
+---
+- mock: nope.json
+-- flows/b02.yaml --
+appId: a.b
+---
+- mock: { file: x, request: { urlPath: /a } }
+-- flows/b03.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a } }
+-- flows/b04.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a, metod: GET }, response: { status: 200 } }
+-- flows/b05.yaml --
+appId: a.b
+---
+- mock: { request: { method: GET }, response: { status: 200 } }
+-- flows/b06.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a, url: /b }, response: { status: 200 } }
+-- flows/b07.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a }, response: { status: 99 } }
+-- flows/b08.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a }, response: { body: x, jsonBody: { a: 1 } } }
+-- flows/b09.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a, bodyPatterns: [ { contains: a, equalTo: b } ] }, response: { status: 200 } }
+-- flows/b10.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a, bodyPatterns: [ { matchesJsonPath: "a.b" } ] }, response: { status: 200 } }
+-- flows/b11.yaml --
+appId: a.b
+---
+- mock: { request: { urlPathPattern: "(" }, response: { status: 200 } }
+-- flows/b12.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a }, response: { body: "{{oops}}" } }
+-- flows/b13.yaml --
+appId: a.b
+---
+- mock: { request: { urlPath: /a }, response: { body: "{{now offset='a while'}}" } }
+-- flows/b14.yaml --
+appId: a.b
+---
+- mock: { newScenarioState: x, request: { urlPath: /a }, response: { status: 200 } }
+-- flows/c01.yaml --
+appId: a.b
+---
+- mockState: x
+-- flows/c02.yaml --
+appId: a.b
+---
+- mockState: { label: x }
+-- flows/c03.yaml --
+appId: a.b
+---
+- network: ofline
+-- flows/c04.yaml --
+appId: a.b
+---
+- network: { fail: 200 }
+-- flows/c05.yaml --
+appId: a.b
+---
+- network: { delay: soon }
+-- flows/c06.yaml --
+appId: a.b
+---
+- network: { state: offline, fail: 500 }
+-- flows/c07.yaml --
+appId: a.b
+---
+- network: { path: /a }
+-- flows/c08.yaml --
+appId: a.b
+---
+- network: { fail: 500, path: "(" }
+-- flows/c09.yaml --
+appId: a.b
+---
+- waitForRequest: { method: GET }
+-- flows/c10.yaml --
+appId: a.b
+---
+- waitForRequest: "("
+-- bad/field.json --
+{"request":{"urlPath":"/a"},"response":{"stauts":200}}
+-- bad/body.json --
+{"request":{"urlPath":"/a"},"response":{"bodyFileName":"nope.json"}}
+-- bad/syntax.json --
+{"request":
+-- bad/extra.json --
+{"mappings":[],"meta":{"total":0}}
+-- bad/second.json --
+{"mappings":[{"request":{"urlPath":"/a"},"response":{}},{"request":{},"response":{}}]}
+==== out ====
+-- exit --
+1
+-- stderr --
+error: flows/a01.yaml:2: no file flows/nope
+       flows/a02.yaml:2: expected the path of a mock
+       flows/a03.yaml:2: bad/field.json: mapping 1: json: unknown field "stauts"
+       flows/a04.yaml:2: bad/body.json: mapping 1: can't read the body nope.json: no file bad/__files/nope.json
+       flows/a05.yaml:2: bad/syntax.json: unexpected end of JSON input
+       flows/a06.yaml:2: bad/extra.json: expected only mappings
+       flows/a07.yaml:2: bad/second.json: mapping 2: a request needs one of url, urlPattern, urlPath, urlPathPattern
+       flows/a08.yaml:2: no file bad/mappings
+       flows/b01.yaml:3: no file flows/nope.json
+       flows/b02.yaml:3: mock needs either a file or a request and a response
+       flows/b03.yaml:3: mock needs a response
+       flows/b04.yaml:3: json: unknown field "metod"
+       flows/b05.yaml:3: a request needs one of url, urlPattern, urlPath, urlPathPattern
+       flows/b06.yaml:3: a request needs one of url, urlPattern, urlPath, urlPathPattern
+       flows/b07.yaml:3: not a status: 99
+       flows/b08.yaml:3: a response takes one of body, jsonBody, bodyFileName
+       flows/b09.yaml:3: a matcher takes one of equalTo, contains, matches, matchesJsonPath, absent
+       flows/b10.yaml:3: can't read the JSONPath "a.b"
+       flows/b11.yaml:3: error parsing regexp: missing closing ): `(?s)^(?:()$`
+       flows/b12.yaml:3: {{oops}}: unknown template
+       flows/b13.yaml:3: {{now offset='a while'}}: use offset='-8 minutes'
+       flows/b14.yaml:3: a state needs a scenarioName
+       flows/c01.yaml:3: mockState doesn't take a plain value
+       flows/c02.yaml:3: mockState takes a scenario and its state, such as { ride: docked }
+       flows/c03.yaml:3: state: not one of offline, online: "ofline"
+       flows/c04.yaml:3: fail: not a status from 400 to 599: "200"
+       flows/c05.yaml:3: delay: not a time: "soon" (use 500 or 10s)
+       flows/c06.yaml:3: network takes online or offline, or else delay and fail
+       flows/c07.yaml:3: network takes online or offline, or else delay and fail
+       flows/c08.yaml:3: path: error parsing regexp: missing closing ): `(?s)^(?:()$`
+       flows/c09.yaml:3: waitForRequest needs path
+       flows/c10.yaml:3: path: error parsing regexp: missing closing ): `(?s)^(?:()$`

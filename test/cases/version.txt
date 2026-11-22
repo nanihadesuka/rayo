@@ -1,0 +1,7 @@
+-- args --
+version
+==== out ====
+-- exit --
+0
+-- stdout --
+rayo 0.1.0

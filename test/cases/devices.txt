@@ -1,0 +1,12 @@
+-- args --
+devices
+-- devices --
+emulator-5554	device
+R5CT	unauthorized
+R5CX	device
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554
+R5CX

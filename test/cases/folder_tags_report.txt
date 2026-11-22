@@ -1,0 +1,77 @@
+-- args --
+test --include-tags smoke,fast --exclude-tags=slow --format junit --output out.xml --debug-output dbg --profile --animations flows
+-- flows/a.yaml --
+appId: a.b
+name: First one
+tags: [smoke]
+---
+- tapOn: a
+-- flows/b.yml --
+appId: a.b
+tags: [fast, slow]
+---
+- tapOn: b
+-- flows/c/flow.yaml --
+appId: a.b
+tags: [fast]
+---
+- tapOn: { id: missing, label: this & that }
+-- flows/d.yaml --
+appId: a.b
+---
+- tapOn: d
+-- flows/config.yaml --
+not: a flow
+==== out ====
+-- exit --
+1
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/2] First one
+  ✓ tapOn a  # ms  [adb+host #, wait 2]
+[1/2] PASS First one  # s
+
+[2/2] c
+  ✗ this & that  # ms
+  saved in dbg/c
+[2/2] FAIL c  # s
+  why: not on screen: missing
+  step: this & that
+  at: flows/c/flow.yaml:4
+  saved: dbg/c
+
+PASS First one  # s
+FAIL c  # s
+
+TOTAL 2: 1 passed, 1 failed  # s
+-- stderr --
+error: failed: c
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+tap {"delay":100,"repeat":1,"sel":{"text":"a"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+bye {"timeout":5000}
+-- file dbg/c/failure.png --
+PNG...
+-- file dbg/c/logcat.txt --
+the log
+-- file dbg/c/screen.txt --
+a screen
+-- file dbg/failed.json --
+{
+  "<dir>/flows/c/flow.yaml": "FAIL"
+}
+-- file out.xml --
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="rayo" tests="2" failures="1" errors="0" skipped="0" time="#">
+  <testcase name="First one" file="flows/a.yaml" time="#"></testcase>
+  <testcase name="c" file="flows/c/flow.yaml" time="#">
+    <failure>  why: not on screen: missing&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  screen:&#xA;    a screen&#xA;  saved: dbg/c&#xA;</failure>
+  </testcase>
+</testsuite>

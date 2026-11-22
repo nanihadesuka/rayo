@@ -1,0 +1,14 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+flows: [a.yaml]
+app: { apk: x.apk }
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: app needs id and apk

@@ -1,0 +1,7 @@
+-- args --
+test --nope flow.yaml
+==== out ====
+-- exit --
+1
+-- stderr --
+error: unknown option --nope

@@ -1,0 +1,77 @@
+-- flow.yaml --
+appId: a.b
+---
+- setLocation: { latitude: 41.3785, longitude: 2.1765 }
+- travel: { points: ["41.3785,2.1765", "41.37851,2.1765"], speed: 1000 }
+- setAirplaneMode: enabled
+- setAirplaneMode: disabled
+- takeScreenshot: shots/one
+- takeScreenshot: { path: two.png }
+- shell: am broadcast -a x
+- shell: boom
+==== out ====
+-- exit --
+1
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ setLocation latitude: 41.3785, longitude: 2.1765  # ms
+  ✓ travel [2], speed: 1000  # ms
+  ✓ setAirplaneMode enabled  # ms
+  ✓ setAirplaneMode disabled  # ms
+  ✓ takeScreenshot shots/one  # ms
+  ✓ takeScreenshot two.png  # ms
+  ✓ shell am broadcast -a x  # ms
+  ✗ shell boom  # ms
+  saved in .rayo/case
+[1/1] FAIL case  # s
+  why: exit code 1
+    it broke
+  step: shell boom
+  at: flow.yaml:10
+  before:
+    takeScreenshot shots/one
+    takeScreenshot two.png
+    shell am broadcast -a x
+  saved: .rayo/case
+
+TOTAL 1: 0 passed, 1 failed  # s
+-- stderr --
+error: failed: case
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+location {"place":"41.3785000,2.1765000","timeout":15000}
+location {"place":"41.3785000,2.1765000","timeout":15000}
+location {"place":"41.3785000,2.1765000","timeout":15000}
+location {"place":"41.3785100,2.1765000","timeout":15000}
+adb exec:cmd connectivity airplane-mode
+shell {"command":"(cmd connectivity airplane-mode enable\n); echo \"rayo:$?\"","timeout":60000}
+shell {"command":"(cmd connectivity airplane-mode disable\n); echo \"rayo:$?\"","timeout":60000}
+adb exec:screencap -p
+adb exec:screencap -p
+shell {"command":"(am broadcast -a x\n); echo \"rayo:$?\"","timeout":60000}
+shell {"command":"(boom\n); echo \"rayo:$?\"","timeout":60000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+resetLocation {"timeout":10000}
+adb exec:cmd connectivity airplane-mode disable
+bye {"timeout":5000}
+-- file .rayo/case/failure.png --
+PNG...
+-- file .rayo/case/logcat.txt --
+the log
+-- file .rayo/case/screen.txt --
+a screen
+-- file .rayo/case/shots/one.png --
+PNG...
+-- file .rayo/case/two.png --
+PNG...
+-- file .rayo/failed.json --
+{
+  "<dir>/flow.yaml": "FAIL"
+}

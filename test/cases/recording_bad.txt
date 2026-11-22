@@ -1,0 +1,15 @@
+-- args --
+check a.yaml b.rayo.yaml
+-- a.yaml --
+appId: a.b
+startRecording: [x]
+---
+- back
+-- b.rayo.yaml --
+flows: [a.yaml]
+startRecording: {}
+==== out ====
+-- exit --
+1
+-- stderr --
+error: b.rayo.yaml: startRecording takes true, false or a path

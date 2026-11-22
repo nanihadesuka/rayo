@@ -1,0 +1,14 @@
+-- args --
+test --emulator --device PHONE1 flow.yaml
+-- devices --
+PHONE1	device
+emulator-5554	device
+-- flow.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: PHONE1 is not an emulator

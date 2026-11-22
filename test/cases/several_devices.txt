@@ -1,0 +1,12 @@
+-- devices --
+one	device
+two	device
+-- flow.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: several devices, choose one with --device: one, two

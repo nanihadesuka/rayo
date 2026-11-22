@@ -1,0 +1,53 @@
+-- flow.yaml --
+appId: a.b
+---
+- assertVisible: Home
+- assertVisible: { id: home, timeout: 1s }
+- assertNotVisible: { id: spinner }
+- assertNotVisible: { id: spinner, timeout: 300 }
+- extendedWaitUntil: { visible: { id: home }, timeout: 20000 }
+- extendedWaitUntil: { notVisible: Loading.* }
+- assertTrue: ${1 + 1 == 2}
+- assertTrue: 2 > 1
+- waitForAnimationToEnd
+- waitForAnimationToEnd: { timeout: 5000 }
+- assertVisible: { id: missing, optional: true }
+- assertNotVisible: { id: stays, optional: true }
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ assertVisible Home  # ms
+  ✓ assertVisible home  # ms
+  ✓ assertNotVisible spinner  # ms
+  ✓ assertNotVisible spinner  # ms
+  ✓ extendedWaitUntil home  # ms
+  ✓ extendedWaitUntil Loading.*  # ms
+  ✓ assertTrue ${1 + 1 == 2}  # ms
+  ✓ assertTrue 2 > 1  # ms
+  ✓ waitForAnimationToEnd  # ms
+  ✓ waitForAnimationToEnd  # ms
+  – assertVisible missing  # ms (optional)
+  – assertNotVisible stays  # ms (optional)
+[1/1] PASS case  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+wait {"sel":{"text":"Home"},"timeout":15000}
+wait {"sel":{"id":"home"},"timeout":1000}
+gone {"sel":{"id":"spinner"},"timeout":5000}
+gone {"sel":{"id":"spinner"},"timeout":300}
+wait {"sel":{"id":"home"},"timeout":20000}
+gone {"sel":{"text":"Loading.*"},"timeout":15000}
+settle {"quiet":200,"timeout":15000}
+settle {"quiet":200,"timeout":5000}
+wait {"sel":{"id":"missing"},"timeout":3000}
+gone {"sel":{"id":"stays"},"timeout":5000}
+bye {"timeout":5000}

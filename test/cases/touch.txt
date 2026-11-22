@@ -1,0 +1,70 @@
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: Log in
+- tapOn: { id: save, text: Save.*, index: -1, enabled: true, checked: false, below: { id: title, text: x }, childOf: Form }
+- tapOn: { text: Row, containsDescendants: [One, { id: two }], containsChild: { text: c }, leftOf: l, rightOf: r, above: a }
+- tapOn: { point: "35%, 30%" }
+- tapOn: { point: "540, 1200", repeat: 2, delay: 50 }
+- tapOn: { id: map, point: "10%,20%" }
+- tapOn: { id: slow, timeout: 20s }
+- tapOn: { id: slow, timeout: 20_000 }
+- doubleTapOn: Photo
+- doubleTapOn: { id: photo, delay: 10 }
+- longPressOn: { id: item }
+- swipe: { direction: UP }
+- swipe: { direction: left, duration: 400 }
+- swipe: { direction: DOWN, from: { id: list } }
+- swipe: { start: "50%,80%", end: "50%,20%" }
+- swipe: { start: "1,2", end: "3,4", duration: 100 }
+- scroll
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ tapOn Log in  # ms
+  ✓ tapOn save, text: Save.*, index: -1, enabled, checked: false, title, text: x, childOf: Form  # ms
+  ✓ tapOn text: Row, [2], c, leftOf: l, rightOf: r, above: a  # ms
+  ✓ tapOn 35%, 30%  # ms
+  ✓ tapOn point: 540, 1200, repeat: 2, delay: 50  # ms
+  ✓ tapOn map, point: 10%,20%  # ms
+  ✓ tapOn slow  # ms
+  ✓ tapOn slow  # ms
+  ✓ doubleTapOn Photo  # ms
+  ✓ doubleTapOn photo, delay: 10  # ms
+  ✓ longPressOn item  # ms
+  ✓ swipe UP  # ms
+  ✓ swipe direction: left, duration: 400  # ms
+  ✓ swipe direction: DOWN, list  # ms
+  ✓ swipe start: 50%,80%, end: 50%,20%  # ms
+  ✓ swipe start: 1,2, end: 3,4, duration: 100  # ms
+  ✓ scroll  # ms
+[1/1] PASS case  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+tap {"delay":100,"repeat":1,"sel":{"text":"Log in"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"below":{"id":"title","text":"x"},"checked":false,"childOf":{"text":"Form"},"enabled":true,"id":"save","index":-1,"text":"Save.*"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"above":{"text":"a"},"containsChild":{"text":"c"},"containsDescendants":[{"text":"One"},{"id":"two"}],"leftOf":{"text":"l"},"rightOf":{"text":"r"},"text":"Row"},"timeout":15000}
+tapAt {"delay":100,"percent":true,"repeat":1,"timeout":15000,"x":35,"y":30}
+tapAt {"delay":50,"percent":false,"repeat":2,"timeout":15000,"x":540,"y":1200}
+tap {"delay":100,"fx":0.1,"fy":0.2,"repeat":1,"sel":{"id":"map"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"slow"},"timeout":20000}
+tap {"delay":100,"repeat":1,"sel":{"id":"slow"},"timeout":20000}
+tap {"delay":100,"repeat":2,"sel":{"text":"Photo"},"timeout":15000}
+tap {"delay":10,"repeat":2,"sel":{"id":"photo"},"timeout":15000}
+tap {"hold":1000,"sel":{"id":"item"},"timeout":15000}
+swipe {"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":75,"y2":25}
+swipe {"ms":400,"percent":true,"timeout":15000,"x":80,"x2":20,"y":50,"y2":50}
+swipeOn {"dx":0,"dy":0.5,"ms":250,"sel":{"id":"list"},"timeout":15000}
+swipe {"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":80,"y2":20}
+swipe {"ms":100,"percent":false,"timeout":15000,"x":1,"x2":3,"y":2,"y2":4}
+swipe {"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":70,"y2":30}
+bye {"timeout":5000}

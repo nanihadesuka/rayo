@@ -1,0 +1,13 @@
+-- args --
+test --emulator flow.yaml
+-- devices --
+PHONE1	device
+-- flow.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: no emulator running

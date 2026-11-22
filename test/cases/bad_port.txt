@@ -1,0 +1,7 @@
+-- args --
+test --mock-port 70000 flow.yaml
+==== out ====
+-- exit --
+1
+-- stderr --
+error: not a port: "70000"

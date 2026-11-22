@@ -1,0 +1,34 @@
+-- args --
+test --mock-port 9000 flow.yaml
+-- flow.yaml --
+appId: a.b
+mock: mock.json
+---
+- tapOn: { id: GET :9000/a }
+- tapOn: { id: GET /a }
+-- mock.json --
+{"request":{"urlPath":"/a"},"response":{"body":"ok"}}
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ tapOn GET :9000/a  # ms
+  ✓ tapOn GET /a  # ms
+[1/1] PASS case  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+adb reverse:forward:tcp:9000;tcp:<free>
+tap {"delay":100,"repeat":1,"sel":{"id":"GET :9000/a"},"timeout":15000}
+  app: GET :9000/a -> 200  ok
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /a"},"timeout":15000}
+  app: GET /a -> refused
+adb reverse:killforward:tcp:9000
+bye {"timeout":5000}

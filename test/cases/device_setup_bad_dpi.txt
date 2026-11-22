@@ -1,0 +1,14 @@
+-- args --
+check s.rayo.yaml
+-- s.rayo.yaml --
+device: { dpi: 5 }
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- tapOn: { id: missing }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml: device: dpi goes from 72 to 1000, not 5

@@ -1,0 +1,121 @@
+-- flow.yaml --
+appId: a.b
+mock: mock.json
+---
+- tapOn: { id: "POST /a {\"x\":[]}" }
+- tapOn: { id: "POST /a {\"x\":{}}" }
+- tapOn: { id: "POST /a {\"x\":null}" }
+- tapOn: { id: "POST /a not json" }
+- tapOn: { id: "POST /a" }
+- tapOn: { id: "POST /a {\"x\":0}" }
+- tapOn: { id: GET /a }
+- tapOn: { id: "GET /q?a=1" }
+- tapOn: { id: GET /q }
+- tapOn: { id: GET /nothing }
+- tapOn: { id: GET /nothing }
+-- mock.json --
+{"mappings":[
+{"request":{"method":"POST","urlPath":"/a","bodyPatterns":[{"matchesJsonPath":"$.x"}]},"response":{"body":"matched"}},
+{"request":{"method":"GET","urlPath":"/q","queryParameters":{"a":{"equalTo":"2"}}},"response":{"body":"matched"}}
+]}
+==== out ====
+-- exit --
+1
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ tapOn POST /a {"x":[]}  # ms
+  ✓ tapOn POST /a {"x":{}}  # ms
+  ✓ tapOn POST /a {"x":null}  # ms
+  ✓ tapOn POST /a not json  # ms
+  ✓ tapOn POST /a  # ms
+  ✓ tapOn POST /a {"x":0}  # ms
+  ✓ tapOn GET /a  # ms
+  ✓ tapOn GET /q?a=1  # ms
+  ✓ tapOn GET /q  # ms
+  ✓ tapOn GET /nothing  # ms
+  ✓ tapOn GET /nothing  # ms
+  last calls:
+    <time> GET /a -> not mocked
+    <time> GET /q?a=1 -> not mocked
+    <time> GET /q -> not mocked
+    <time> GET /nothing -> not mocked
+    <time> GET /nothing -> not mocked
+  saved in .rayo/case
+[1/1] FAIL case  # s
+  why: the app called what isn't mocked:
+        POST /a
+        GET /a
+        GET /q?a=1
+        GET /q
+        GET /nothing
+  before:
+    tapOn GET /q
+    tapOn GET /nothing
+    tapOn GET /nothing
+  saved: .rayo/case
+
+TOTAL 1: 0 passed, 1 failed  # s
+-- stderr --
+error: failed: case
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+adb reverse:forward:tcp:8080;tcp:<free>
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /a {\"x\":[]}"},"timeout":15000}
+  app: POST /a {"x":[]} -> 404  not mocked: POST /a
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /a {\"x\":{}}"},"timeout":15000}
+  app: POST /a {"x":{}} -> 404  not mocked: POST /a
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /a {\"x\":null}"},"timeout":15000}
+  app: POST /a {"x":null} -> 404  not mocked: POST /a
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /a not json"},"timeout":15000}
+  app: POST /a not json -> 404  not mocked: POST /a
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /a"},"timeout":15000}
+  app: POST /a -> 404  not mocked: POST /a
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /a {\"x\":0}"},"timeout":15000}
+  app: POST /a {"x":0} -> 200  matched
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /a"},"timeout":15000}
+  app: GET /a -> 404  not mocked: GET /a
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /q?a=1"},"timeout":15000}
+  app: GET /q?a=1 -> 404  not mocked: GET /q?a=1
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /q"},"timeout":15000}
+  app: GET /q -> 404  not mocked: GET /q
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /nothing"},"timeout":15000}
+  app: GET /nothing -> 404  not mocked: GET /nothing
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /nothing"},"timeout":15000}
+  app: GET /nothing -> 404  not mocked: GET /nothing
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb reverse:killforward:tcp:8080
+bye {"timeout":5000}
+-- file .rayo/case/failure.png --
+PNG...
+-- file .rayo/case/logcat.txt --
+the log
+-- file .rayo/case/requests.txt --
+<time> POST /a -> not mocked
+    {"x":[]}
+<time> POST /a -> not mocked
+    {"x":{}}
+<time> POST /a -> not mocked
+    {"x":null}
+<time> POST /a -> not mocked
+    not json
+<time> POST /a -> not mocked
+<time> POST /a -> 200
+    {"x":0}
+<time> GET /a -> not mocked
+<time> GET /q?a=1 -> not mocked
+<time> GET /q -> not mocked
+<time> GET /nothing -> not mocked
+<time> GET /nothing -> not mocked
+-- file .rayo/case/screen.txt --
+a screen
+-- file .rayo/failed.json --
+{
+  "<dir>/flow.yaml": "FAIL"
+}

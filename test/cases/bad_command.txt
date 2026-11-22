@@ -1,0 +1,7 @@
+-- args --
+tset flow.yaml
+==== out ====
+-- exit --
+1
+-- stderr --
+error: unknown command "tset", see rayo help

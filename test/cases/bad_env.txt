@@ -1,0 +1,7 @@
+-- args --
+test -e NOPE flow.yaml
+==== out ====
+-- exit --
+1
+-- stderr --
+error: -e takes KEY=VALUE

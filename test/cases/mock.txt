@@ -1,0 +1,135 @@
+-- flow.yaml --
+appId: a.b
+mock: [mock, overrides.json]
+---
+- tapOn: { id: GET /plain }
+- tapOn: { id: GET /file }
+- tapOn: { id: GET /now }
+- tapOn: { id: "GET /echo/x%2Fy?q=a%26b+c&q=2" }
+- tapOn: { id: "GET /extract?p=1,2%7C3,4" }
+- tapOn: { id: GET /extract }
+- tapOn: { id: GET /typed }
+- tapOn: { id: GET /empty }
+- tapOn: { id: GET /tie }
+- tapOn: { id: GET /priority }
+- tapOn: { id: "GET /url?x=1" }
+- tapOn: { id: GET /pattern/12 }
+- tapOn: { id: "GET /urlpattern?id=7" }
+- tapOn: { id: DELETE /any }
+- tapOn: { id: "GET /query?a=1&a=2&b=zz" }
+- tapOn: { id: GET /header }
+- tapOn: { id: "POST /json {\"x\":{\"list\":[1,{\"y\":\"k\"}]}}" }
+- tapOn: { id: "POST /filter {\"id\":1,\"kind\":\"a@b\"}" }
+- tapOn: { id: "POST /filter [{\"id\":2},{\"id\":1,\"kind\":\"a@b\"}]" }
+- tapOn: { id: "POST /body hello world" }
+- tapOn: { id: GET /late }
+-- mock/mappings/a.json --
+{"mappings":[
+{"request":{"method":"GET","urlPath":"/plain"},"response":{"body":"plain"}},
+{"request":{"method":"GET","urlPath":"/file"},"response":{"bodyFileName":"a/b.json"}},
+{"request":{"method":"GET","urlPath":"/now"},"response":{"body":"{{now}} {{now offset='-8 minutes'}} {{ now offset='1 day' }}"}},
+{"request":{"method":"GET","urlPathPattern":"/echo/.*"},"response":{"body":"{{request.path}} {{request.url}} {{request.query.q}} {{request.headers.X-App}}"}},
+{"request":{"method":"GET","urlPath":"/extract"},"response":{"body":"{{regexExtract request.query.p '([^|]+)\\|(.+)' 'ends'}}[{{ends.0}}] [{{ends.1}}] [{{ends.2}}]"}},
+{"request":{"method":"GET","urlPath":"/typed"},"response":{"status":201,"headers":{"Content-Type":"application/json"},"jsonBody":{"t":"<a>&{{request.path}}","n":1.0}}},
+{"request":{"method":"GET","urlPath":"/empty"},"response":{"status":204}},
+{"request":{"method":"GET","urlPath":"/tie"},"response":{"body":"first"}},
+{"request":{"method":"GET","urlPath":"/tie"},"response":{"body":"second"}},
+{"request":{"method":"GET","urlPath":"/priority"},"response":{"body":"file"}},
+{"request":{"method":"GET","url":"/url?x=1"},"response":{"body":"url"}},
+{"request":{"method":"GET","urlPathPattern":"/pattern/[0-9]+"},"response":{"body":"pattern"}},
+{"request":{"method":"GET","urlPattern":"/urlpattern\\?id=.*"},"response":{"body":"url pattern"}},
+{"request":{"urlPath":"/any"},"response":{"body":"any"}},
+{"request":{"method":"GET","urlPath":"/query","queryParameters":{"a":{"equalTo":"2"},"b":{"matches":"z+"},"c":{"absent":true}}},"response":{"body":"query"}},
+{"request":{"method":"GET","urlPath":"/header","headers":{"x-app":{"contains":"ak"}}},"response":{"body":"header"}},
+{"request":{"method":"POST","urlPath":"/json","bodyPatterns":[{"matchesJsonPath":"$.x.list[1]['y']"},{"matchesJsonPath":"$.x.list[*]"}]},"response":{"body":"json"}},
+{"request":{"method":"POST","urlPath":"/filter","bodyPatterns":[{"matchesJsonPath":"$[?(@.id == 1 && @.kind == 'a@b')]"}]},"response":{"body":"filter"}},
+{"request":{"method":"POST","urlPath":"/body","bodyPatterns":[{"contains":"lo wo"},{"matches":"hello.*"}]},"response":{"body":"{{request.body}}!"}}
+]}
+-- mock/mappings/deep/b.json --
+{"id":"one","name":"single","request":{"method":"GET","urlPath":"/late"},"response":{"body":"late","fixedDelayMilliseconds":30}}
+-- mock/__files/a/b.json --
+{"from":"file"}
+-- overrides.json --
+{"mappings":[{"priority":1,"request":{"urlPath":"/priority"},"response":{"body":"override"}}]}
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ tapOn GET /plain  # ms
+  ✓ tapOn GET /file  # ms
+  ✓ tapOn GET /now  # ms
+  ✓ tapOn GET /echo/x%2Fy?q=a%26b+c&q=2  # ms
+  ✓ tapOn GET /extract?p=1,2%7C3,4  # ms
+  ✓ tapOn GET /extract  # ms
+  ✓ tapOn GET /typed  # ms
+  ✓ tapOn GET /empty  # ms
+  ✓ tapOn GET /tie  # ms
+  ✓ tapOn GET /priority  # ms
+  ✓ tapOn GET /url?x=1  # ms
+  ✓ tapOn GET /pattern/12  # ms
+  ✓ tapOn GET /urlpattern?id=7  # ms
+  ✓ tapOn DELETE /any  # ms
+  ✓ tapOn GET /query?a=1&a=2&b=zz  # ms
+  ✓ tapOn GET /header  # ms
+  ✓ tapOn POST /json {"x":{"list":[1,{"y":"k"}]}}  # ms
+  ✓ tapOn POST /filter {"id":1,"kind":"a@b"}  # ms
+  ✓ tapOn POST /filter [{"id":2},{"id":1,"kind":"a@b"}]  # ms
+  ✓ tapOn POST /body hello world  # ms
+  ✓ tapOn GET /late  # ms
+[1/1] PASS case  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+adb reverse:forward:tcp:8080;tcp:<free>
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /plain"},"timeout":15000}
+  app: GET /plain -> 200  plain
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /file"},"timeout":15000}
+  app: GET /file -> 200  {"from":"file"}
+
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /now"},"timeout":15000}
+  app: GET /now -> 200  <now> <now> <now>
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /echo/x%2Fy?q=a%26b+c\u0026q=2"},"timeout":15000}
+  app: GET /echo/x%2Fy?q=a%26b+c&q=2 -> 200  /echo/x/y /echo/x%2Fy?q=a%26b+c&q=2 a&b c fake
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /extract?p=1,2%7C3,4"},"timeout":15000}
+  app: GET /extract?p=1,2%7C3,4 -> 200  [1,2] [3,4] []
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /extract"},"timeout":15000}
+  app: GET /extract -> 200  [] [] []
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /typed"},"timeout":15000}
+  app: GET /typed -> 201 application/json {"t":"<a>&/typed","n":1.0}
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /empty"},"timeout":15000}
+  app: GET /empty -> 204  
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /tie"},"timeout":15000}
+  app: GET /tie -> 200  second
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /priority"},"timeout":15000}
+  app: GET /priority -> 200  override
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /url?x=1"},"timeout":15000}
+  app: GET /url?x=1 -> 200  url
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /pattern/12"},"timeout":15000}
+  app: GET /pattern/12 -> 200  pattern
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /urlpattern?id=7"},"timeout":15000}
+  app: GET /urlpattern?id=7 -> 200  url pattern
+tap {"delay":100,"repeat":1,"sel":{"id":"DELETE /any"},"timeout":15000}
+  app: DELETE /any -> 200  any
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /query?a=1\u0026a=2\u0026b=zz"},"timeout":15000}
+  app: GET /query?a=1&a=2&b=zz -> 200  query
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /header"},"timeout":15000}
+  app: GET /header -> 200  header
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /json {\"x\":{\"list\":[1,{\"y\":\"k\"}]}}"},"timeout":15000}
+  app: POST /json {"x":{"list":[1,{"y":"k"}]}} -> 200  json
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /filter {\"id\":1,\"kind\":\"a@b\"}"},"timeout":15000}
+  app: POST /filter {"id":1,"kind":"a@b"} -> 200  filter
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /filter [{\"id\":2},{\"id\":1,\"kind\":\"a@b\"}]"},"timeout":15000}
+  app: POST /filter [{"id":2},{"id":1,"kind":"a@b"}] -> 200  filter
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /body hello world"},"timeout":15000}
+  app: POST /body hello world -> 200  hello world!
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /late"},"timeout":15000}
+  app: GET /late -> 200  late
+adb reverse:killforward:tcp:8080
+bye {"timeout":5000}

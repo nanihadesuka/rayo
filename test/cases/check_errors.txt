@@ -1,0 +1,297 @@
+-- args --
+check flows
+-- flows/a01.yaml --
+appId: a.b
+---
+- tapOm: x
+-- flows/a02.yaml --
+appId: a.b
+---
+- tapOn
+-- flows/a03.yaml --
+appId: a.b
+---
+- tapOn: { idd: x }
+-- flows/a04.yaml --
+appId: a.b
+---
+- tapOn: { repeat: 2 }
+-- flows/a05.yaml --
+appId: a.b
+---
+- tapOn: [a]
+-- flows/a06.yaml --
+appId: a.b
+---
+- tapOn: { id: x, below: { nope: y } }
+-- flows/a07.yaml --
+appId: a.b
+---
+- tapOn: { id: x, containsDescendants: [ { nope: y } ] }
+-- flows/a08.yaml --
+appId: a.b
+---
+- tapOn: { point: "3,4%" }
+-- flows/a09.yaml --
+appId: a.b
+---
+- tapOn: { id: x, timeout: soon }
+-- flows/a10.yaml --
+appId: a.b
+---
+- back: now
+-- flows/a11.yaml --
+appId: a.b
+---
+- tapOn: x
+  id: y
+-- flows/a12.yaml --
+appId: a.b
+bogus: 1
+---
+- back
+-- flows/a13.yaml --
+- back
+-- flows/a14.yaml --
+appId: [
+---
+- back
+-- flows/b01.yaml --
+appId: a.b
+---
+- runFlow: nope.yaml
+-- flows/b02.yaml --
+appId: a.b
+---
+- runFlow: { when: { visible: x } }
+-- flows/b03.yaml --
+appId: a.b
+---
+- runFlow: { when: { visble: x }, commands: [ back ] }
+-- flows/b04.yaml --
+appId: a.b
+---
+- runFlow: { commands: [ back, { tapOn: { nope: 1 } } ] }
+-- flows/b05.yaml --
+appId: a.b
+---
+- runFlow: b05.yaml
+-- flows/b06.yaml --
+appId: a.b
+---
+- runScript: nope.js
+-- flows/b07.yaml --
+appId: a.b
+---
+- runScript: { env: { A: b } }
+-- flows/b08.yaml --
+appId: a.b
+---
+- repeat: { commands: [ back ] }
+-- flows/b09.yaml --
+appId: a.b
+---
+- retry: { maxRetries: 2 }
+-- flows/b10.yaml --
+appId: a.b
+---
+- extendedWaitUntil: { timeout: 1s }
+-- flows/b11.yaml --
+appId: a.b
+---
+- extendedWaitUntil: { visible: { nope: 1 } }
+-- flows/b12.yaml --
+appId: a.b
+---
+- runFlow: { commands: { a: b } }
+-- flows/c01.yaml --
+appId: a.b
+---
+- setLocation: { latitude: 1 }
+-- flows/c02.yaml --
+appId: a.b
+---
+- travel: { speed: 1 }
+-- flows/c03.yaml --
+appId: a.b
+---
+- type: { id: x }
+-- flows/c04.yaml --
+appId: a.b
+---
+- http: { method: GET }
+-- flows/c05.yaml --
+appId: a.b
+---
+- scrollUntilVisible: { direction: UP }
+-- flows/c06.yaml --
+appId: a.b
+---
+- swipe: { start: "1,2" }
+-- flows/c07.yaml --
+appId: a.b
+---
+- swipe: { start: "1", end: "1,2" }
+-- flows/c08.yaml --
+appId: a.b
+---
+- pressKey: Bogus
+-- flows/c09.yaml --
+appId: a.b
+---
+- pressKey: { label: x }
+-- flows/c10.yaml --
+appId: a.b
+---
+- addMedia: x
+-- flows/d01.yaml --
+appId: a.b
+---
+- repeat: { times: many, commands: [ back ] }
+-- flows/d02.yaml --
+appId: a.b
+---
+- tapOn: { id: x, enabled: yes, optional: true }
+-- flows/d03.yaml --
+appId: a.b
+---
+- swipe: { direction: SIDEWAYS }
+-- flows/d04.yaml --
+appId: a.b
+---
+- tapOn: { id: { a: b } }
+-- flows/d05.yaml --
+appId: a.b
+---
+- assertVisible: { text: x, childOf: { index: first } }
+-- flows/e00.yaml --
+appId: a.b
+---
+- tapOn: { id: x, label: { a: b } }
+-- flows/e01.yaml --
+appId: a.b
+---
+- launchApp: { permissions: { camera: alow } }
+-- flows/e02.yaml --
+appId: a.b
+---
+- launchApp: { permissions: all }
+-- flows/e03.yaml --
+appId: a.b
+---
+- launchApp: { arguments: [ 1 ] }
+-- flows/e04.yaml --
+appId: a.b
+---
+- runFlow: { when: visible, commands: [ back ] }
+-- flows/e05.yaml --
+appId: a.b
+---
+- runFlow: { env: x, commands: [ back ] }
+-- flows/e06.yaml --
+appId: a.b
+---
+- runFlow: { when: { platform: Windows }, commands: [ back ] }
+-- flows/e07.yaml --
+appId: a.b
+---
+- travel: { points: "1,2" }
+-- flows/e08.yaml --
+appId: a.b
+---
+- travel: { points: [ "1,2", "here" ] }
+-- flows/e09.yaml --
+appId: a.b
+---
+- travel: { points: [ "1,2" ], speed: 0 }
+-- flows/e10.yaml --
+appId: a.b
+---
+- tapOn: { id: x, containsDescendants: y }
+-- flows/e11.yaml --
+appId: a.b
+---
+- setLocation: { latitude: north, longitude: 1 }
+-- flows/e12.yaml --
+appId: a.b
+---
+- setAirplaneMode: maybe
+-- flows/f01.yaml --
+appId: a.b
+env: x
+---
+- back
+-- flows/g01.yaml --
+appId: a.b
+---
+- setPermissions: { camera: allow }
+-- flows/g02.yaml --
+appId: a.b
+---
+- setPermissions: { appId: a.b }
+-- flows/h01.yaml --
+appId: a.b
+---
+- camera: nope.png
+==== out ====
+-- exit --
+1
+-- stderr --
+error: flows/a01.yaml:3: unknown command "tapOm", did you mean tapOn?
+       flows/a02.yaml:3: tapOn needs a value
+       flows/a03.yaml:3: tapOn doesn't take "idd" (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)
+       flows/a04.yaml:3: tapOn needs an element, such as a text or an id
+       flows/a05.yaml:3: tapOn doesn't take a list
+       flows/a06.yaml:3: a selector doesn't take "nope" (it takes above, below, checked, childOf, containsChild, containsDescendants, enabled, focused, id, index, leftOf, rightOf, selected, text)
+       flows/a07.yaml:3: a selector doesn't take "nope" (it takes above, below, checked, childOf, containsChild, containsDescendants, enabled, focused, id, index, leftOf, rightOf, selected, text)
+       flows/a08.yaml:3: point: not a point: "3,4%" (use '35%, 30%' or '540, 1200')
+       flows/a09.yaml:3: timeout: not a time: "soon" (use 500 or 10s)
+       flows/a10.yaml:3: back doesn't take a plain value
+       flows/a11.yaml:3: a command is one action, such as '- tapOn: Login'
+       flows/a12.yaml:2: unknown key "bogus"
+       flows/a13.yaml: expected 'appId: ...', then '---', then a list of commands
+       flows/a14.yaml: yaml: line 1: did not find expected node content
+       flows/b01.yaml:3: no file flows/nope.yaml
+       flows/b02.yaml:3: runFlow needs either a file or commands
+       flows/b03.yaml:3: when doesn't take "visble" (it takes notVisible, platform, true, visible)
+       flows/b04.yaml:3: tapOn doesn't take "nope" (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)
+       flows/b05.yaml: flows run each other in a circle
+       flows/b06.yaml:3: no such file: nope.js
+       flows/b07.yaml:3: runScript needs file
+       flows/b08.yaml:3: repeat needs commands, and times or while
+       flows/b09.yaml:3: retry needs either a file or commands
+       flows/b10.yaml:3: extendedWaitUntil needs visible or notVisible
+       flows/b11.yaml:3: a selector doesn't take "nope" (it takes above, below, checked, childOf, containsChild, containsDescendants, enabled, focused, id, index, leftOf, rightOf, selected, text)
+       flows/b12.yaml:3: expected a list of commands
+       flows/c01.yaml:3: setLocation needs latitude and longitude
+       flows/c02.yaml:3: travel needs points
+       flows/c03.yaml:3: type needs value
+       flows/c04.yaml:3: http needs url
+       flows/c05.yaml:3: scrollUntilVisible needs element
+       flows/c06.yaml:3: swipe needs a direction, or start and end
+       flows/c07.yaml:3: start: not a point: "1" (use '35%, 30%' or '540, 1200')
+       flows/c08.yaml:3: key: unknown key "Bogus"
+       flows/c09.yaml:3: pressKey needs key
+       flows/c10.yaml:3: unknown command "addMedia"
+       flows/d01.yaml:3: times: not a whole number: "many"
+       flows/d02.yaml:3: enabled: not one of true, false: "yes"
+       flows/d03.yaml:3: direction: not one of UP, DOWN, LEFT, RIGHT: "SIDEWAYS"
+       flows/d04.yaml:3: id: takes a single value
+       flows/d05.yaml:3: index: not a whole number: "first"
+       flows/e00.yaml:3: label: takes a single value
+       flows/e01.yaml:3: permissions: camera: not one of allow, deny, unset: "alow"
+       flows/e02.yaml:3: permissions: takes a mapping
+       flows/e03.yaml:3: arguments: takes a mapping
+       flows/e04.yaml:3: when: takes visible, notVisible, platform, true
+       flows/e05.yaml:3: env: takes a mapping
+       flows/e06.yaml:3: platform: not one of Android, iOS, Web: "Windows"
+       flows/e07.yaml:3: points: takes a list
+       flows/e08.yaml:3: points: not a location: "here"
+       flows/e09.yaml:3: speed: not a speed: "0"
+       flows/e10.yaml:3: containsDescendants: takes a list
+       flows/e11.yaml:3: latitude: not a number: "north"
+       flows/e12.yaml:3: value: not one of enabled, disabled, true, false: "maybe"
+       flows/f01.yaml:2: env: takes a mapping
+       flows/g01.yaml:3: setPermissions doesn't take "camera" (it takes appId, permissions)
+       flows/g02.yaml:3: setPermissions needs permissions
+       flows/h01.yaml:3: no such file: nope.png

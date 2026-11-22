@@ -1,0 +1,7 @@
+-- args --
+test flow.yaml --device
+==== out ====
+-- exit --
+1
+-- stderr --
+error: --device needs a value

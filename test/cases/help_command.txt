@@ -1,0 +1,33 @@
+-- args --
+help tapOn
+==== out ====
+-- exit --
+0
+-- stdout --
+tapOn: Waits until the element is on screen, enabled and still, then taps it
+
+keys:
+  point                  point        Of the screen; with a selector, of the element in %
+  repeat                 number       Taps (1)
+  delay                  time         Between taps (100)
+
+selector:
+  id                     text         The resource id, a regular expression
+  text                   text         The text, description or hint, a regular expression (short form)
+  index                  number       The n-th match, from 0; negative counts from the end
+  enabled                true/false   Whether it is enabled
+  checked                true/false   Whether it is checked
+  focused                true/false   Whether it has the focus
+  selected               true/false   Whether it is selected
+  below                  selector     Entirely below another
+  above                  selector     Entirely above another
+  leftOf                 selector     Entirely to the left of another
+  rightOf                selector     Entirely to the right of another
+  containsChild          selector     The direct parent of another
+  childOf                selector     Anywhere inside another
+  containsDescendants    selectors    Around all of these
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take

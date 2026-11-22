@@ -1,0 +1,113 @@
+-- flow.yaml --
+appId: a.b
+env: { WHO: header, KEPT: kept }
+onFlowStart:
+  - tapOn: start
+onFlowComplete:
+  - tapOn: complete
+---
+- runFlow: sub/sub.yaml
+- runFlow: { file: sub/sub.yaml, env: { WHO: caller } }
+- runFlow: { commands: [ { tapOn: "${WHO}" } ], env: { WHO: inline } }
+- tapOn: ${WHO} ${KEPT}
+- runFlow: { when: { visible: { id: missing } }, commands: [ back ] }
+- runFlow: { when: { notVisible: { id: stays } }, commands: [ back ] }
+- runFlow: { when: { platform: iOS }, commands: [ back ] }
+- runFlow: { when: { platform: Android, true: "${1 == 1}", visible: home }, commands: [ back ] }
+- runFlow: { when: { true: "${false}" }, file: sub/sub.yaml }
+- repeat: { times: 2, commands: [ { tapOn: again } ] }
+- evalScript: ${output.n = 0}
+- repeat:
+    while: { true: "${output.n < 3}" }
+    commands:
+      - evalScript: ${output.n++}
+- retry: { maxRetries: 2, commands: [ { tapOn: { id: flaky 2 } } ] }
+- retry: { file: sub/sub.yaml }
+- tapOn: { id: missing, optional: true }
+- runFlow: { commands: [ { tapOn: { id: missing } }, back ], optional: true }
+-- sub/sub.yaml --
+appId: a.b
+env: { WHO: file, EXTRA: extra }
+onFlowStart: [ { tapOn: sub start } ]
+onFlowComplete: [ { tapOn: sub complete } ]
+---
+- tapOn: ${WHO} ${EXTRA}
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ tapOn start  # ms
+  ▸ runFlow sub/sub.yaml
+    ✓ tapOn sub start  # ms
+    ✓ tapOn ${WHO} ${EXTRA}  # ms
+    ✓ tapOn sub complete  # ms
+  ▸ runFlow file: sub/sub.yaml
+    ✓ tapOn sub start  # ms
+    ✓ tapOn ${WHO} ${EXTRA}  # ms
+    ✓ tapOn sub complete  # ms
+  ▸ runFlow
+    ✓ tapOn ${WHO}  # ms
+  ✓ tapOn ${WHO} ${KEPT}  # ms
+  – runFlow missing  skipped
+  – runFlow stays  skipped
+  – runFlow iOS  skipped
+  ▸ runFlow platform: Android, true: ${1 == 1}, visible: home
+    ✓ back  # ms
+  – runFlow ${false}, file: sub/sub.yaml  skipped
+  ▸ repeat times: 2
+    ✓ tapOn again  # ms
+    ✓ tapOn again  # ms
+  ✓ evalScript ${output.n = 0}  # ms
+  ▸ repeat ${output.n < 3}
+    ✓ evalScript ${output.n++}  # ms
+    ✓ evalScript ${output.n++}  # ms
+    ✓ evalScript ${output.n++}  # ms
+  ▸ retry maxRetries: 2
+    ✗ tapOn flaky 2  # ms
+    ✗ tapOn flaky 2  # ms
+    ✓ tapOn flaky 2  # ms
+  ▸ retry sub/sub.yaml
+    ✓ tapOn sub start  # ms
+    ✓ tapOn ${WHO} ${EXTRA}  # ms
+    ✓ tapOn sub complete  # ms
+  – tapOn missing  # ms (optional)
+  ▸ runFlow
+    ✗ tapOn missing  # ms
+  – runFlow  # ms (optional)
+  ✓ tapOn complete  # ms
+[1/1] PASS case  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+tap {"delay":100,"repeat":1,"sel":{"text":"start"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"sub start"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"file extra"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"sub complete"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"sub start"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"caller extra"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"sub complete"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"inline"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"header kept"},"timeout":15000}
+wait {"sel":{"id":"missing"},"timeout":700}
+gone {"sel":{"id":"stays"},"timeout":700}
+wait {"sel":{"text":"home"},"timeout":700}
+key {"code":4,"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"again"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"again"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"flaky 2"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"flaky 2"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"flaky 2"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"sub start"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"file extra"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"sub complete"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":3000}
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"text":"complete"},"timeout":15000}
+bye {"timeout":5000}
