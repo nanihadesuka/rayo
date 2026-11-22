@@ -1,0 +1,7 @@
+-- args --
+hierarchy x
+==== out ====
+-- exit --
+1
+-- stderr --
+error: hierarchy takes no "x"

@@ -1,5 +1,5 @@
 -- args --
-test --retries 1 --results-format json --results out.json a.yaml b.yaml c.yaml d.yaml
+test --retries 1 --results out.json a.yaml b.yaml c.yaml d.yaml
 -- a.yaml --
 appId: a.b
 ---

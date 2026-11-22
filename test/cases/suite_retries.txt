@@ -4,7 +4,6 @@ test s.rayo.yaml
 -- s.rayo.yaml --
 retries: 1
 results: out.json
-resultsFormat: json
 flows:
   - a.yaml
   - { file: b.yaml, retries: 2 }

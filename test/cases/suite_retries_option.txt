@@ -1,9 +1,8 @@
 -- args --
-test --retries 0 --results-format txt --results out.txt s.rayo.yaml
+test --retries 0 --results out.txt s.rayo.yaml
 -- s.rayo.yaml --
 retries: 1
 results: out.json
-resultsFormat: json
 flows:
   - a.yaml
   - { file: b.yaml, retries: 2 }

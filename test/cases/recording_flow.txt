@@ -2,12 +2,12 @@
 test a.yaml b.yaml c.yaml --results out.txt
 -- a.yaml --
 appId: a.b
-startRecording: true
+record: true
 ---
 - tapOn: { id: missing }
 -- b.yaml --
 appId: a.b
-startRecording: named
+record: named
 ---
 - back
 -- c.yaml --

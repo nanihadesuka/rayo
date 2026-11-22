@@ -3,8 +3,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -14,6 +16,9 @@ import (
 	"github.com/nanihadesuka/rayo/internal/adb"
 	"github.com/nanihadesuka/rayo/internal/agent"
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/live"
+	"github.com/nanihadesuka/rayo/internal/report"
+	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
 const version = "0.1.0"
@@ -27,7 +32,7 @@ const (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Print(help)
+		fmt.Print(help())
 		os.Exit(exitUsage)
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -47,17 +52,24 @@ func main() {
 
 func run(ctx context.Context, command string, args []string) error {
 	switch command {
-	case "test":
+	case cmdTest:
 		return test(ctx, args)
-	case "check":
+	case cmdCheck:
 		return check(args)
-	case "live":
+	case cmdLive:
 		return runLive(ctx, args)
-	case "do":
+	case cmdDo:
 		return runDo(args)
-	case "hierarchy", "tree":
+	case cmdHierarchy:
 		return hierarchy(ctx, args)
-	case "devices":
+	case cmdDevices:
+		o, err := parse(cmdDevices, args)
+		if err == nil {
+			err = o.none(cmdDevices)
+		}
+		if err != nil {
+			return err
+		}
 		list, err := adb.Devices()
 		if err == nil {
 			fmt.Println(strings.Join(list, "\n"))
@@ -68,7 +80,7 @@ func run(ctx context.Context, command string, args []string) error {
 		return nil
 	case "help", "--help", "-h":
 		if len(args) == 0 {
-			fmt.Print(help)
+			fmt.Print(help())
 			return nil
 		}
 		text, err := flow.Help(args[0])
@@ -79,7 +91,11 @@ func run(ctx context.Context, command string, args []string) error {
 }
 
 func check(args []string) error {
-	flows, _, err := load(args)
+	o, err := parse(cmdCheck, args)
+	if err != nil {
+		return err
+	}
+	flows, _, err := suite.Load(o.args)
 	if err == nil {
 		fmt.Printf("%d flows are fine\n", len(flows))
 	}
@@ -87,7 +103,10 @@ func check(args []string) error {
 }
 
 func hierarchy(ctx context.Context, args []string) error {
-	o, err := parse(args)
+	o, err := parse(cmdHierarchy, args)
+	if err == nil {
+		err = o.none(cmdHierarchy)
+	}
 	if err != nil {
 		return err
 	}
@@ -108,35 +127,34 @@ func hierarchy(ctx context.Context, args []string) error {
 }
 
 func test(ctx context.Context, args []string) (err error) {
-	o, err := parse(args)
+	o, err := parse(cmdTest, args)
 	if err != nil {
 		return err
 	}
-	all, group, err := load(o.paths)
+	all, group, err := suite.Load(o.args)
 	if err != nil {
 		return err
 	}
 	o.suite = group
-	title := strings.Join(o.paths, " ")
+	title := strings.Join(o.args, " ")
 	if group != nil {
 		if group.Name != "" {
 			title = group.Name
 		}
-		if o.runner.Out == "" {
-			o.runner.Out = group.relative(group.Output)
-		}
-		o.runner.Recording = group.recording
-		if o.results == "" {
-			o.results = group.relative(group.Results)
-		}
-		if o.resultsFormat == "" {
-			o.resultsFormat = group.Format
+		o.into(group.Relative(group.Output))
+		o.runner.Recording = &flow.Recording{On: group.Record, Path: group.Relative(group.RecordFolder)}
+		if o.results == nil {
+			for _, file := range group.Results {
+				o.results = append(o.results, group.Relative(file))
+			}
 		}
 	}
-	o.runner.JSON = o.resultsFormat == formatJSON
-	if o.runner.Out == "" {
-		o.runner.Out = ".rayo"
+	for _, file := range o.results {
+		if format, _ := report.FormatOf(file); format == report.JSON { // it has been checked
+			o.runner.JSON = true
+		}
 	}
+	o.into("")
 	flows, err := o.choose(all)
 	if err != nil {
 		return err
@@ -153,7 +171,7 @@ func test(ctx context.Context, args []string) (err error) {
 		return err
 	}
 	if group != nil {
-		if err := group.install(d, o.steps(flows)); err != nil {
+		if err := group.Install(d, o.steps(flows)); err != nil {
 			return err
 		}
 	}
@@ -180,7 +198,7 @@ func test(ctx context.Context, args []string) (err error) {
 
 	watch := watcher{}
 	if group != nil {
-		watch[group.path] = true
+		watch[group.Path] = true
 	}
 	for {
 		err = s.runAll(ctx, flows, title)
@@ -198,7 +216,7 @@ func test(ctx context.Context, args []string) (err error) {
 			if err := watch.await(ctx, flows); err != nil {
 				return err
 			}
-			again, changed, err := load(o.paths)
+			again, changed, err := suite.Load(o.args)
 			if err == nil {
 				o.suite = changed
 				again, err = o.choose(again)
@@ -228,4 +246,67 @@ func (o *options) checkCapture(flows []*flow.Flow) error {
 		return fmt.Errorf("%s is there already", filepath.ToSlash(folder))
 	}
 	return nil
+}
+
+func runLive(ctx context.Context, args []string) error {
+	o, err := parse(cmdLive, args)
+	if err != nil {
+		return err
+	}
+	if len(o.args) != 1 {
+		return errors.New("which flow? give a file, there already or not")
+	}
+	o.into("")
+	p := live.Params{Path: o.args[0], App: o.app, Mocks: o.mocks, Output: o.output, NoRun: o.noRun, Serve: o.serve}
+	return live.Run(ctx, p, func(reporter flow.Reporter) (*flow.Runner, func(), error) {
+		d, err := adb.Pick(o.device, o.emulator)
+		if err != nil {
+			return nil, nil, err
+		}
+		s := &session{o: o, device: d, reporter: reporter}
+		if err := s.start(); err != nil {
+			return nil, nil, err
+		}
+		return s.runner, func() { s.agent.Close() }, nil
+	})
+}
+
+// errShown is a failure that has been printed.
+var errShown = errors.New("")
+
+// runDo sends commands to the live session.
+func runDo(args []string) error {
+	o, err := parse(cmdDo, args)
+	if err != nil {
+		return err
+	}
+	o.into("")
+	for i, text := range o.args {
+		if text == "-" {
+			data, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return err
+			}
+			o.args[i] = string(data)
+		}
+	}
+	if len(o.args) == 0 {
+		return errors.New("do what? such as rayo do '- tapOn: Save', or rayo do .help")
+	}
+	a, err := live.Ask(o.output, live.Request{Text: strings.Join(o.args, "\n"), Screen: o.screen})
+	if err != nil {
+		return err
+	}
+	if o.json {
+		e := json.NewEncoder(os.Stdout)
+		e.SetEscapeHTML(false)
+		e.SetIndent("", "  ")
+		err = e.Encode(a)
+	} else {
+		fmt.Print(a.Text())
+	}
+	if err == nil && !a.OK {
+		err = errShown
+	}
+	return err
 }

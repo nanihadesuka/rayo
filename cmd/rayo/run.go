@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand/v2"
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -15,6 +13,8 @@ import (
 	"github.com/nanihadesuka/rayo/internal/adb"
 	"github.com/nanihadesuka/rayo/internal/agent"
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/report"
+	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
 // session is a device ready to run flows.
@@ -55,10 +55,10 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 			return nil, fmt.Errorf("no flow is called %s", name)
 		}
 	}
-	var last map[string]string
+	var last map[string]report.Status
 	if o.rerunFailed {
 		var err error
-		if last, err = o.lastRun(); err != nil {
+		if last, err = report.Last(report.LastFile(o.output)); err != nil {
 			return nil, err
 		}
 	}
@@ -73,7 +73,7 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 		if len(o.include) > 0 && !has(f, o.include) || has(f, o.exclude) {
 			continue
 		}
-		if _, failed := last[identity(f)]; o.rerunFailed && !failed {
+		if _, failed := last[report.Identity(f)]; o.rerunFailed && !failed {
 			continue
 		}
 		chosen = append(chosen, f)
@@ -83,7 +83,7 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 	}
 	if o.shuffle {
 		// By path first, so that a seed always means the same order.
-		slices.SortStableFunc(chosen, func(a, b *flow.Flow) int { return strings.Compare(identity(a), identity(b)) })
+		slices.SortStableFunc(chosen, func(a, b *flow.Flow) int { return strings.Compare(report.Identity(a), report.Identity(b)) })
 		rand.New(rand.NewPCG(o.seed, 0)).Shuffle(len(chosen), func(i, j int) { chosen[i], chosen[j] = chosen[j], chosen[i] })
 	}
 	return chosen, nil
@@ -104,7 +104,7 @@ const (
 )
 
 // after takes a try into account, and returns why to stop, if so.
-func (r *streak) after(o *outcome, keepGoing bool) string {
+func (r *streak) after(o *report.Outcome, keepGoing bool) string {
 	f := o.Failure
 	if o.Err == nil || f == nil || f.Cause == flow.Test {
 		*r = streak{}
@@ -124,10 +124,10 @@ func (r *streak) after(o *outcome, keepGoing bool) string {
 	if r.crash != f.Because {
 		r.app = 0
 	}
-	if r.app == 0 || r.last != o.flow {
+	if r.app == 0 || r.last != o.Flow {
 		r.app++
 	}
-	r.device, r.crash, r.last = 0, f.Because, o.flow
+	r.device, r.crash, r.last = 0, f.Because, o.Flow
 	if r.app >= appRow && !keepGoing {
 		return fmt.Sprintf("app: %d flows in a row, %s", r.app, f.Because)
 	}
@@ -142,25 +142,20 @@ func (o *options) retriesOf(f *flow.Flow) int {
 	case o.retries >= 0:
 		return o.retries
 	case o.suite != nil:
-		return o.suite.retriesOf(f)
+		return o.suite.RetriesOf(f)
 	case o.continuous: // someone is looking, and changing it
 		return 0
 	}
-	return defaultRetries
+	return suite.DefaultRetries
 }
-
-const defaultRetries = 1
-
-// steps says whether to show every step, and not only how each flow went.
-func (o *options) steps(flows []*flow.Flow) bool { return o.verbose || len(flows) == 1 }
 
 // runAll runs flows and says how each went, also those that didn't run.
 func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) error {
 	o := s.o
-	sum := &summary{title: title, device: s.device.Serial, began: time.Now()}
+	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now()}
 	if o.shuffle {
-		sum.order = fmt.Sprintf("--shuffle=%d", o.seed)
-		fmt.Println("order:", sum.order)
+		sum.Order = fmt.Sprintf("--shuffle=%d", o.seed)
+		fmt.Println("order:", sum.Order)
 	}
 	folders := map[string]int{}
 	var row streak
@@ -168,9 +163,9 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	verbose := o.steps(flows)
 	s.reporter.(*console).verbose = verbose
 	for i, f := range flows {
-		out := outcome{flow: f, retries: o.retriesOf(f)}
+		out := report.Outcome{Flow: f, Retries: o.retriesOf(f)}
 		if stop != "" {
-			out.status, out.why = notRun, stop
+			out.Status, out.Why = report.NotRun, stop
 		} else {
 			name := flow.FolderName(f.Name)
 			if folders[strings.ToLower(name)]++; folders[strings.ToLower(name)] > 1 { // two flows with one name
@@ -178,13 +173,11 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 			}
 			s.reporter.(*console).begin(i+1, len(flows), f.Name)
 			for try := 0; ; try++ {
-				folder := filepath.Join(o.runner.Out, name)
+				folder := filepath.Join(o.output, name)
 				if try > 0 {
 					folder += fmt.Sprintf("_retry%d", try)
 				}
-				out.Result = s.runner.Run(ctx, f, folder)
-				out.tries = append(out.tries, out.Result)
-				out.status = out.judge(ctx)
+				out.Judge(ctx, s.runner.Run(ctx, f, folder))
 				if ctx.Err() == nil {
 					stop = row.after(&out, o.keepGoing)
 					if stop == "" && s.agent.Dead() != nil {
@@ -192,89 +185,31 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 							stop = fmt.Sprintf("the device was lost: %v", err)
 						}
 					}
-					sum.stopped = stop
+					sum.Stopped = stop
 				}
-				if out.status != failed || try >= out.retries || stop != "" {
+				if out.Status != report.Failed || try >= out.Retries || stop != "" {
 					break
 				}
 				if verbose {
-					fmt.Printf("  failed, retry %d of %d: %v\n", try+1, out.retries, out.Err)
+					fmt.Printf("  failed, retry %d of %d: %v\n", try+1, out.Retries, out.Err)
 				}
 			}
 			switch {
 			case ctx.Err() != nil:
 				stop = "interrupted"
-			case stop == "" && out.status == failed && o.failFast:
+			case stop == "" && out.Status == report.Failed && o.failFast:
 				stop = "--fail-fast, after " + f.Name
 			}
 		}
-		sum.outcomes = append(sum.outcomes, out)
+		sum.Outcomes = append(sum.Outcomes, out)
 		s.reporter.(*console).end(i+1, len(flows), &out)
 	}
-	sum.took = time.Since(sum.began)
+	sum.Took = time.Since(sum.Began)
 	fmt.Println()
-	fmt.Print(sum.text(o.failuresOnly, true))
-	return errors.Join(sum.save(o), sum.err())
-}
-
-// --- The last run ---
-
-// identity tells flows apart in different runs.
-func identity(f *flow.Flow) string {
-	path := f.Path
-	if abs, err := filepath.Abs(path); err == nil {
-		path = abs
+	fmt.Print(sum.Text(o.failuresOnly, true))
+	err := sum.SaveLast(report.LastFile(o.output))
+	for _, file := range o.results {
+		err = errors.Join(err, sum.Write(file, o.failuresOnly))
 	}
-	return filepath.ToSlash(path)
-}
-
-func (o *options) lastFile() string { return filepath.Join(o.runner.Out, "failed.json") }
-
-// lastRun is the flows that haven't passed since they last failed, and how they went.
-func (o *options) lastRun() (map[string]string, error) {
-	last := map[string]string{}
-	data, err := os.ReadFile(o.lastFile())
-	if errors.Is(err, os.ErrNotExist) {
-		return last, nil
-	}
-	if err == nil {
-		err = json.Unmarshal(data, &last)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", filepath.ToSlash(o.lastFile()), err)
-	}
-	return last, nil
-}
-
-func (s *summary) saveLast(o *options) error {
-	last, err := o.lastRun()
-	if err != nil {
-		last = map[string]string{} // unreadable, so written again
-	}
-	before := len(last)
-	for _, out := range s.outcomes {
-		if out.status == passed {
-			delete(last, identity(out.flow))
-		} else {
-			last[identity(out.flow)] = out.status.String()
-		}
-	}
-	if len(last) == 0 {
-		if before > 0 || err != nil {
-			return os.Remove(o.lastFile())
-		}
-		return nil
-	}
-	data, err := json.MarshalIndent(last, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeFile(o.lastFile(), append(data, '\n'))
-}
-
-func writeFile(path string, data []byte) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, 0o644)
+	return errors.Join(err, sum.Err())
 }

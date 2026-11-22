@@ -1,5 +1,5 @@
 -- args --
-test e2e/all.rayo.yaml --retries 1 --results out.xml --results-format junit
+test e2e/all.rayo.yaml --retries 1 --results out.xml
 -- e2e/all.rayo.yaml --
 name: Everything
 output: results

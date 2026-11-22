@@ -1,7 +1,0 @@
--- args --
-test --format html flow.yaml
-==== out ====
--- exit --
-1
--- stderr --
-error: unknown format "html" (use junit)

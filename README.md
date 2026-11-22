@@ -20,29 +20,69 @@ rayo devices
 rayo help tapOn                  what a command takes
 ```
 
-Needs adb and a device or emulator. Options of `test`:
+Needs adb and a device or emulator. All the options, as `rayo help` prints them:
 
-| Option | |
-|---|---|
-| `--device <serial>` | When several are connected |
-| `--emulator` | Never a real device, even if it is the only one |
-| `-e KEY=VALUE` | A variable for the flows |
-| `--include-tags a,b`, `--exclude-tags a,b` | Choose flows by tag |
-| `--only a,b` | Choose flows by name |
-| `--rerun-failed` | Only those that haven't passed since they last failed |
-| `--shuffle`, `--shuffle=<seed>` | In a random order, or that of an earlier run |
-| `--retries <n>` | Try again what fails (1), whatever the [suite](REFERENCE.md#retries) says |
-| `--fail-fast` | Stop at the first failure |
-| `--keep-going` | Don't stop when the device or the app [fails over and over](REFERENCE.md#causes) |
-| `-v` | Every step, also with several flows |
-| `--results <file>`, `--results-format` | Write the [results](REFERENCE.md#results) as `txt` (the default), `json` or `junit` |
-| `--failures-only` | Results without what passed |
-| `--format junit --output report.xml` | Write a report |
-| `--capture <folder>`, `--capture-from <url>` | Make mocks from the real backend, see [Capture](REFERENCE.md#capture) |
-| `--debug-output <folder>` | Where failures and screenshots go (default `.rayo`) |
-| `--profile` | Where the time of each step went |
-| `--mock-port <port>` | Where the app finds the [mock](REFERENCE.md#mock) on the device (8080) |
-| `--animations` | Leave the device's animations on |
+```
+rayo - runs flows on Android, fast
+
+  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.rayo.yaml
+  rayo check <flow, folder or suite>...            check flows without a device
+  rayo live [options] <flow>                       write a flow as it runs, command by command
+  rayo do [options] <commands>                     send commands to the live session; rayo do .help
+  rayo hierarchy [options]                         what is on screen, and how to refer to it
+  rayo devices                                     connected devices
+  rayo help <command>                              what a command of a flow takes
+  rayo version
+
+Options of test, live and hierarchy
+  --device <serial>          when several are connected
+  --emulator                 never a real device, even if it is the only one
+
+Options of test, live and do
+  --output <folder>          where failures and screenshots go (default .rayo)
+
+Options of test and live
+  -e, --env <KEY=VALUE>      a variable for the flows
+  --mock-port <port>         where the app finds the mock on the device (default 8080)
+  --animations               leave the device's animations on
+  --profile                  where the time of each step went
+
+Options of test: which flows
+  --only <a,b>               only the flows with these names
+  --include-tags <a,b>       only flows with one of these tags
+  --exclude-tags <a,b>       not flows with one of these tags
+  --rerun-failed             only those that haven't passed since they last failed
+
+Options of test: how they run
+  --retries <n>              try again what fails, whatever the suite says (default 1)
+  --fail-fast                stop at the first failure
+  --keep-going               don't stop when the device or the app fails over and over
+  --shuffle[=seed]           in a random order, or in that of an earlier run
+  -c, --continuous           run again whenever a file changes
+
+Options of test: what comes out
+  -v, --verbose              every step (always, for a single flow)
+  --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
+  --failures-only            leave the flows that passed out of the results
+
+Options of test: mocks from the real backend
+  --capture <folder>         call the real backend, and write what it answers as mocks
+  --capture-from <url>       the backend, if calls don't begin with /host/
+
+Options of live
+  --app <package>            of a flow that isn't there yet
+  --mock <a,b>               its mocks, relative to it
+  --no-run                   don't begin by running the steps it has
+  --serve                    only take commands from rayo do, until .quit
+
+Options of do
+  --screen                   also what is on screen afterwards
+  --json                     for a program
+```
+
+An option of another command is an error, never ignored. More on [retries](REFERENCE.md#retries),
+[when it stops](REFERENCE.md#causes), [results](REFERENCE.md#results),
+[capture](REFERENCE.md#capture) and [live sessions](REFERENCE.md#live-sessions).
 
 The exit code is not 0 if a flow fails or doesn't run. A failure saves a screenshot, the elements on screen and
 the device log.
@@ -77,8 +117,9 @@ A suite, `*.rayo.yaml`, lists the flows that run together and how:
 name: Rides
 app: { id: com.example.app, apk: app-debug.apk }    # installed if the device has another
 output: .results                  # what is saved of each failure
-results: .results/results.txt     # how it went; resultsFormat: txt, json or junit
-startRecording: .results/videos   # a small video of each flow
+results: [.results/results.txt, .results/junit.xml]   # how it went: .txt, .json or .xml (JUnit)
+record: true                      # a small video of each flow
+recordFolder: .results/videos     # where; in output if not said
 retries: 1                        # of a whole flow that fails; 1 if not said
 device: { size: 1080x2400, dpi: 420, fontScale: 1.0, darkMode: false }   # put back at the end
 
@@ -198,10 +239,12 @@ the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
 
 | | |
 |---|---|
-| `cmd/rayo` | Command line, continuous mode |
-| `  suite.go`, `run.go` | Which flows; running them all, losing none |
-| `  live.go` | Live sessions and `do` |
-| `  console.go`, `results.go`, `json.go`, `junit.go` | What it prints and writes |
+| `cmd/rayo` | Command line |
+| `  options.go` | Every option, in one table: the commands that take it, its check and its help |
+| `  run.go` | Runs all the flows, losing none |
+| `internal/suite` | Which flows, also those of a suite |
+| `internal/report` | How a run went: on the screen, as text, JSON and JUnit |
+| `internal/live` | Live sessions, and how `do` reaches them |
 | `internal/flow` | Flows: reading, checking and running them |
 | `  keys.go`, `kinds.go` | Every key a flow may use; the kinds of value, each checked and read by one function |
 | `  commands.go` | Every command, in one table: its keys, its check and what it does |
@@ -212,7 +255,8 @@ the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
 | `internal/adb` | Talks to the adb server, sets up the device, and talks to the emulator's console |
 
 `test/` runs the real rayo against a pretend device and compares all that comes out, also every
-trip to the device: `go test ./test` (3 s), `-update` to accept a change.
+trip to the device: `go test ./test` (5 s), `-update` to accept a change. What only a real one can tell:
+`go test ./test -run Real -emulator emulator-5554`.
 
 The agent runs as the shell user with `app_process`. Waiting happens there, reacting to screen
 events, so there is no polling over adb. A tap waits until the element is enabled and its

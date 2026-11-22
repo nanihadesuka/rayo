@@ -1,5 +1,5 @@
 -- args --
-test e2e/all.rayo.yaml --failures-only --fail-fast --format=junit
+test e2e/all.rayo.yaml --failures-only --fail-fast
 -- e2e/all.rayo.yaml --
 name: Everything
 output: results
@@ -123,16 +123,3 @@ NOT_RUN c  (--fail-fast, after b)
   file: e2e/c/flow.yaml
 
 TOTAL 3: 0 passed, 1 failed, 2 not run, of those failed 1 app  # s
--- file report.xml --
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="rayo" tests="3" failures="1" errors="0" skipped="2" time="#">
-  <testcase name="b" file="e2e/b/flow.yaml" time="#">
-    <failure>  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b&#xA;</failure>
-  </testcase>
-  <testcase name="a" file="e2e/a/flow.yaml" time="#">
-    <skipped message="--fail-fast, after b"></skipped>
-  </testcase>
-  <testcase name="c" file="e2e/c/flow.yaml" time="#">
-    <skipped message="--fail-fast, after b"></skipped>
-  </testcase>
-</testsuite>

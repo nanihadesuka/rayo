@@ -1,4 +1,4 @@
-package main
+package report
 
 import (
 	"bytes"
@@ -36,21 +36,22 @@ type jsonRun struct {
 }
 
 type jsonFlow struct {
-	Name         string        `json:"name"`
-	File         string        `json:"file"`
-	Status       status        `json:"status"`
-	Cause        flow.Cause    `json:"cause"` // if it failed
-	Seconds      float64       `json:"seconds"`
-	Tries        int           `json:"tries"`
-	TimesFailed  int           `json:"timesFailed"`
-	Retries      int           `json:"retries"` // allowed
-	NotRunReason string        `json:"notRunReason"`
-	Warnings     []string      `json:"warnings"`
-	Recordings   []string      `json:"recordings"`
-	Failures     []jsonFailure `json:"failures"` // one for each try that failed
+	Name         string     `json:"name"`
+	File         string     `json:"file"`
+	Status       Status     `json:"status"`
+	Cause        flow.Cause `json:"cause"` // if it failed
+	Seconds      float64    `json:"seconds"`
+	Tries        int        `json:"tries"`
+	TimesFailed  int        `json:"timesFailed"`
+	Retries      int        `json:"retries"` // allowed
+	NotRunReason string     `json:"notRunReason"`
+	Warnings     []string   `json:"warnings"`
+	Recordings   []string   `json:"recordings"`
+	Failures     []Failure  `json:"failures"` // one for each try that failed
 }
 
-type jsonFailure struct {
+// Failure is one, for a program.
+type Failure struct {
 	Try     int         `json:"try"`
 	Why     string      `json:"why"`
 	Cause   flow.Cause  `json:"cause"`
@@ -74,8 +75,8 @@ type jsonStep struct {
 
 func seconds(d time.Duration) float64 { return math.Round(d.Seconds()*1000) / 1000 }
 
-// list is never null.
-func list[T any](l []T) []T {
+// List is never null.
+func List[T any](l []T) []T {
 	if l == nil {
 		return []T{}
 	}
@@ -84,15 +85,17 @@ func list[T any](l []T) []T {
 
 func stepOf(s *flow.Step) jsonStep { return jsonStep{s.Text(), filepath.ToSlash(s.Path), s.Line} }
 
-func linesOf(text string) []string {
+// Lines are those of a text; never null.
+func Lines(text string) []string {
 	if text == "" {
 		return []string{}
 	}
 	return strings.Split(strings.TrimRight(strings.ReplaceAll(text, "\r\n", "\n"), "\n"), "\n")
 }
 
-func failureOf(err error, e *flow.Failure) jsonFailure {
-	x := jsonFailure{Try: 1, Why: err.Error(), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}}
+// FailureOf describes a failure.
+func FailureOf(err error, e *flow.Failure) Failure {
+	x := Failure{Try: 1, Why: err.Error(), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}}
 	var step *flow.StepError
 	if errors.As(err, &step) {
 		at := stepOf(step.Step)
@@ -103,33 +106,33 @@ func failureOf(err error, e *flow.Failure) jsonFailure {
 	}
 	if e != nil {
 		x.Cause, x.Because = e.Cause, e.Because
-		x.Before, x.Calls, x.Crash, x.Saved = list(e.Before), list(e.Calls), e.Crash, e.Saved
-		x.Screen = linesOf(e.Screen)
+		x.Before, x.Calls, x.Crash, x.Saved = List(e.Before), List(e.Calls), e.Crash, e.Saved
+		x.Screen = Lines(e.Screen)
 	}
 	return x
 }
 
-func (o *outcome) json() jsonFlow {
-	f := jsonFlow{Name: o.flow.Name, File: filepath.ToSlash(o.flow.Path), Status: o.status, Cause: o.cause(), Seconds: seconds(o.took()),
-		Tries: len(o.tries), TimesFailed: o.timesFailed(), Retries: o.retries, NotRunReason: o.why, Warnings: list(o.Warnings), Recordings: []string{}, Failures: []jsonFailure{}}
-	for i, t := range o.tries {
+func (o *Outcome) json() jsonFlow {
+	f := jsonFlow{Name: o.Flow.Name, File: filepath.ToSlash(o.Flow.Path), Status: o.Status, Cause: o.cause(), Seconds: seconds(o.took()),
+		Tries: len(o.Tries), TimesFailed: o.TimesFailed(), Retries: o.Retries, NotRunReason: o.Why, Warnings: List(o.Warnings), Recordings: []string{}, Failures: []Failure{}}
+	for i, t := range o.Tries {
 		f.Recordings = append(f.Recordings, t.Recordings...)
-		if t.Err == nil || o.status == interrupted {
+		if t.Err == nil || o.Status == Interrupted {
 			continue
 		}
-		x := failureOf(t.Err, t.Failure)
+		x := FailureOf(t.Err, t.Failure)
 		x.Try = i + 1
 		f.Failures = append(f.Failures, x)
 	}
 	return f
 }
 
-func (s *summary) json(failuresOnly bool) ([]byte, error) {
-	r := jsonRun{Version: resultsVersion, Run: s.title, Device: s.device, Began: s.began.UTC().Format("2006-01-02T15:04:05Z"),
-		Seconds: seconds(s.took), Order: s.order, Stopped: s.stopped, OK: s.err() == nil, Total: len(s.outcomes), Passed: s.count(passed),
-		Failed: s.count(failed), Interrupted: s.count(interrupted), NotRun: s.count(notRun), Retried: s.retried(), Flows: []jsonFlow{}}
-	for _, o := range s.outcomes {
-		if !failuresOnly || o.status != passed || o.timesFailed() > 0 {
+func (s *Summary) json(failuresOnly bool) ([]byte, error) {
+	r := jsonRun{Version: resultsVersion, Run: s.Title, Device: s.Device, Began: s.Began.UTC().Format("2006-01-02T15:04:05Z"),
+		Seconds: seconds(s.Took), Order: s.Order, Stopped: s.Stopped, OK: s.Err() == nil, Total: len(s.Outcomes), Passed: s.count(Passed),
+		Failed: s.count(Failed), Interrupted: s.count(Interrupted), NotRun: s.count(NotRun), Retried: s.retried(), Flows: []jsonFlow{}}
+	for _, o := range s.Outcomes {
+		if !failuresOnly || o.Status != Passed || o.TimesFailed() > 0 {
 			r.Flows = append(r.Flows, o.json())
 		}
 	}

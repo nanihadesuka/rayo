@@ -1,0 +1,11 @@
+-- args --
+check --emulator a.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: --emulator is not an option of check

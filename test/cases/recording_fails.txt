@@ -1,7 +1,7 @@
 -- device without recorder --
 -- flow.yaml --
 appId: a.b
-startRecording: true
+record: true
 ---
 - back
 ==== out ====

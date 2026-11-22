@@ -103,7 +103,7 @@ func parse(path string, data []byte, depth int) (*Flow, error) {
 			}
 		case "mock":
 			f.Mock, err = p.mocks(v)
-		case "startRecording":
+		case "record":
 			if f.Recording, err = ReadRecording(v); err != nil {
 				err = problem(path, v.Line, "%v", err)
 			}

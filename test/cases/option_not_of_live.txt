@@ -1,0 +1,11 @@
+-- args --
+live --retries 2 a.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: --retries is not an option of live

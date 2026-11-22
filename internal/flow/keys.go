@@ -143,15 +143,15 @@ var (
 
 // Control and scripts.
 var (
-	keyFile       = newKey("file", aText, "A path relative to this flow")
-	keyEnv        = newKey("env", variables, "Variables for it")
-	keyWhen       = newKey("when", conditions, "Only if these hold")
-	keyWhile      = newKey("while", conditions, "As long as these hold")
-	keyCommands   = newKey("commands", raw("commands"), "What to run")
-	keyTimes      = newKey("times", aNumber, "At most")
-	keyMaxRetries = newKey("maxRetries", aNumber, "How many more times (1)")
-	keyCondition  = newKey("condition", aScript, "An expression")
-	keyScript     = newKey("script", aScript, "A line of it")
+	keyFile      = newKey("file", aText, "A path relative to this flow")
+	keyEnv       = newKey("env", variables, "Variables for it")
+	keyWhen      = newKey("when", conditions, "Only if these hold")
+	keyWhile     = newKey("while", conditions, "As long as these hold")
+	keyCommands  = newKey("commands", raw("commands"), "What to run")
+	keyTimes     = newKey("times", aNumber, "At most")
+	keyRetries   = newKey("retries", aNumber, "How many more times (1)")
+	keyCondition = newKey("condition", aScript, "An expression")
+	keyScript    = newKey("script", aScript, "A line of it")
 )
 
 // Device.

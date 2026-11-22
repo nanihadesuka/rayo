@@ -2,14 +2,18 @@
 check a.yaml b.rayo.yaml
 -- a.yaml --
 appId: a.b
-startRecording: [x]
+record: [x]
 ---
 - back
 -- b.rayo.yaml --
-flows: [a.yaml]
-startRecording: {}
+flows: [c.yaml]
+recordFolder: x
+-- c.yaml --
+appId: a.b
+---
+- back
 ==== out ====
 -- exit --
 1
 -- stderr --
-error: b.rayo.yaml: startRecording takes true, false or a path
+error: b.rayo.yaml: recordFolder needs record: true

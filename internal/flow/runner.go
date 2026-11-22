@@ -24,7 +24,6 @@ const (
 
 // Options of a Runner.
 type Options struct {
-	Out       string            // folder for failures and screenshots
 	Env       map[string]string // wins over the flow's
 	Profile   bool
 	MockPort  int        // on the device

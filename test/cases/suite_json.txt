@@ -4,7 +4,6 @@ test e2e/all.rayo.yaml --retries 1
 name: Everything
 output: results
 results: results/results.json
-resultsFormat: json
 flows:
   - b/flow.yaml
   - a/flow.yaml

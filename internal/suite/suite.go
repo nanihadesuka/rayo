@@ -1,4 +1,5 @@
-package main
+// Package suite finds the flows to run, also those that a suite lists.
+package suite
 
 import (
 	"bytes"
@@ -12,28 +13,43 @@ import (
 
 	"github.com/nanihadesuka/rayo/internal/adb"
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/report"
 	"gopkg.in/yaml.v3"
 )
 
 // suiteEnd is how the name of a suite ends.
 const suiteEnd = ".rayo.yaml"
 
-// suite is a file that says which flows run together. Its paths are relative to it.
-type suite struct {
+// Suite is a file that says which flows run together. Its paths are relative to it.
+type Suite struct {
 	Name    string  `yaml:"name"`
 	App     *app    `yaml:"app"`
 	Flows   []entry `yaml:"flows"`
 	Retries *int    `yaml:"retries"`
 	Output  string  `yaml:"output"`
-	Results string  `yaml:"results"`
-	Format  string  `yaml:"resultsFormat"`
+	Results files   `yaml:"results"`
 
-	Device    *adb.Setup `yaml:"device"`
-	Recording yaml.Node  `yaml:"startRecording"`
+	Device       *adb.Setup `yaml:"device"`
+	Record       bool       `yaml:"record"`
+	RecordFolder string     `yaml:"recordFolder"`
 
-	path      string
-	recording *flow.Recording
+	Path string `yaml:"-"`
 }
+
+// files is one or a list.
+type files []string
+
+// UnmarshalYAML reads it.
+func (f *files) UnmarshalYAML(n *yaml.Node) error {
+	if n.Kind == yaml.ScalarNode {
+		*f = files{n.Value}
+		return nil
+	}
+	return n.Decode((*[]string)(f))
+}
+
+// DefaultRetries is how many times a flow is tried again, if nothing says.
+const DefaultRetries = 1
 
 // entry is a flow of a suite: its file, or a mapping with what is only for it.
 type entry struct {
@@ -72,17 +88,17 @@ func (e *entry) UnmarshalYAML(n *yaml.Node) error {
 	return nil
 }
 
-// retriesOf says how many times a flow may be tried again.
-func (s *suite) retriesOf(f *flow.Flow) int {
+// RetriesOf says how many times a flow may be tried again.
+func (s *Suite) RetriesOf(f *flow.Flow) int {
 	for _, e := range s.Flows {
-		if e.retries != nil && s.relative(e.file) == f.Path {
+		if e.retries != nil && s.Relative(e.file) == f.Path {
 			return *e.retries
 		}
 	}
 	if s.Retries != nil {
 		return *s.Retries
 	}
-	return defaultRetries
+	return DefaultRetries
 }
 
 type app struct {
@@ -90,12 +106,12 @@ type app struct {
 	APK string `yaml:"apk"`
 }
 
-func loadSuite(path string) (*suite, error) {
+func read(path string) (*Suite, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	s := &suite{path: path}
+	s := &Suite{Path: path}
 	d := yaml.NewDecoder(bytes.NewReader(data))
 	d.KnownFields(true)
 	where := filepath.ToSlash(path)
@@ -105,8 +121,8 @@ func loadSuite(path string) (*suite, error) {
 	if len(s.Flows) == 0 {
 		return nil, fmt.Errorf("%s: needs flows, a list of files", where)
 	}
-	if s.Format != "" {
-		if err := checkFormat(s.Format); err != nil {
+	for _, file := range s.Results {
+		if _, err := report.FormatOf(file); err != nil {
 			return nil, fmt.Errorf("%s: %w", where, err)
 		}
 	}
@@ -115,11 +131,8 @@ func loadSuite(path string) (*suite, error) {
 			return nil, fmt.Errorf("%s: device: %w", where, err)
 		}
 	}
-	if s.Recording.Kind != 0 {
-		if s.recording, err = flow.ReadRecording(&s.Recording); err != nil {
-			return nil, fmt.Errorf("%s: %w", where, err)
-		}
-		s.recording.Path = s.relative(s.recording.Path)
+	if s.RecordFolder != "" && !s.Record {
+		return nil, fmt.Errorf("%s: recordFolder needs record: true", where)
 	}
 	if a := s.App; a != nil && (a.APK == "" || a.ID == "") {
 		return nil, fmt.Errorf("%s: app needs id and apk", where)
@@ -131,7 +144,7 @@ func loadSuite(path string) (*suite, error) {
 		if slices.ContainsFunc(s.Flows[:i], func(o entry) bool { return o.file == e.file }) {
 			return nil, fmt.Errorf("%s: %s is listed twice", where, e.file)
 		}
-		if info, err := os.Stat(s.relative(e.file)); err != nil || info.IsDir() {
+		if info, err := os.Stat(s.Relative(e.file)); err != nil || info.IsDir() {
 			return nil, fmt.Errorf("%s: no such flow: %s", where, e.file)
 		}
 		if e.retries != nil && *e.retries < 0 {
@@ -141,20 +154,21 @@ func loadSuite(path string) (*suite, error) {
 	return s, nil
 }
 
-func (s *suite) relative(path string) string {
+// Relative is a path written in the suite.
+func (s *Suite) Relative(path string) string {
 	path = filepath.FromSlash(path)
 	if path == "" || filepath.IsAbs(path) {
 		return path
 	}
-	return filepath.Join(filepath.Dir(s.path), path)
+	return filepath.Join(filepath.Dir(s.Path), path)
 }
 
-// install puts the app on the device, unless that same one is there.
-func (s *suite) install(d *adb.Device, say bool) error {
+// Install puts the app on the device, unless that same one is there.
+func (s *Suite) Install(d *adb.Device, say bool) error {
 	if s.App == nil {
 		return nil
 	}
-	apk, err := os.ReadFile(s.relative(s.App.APK))
+	apk, err := os.ReadFile(s.Relative(s.App.APK))
 	if err != nil {
 		return err
 	}
@@ -168,13 +182,13 @@ func (s *suite) install(d *adb.Device, say bool) error {
 	return nil
 }
 
-// load loads every flow, so a mistake in any shows before the first one runs. The suite is nil
+// Load loads every flow, so a mistake in any shows before the first one runs. The suite is nil
 // unless one was given.
-func load(paths []string) ([]*flow.Flow, *suite, error) {
+func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 	if len(paths) == 0 {
 		return nil, nil, errors.New("which flow? give a file, a folder or a suite")
 	}
-	var s *suite
+	var s *Suite
 	var files []string
 	for _, p := range paths {
 		info, err := os.Stat(p)
@@ -185,11 +199,11 @@ func load(paths []string) ([]*flow.Flow, *suite, error) {
 			if s != nil {
 				return nil, nil, errors.New("one suite at a time")
 			}
-			if s, err = loadSuite(p); err != nil {
+			if s, err = read(p); err != nil {
 				return nil, nil, err
 			}
 			for _, f := range s.Flows {
-				files = append(files, s.relative(f.file))
+				files = append(files, s.Relative(f.file))
 			}
 			continue
 		}

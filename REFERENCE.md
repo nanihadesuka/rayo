@@ -47,7 +47,7 @@ appId: com.example.app
 | `tags` | A list, see [Tags](#tags) |
 | `env` | See [Variables](#variables) |
 | `mock` | A path or a list, see [Mock](#mock) |
-| `startRecording` | `true`, `false` or a path, see [startRecording](#startrecording-stoprecording) |
+| `record` | `true`, `false` or a file, see [Recording a whole flow](#recording-a-whole-flow) |
 | `onFlowStart` | Commands run first |
 | `onFlowComplete` | Commands run last, also after a failure |
 
@@ -324,7 +324,7 @@ The same two, usually with a longer `timeout`.
 
 ### retry
 
-🧪 Runs `commands` or a `file`, again if it fails, up to `maxRetries` (1) more times.
+🧪 Runs `commands` or a `file`, again if it fails, up to `retries` (1) more times.
 
 ### when
 
@@ -404,7 +404,7 @@ Android 12.
 
 ### takeScreenshot
 
-🧪 Saves `<debug output>/<flow>/<name>.png`.
+🧪 Saves `<output>/<flow>/<name>.png`.
 
 ### startRecording, stopRecording
 
@@ -412,22 +412,23 @@ Records the screen as an mp4. The recording ends with `stopRecording` or with th
 fails. Without a path it has the flow's name.
 
 ```yaml
-- startRecording                      # <debug output>/<flow>/<flow>.mp4
-- startRecording: login               # <debug output>/<flow>/login.mp4
+- startRecording                      # <output>/<flow>/<flow>.mp4
+- startRecording: login               # <output>/<flow>/login.mp4
 - startRecording: { path: login }     # the same
 - stopRecording
 ```
 
-To record all of a flow, say so in its header; or in a [suite](#suites), for those of its flows that
-don't say:
+#### Recording a whole flow
 
-| Where | `startRecording` | Saved as |
+`record` in its header; or in a [suite](#suites), for those of its flows that don't say:
+
+| Where | | Saved as |
 |---|---|---|
-| Flow header | `true` | `<debug output>/<flow>/<flow>.mp4` |
-| | `name`, or an absolute path | `<debug output>/<flow>/name.mp4`, or that path |
-| | `false` | Not recorded, whatever the suite says |
-| Suite | `true` | `<debug output>/<flow>/<flow>.mp4` |
-| | `folder`, relative to the suite | `folder/<flow>.mp4` |
+| Flow header | `record: true` | `<output>/<flow>/<flow>.mp4` |
+| | `record: name`, or an absolute path | `<output>/<flow>/name.mp4`, or that path |
+| | `record: false` | Not recorded, whatever the suite says |
+| Suite | `record: true` | `<output>/<flow>/<flow>.mp4` |
+| | and `recordFolder: videos`, relative to the suite | `videos/<flow>.mp4` |
 
 Each try of a flow has its own, such as `<flow>_retry1.mp4`. One recording at a time: with one in
 the header, another needs `stopRecording` first. At most 30 minutes, or 3 before Android 11 or so;
@@ -616,9 +617,9 @@ flows:
 | `name` | Shown in the results |
 | `app` | `apk` is installed before the flows, if the device has another, as `id`. rayo doesn't build it |
 | `device` | How the device is while the flows run, see [below](#device-setup) |
-| `output` | As `--debug-output`, which wins |
-| `startRecording` | `true`, or the folder for a video of each flow, see [startRecording](#startrecording-stoprecording) |
-| `results`, `resultsFormat` | As `--results` and `--results-format`, which win |
+| `output` | As `--output`, which wins |
+| `record`, `recordFolder` | `true`, and where the videos go, see [Recording a whole flow](#recording-a-whole-flow) |
+| `results` | A file or a list, as `--results`, which wins over all of them |
 
 Mocks, shared steps and permissions belong in each flow, so that it can be read and run alone. The
 device is chosen as always: use `--emulator` if the flows must never run on a real one.
@@ -742,7 +743,7 @@ Every flow asked for has one; none is left out of the count.
 | `INTERRUPTED` | Ctrl-C while it ran | 130 |
 | `NOT_RUN` | With the reason: interrupted, `--fail-fast`, or the run [stopped](#causes) | 1 |
 
-If the connection is lost, the flow fails and the next goes on with a new one. `--rerun-failed` runs what is in `<debug output>/failed.json`: what
+If the connection is lost, the flow fails and the next goes on with a new one. `--rerun-failed` runs what is in `<output>/failed.json`: what
 failed, was interrupted or didn't run, until it passes.
 
 ### Results
@@ -790,20 +791,24 @@ The list at the end is only there if something didn't pass. Under a failure:
 | `recording` | A video; of flows that passed, only in the file |
 | `warning` | Something that may explain this, or the next flow |
 
-`--results <file>` writes it to a file, and `--results-format` says how:
+`--results <file>` writes it, as the file's name says. It may be repeated, for several formats at once:
 
-| Format | |
+```
+rayo test --results out.txt --results junit.xml all.rayo.yaml
+```
+
+| File | |
 |---|---|
-| `txt` | The default: as above for every flow, with `run`, `device` and `began` at the top and each flow's `file` |
-| `json` | For a program |
-| `junit` | For a CI, see [Report](#report) |
+| `.txt` | As above for every flow, with `run`, `device` and `began` at the top and each flow's `file` |
+| `.json` | For a program |
+| `.xml` | JUnit, for a CI, see [Report](#report) |
 
-`--failures-only` leaves out the flows that passed, but counts them; not from `junit`.
+`--failures-only` leaves out the flows that passed, but counts them; not from JUnit.
 
-In `txt`, a line that begins with an outcome is a flow: `grep -E '^(FAIL|NOT_RUN)' results.txt`. What
+In a `.txt`, a line that begins with an outcome is a flow: `grep -E '^(FAIL|NOT_RUN)' results.txt`. What
 follows is about it: `  key: value`, or `  key:` and lines with four spaces. `TOTAL` is the last line.
 
-In `json`, every key is always there: what there is none of is `""`, `0` or `[]`.
+In a `.json`, every key is always there: what there is none of is `""`, `0` or `[]`.
 
 ```json
 {
@@ -908,7 +913,7 @@ be left out.
 
 ### From other programs
 
-`rayo do` sends commands to the live session, from the same folder or with the same `--debug-output`.
+`rayo do` sends commands to the live session, from the same folder or with the same `--output`.
 Each call answers when the steps have run; its exit code is 1 if one failed.
 
 ```
@@ -929,7 +934,7 @@ rayo do .quit
 Calls the app makes without a mock are warnings here: the session goes on. A run of the saved
 flow would fail.
 
-Only this computer can use a session, with a token kept in `<debug output>/live.json`.
+Only this computer can use a session, with a token kept in `<output>/live.json`.
 
 ---
 
@@ -954,7 +959,7 @@ Used as `${NAME}`. The first that has it wins:
 
 ### Failures
 
-Saved in `<debug output>/<flow>/`, or `<flow>_2` for a second one with that name; the tries after the
+Saved in `<output>/<flow>/`, or `<flow>_2` for a second one with that name; the tries after the
 first in `<flow>_retry1` and so on. Those of an earlier run are removed when the flow runs again.
 
 | File | |
@@ -962,7 +967,7 @@ first in `<flow>_retry1` and so on. Those of an earlier run are removed when the
 | `failure.png` | The screen |
 | `screen.txt` | The elements on it, as `rayo hierarchy` shows them |
 | `logcat.txt` | The end of the device log |
-| `requests.txt` | Every call the app made to the [mock](#mock), with its body; `requests.json`, a list like `calls`, with `--results-format json`. The last five are printed |
+| `requests.txt` | Every call the app made to the [mock](#mock), with its body; `requests.json`, a list like `calls`, if the results are also written to a `.json`. The last five are printed |
 
 | Exit code | |
 |---|---|
@@ -988,7 +993,7 @@ first in `<flow>_retry1` and so on. Those of an earlier run are removed when the
 
 ### Report
 
-`--format junit --output report.xml`, besides the [results](#results) or as their format. What didn't run is `skipped`, what was interrupted is an `error`,
+JUnit: `--results report.xml`. What didn't run is `skipped`, what was interrupted is an `error`,
 and a flow that failed first has its failed tries in `system-out`.
 
 ### Environment

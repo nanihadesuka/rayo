@@ -2,7 +2,7 @@
 check s.rayo.yaml
 -- s.rayo.yaml --
 flows: [a.yaml]
-resultsFormat: xml
+results: [out.txt, out.yaml]
 -- a.yaml --
 appId: a.b
 ---
@@ -11,4 +11,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml: unknown results format "xml" (use txt, json or junit)
+error: s.rayo.yaml: results go to a .txt, .json or .xml (JUnit) file, not "out.yaml"

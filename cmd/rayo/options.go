@@ -3,197 +3,294 @@ package main
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/report"
+	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const help = `rayo - runs flows on Android, fast
+// options are those of all the commands: each takes only its own, see the table below.
+type options struct {
+	args []string // what isn't an option
+
+	// Of those that use a device.
+	device     string
+	emulator   bool
+	animations bool
+	output     string // folder; empty if not said
+	runner     flow.Options
+
+	// Of test.
+	continuous             bool
+	only, include, exclude []string
+	rerunFailed            bool
+	shuffle                bool
+	seed                   uint64
+	retries                int // negative if not said
+	failFast, keepGoing    bool
+	verbose                bool
+	results                []string // files
+	failuresOnly           bool
+	suite                  *suite.Suite
+
+	// Of live.
+	app          string
+	mocks        []string
+	noRun, serve bool
+
+	// Of do.
+	screen, json bool
+}
+
+// option is all there is to know about one: to add one, add it to the table below.
+type option struct {
+	short, name string
+	value       string // what it takes; empty if nothing
+	optional    bool   // the value, only as --name=value
+	about       string
+	set         func(o *options, value string) error
+}
+
+// section is the options of some commands.
+type section struct {
+	commands []string
+	title    string // of a part of them
+	options  []option
+}
+
+const (
+	cmdTest      = "test"
+	cmdCheck     = "check"
+	cmdLive      = "live"
+	cmdDo        = "do"
+	cmdHierarchy = "hierarchy"
+	cmdDevices   = "devices"
+)
+
+func flag(name, about string, at func(o *options) *bool) option {
+	return option{name: name, about: about, set: func(o *options, _ string) error { *at(o) = true; return nil }}
+}
+
+func text(name, value, about string, at func(o *options) *string) option {
+	return option{name: name, value: value, about: about, set: func(o *options, v string) error {
+		if v == "" {
+			return fmt.Errorf("--%s takes a %s", name, value)
+		}
+		*at(o) = v
+		return nil
+	}}
+}
+
+func list(name, about string, at func(o *options) *[]string) option {
+	return option{name: name, value: "a,b", about: about, set: func(o *options, v string) error {
+		*at(o) = strings.Split(v, ",")
+		return nil
+	}}
+}
+
+func (p option) withShort(short string) option { p.short = short; return p }
+
+var sections = []section{
+	{[]string{cmdTest, cmdLive, cmdHierarchy}, "", []option{
+		text("device", "serial", "when several are connected", func(o *options) *string { return &o.device }),
+		flag("emulator", "never a real device, even if it is the only one", func(o *options) *bool { return &o.emulator }),
+	}},
+	{[]string{cmdTest, cmdLive, cmdDo}, "", []option{
+		text("output", "folder", "where failures and screenshots go (default .rayo)", func(o *options) *string { return &o.output }),
+	}},
+	{[]string{cmdTest, cmdLive}, "", []option{
+		{short: "e", name: "env", value: "KEY=VALUE", about: "a variable for the flows", set: func(o *options, v string) error {
+			k, value, ok := strings.Cut(v, "=")
+			if !ok {
+				return errors.New("--env takes KEY=VALUE")
+			}
+			o.runner.Env[k] = value
+			return nil
+		}},
+		{name: "mock-port", value: "port", about: "where the app finds the mock on the device (default 8080)", set: func(o *options, v string) error {
+			n, err := strconv.ParseUint(v, 10, 16)
+			if err != nil || n == 0 {
+				return fmt.Errorf("not a port: %q", v)
+			}
+			o.runner.MockPort = int(n)
+			return nil
+		}},
+		flag("animations", "leave the device's animations on", func(o *options) *bool { return &o.animations }),
+		flag("profile", "where the time of each step went", func(o *options) *bool { return &o.runner.Profile }),
+	}},
+	{[]string{cmdTest}, "which flows", []option{
+		list("only", "only the flows with these names", func(o *options) *[]string { return &o.only }),
+		list("include-tags", "only flows with one of these tags", func(o *options) *[]string { return &o.include }),
+		list("exclude-tags", "not flows with one of these tags", func(o *options) *[]string { return &o.exclude }),
+		flag("rerun-failed", "only those that haven't passed since they last failed", func(o *options) *bool { return &o.rerunFailed }),
+	}},
+	{[]string{cmdTest}, "how they run", []option{
+		{name: "retries", value: "n", about: "try again what fails, whatever the suite says (default 1)", set: func(o *options, v string) error {
+			n, err := strconv.Atoi(v)
+			if err != nil || n < 0 {
+				return fmt.Errorf("--retries takes a number, not %q", v)
+			}
+			o.retries = n
+			return nil
+		}},
+		flag("fail-fast", "stop at the first failure", func(o *options) *bool { return &o.failFast }),
+		flag("keep-going", "don't stop when the device or the app fails over and over", func(o *options) *bool { return &o.keepGoing }),
+		{name: "shuffle", value: "seed", optional: true, about: "in a random order, or in that of an earlier run", set: func(o *options, v string) error {
+			o.shuffle, o.seed = true, uint64(time.Now().UnixMilli())
+			if v == "" {
+				return nil
+			}
+			var err error
+			if o.seed, err = strconv.ParseUint(v, 10, 64); err != nil {
+				return fmt.Errorf("--shuffle takes a number, not %q", v)
+			}
+			return nil
+		}},
+		flag("continuous", "run again whenever a file changes", func(o *options) *bool { return &o.continuous }).withShort("c"),
+	}},
+	{[]string{cmdTest}, "what comes out", []option{
+		flag("verbose", "every step (always, for a single flow)", func(o *options) *bool { return &o.verbose }).withShort("v"),
+		{name: "results", value: "file", about: "write the results: .txt, .json or .xml (JUnit); may be repeated", set: func(o *options, v string) error {
+			o.results = append(o.results, v)
+			_, err := report.FormatOf(v)
+			return err
+		}},
+		flag("failures-only", "leave the flows that passed out of the results", func(o *options) *bool { return &o.failuresOnly }),
+	}},
+	{[]string{cmdTest}, "mocks from the real backend", []option{
+		text("capture", "folder", "call the real backend, and write what it answers as mocks", func(o *options) *string { return &o.runner.Capture }),
+		text("capture-from", "url", "the backend, if calls don't begin with /host/", func(o *options) *string { return &o.runner.Backend }),
+	}},
+	{[]string{cmdLive}, "", []option{
+		text("app", "package", "of a flow that isn't there yet", func(o *options) *string { return &o.app }),
+		list("mock", "its mocks, relative to it", func(o *options) *[]string { return &o.mocks }),
+		flag("no-run", "don't begin by running the steps it has", func(o *options) *bool { return &o.noRun }),
+		flag("serve", "only take commands from rayo do, until .quit", func(o *options) *bool { return &o.serve }),
+	}},
+	{[]string{cmdDo}, "", []option{
+		flag("screen", "also what is on screen afterwards", func(o *options) *bool { return &o.screen }),
+		flag("json", "for a program", func(o *options) *bool { return &o.json }),
+	}},
+}
+
+const usage = `rayo - runs flows on Android, fast
 
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.rayo.yaml
   rayo check <flow, folder or suite>...            check flows without a device
   rayo live [options] <flow>                       write a flow as it runs, command by command
-  rayo do [--screen] [--json] <commands>           send commands to the live session; rayo do .help
-  rayo hierarchy                                   what is on screen, and how to refer to it
+  rayo do [options] <commands>                     send commands to the live session; rayo do .help
+  rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
-  rayo help <command>                              what a command takes
+  rayo help <command>                              what a command of a flow takes
   rayo version
-
-Options of test:
-  --device <serial>        when several are connected
-  --emulator               never a real device, even if it is the only one
-  -e, --env KEY=VALUE      a variable for the flows
-  -c, --continuous         run again whenever a file changes
-
-  Which flows, and how:
-  --only a,b               only the flows with these names
-  --include-tags a,b       only flows with one of these tags
-  --exclude-tags a,b       not flows with one of these tags
-  --rerun-failed           only those that haven't passed since they last failed
-  --shuffle[=seed]         in a random order, or in that of an earlier run
-  --retries <n>            try again what fails, whatever the suite says (default 1)
-  --fail-fast              stop at the first failure
-  --keep-going             don't stop when the device or the app fails over and over
-
-  What comes out:
-  -v, --verbose            every step (always, for a single flow)
-  --profile                where the time of each step went
-  --results <file>         write the results
-  --results-format <f>     txt (the default), json or junit
-  --failures-only          leave the flows that passed out of the results
-  --format junit           write a report
-  --output <file>          where (default report.xml)
-  --debug-output <folder>  where failures and screenshots go (default .rayo)
-
-  --capture <folder>       call the real backend, and write what it answers as mocks
-  --capture-from <url>     the backend, if calls don't begin with /host/
-
-Options of live, besides --device, --emulator, -e, --mock-port, --debug-output and --animations:
-  --app <package>          of a flow that isn't there yet
-  --mock a,b               its mocks, relative to it
-  --no-run                 don't begin by running the steps it has
-  --serve                  only take commands from rayo do, until .quit
-  --mock-port <port>       where the app finds the mock on the device (default 8080)
-  --animations             leave the device's animations on
 `
 
-type options struct {
-	device, format, output string
-	results, resultsFormat string
-	include, exclude, only []string
-	continuous, animations bool
-	verbose, failuresOnly  bool
-	rerunFailed, failFast  bool
-	shuffle, emulator      bool
-	noRun, serve           bool
-	keepGoing              bool
-	app                    string
-	mocks                  []string
-	seed                   uint64
-	retries                int // negative if not said
-	suite                  *suite
-	runner                 flow.Options
-	paths                  []string
+// help is made from the table.
+func help() string {
+	var b strings.Builder
+	b.WriteString(usage)
+	for _, s := range sections {
+		names := strings.Join(s.commands, ", ")
+		if i := strings.LastIndex(names, ", "); i >= 0 {
+			names = names[:i] + " and " + names[i+2:]
+		}
+		fmt.Fprintf(&b, "\nOptions of %s", names)
+		if s.title != "" {
+			fmt.Fprintf(&b, ": %s", s.title)
+		}
+		b.WriteString("\n")
+		for _, p := range s.options {
+			name := "--" + p.name
+			switch {
+			case p.optional:
+				name += "[=" + p.value + "]"
+			case p.value != "":
+				name += " <" + p.value + ">"
+			}
+			if p.short != "" {
+				name = "-" + p.short + ", " + name
+			}
+			fmt.Fprintf(&b, "  %-26s %s\n", name, p.about)
+		}
+	}
+	return b.String()
 }
 
-func parse(args []string) (*options, error) {
-	o := &options{output: "report.xml", retries: -1, runner: flow.Options{Env: map[string]string{}, MockPort: 8080}}
+// find is the option with a name as written, if the command takes it.
+func find(command, written string) (option, error) {
+	known := false
+	for _, s := range sections {
+		for _, p := range s.options {
+			if written != "--"+p.name && (p.short == "" || written != "-"+p.short) {
+				continue
+			}
+			if slices.Contains(s.commands, command) {
+				return p, nil
+			}
+			known = true
+		}
+	}
+	if known {
+		return option{}, fmt.Errorf("%s is not an option of %s", written, command)
+	}
+	return option{}, fmt.Errorf("unknown option %s", written)
+}
+
+func parse(command string, args []string) (*options, error) {
+	o := &options{retries: -1, runner: flow.Options{Env: map[string]string{}, MockPort: 8080}}
 	for i := 0; i < len(args); i++ {
-		name, value, joined := strings.Cut(args[i], "=")
-		if !strings.HasPrefix(args[i], "-") {
-			o.paths = append(o.paths, args[i])
+		// A command for do may begin with a dash, as in a list.
+		if !strings.HasPrefix(args[i], "-") || command == cmdDo && !strings.HasPrefix(args[i], "--") {
+			o.args = append(o.args, args[i])
 			continue
 		}
-		next := func() (string, error) {
-			if joined {
-				return value, nil
-			}
-			if i++; i >= len(args) {
-				return "", fmt.Errorf("%s needs a value", name)
-			}
-			return args[i], nil
-		}
-		var err error
-		switch name {
-		case "--device", "--udid":
-			o.device, err = next()
-		case "-e", "--env":
-			var pair string
-			if pair, err = next(); err == nil {
-				k, v, ok := strings.Cut(pair, "=")
-				if !ok {
-					err = fmt.Errorf("%s takes KEY=VALUE", name)
-				}
-				o.runner.Env[k] = v
-			}
-		case "--include-tags":
-			o.include, err = tags(next)
-		case "--exclude-tags":
-			o.exclude, err = tags(next)
-		case "--only":
-			o.only, err = tags(next)
-		case "--results":
-			o.results, err = next()
-		case "--results-format":
-			if o.resultsFormat, err = next(); err == nil {
-				err = checkFormat(o.resultsFormat)
-			}
-		case "--capture":
-			if o.runner.Capture, err = next(); err == nil && o.runner.Capture == "" {
-				err = errors.New("--capture takes a folder")
-			}
-		case "--capture-from":
-			o.runner.Backend, err = next()
-		case "--retries":
-			var n string
-			if n, err = next(); err == nil {
-				if o.retries, err = strconv.Atoi(n); err != nil || o.retries < 0 {
-					err = fmt.Errorf("--retries takes a number, not %q", n)
-				}
-			}
-		case "--shuffle":
-			o.shuffle, o.seed = true, uint64(time.Now().UnixMilli())
-			if joined {
-				if o.seed, err = strconv.ParseUint(value, 10, 64); err != nil {
-					err = fmt.Errorf("--shuffle takes a number, not %q", value)
-				}
-			}
-		case "--rerun-failed":
-			o.rerunFailed = true
-		case "--app":
-			o.app, err = next()
-		case "--mock":
-			o.mocks, err = tags(next)
-		case "--no-run":
-			o.noRun = true
-		case "--serve":
-			o.serve = true
-		case "--emulator":
-			o.emulator = true
-		case "--keep-going":
-			o.keepGoing = true
-		case "--fail-fast":
-			o.failFast = true
-		case "--failures-only":
-			o.failuresOnly = true
-		case "-v", "--verbose":
-			o.verbose = true
-		case "--format":
-			if o.format, err = next(); err == nil && !strings.EqualFold(o.format, "junit") {
-				err = fmt.Errorf("unknown format %q (use junit)", o.format)
-			}
-		case "--output":
-			o.output, err = next()
-		case "--debug-output", "--test-output-dir":
-			o.runner.Out, err = next()
-		case "--mock-port":
-			var port string
-			if port, err = next(); err == nil {
-				n, e := strconv.ParseUint(port, 10, 16)
-				if e != nil || n == 0 {
-					err = fmt.Errorf("not a port: %q", port)
-				}
-				o.runner.MockPort = int(n)
-			}
-		case "-c", "--continuous":
-			o.continuous = true
-		case "--profile":
-			o.runner.Profile, o.verbose = true, true
-		case "--animations":
-			o.animations = true
-		default:
-			err = fmt.Errorf("unknown option %s", name)
-		}
+		name, value, joined := strings.Cut(args[i], "=")
+		p, err := find(command, name)
 		if err != nil {
 			return nil, err
 		}
+		switch {
+		case p.value == "" && joined:
+			return nil, fmt.Errorf("%s takes no value", name)
+		case p.value != "" && !joined && !p.optional:
+			if i++; i >= len(args) {
+				return nil, fmt.Errorf("%s needs a value", name)
+			}
+			value = args[i]
+		}
+		if err := p.set(o, value); err != nil {
+			return nil, err
+		}
+	}
+	if o.failFast && o.keepGoing {
+		return nil, errors.New("--fail-fast and --keep-going don't go together")
 	}
 	return o, nil
 }
 
-func tags(next func() (string, error)) ([]string, error) {
-	v, err := next()
-	return strings.Split(v, ","), err
+// none is an error if there is something else than options.
+func (o *options) none(command string) error {
+	if len(o.args) > 0 {
+		return fmt.Errorf("%s takes no %q", command, o.args[0])
+	}
+	return nil
+}
+
+// steps says whether to show every step, and not only how each flow went.
+func (o *options) steps(flows []*flow.Flow) bool {
+	return o.verbose || o.runner.Profile || len(flows) == 1
+}
+
+// into settles the output folder: the option, or else the suite's.
+func (o *options) into(folder string) {
+	if o.output == "" {
+		o.output = folder
+	}
+	if o.output == "" {
+		o.output = ".rayo"
+	}
 }

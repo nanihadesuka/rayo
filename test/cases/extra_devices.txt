@@ -1,0 +1,7 @@
+-- args --
+devices x
+==== out ====
+-- exit --
+1
+-- stderr --
+error: devices takes no "x"

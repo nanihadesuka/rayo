@@ -1,7 +1,8 @@
 -- args --
-test s.rayo.yaml --retries 1 --results-format json
+test s.rayo.yaml --retries 1
 -- s.rayo.yaml --
-startRecording: videos
+record: true
+recordFolder: videos
 results: out.json
 flows: [a.yaml, b.yaml, c.yaml]
 -- a.yaml --
@@ -10,12 +11,12 @@ appId: a.b
 - tapOn: { id: flaky 1 }
 -- b.yaml --
 appId: a.b
-startRecording: false
+record: false
 ---
 - back
 -- c.yaml --
 appId: a.b
-startRecording: own
+record: own
 ---
 - back
 ==== out ====

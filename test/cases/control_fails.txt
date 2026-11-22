@@ -8,7 +8,7 @@ onFlowComplete:
 -- sub.yaml --
 appId: a.b
 ---
-- retry: { maxRetries: 1, commands: [ { tapOn: { id: missing, label: Open it } } ] }
+- retry: { retries: 1, commands: [ { tapOn: { id: missing, label: Open it } } ] }
 ==== out ====
 -- exit --
 1
@@ -17,7 +17,7 @@ emulator-5554, ready in # ms
 
 [1/1] case
   ▸ runFlow sub.yaml
-    ▸ retry maxRetries: 1
+    ▸ retry retries: 1
       ✗ Open it  # ms
       ✗ Open it  # ms
   saved in .rayo/case
@@ -27,7 +27,7 @@ emulator-5554, ready in # ms
   cause: test
   step: Open it
   at: sub.yaml:3
-  from: sub.yaml:3 retry maxRetries: 1
+  from: sub.yaml:3 retry retries: 1
   from: flow.yaml:5 runFlow sub.yaml
   saved: .rayo/case
 

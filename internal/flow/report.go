@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"fmt"
 	"iter"
 	"strings"
 	"time"
@@ -27,6 +28,22 @@ type StepReport struct {
 	Text    string
 	Took    time.Duration
 	Profile string // where the time went, if asked for
+}
+
+var marks = map[Status]string{Passed: "✓", Failed: "✗", Optional: "–", Skipped: "–", Started: "▸"}
+
+// Line is how it is printed.
+func (s StepReport) Line() string {
+	note := fmt.Sprintf("  %d ms%s", s.Took.Milliseconds(), s.Profile)
+	switch s.Status {
+	case Optional:
+		note += " (optional)"
+	case Skipped:
+		note = "  skipped"
+	case Started:
+		note = ""
+	}
+	return fmt.Sprintf("%s%s %s%s\n", strings.Repeat("  ", s.Depth+1), marks[s.Status], s.Text, note)
 }
 
 // Reporter is told what happens as flows run.

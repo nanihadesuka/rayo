@@ -1,5 +1,5 @@
 -- args --
-test e2e/all.rayo.yaml --retries 1 --format junit
+test e2e/all.rayo.yaml --retries 1
 -- e2e/all.rayo.yaml --
 name: Everything
 output: results
@@ -199,14 +199,3 @@ PASS c  # s  (failed once, then passed)
   try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c
 
 TOTAL 3: 2 passed, 1 failed, of those failed 1 app, 2 retried  # s
--- file report.xml --
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="rayo" tests="3" failures="1" errors="0" skipped="0" time="#">
-  <testcase name="b" file="e2e/b/flow.yaml" time="#">
-    <failure>  try: 1&#xA;  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b&#xA;  try: 2&#xA;  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b_retry1&#xA;</failure>
-  </testcase>
-  <testcase name="a" file="e2e/a/flow.yaml" time="#"></testcase>
-  <testcase name="c" file="e2e/c/flow.yaml" time="#">
-    <system-out>PASS c  # s  (failed once, then passed)&#xA;  try: 1&#xA;  why: flaked&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn flaky 1&#xA;  at: e2e/c/flow.yaml:3&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/c&#xA;</system-out>
-  </testcase>
-</testsuite>

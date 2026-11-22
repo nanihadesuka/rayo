@@ -187,7 +187,7 @@ func init() {
 		"runFlow": {about: "Runs another flow, or commands right here",
 			keys: []anyKey{keyFile, keyEnv, keyWhen, keyCommands}, plain: keyFile, group: true, check: checkFileOrCommands, run: runFlow},
 		"retry": {about: "Runs again what fails",
-			keys: []anyKey{keyMaxRetries, keyCommands, keyFile, keyEnv}, group: true, check: checkFileOrCommands, run: retry},
+			keys: []anyKey{keyRetries, keyCommands, keyFile, keyEnv}, group: true, check: checkFileOrCommands, run: retry},
 		"repeat": {about: "Runs commands several times",
 			keys: []anyKey{keyTimes, keyWhile, keyCommands}, group: true, run: repeat, check: func(p *reader, s *Step) error {
 				if s.Sub == nil || (get(s.Value, keyTimes) == nil && get(s.Value, keyWhile) == nil) {

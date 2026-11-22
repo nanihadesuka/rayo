@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/report"
 )
 
 // console prints what happens: each step if verbose, or else a line for each flow.
@@ -20,26 +21,11 @@ func newConsole() *console {
 	return &console{terminal: err == nil && info.Mode()&os.ModeCharDevice != 0}
 }
 
-var marks = map[flow.Status]string{flow.Passed: "✓", flow.Failed: "✗", flow.Optional: "–", flow.Skipped: "–", flow.Started: "▸"}
-
 // Step prints one line.
 func (c *console) Step(s flow.StepReport) {
 	if c.verbose {
-		fmt.Print(stepLine(s))
+		fmt.Print(s.Line())
 	}
-}
-
-func stepLine(s flow.StepReport) string {
-	note := fmt.Sprintf("  %d ms%s", s.Took.Milliseconds(), s.Profile)
-	switch s.Status {
-	case flow.Optional:
-		note += " (optional)"
-	case flow.Skipped:
-		note = "  skipped"
-	case flow.Started:
-		note = ""
-	}
-	return fmt.Sprintf("%s%s %s%s\n", strings.Repeat("  ", s.Depth+1), marks[s.Status], s.Text, note)
 }
 
 // Note prints something else worth knowing.
@@ -60,16 +46,16 @@ func (c *console) begin(i, of int, name string) {
 	}
 }
 
-func (c *console) end(i, of int, o *outcome) {
-	line := fmt.Sprintf("[%d/%d] %s", i, of, o.line())
+func (c *console) end(i, of int, o *report.Outcome) {
+	line := fmt.Sprintf("[%d/%d] %s", i, of, o.Line())
 	if c.pending > 0 {
 		fmt.Print("\r" + strings.Repeat(" ", c.pending) + "\r")
 		c.pending = 0
 	}
 	fmt.Println(line)
-	if o.status == passed {
-		fmt.Print(o.notes() + o.warnings())
+	if o.Status == report.Passed {
+		fmt.Print(o.Notes() + o.WarningLines())
 		return
 	}
-	fmt.Print(o.details(!c.verbose)) // verbose has shown the calls, and the screen is long
+	fmt.Print(o.Details(!c.verbose)) // verbose has shown the calls, and the screen is long
 }

@@ -11,4 +11,4 @@ appId: a.b
 1
 -- stderr --
 error: s.rayo.yaml: yaml: unmarshal errors:
-  line 1: field flow not found in type main.suite
+  line 1: field flow not found in type suite.Suite

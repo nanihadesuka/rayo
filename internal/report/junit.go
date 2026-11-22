@@ -1,4 +1,4 @@
-package main
+package report
 
 import (
 	"encoding/xml"
@@ -43,25 +43,25 @@ func plain(text string) string {
 	}, text)
 }
 
-func writeJUnit(path string, sum *summary) error {
-	s := junitSuite{Name: "rayo", Tests: len(sum.outcomes), Failures: sum.count(failed), Errors: sum.count(interrupted), Skipped: sum.count(notRun)}
+func (sum *Summary) junit() ([]byte, error) {
+	s := junitSuite{Name: "rayo", Tests: len(sum.Outcomes), Failures: sum.count(Failed), Errors: sum.count(Interrupted), Skipped: sum.count(NotRun)}
 	var total time.Duration
-	for _, o := range sum.outcomes {
+	for _, o := range sum.Outcomes {
 		took := o.took()
 		total += took
-		c := junitCase{Name: o.flow.Name, File: filepath.ToSlash(o.flow.Path), Time: fmt.Sprintf("%.3f", took.Seconds())}
-		text := plain(o.details(true))
-		switch o.status {
-		case failed:
+		c := junitCase{Name: o.Flow.Name, File: filepath.ToSlash(o.Flow.Path), Time: fmt.Sprintf("%.3f", took.Seconds())}
+		text := plain(o.Details(true))
+		switch o.Status {
+		case Failed:
 			c.Failure = &text
-		case interrupted:
+		case Interrupted:
 			text = "interrupted"
 			c.Error = &text
-		case notRun:
-			c.Skipped = &junitSkipped{o.why}
-		case passed:
-			if o.timesFailed() > 0 {
-				text = plain(o.line() + "\n" + o.details(true))
+		case NotRun:
+			c.Skipped = &junitSkipped{o.Why}
+		case Passed:
+			if o.TimesFailed() > 0 {
+				text = plain(o.Line() + "\n" + o.Details(true))
 				c.Out = &text
 			}
 		}
@@ -70,7 +70,7 @@ func writeJUnit(path string, sum *summary) error {
 	s.Time = fmt.Sprintf("%.3f", total.Seconds())
 	data, err := xml.MarshalIndent(s, "", "  ")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return writeFile(path, append([]byte(xml.Header), data...))
+	return append([]byte(xml.Header), data...), nil
 }

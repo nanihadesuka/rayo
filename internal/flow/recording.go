@@ -25,7 +25,7 @@ type Recording struct {
 func ReadRecording(n *yaml.Node) (*Recording, error) {
 	switch {
 	case n.Kind != yaml.ScalarNode || n.Value == "":
-		return nil, errors.New("startRecording takes true, false or a path")
+		return nil, errors.New("record takes true, false or a path")
 	case n.ShortTag() == "!!bool":
 		var on bool
 		err := n.Decode(&on)

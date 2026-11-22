@@ -28,7 +28,7 @@ func runFlow(c *call) error {
 
 func retry(c *call) error {
 	return c.group(func(steps []*Step) error {
-		times := argOr(c, keyMaxRetries, 1)
+		times := argOr(c, keyRetries, 1)
 		for i := 0; ; i++ {
 			err := c.inside(steps)
 			if err == nil || i >= times || c.r.agent.Dead() != nil || c.ctx.Err() != nil {

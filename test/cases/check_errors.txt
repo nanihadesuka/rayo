@@ -91,7 +91,7 @@ appId: a.b
 -- flows/b09.yaml --
 appId: a.b
 ---
-- retry: { maxRetries: 2 }
+- retry: { retries: 2 }
 -- flows/b10.yaml --
 appId: a.b
 ---

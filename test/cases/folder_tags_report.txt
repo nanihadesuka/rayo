@@ -1,5 +1,5 @@
 -- args --
-test --include-tags smoke,fast --exclude-tags=slow --format junit --output out.xml --debug-output dbg --profile --animations flows
+test --include-tags smoke,fast --exclude-tags=slow --results out.xml --output dbg --profile --animations flows
 -- flows/a.yaml --
 appId: a.b
 name: First one

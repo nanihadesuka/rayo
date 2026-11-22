@@ -21,7 +21,7 @@ onFlowComplete:
     while: { true: "${output.n < 3}" }
     commands:
       - evalScript: ${output.n++}
-- retry: { maxRetries: 2, commands: [ { tapOn: { id: flaky 2 } } ] }
+- retry: { retries: 2, commands: [ { tapOn: { id: flaky 2 } } ] }
 - retry: { file: sub/sub.yaml }
 - tapOn: { id: missing, optional: true }
 - runFlow: { commands: [ { tapOn: { id: missing } }, back ], optional: true }
@@ -65,7 +65,7 @@ emulator-5554, ready in # ms
     ✓ evalScript ${output.n++}  # ms
     ✓ evalScript ${output.n++}  # ms
     ✓ evalScript ${output.n++}  # ms
-  ▸ retry maxRetries: 2
+  ▸ retry retries: 2
     ✗ tapOn flaky 2  # ms
     ✗ tapOn flaky 2  # ms
     ✓ tapOn flaky 2  # ms

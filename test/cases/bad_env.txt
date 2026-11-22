@@ -4,4 +4,4 @@ test -e NOPE flow.yaml
 -- exit --
 1
 -- stderr --
-error: -e takes KEY=VALUE
+error: --env takes KEY=VALUE
