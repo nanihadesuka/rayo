@@ -211,7 +211,7 @@ func run(t *testing.T, input string) string {
 			return nil
 		}
 		data, err := os.ReadFile(p)
-		part("file "+name, fmt.Sprintf("%s", bytes.TrimPrefix(data, []byte("\x89"))))
+		part("file "+name, string(bytes.TrimPrefix(data, []byte("\x89"))))
 		return err
 	})
 	return b.String()
