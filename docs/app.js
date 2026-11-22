@@ -5,10 +5,7 @@
 const { markdown, rayo } = window.RAYO
 const repository = 'https://github.com/nanihadesuka/rayo'
 // The marks of the reference are for who works on rayo.
-markdown['REFERENCE.md'] = markdown['REFERENCE.md'].replace(/^- What is marked 🧪[\s\S]*?(?=
-- |
-
-|$(?![\s\S]))/m, '').replace(/ ?🧪 ?/gu, '')
+markdown['REFERENCE.md'] = markdown['REFERENCE.md'].replace(/\n- What is marked 🧪[^\n]*(\n {2}[^\n]*)*/u, '').replace(/ ?🧪 ?/gu, '')
 const $ = s => document.querySelector(s)
 const escape = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 const slug = t => t.toLowerCase().replace(/[^\p{L}\p{N}_\- ]/gu, '').trim().replace(/ /g, '-')
