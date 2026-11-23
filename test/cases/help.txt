@@ -57,6 +57,7 @@ Options of test and live: mocks from the real backend
   --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it
   --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
   --capture-append           go on with the capture already in the folder, as if in one go
+  --redact-value <name=value> what a private field of a body becomes, such as phone=+4915100000000 (default one of the same form: a date stays a date); again for more
 
 Options of test, live and mocks: how a capture or an import becomes mocks
   --capture-from <url>       the backend, if calls don't begin with /host/

@@ -198,6 +198,13 @@ var sections = []section{
 		}},
 		flag("check", "with --capture-update, fail if the mocks differ from the backend, and change nothing", func(o *options) *bool { return &o.runner.CaptureCheck }),
 		flag("capture-append", "go on with the capture already in the folder, as if in one go", func(o *options) *bool { return &o.runner.CaptureAppend }),
+		{name: "redact-value", value: "name=value", about: "what a private field of a body becomes, such as phone=+4915100000000 (default one of the same form: a date stays a date); again for more", set: func(o *options, v string) error {
+			if n, _, ok := strings.Cut(v, "="); !ok || n == "" {
+				return fmt.Errorf("--redact-value takes name=value, not %q", v)
+			}
+			o.runner.Matching.RedactValues = append(o.runner.Matching.RedactValues, v)
+			return nil
+		}},
 	}},
 	{[]string{cmdTest, cmdLive, cmdMocks}, "how a capture or an import becomes mocks", []option{
 		text("capture-from", "url", "the backend, if calls don't begin with /host/", func(o *options) *string { return &o.runner.Backend }),

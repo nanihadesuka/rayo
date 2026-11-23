@@ -88,6 +88,7 @@ Options of test and live: mocks from the real backend
   --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it
   --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
   --capture-append           go on with the capture already in the folder, as if in one go
+  --redact-value <name=value> what a private field of a body becomes, such as phone=+4915100000000 (default one of the same form: a date stays a date); again for more
 
 Options of test, live and mocks: how a capture or an import becomes mocks
   --capture-from <url>       the backend, if calls don't begin with /host/
@@ -1042,7 +1043,11 @@ as GraphQL when it is a JSON `POST` whose body has `query`, `operationName` or
 Left out, as far as it can be recognised: the values of `-e`; emails and JWTs anywhere; and what is
 under a name such as `access_token`, `password`, `email`, `phone` or `firstName`, also in the address
 and in what the app sends. In an address or a body, anything goes in its place. The value of every
-cookie, and headers such as `Authorization`, are hidden. An answer that isn't text is kept as it was;
+cookie, and headers such as `Authorization`, are hidden. In a JSON answer, a hidden value keeps its
+form, so that a typed client still reads it: a date or time becomes `2000-01-01T00:00:00Z` in the
+same layout, a phone `+12025550123`, a first name `Alex`, a last name `Doe`, digits zeros, a number
+`0`; what has no form, such as a token, `REDACTED`. `--redact-value phone=+4915100000000` (again for
+more) says what a name becomes. An answer that isn't text is kept as it was;
 a body the app sent that isn't text isn't kept if a secret is found in it. **Names that aren't in that
 list are kept, so read the files before committing them.** A failure's screenshot and device log are
 not touched.

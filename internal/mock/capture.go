@@ -30,6 +30,7 @@ type Settings struct {
 	Timestamps   string   `json:"timestamps,omitempty"`   // TimestampsFormat or TimestampsExact
 	Headers      []string `json:"headers,omitempty"`      // of the request, to match
 	IgnoreHost   bool     `json:"ignoreHost,omitempty"`   // any host, for paths that begin with one
+	RedactValues []string `json:"redactValues,omitempty"` // name=value: what a private field of a body becomes
 }
 
 // Values of Settings.
@@ -58,6 +59,7 @@ func (s Settings) Or(other Settings) Settings {
 		GraphQL: pick(s.GraphQL, other.GraphQL), GraphQLPath: pick(s.GraphQLPath, other.GraphQLPath), REST: pick(s.REST, other.REST),
 		IgnoreParams: list(s.IgnoreParams, other.IgnoreParams), IgnoreBody: list(s.IgnoreBody, other.IgnoreBody),
 		Timestamps: pick(s.Timestamps, other.Timestamps), Headers: list(s.Headers, other.Headers), IgnoreHost: s.IgnoreHost || other.IgnoreHost,
+		RedactValues: list(s.RedactValues, other.RedactValues),
 	}
 }
 
@@ -531,15 +533,17 @@ func (r *real) cleanBody(data []byte) (string, error) {
 }
 
 // cleanValue keeps the type of what it hides, so that the app can still read it.
-func (r *real) cleanValue(v any, hide bool) any {
+func (r *real) cleanValue(v any, hide bool) any { return r.cleanNamed("", v, hide) }
+
+func (r *real) cleanNamed(name string, v any, hide bool) any {
 	switch v := v.(type) {
 	case map[string]any:
 		for k, child := range v {
-			v[k] = r.cleanValue(child, hide || private(k))
+			v[k] = r.cleanNamed(k, child, hide || private(k))
 		}
 	case []any:
 		for i, child := range v {
-			v[i] = r.cleanValue(child, hide)
+			v[i] = r.cleanNamed(name, child, hide)
 		}
 	case json.Number:
 		if hide {
@@ -547,12 +551,68 @@ func (r *real) cleanValue(v any, hide bool) any {
 		}
 	case string:
 		switch {
-		case hide && emails.MatchString(v):
-			return nobody
 		case hide && v != "":
-			return redacted
+			return r.fake(name, v)
 		}
 		return r.cleanText(v)
 	}
 	return v
+}
+
+var (
+	dates  = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+	phones = regexp.MustCompile(`^\+?[\d\s().-]{6,}$`)
+	numeric = regexp.MustCompile(`^[\d\s-]+$`)
+)
+
+// fake is what a private text becomes: of the same form, so that the app reads it as it read the real one.
+func (r *real) fake(name, v string) string {
+	key := strings.ToLower(strings.NewReplacer("_", "", "-", "").Replace(name))
+	for _, kv := range r.settings.RedactValues {
+		if n, value, ok := strings.Cut(kv, "="); ok && strings.ToLower(strings.NewReplacer("_", "", "-", "").Replace(n)) == key {
+			return value
+		}
+	}
+	switch {
+	case emails.MatchString(v):
+		return nobody
+	case timestamp.MatchString(v) || dates.MatchString(v):
+		// The same layout, with the time zone it had: 2000-01-01, 00:00:00.000, +00:00.
+		out := []byte(v)
+		copy(out, "2000-01-01")
+		for i := 10; i < len(out); i++ {
+			if out[i] >= '0' && out[i] <= '9' {
+				out[i] = '0'
+			}
+		}
+		return string(out)
+	case strings.Contains(key, "phone") || strings.Contains(key, "mobile") || phones.MatchString(v) && !numeric.MatchString(v):
+		if strings.HasPrefix(v, "+") {
+			return "+12025550123" // a valid E.164 number no one has
+		}
+		return sameDigits(v, "2025550123")
+	case numeric.MatchString(v): // such as a postal code or a card's number
+		return sameDigits(v, "0")
+	case strings.Contains(key, "first") || strings.Contains(key, "given") || key == "name":
+		return "Alex"
+	case strings.Contains(key, "last") || strings.Contains(key, "family") || strings.Contains(key, "surname"):
+		return "Doe"
+	case strings.Contains(key, "full") || strings.Contains(key, "middle"):
+		return "Alex Doe"
+	case strings.HasPrefix(key, "user"):
+		return "alex"
+	}
+	return redacted
+}
+
+// sameDigits keeps where the digits and the rest are, with the digits of with.
+func sameDigits(v, with string) string {
+	out, n := []byte(v), 0
+	for i, c := range out {
+		if c >= '0' && c <= '9' {
+			out[i] = with[n%len(with)]
+			n++
+		}
+	}
+	return string(out)
 }
