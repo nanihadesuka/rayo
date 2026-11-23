@@ -94,15 +94,64 @@ final class Input {
     return null;
   }
 
+  /** Where the last tapOn touched: a field there is the one meant, when accessibility reports no focus. */
+  static android.graphics.Point tapped;
+
   static AccessibilityNodeInfo focusedField(long deadline) throws Exception {
     while (true) {
       long since = seen();
       clearCache();
-      AccessibilityNodeInfo n = ui.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
-      if (n != null && editable(n)) return n;
-      if (SystemClock.uptimeMillis() >= deadline) throw new Failure("no text field is focused");
+      String[] why = {"no input focus"};
+      AccessibilityNodeInfo n = findField(why);
+      if (n != null) return n;
+      if (SystemClock.uptimeMillis() >= deadline) throw new Failure("no text field is focused: " + why[0]);
       awaitChange(since, deadline);
     }
+  }
+
+  /** The focused field: where accessibility says, then in every window (a sheet or dialog is its own), then where the last tap was. */
+  static AccessibilityNodeInfo findField(String[] why) {
+    AccessibilityNodeInfo n = ui.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+    AccessibilityNodeInfo f = n == null ? null : inside(n);
+    if (f != null) return f;
+    if (n != null) why[0] = "focused node " + n.getClassName() + " has no SET_TEXT";
+    java.util.List<AccessibilityWindowInfo> windows = ui.getWindows();
+    for (AccessibilityWindowInfo w : windows) {
+      AccessibilityNodeInfo root = w.getRoot();
+      if (root == null) continue;
+      AccessibilityNodeInfo m = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+      if (m != null && (f = inside(m)) != null) return f;
+      if ((f = focusedIn(root)) != null) return f;
+    }
+    if (tapped != null) {
+      for (AccessibilityWindowInfo w : windows) { // the top one first
+        AccessibilityNodeInfo root = w.getRoot();
+        if (root != null && (f = at(root, tapped.x, tapped.y)) != null) return f;
+      }
+    }
+    return null;
+  }
+
+  static AccessibilityNodeInfo focusedIn(AccessibilityNodeInfo n) {
+    if (n.isFocused() && editable(n)) return n;
+    for (int i = 0; i < n.getChildCount(); i++) {
+      AccessibilityNodeInfo child = n.getChild(i);
+      AccessibilityNodeInfo found = child == null ? null : focusedIn(child);
+      if (found != null) return found;
+    }
+    return null;
+  }
+
+  static AccessibilityNodeInfo at(AccessibilityNodeInfo n, int x, int y) {
+    android.graphics.Rect b = new android.graphics.Rect();
+    n.getBoundsInScreen(b);
+    if (!b.contains(x, y)) return null;
+    for (int i = 0; i < n.getChildCount(); i++) {
+      AccessibilityNodeInfo child = n.getChild(i);
+      AccessibilityNodeInfo found = child == null ? null : at(child, x, y);
+      if (found != null) return found;
+    }
+    return editable(n) ? n : null;
   }
 
   static String textOf(AccessibilityNodeInfo field) {

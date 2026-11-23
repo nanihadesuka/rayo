@@ -113,6 +113,7 @@ public final class Agent {
         float x = b.left + b.width() * (float) r.optDouble("fx", 0.5);
         float y = b.top + b.height() * (float) r.optDouble("fy", 0.5);
         presses(x, y, r);
+        tapped = new android.graphics.Point((int) x, (int) y);
         break;
       }
       case "tapAt":
