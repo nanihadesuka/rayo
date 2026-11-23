@@ -85,3 +85,23 @@ func TestSplitByAuth(t *testing.T) {
 		}
 	}
 }
+
+func TestHostsThatMoveState(t *testing.T) {
+	calls := []captured{
+		call("GET", "/api.x.com/cart", `{"n":0}`, 200),
+		call("POST", "/api.intercom.io/ping", `{}`, 200),
+		call("POST", "/api.x.com/add", `{}`, 200),
+		call("GET", "/api.x.com/cart", `{"n":1}`, 200),
+		call("POST", "/api.intercom.io/ping", `{"a":1}`, 200),
+		call("GET", "/api.x.com/cart", `{"n":2}`, 200),
+	}
+	b := &builder{s: Settings{}, loosened: map[string]bool{}, unmatched: map[string]string{}}
+	states, _, err := writeMocks(t.TempDir(), calls, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	notes := strings.Join(report("x", calls, states, b), "\n")
+	if !strings.Contains(notes, "these hosts change the state: api.intercom.io (2);") {
+		t.Errorf("no note of the hosts:\n%s", notes)
+	}
+}

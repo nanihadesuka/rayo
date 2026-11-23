@@ -827,6 +827,28 @@ func report(folder string, calls []captured, states []*state, b *builder) []stri
 	if binaries > 0 {
 		notes = append(notes, fmt.Sprintf("%d answers aren't text, and are kept as they were: nothing in them is hidden", binaries))
 	}
+	// Hosts that aren't the app's backend, such as analytics, shouldn't move it.
+	moving, all := map[string]int{}, map[string]bool{}
+	for _, c := range calls {
+		if host, _, _ := strings.Cut(strings.TrimPrefix(c.uri, "/"), "/"); hostName.MatchString(host) {
+			all[host] = true
+		}
+	}
+	for _, s := range states {
+		if s.by != nil {
+			if host, _, _ := strings.Cut(strings.TrimPrefix(s.by.uri, "/"), "/"); hostName.MatchString(host) {
+				moving[host]++
+			}
+		}
+	}
+	if len(all) > 1 && len(moving) > 0 {
+		var hosts []string
+		for _, h := range slices.Sorted(maps.Keys(moving)) {
+			hosts = append(hosts, fmt.Sprintf("%s (%d)", h, moving[h]))
+		}
+		notes = append(notes, "these hosts change the state: "+strings.Join(hosts, ", ")+
+			"; if one isn't the app's backend, --stateless 'host/**' keeps it out, or --hosts leaves it uncaptured")
+	}
 	alone := false
 	for i, s := range states {
 		if i == 0 || s.by != nil {

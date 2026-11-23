@@ -973,6 +973,8 @@ How it becomes mocks, as WireMock's recorder does by default:
   'api.shop.com/quotes/**,*/availability'` says which paths only read, whatever the method, such as a
   POST that searches: they answer in any state, as often as the app calls them. `*` is any text but
   `/`, `**` any text, from the host when calls begin with one.
+- When calls go to several hosts, `capture.txt` says which of them change the state: one that isn't
+  the app's backend, such as analytics, is best left out with `--stateless 'its.host/**'`.
 - A read that answers one way when the app sends `Authorization` and another when it doesn't, such
   as `GET /users/me` before and after logging in, is matched by whether the header is there, not by
   a state: `(signed in)` and `(signed out)` in its name.
