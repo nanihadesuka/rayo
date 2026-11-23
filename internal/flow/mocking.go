@@ -87,6 +87,7 @@ func (b *backend) startProxy(m *mock.Mock) (*mock.Mock, error) {
 		return nil, err
 	}
 	p := mock.NewProxy(m, ca, b.opens(m))
+	p.Asked = func(host string) bool { return len(b.hosts) > 0 && mock.Matches(host, b.hosts) }
 	port, err := p.Start()
 	if err != nil {
 		return nil, err

@@ -79,7 +79,7 @@ rayo test --network proxy flow.yaml                   # mock
 
 | | `interceptor` (default) | `proxy` |
 |---|---|---|
-| What it sees | Calls made through the app's own client | Every HTTP(S) call on the device: the app, SDKs, WebViews |
+| What it sees | Calls made through the app's own client | Every HTTP(S) call on the device: the app, SDKs; WebViews of `--hosts` |
 | In the app | The interceptor, and cleartext to `127.0.0.1` | No code: the debug build trusts rayo's CA |
 | On the device | `adb reverse` | `adb reverse`, and `http_proxy` while the flow runs |
 | Fails when | An SDK uses its own client | A library pins certificates: that host is tunnelled, and said so |
@@ -94,8 +94,15 @@ other way. An app that still rewrites its URLs works behind the proxy too.
   their subdomains; else, capturing, all but Google's, Firebase's, analytics and crash reports; else
   those the mocks have in their paths. Then a call to a host of the mocks that none fits fails as
   `not mocked`, and a call to another host goes to the real one. The hosts left alone are listed after the flow.
-- **Pinning.** A host whose TLS the app refuses is listed as `pinned or untrusted CA: <host>, tunnelled`,
-  and tunnelled from then on, instead of failing the run.
+- **Browsers.** A Custom Tab or the browser, such as for a login page, trusts only the system's CAs,
+  and would show "Your connection is not private". The proxy reads the start of each TLS connection
+  first: Chrome and what is made from it (WebViews, Cronet) send GREASE values, Android's own TLS
+  doesn't. Such a connection is passed untouched, and its hosts listed after the flow, unless the host
+  is in `--hosts`: name it there to capture or mock a WebView's calls.
+- **Pinning.** A host whose TLS the app refuses is listed after the flow as `pinned or untrusted CA:
+  <host> rejected rayo's CA`, its calls neither captured nor mocked, and tunnelled from then on, instead
+  of failing the run. The app needs rayo's CA in its debug `network_security_config`, from `rayo ca
+  export`; a build that pins certificates needs the pins off in debug.
 - **Plain `http://`** passes untouched, and is listed.
 - **Clean-up.** The proxy is set by a shell on the device that puts the one before back when the flow
   ends, and also when the connection closes, however rayo stopped: a device isn't left with a proxy

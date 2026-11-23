@@ -76,7 +76,7 @@ func TestProxy(t *testing.T) {
 			break
 		}
 	}
-	if !strings.Contains(notes, "pinned or untrusted CA: api.example.com, tunnelled") {
+	if !strings.Contains(notes, "pinned or untrusted CA: api.example.com rejected rayo's CA") {
 		t.Fatalf("notes: %s", notes)
 	}
 	calls := m.Calls()
@@ -92,6 +92,14 @@ func TestMatches(t *testing.T) {
 	for host, want := range map[string]bool{"example.com": true, "api.example.com": true, "notexample.com": false, "x.io": false} {
 		if Matches(host, []string{"example.com"}) != want {
 			t.Errorf("%s: want %v", host, want)
+		}
+	}
+}
+
+func TestGrease(t *testing.T) {
+	for v, want := range map[uint16]bool{0x0a0a: true, 0xfafa: true, 0x1a1a: true, 0x1a2a: false, 0x1301: false, 0x0304: false} {
+		if grease(v) != want {
+			t.Errorf("%#x: %t", v, !want)
 		}
 	}
 }

@@ -23,12 +23,15 @@ type Proxy struct {
 	mock   *Mock
 	ca     *CA
 	open   func(host string) bool
+	// Asked says whether a host was named, as with --hosts: then a browser's calls to it are decrypted too.
+	Asked func(host string) bool
 	server *http.Server
 
 	mu        sync.Mutex
 	passed    map[string]bool   // hosts tunnelled untouched
 	refused   map[string]string // hosts whose TLS the app refused: tunnelled from then on
 	plainSeen map[string]bool   // hosts called over plain http, passed untouched
+	browsers  map[string]bool   // hosts a browser called, such as a Custom Tab: tunnelled, as it trusts only the system CAs
 	conns     map[net.Conn]bool // hijacked, which the server doesn't close
 }
 
@@ -60,7 +63,7 @@ func NewProxy(m *Mock, ca *CA, open func(host string) bool) *Proxy {
 	if m.real != nil { // the app follows a redirect, through the proxy again
 		m.real.client.CheckRedirect = noFollow
 	}
-	return &Proxy{mock: m, ca: ca, open: open, passed: map[string]bool{}, refused: map[string]string{}, plainSeen: map[string]bool{}, conns: map[net.Conn]bool{}}
+	return &Proxy{mock: m, ca: ca, open: open, passed: map[string]bool{}, refused: map[string]string{}, plainSeen: map[string]bool{}, browsers: map[string]bool{}, conns: map[net.Conn]bool{}}
 }
 
 // Start serves on a free port of this computer.
@@ -100,6 +103,9 @@ func (p *Proxy) Notes() []string {
 	if list := sorted(p.passed); list != "" {
 		notes = append(notes, "proxy, passed untouched: "+list)
 	}
+	if list := sorted(p.browsers); list != "" {
+		notes = append(notes, "proxy, a browser's calls passed untouched, as it trusts only the system's CAs: "+list)
+	}
 	if list := sorted(p.plainSeen); list != "" {
 		notes = append(notes, "proxy, plain http passed untouched: "+list)
 	}
@@ -109,7 +115,8 @@ func (p *Proxy) Notes() []string {
 	}
 	sort.Strings(hosts)
 	for _, h := range hosts {
-		notes = append(notes, fmt.Sprintf("pinned or untrusted CA: %s, tunnelled (%s)", h, p.refused[h]))
+		notes = append(notes, fmt.Sprintf("pinned or untrusted CA: %s rejected rayo's CA (%s), so its calls were tunnelled, "+
+			"neither captured nor mocked; a debug build trusts it with the network_security_config of rayo ca export", h, p.refused[h]))
 	}
 	return notes
 }
@@ -200,6 +207,26 @@ func (p *Proxy) connect(w http.ResponseWriter, q *http.Request) {
 	}
 	defer p.keep(client)()
 	_, _ = io.WriteString(client, "HTTP/1.1 200 Connection Established\r\n\r\n")
+	// A browser, such as a Custom Tab with a login page, trusts only the system's CAs: it would show
+	// "not private" instead of the page. Its hello is read first, and then passed on untouched.
+	hello, browser := peekHello(client)
+	if browser && !p.asked(host) {
+		p.mu.Lock()
+		p.browsers[host] = true
+		p.mu.Unlock()
+		server, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), 15*time.Second)
+		if err != nil {
+			return
+		}
+		defer p.keep(server)()
+		if _, err := server.Write(hello); err != nil {
+			server.Close()
+			return
+		}
+		tunnel(client, server)
+		return
+	}
+	client = &replayed{Conn: client, first: hello}
 	conn := tls.Server(client, &tls.Config{
 		NextProtos: []string{"http/1.1"},
 		GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -225,6 +252,60 @@ func (p *Proxy) connect(w http.ResponseWriter, q *http.Request) {
 		p.mock.ServeHTTP(w, q)
 	})}
 	_ = served.Serve(&oneConn{conn: conn, done: make(chan struct{})})
+}
+
+// peekHello reads a TLS client hello without answering it: what was read, and whether a browser sent it.
+// Chrome, and the browsers and WebViews made from it, send GREASE values; Android's own TLS, which
+// OkHttp uses, doesn't.
+func peekHello(c net.Conn) (read []byte, browser bool) {
+	rec := &recorder{Conn: c}
+	_ = c.SetReadDeadline(time.Now().Add(15 * time.Second))
+	_ = tls.Server(rec, &tls.Config{GetConfigForClient: func(h *tls.ClientHelloInfo) (*tls.Config, error) {
+		for _, v := range append(append([]uint16{}, h.CipherSuites...), h.SupportedVersions...) {
+			if grease(v) {
+				browser = true
+			}
+		}
+		return nil, errPeeked
+	}}).Handshake()
+	_ = c.SetReadDeadline(time.Time{})
+	return rec.read, browser
+}
+
+func (p *Proxy) asked(host string) bool { return p.Asked != nil && p.Asked(host) }
+
+// grease is a value of RFC 8701, which a client sends to keep servers from choking on new ones.
+func grease(v uint16) bool { return v&0x0f0f == 0x0a0a && v>>8 == v&0xff }
+
+var errPeeked = errors.New("peeked")
+
+// recorder keeps what is read, and sends nothing: the alert of a hello cut short doesn't reach the app.
+type recorder struct {
+	net.Conn
+	read []byte
+}
+
+func (r *recorder) Read(b []byte) (int, error) {
+	n, err := r.Conn.Read(b)
+	r.read = append(r.read, b[:n]...)
+	return n, err
+}
+
+func (r *recorder) Write(b []byte) (int, error) { return len(b), nil }
+
+// replayed reads again what was read already, before the rest.
+type replayed struct {
+	net.Conn
+	first []byte
+}
+
+func (r *replayed) Read(b []byte) (int, error) {
+	if len(r.first) > 0 {
+		n := copy(b, r.first)
+		r.first = r.first[n:]
+		return n, nil
+	}
+	return r.Conn.Read(b)
 }
 
 var alert = regexp.MustCompile(`remote error: tls: (.*)`)
