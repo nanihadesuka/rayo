@@ -30,6 +30,7 @@ type Settings struct {
 	Timestamps   string   `json:"timestamps,omitempty"`   // TimestampsFormat or TimestampsExact
 	Headers      []string `json:"headers,omitempty"`      // of the request, to match
 	IgnoreHost   bool     `json:"ignoreHost,omitempty"`   // any host, for paths that begin with one
+	PathIDs      bool     `json:"ignorePathIds,omitempty"` // match UUIDs and ULIDs in paths by their form
 	Stateless    []string `json:"stateless,omitempty"`    // globs of host/path whose calls only read, whatever the method
 	RedactValues []string `json:"redactValues,omitempty"` // name=value: what a private field of a body becomes
 }
@@ -59,7 +60,7 @@ func (s Settings) Or(other Settings) Settings {
 	return Settings{
 		GraphQL: pick(s.GraphQL, other.GraphQL), GraphQLPath: pick(s.GraphQLPath, other.GraphQLPath), REST: pick(s.REST, other.REST),
 		IgnoreParams: list(s.IgnoreParams, other.IgnoreParams), IgnoreBody: list(s.IgnoreBody, other.IgnoreBody),
-		Timestamps: pick(s.Timestamps, other.Timestamps), Headers: list(s.Headers, other.Headers), IgnoreHost: s.IgnoreHost || other.IgnoreHost,
+		Timestamps: pick(s.Timestamps, other.Timestamps), Headers: list(s.Headers, other.Headers), IgnoreHost: s.IgnoreHost || other.IgnoreHost, PathIDs: s.PathIDs || other.PathIDs,
 		RedactValues: list(s.RedactValues, other.RedactValues), Stateless: list(s.Stateless, other.Stateless),
 	}
 }

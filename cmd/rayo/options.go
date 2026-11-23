@@ -222,6 +222,7 @@ var sections = []section{
 		choice("timestamps", "match", "match dates and times in the query and bodies by their form (format, default), or exactly", func(o *options) *string { return &o.runner.Matching.Timestamps }, mock.TimestampsFormat, mock.TimestampsExact),
 		list("capture-headers", "headers of the request to match too, such as Accept-Language", func(o *options) *[]string { return &o.runner.Matching.Headers }),
 		flag("ignore-host", "match calls whose path begins with a host, whatever the host", func(o *options) *bool { return &o.runner.Matching.IgnoreHost }),
+		flag("ignore-path-ids", "match UUIDs and ULIDs in paths by their form, as they are new on each run", func(o *options) *bool { return &o.runner.Matching.PathIDs }),
 		{name: "stateless", value: "a,b", about: "paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)", set: func(o *options, v string) error {
 			for _, g := range strings.Split(v, ",") {
 				if _, err := mock.Glob(g); err != nil {

@@ -47,6 +47,17 @@ func (b *builder) loose(what string) { b.loosened[what] = true }
 // timestampPattern is an ISO 8601 date and time: a value of the moment, matched by its form.
 const timestampPattern = `\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}([.,]\d+)?)?(Z|[+-]\d{2}(:?\d{2})?)?`
 
+// Ids made anew on each run, matched by their form with --ignore-path-ids.
+const (
+	uuidPattern = `[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`
+	ulidPattern = `[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}`
+)
+
+var (
+	uuidID = regexp.MustCompile(`^` + uuidPattern + `$`)
+	ulidID = regexp.MustCompile(`^[0-7]` + ulidPattern[:len(ulidPattern)-4] + `{25}$`)
+)
+
 var timestamp = regexp.MustCompile(`^` + timestampPattern + `$`)
 
 var hiddenParts = regexp.MustCompile(regexp.QuoteMeta(redacted) + "|" + regexp.QuoteMeta(nobody))
@@ -294,6 +305,12 @@ func (b *builder) spec(c *captured) *spec {
 			patterns[i], shown[i], patterned = `[^/]*`, "*", true
 		case b.s.IgnoreHost && i == 1 && hostName.MatchString(s):
 			patterns[i], shown[i], patterned = `[^/]+`, "*", true
+		case b.s.PathIDs && uuidID.MatchString(s):
+			patterns[i], shown[i], patterned = uuidPattern, "<uuid>", true
+			b.loose("path ids")
+		case b.s.PathIDs && ulidID.MatchString(s):
+			patterns[i], shown[i], patterned = ulidPattern, "<ulid>", true
+			b.loose("path ids")
 		}
 	}
 	address := path

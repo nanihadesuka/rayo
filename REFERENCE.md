@@ -100,6 +100,7 @@ Options of test, live and mocks: how a capture or an import becomes mocks
   --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly
   --capture-headers <a,b>    headers of the request to match too, such as Accept-Language
   --ignore-host              match calls whose path begins with a host, whatever the host
+  --ignore-path-ids          match UUIDs and ULIDs in paths by their form, as they are new on each run
   --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)
 
 Options of test and live: how calls reach the mock
@@ -965,7 +966,8 @@ How it becomes mocks, as WireMock's recorder does by default:
   or in a JSON body is matched by its form; `--timestamps exact` matches it as it was. `--ignore-params
   depart_at,session` leaves parameters of the query out; `--ignore-body nonce,trip.clientTime` leaves
   names, at any depth, or paths, out of JSON bodies, GraphQL variables and forms; `--ignore-host`
-  matches the path of any host (then, through the proxy, `--hosts` says which to open).
+  matches the path of any host (then, through the proxy, `--hosts` says which to open);
+  `--ignore-path-ids` matches a UUID or ULID in a path, such as `/executions/<uuid>/status`, by its form.
   `capture.txt` lists what was left out.
 - A call that changes nothing, as GET, keeps the state; any other may change it. `--stateless
   'api.shop.com/quotes/**,*/availability'` says which paths only read, whatever the method, such as a

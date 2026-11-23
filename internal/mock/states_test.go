@@ -52,3 +52,17 @@ func TestStatelessPOST(t *testing.T) {
 		t.Error("without --stateless, the POST should move the state")
 	}
 }
+
+func TestIgnorePathIDs(t *testing.T) {
+	calls := []captured{call("GET", "/api.x.com/executions/3f2b8c1e-9a4d-4e2b-8c1e-9a4d4e2b8c1e/status", `{}`, 200)}
+	r := mappingsOf(t, Settings{PathIDs: true}, calls...)[0]
+	if p, _ := r.Request["urlPathPattern"].(string); !uuidID.MatchString("0f2b8c1e-9a4d-4e2b-8c1e-9a4d4e2b8c1f") || !strings.Contains(p, uuidPattern) {
+		t.Errorf("not matched by its form: %v", r.Request)
+	}
+	if r := mappingsOf(t, Settings{}, calls...)[0]; r.Request["urlPath"] == nil {
+		t.Errorf("matched by its form without the option: %v", r.Request)
+	}
+	if !ulidID.MatchString("01ARZ3NDEKTSV4RRFFQ69G5FAV") || ulidID.MatchString("ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+		t.Error("ulid")
+	}
+}
