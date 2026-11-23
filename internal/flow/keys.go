@@ -172,7 +172,7 @@ var (
 	keyRetries   = newKey("retries", aNumber, "How many more times (1)")
 	keyCondition = newKey("condition", aScript, "An expression")
 	keyScript    = newKey("script", aScript, "A line of it")
-	keyQuiet     = newKey("quiet", aTime, "How long nothing may change (500ms)")
+	keyQuiet     = newKey("quiet", aTime, "How long nothing may change (1s)")
 )
 
 // Device.

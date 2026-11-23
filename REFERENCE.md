@@ -395,7 +395,10 @@ Adds text to the focused field, waiting for one to be focused.
 
 ### hideKeyboard
 
-🧪 Closes the keyboard if it is open, and waits until it has. Does nothing when none is open.
+🧪 Closes the keyboard if it is open with one Back, and waits until it has. Does nothing when none is
+open. It never sends a second Back, which could close the window under the keyboard, such as a
+Custom Tab: if the keyboard is still open at the `timeout`, it fails. To try again, use `back` or
+`retry`.
 
 ### pressKey
 
@@ -461,17 +464,26 @@ The same two, usually with a longer `timeout`.
 
 ### waitForAnimationToEnd
 
-🧪 Waits until nothing on screen has changed for `quiet` (500 ms). Goes on when the `timeout` is
+🧪 Waits until nothing on screen has changed for `quiet` (1 s). Goes on when the `timeout` is
 over, without failing.
 
-It can't know about what hasn't begun: a dialog that comes a second later may still be missing. To
-wait for something late, wait for it by name, as `extendedWaitUntil` or a `when` with a longer
-`timeout`.
+A quiet screen isn't a finished transition: while the app waits for the network, nothing moves, so
+this returns, and a dialog that comes after may still be missing. It can't know about what hasn't
+begun. To wait for something late, wait for it by name, as `extendedWaitUntil`, or a `when` with a
+longer `timeout`:
+
+```yaml
+- tapOn: Continue
+- runFlow:
+    when: { visible: Allow notifications, timeout: 5s }
+    commands: [ { tapOn: Not now } ]
+- assertVisible: Home
+```
 
 <!-- generated: keys waitForAnimationToEnd -->
 | Key | Takes | |
 |---|---|---|
-| `quiet` | time | How long nothing may change (500ms) |
+| `quiet` | time | How long nothing may change (1s) |
 <!-- end -->
 
 ```yaml

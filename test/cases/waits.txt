@@ -46,8 +46,8 @@ gone {"sel":{"id":"spinner"},"timeout":5000}
 gone {"sel":{"id":"spinner"},"timeout":300}
 wait {"sel":{"id":"home"},"timeout":20000}
 gone {"sel":{"text":"Loading.*"},"timeout":15000}
-settle {"quiet":500,"timeout":15000}
-settle {"quiet":500,"timeout":5000}
+settle {"quiet":1000,"timeout":15000}
+settle {"quiet":1000,"timeout":5000}
 wait {"sel":{"id":"missing"},"timeout":3000}
 gone {"sel":{"id":"stays"},"timeout":5000}
 bye {"timeout":5000}

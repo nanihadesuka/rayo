@@ -5762,7 +5762,7 @@
                           "type": "string"
                         }
                       ],
-                      "description": "How long nothing may change (500ms)"
+                      "description": "How long nothing may change (1s)"
                     },
                     "timeout": {
                       "anyOf": [

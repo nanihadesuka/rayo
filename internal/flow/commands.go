@@ -183,7 +183,7 @@ func init() {
 			}},
 		"waitForAnimationToEnd": {untested: true, about: "Waits until nothing has changed for a while",
 			keys: []anyKey{keyQuiet}, alone: true, run: func(c *call) error {
-				return c.do("settle", agent.Args{"quiet": argOr(c, keyQuiet, 500*time.Millisecond).Milliseconds()})
+				return c.do("settle", agent.Args{"quiet": argOr(c, keyQuiet, time.Second).Milliseconds()})
 			}},
 
 		// Control

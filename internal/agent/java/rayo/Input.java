@@ -158,17 +158,10 @@ final class Input {
   static void hideKeyboard(long deadline) throws Exception {
     settle(60, 300); // it may be opening
     if (!keyboardOpen()) return; // nothing to do
-    key(KeyEvent.KEYCODE_BACK);
-    // Some windows, such as a Custom Tab, ignore an injected Back for the keyboard: then as the shell does.
-    long fallback = SystemClock.uptimeMillis() + 1500;
-    boolean again = false;
+    key(KeyEvent.KEYCODE_BACK); // one Back only: a second one could close the window under the keyboard
     while (keyboardOpen()) {
       long now = SystemClock.uptimeMillis();
-      if (now >= deadline) throw new Failure("the keyboard didn't close");
-      if (!again && now >= fallback) {
-        again = true;
-        Shell.shell("input keyevent 4"); // only while it is still open, so it is not a Back for the app
-      }
+      if (now >= deadline) throw new Failure("the keyboard didn't close after one Back; to send another, use back or retry");
       awaitChange(seen(), Math.min(deadline, now + 250));
     }
   }
