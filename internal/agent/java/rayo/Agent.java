@@ -99,7 +99,9 @@ public final class Agent {
   static JSONObject handle(JSONObject r) throws Exception {
     JSONObject answer = new JSONObject();
     long deadline = SystemClock.uptimeMillis() + r.optLong("timeout");
-    switch (r.getString("op")) {
+    String op = r.getString("op");
+    if (op.equals("tapAt") || op.startsWith("swipe") || op.equals("key")) tapped = null; // focus may have moved
+    switch (op) {
       case "wait": {
         Entry e = await(new Selector(r.getJSONObject("sel")), deadline);
         answer.put("text", e.label());

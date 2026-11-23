@@ -94,7 +94,10 @@ final class Input {
     return null;
   }
 
-  /** Where the last tapOn touched: a field there is the one meant, when accessibility reports no focus. */
+  /**
+   * Where the last tapOn touched: a field there is the one meant, even when accessibility still reports the field
+   * focused before (Compose may, #16). Another touch or key forgets it.
+   */
   static android.graphics.Point tapped;
 
   static AccessibilityNodeInfo focusedField(long deadline) throws Exception {
@@ -109,25 +112,30 @@ final class Input {
     }
   }
 
-  /** The focused field: where accessibility says, then in every window (a sheet or dialog is its own), then where the last tap was. */
+  /** The field: where the last tap was, then where accessibility says, then in every window (a sheet or dialog is its own). */
   static AccessibilityNodeInfo findField(String[] why) {
+    java.util.List<AccessibilityWindowInfo> windows = ui.getWindows();
+    AccessibilityNodeInfo f;
+    if (tapped != null) {
+      for (AccessibilityWindowInfo w : windows) { // the top one first
+        AccessibilityNodeInfo root = w.getRoot();
+        if (root != null && (f = at(root, tapped.x, tapped.y)) != null) {
+          // Keys typed go where the input focus is: move it here if it isn't.
+          if (!f.isFocused()) f.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+          return f;
+        }
+      }
+    }
     AccessibilityNodeInfo n = ui.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
-    AccessibilityNodeInfo f = n == null ? null : inside(n);
+    f = n == null ? null : inside(n);
     if (f != null) return f;
     if (n != null) why[0] = "focused node " + n.getClassName() + " has no SET_TEXT";
-    java.util.List<AccessibilityWindowInfo> windows = ui.getWindows();
     for (AccessibilityWindowInfo w : windows) {
       AccessibilityNodeInfo root = w.getRoot();
       if (root == null) continue;
       AccessibilityNodeInfo m = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
       if (m != null && (f = inside(m)) != null) return f;
       if ((f = focusedIn(root)) != null) return f;
-    }
-    if (tapped != null) {
-      for (AccessibilityWindowInfo w : windows) { // the top one first
-        AccessibilityNodeInfo root = w.getRoot();
-        if (root != null && (f = at(root, tapped.x, tapped.y)) != null) return f;
-      }
     }
     return null;
   }
