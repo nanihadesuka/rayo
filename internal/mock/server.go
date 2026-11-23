@@ -1,11 +1,17 @@
 package mock
 
 import (
+	"bytes"
+	"compress/flate"
+	"compress/gzip"
+	"compress/zlib"
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
 	"log"
+	mrand "math/rand/v2"
 	"net"
 	"net/http"
 	"regexp"
@@ -52,7 +58,7 @@ func (m *Mock) fail(err error) {
 }
 
 func (m *Mock) ServeHTTP(w http.ResponseWriter, q *http.Request) {
-	data, err := io.ReadAll(io.LimitReader(q.Body, 10<<20))
+	data, err := io.ReadAll(io.LimitReader(q.Body, maxRequest))
 	if err != nil {
 		return // the app hung up
 	}
@@ -60,7 +66,7 @@ func (m *Mock) ServeHTTP(w http.ResponseWriter, q *http.Request) {
 		m.pass(w, q, data)
 		return
 	}
-	a := m.answer(q, string(data))
+	a := m.answer(q, decoded(q.Header, data))
 	if a.delay > 0 {
 		select {
 		case <-time.After(a.delay):
@@ -71,20 +77,102 @@ func (m *Mock) ServeHTTP(w http.ResponseWriter, q *http.Request) {
 	if a.drop {
 		panic(http.ErrAbortHandler) // closes the connection without an answer
 	}
+	if a.fault != "" {
+		fault(w, a.fault)
+		return
+	}
 	w.Header()["Content-Type"] = nil // or Go guesses one
 	for k, v := range a.headers {
-		w.Header().Set(k, v)
+		if k = http.CanonicalHeaderKey(k); k != "Content-Length" && k != "Transfer-Encoding" { // Go's to say, of the body as filled in
+			w.Header()[k] = v
+		}
 	}
 	w.WriteHeader(a.status)
-	_, _ = io.WriteString(w, a.body) // the app may have hung up
+	if a.chunks <= 1 {
+		_, _ = io.WriteString(w, a.body) // the app may have hung up
+		return
+	}
+	flusher, _ := w.(http.Flusher)
+	size := max((len(a.body)+a.chunks-1)/a.chunks, 1)
+	for i := 0; i < len(a.body); i += size {
+		if i > 0 {
+			select {
+			case <-time.After(a.every):
+			case <-q.Context().Done():
+				return
+			}
+		}
+		if _, err := io.WriteString(w, a.body[i:min(i+size, len(a.body))]); err != nil {
+			return
+		}
+		if flusher != nil {
+			flusher.Flush()
+		}
+	}
+}
+
+const maxRequest = 10 << 20
+
+// decoded is a body as compared: not compressed, if the app compressed it.
+func decoded(h http.Header, data []byte) string {
+	var r io.Reader
+	switch strings.ToLower(strings.TrimSpace(h.Get("Content-Encoding"))) {
+	case "gzip", "x-gzip":
+		z, err := gzip.NewReader(bytes.NewReader(data))
+		if err != nil {
+			return string(data)
+		}
+		r = z
+	case "deflate":
+		r = flate.NewReader(bytes.NewReader(data))
+		if z, err := zlib.NewReader(bytes.NewReader(data)); err == nil { // as most send it
+			r = z
+		}
+	default:
+		return string(data)
+	}
+	plain, err := io.ReadAll(io.LimitReader(r, maxRequest))
+	if err != nil {
+		return string(data)
+	}
+	return string(plain)
+}
+
+// fault breaks the connection as WireMock's faults do.
+func fault(w http.ResponseWriter, kind string) {
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		panic(http.ErrAbortHandler)
+	}
+	conn, buf, err := hj.Hijack()
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+	switch kind {
+	case "CONNECTION_RESET_BY_PEER":
+		if tcp, ok := conn.(*net.TCPConn); ok {
+			_ = tcp.SetLinger(0) // a reset, not a close
+		}
+	case "MALFORMED_RESPONSE_CHUNK":
+		_, _ = buf.WriteString("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nlskdu018973t09sylgasjkfg1][]'./.sdlv")
+	case "RANDOM_DATA_THEN_CLOSE":
+		junk := make([]byte, 64)
+		_, _ = rand.Read(junk)
+		_, _ = buf.Write(junk)
+	}
+	_ = buf.Flush()
 }
 
 type answer struct {
 	status  int
-	headers map[string]string
+	headers map[string][]string
 	body    string
 	delay   time.Duration
 	drop    bool
+	fault   string
+	chunks  int           // the body is sent in so many pieces
+	every   time.Duration // between them
 }
 
 func (m *Mock) answer(q *http.Request, body string) (a answer) {
@@ -105,17 +193,13 @@ func (m *Mock) answer(q *http.Request, body string) (a answer) {
 			return a
 		}
 	}
-	var best *Rule
-	for _, r := range m.rules {
-		// Of the same priority, the last one added wins.
-		if best != nil && r.priority() > best.priority() {
-			continue
-		}
-		if r.RequiredScenarioState != "" && m.state(r.ScenarioName) != r.RequiredScenarioState {
-			continue
-		}
-		if r.fits(m.vm, q, body) {
-			best = r
+	asked := q
+	best := m.pick(q, body)
+	if best == nil {
+		if bare := m.withoutHost(q); bare != nil {
+			if best = m.pick(bare, body); best != nil {
+				asked = bare
+			}
 		}
 	}
 	if best == nil {
@@ -125,15 +209,89 @@ func (m *Mock) answer(q *http.Request, body string) (a answer) {
 			call.Outcome = "not mocked: GraphQL operation " + op
 			a.body += ", GraphQL operation " + op
 		}
+		if near := m.nearest(q, body); near != "" {
+			call.Outcome += "; nearest " + near
+			a.body += "\nnearest " + near
+		}
 		return a
 	}
 	if best.NewScenarioState != "" {
 		m.states[best.ScenarioName] = best.NewScenarioState
 	}
-	call.Outcome = strconv.Itoa(best.Response.Status)
-	a.status, a.headers, a.body = best.Response.Status, best.Response.Headers, best.body.render(q, body)
-	a.delay += time.Duration(best.Response.FixedDelayMilliseconds) * time.Millisecond
+	r := &best.Response
+	call.Outcome = strconv.Itoa(r.Status)
+	a.status, a.headers, a.body = r.Status, r.Headers, best.body.render(asked, body, r.TransformerParameters, m.vm)
+	a.delay += r.delay(mrand.Float64, mrand.NormFloat64)
+	a.fault = r.Fault
+	if d := r.ChunkedDribbleDelay; d != nil {
+		a.chunks, a.every = d.NumberOfChunks, time.Duration(d.TotalDuration)*time.Millisecond/time.Duration(d.NumberOfChunks)
+	}
 	return a
+}
+
+// withoutHost is a call through the proxy, /host/path, as /path: for mocks written without the host, as
+// WireMock's are. Only for a host that no mock names, so that those that do are never passed over.
+func (m *Mock) withoutHost(q *http.Request) *http.Request {
+	host, _, ok := strings.Cut(strings.TrimPrefix(q.URL.Path, "/"), "/")
+	if !ok || !hostName.MatchString(host) || m.hosts()[strings.ToLower(host)] {
+		return nil
+	}
+	bare := q.Clone(q.Context())
+	bare.URL.Path = strings.TrimPrefix(q.URL.Path, "/"+host)
+	bare.URL.RawPath = ""
+	if raw := q.URL.RawPath; raw != "" {
+		bare.URL.RawPath = strings.TrimPrefix(raw, "/"+host)
+	}
+	return bare
+}
+
+// pick is the rule that answers a call: of those that fit, the lowest priority, then the last added.
+func (m *Mock) pick(q *http.Request, body string) *Rule {
+	var best *Rule
+	for _, r := range m.rules {
+		if best != nil && r.priority() > best.priority() {
+			continue
+		}
+		if r.RequiredScenarioState != "" && m.state(r.ScenarioName) != r.RequiredScenarioState {
+			continue
+		}
+		if r.miss(m.vm, q, body) == "" {
+			best = r
+		}
+	}
+	return best
+}
+
+// nearest says, of the mappings for the call's method and address, the one that would answer but for
+// one thing, and what it is: as WireMock's near misses.
+func (m *Mock) nearest(q *http.Request, body string) string {
+	var best *Rule
+	why := ""
+	for _, r := range m.rules {
+		if r.missAddress(q) != "" || best != nil && r.priority() > best.priority() {
+			continue
+		}
+		reason := r.missRest(m.vm, q, body)
+		if reason == "" && r.RequiredScenarioState != "" {
+			reason = fmt.Sprintf("scenario %s is in %s, it needs %s", r.ScenarioName, m.state(r.ScenarioName), r.RequiredScenarioState)
+		}
+		if reason != "" {
+			best, why = r, reason
+		}
+	}
+	if best == nil {
+		return ""
+	}
+	return best.title() + ": " + why
+}
+
+// title is how a mapping is called in what rayo says.
+func (r *Rule) title() string {
+	if r.Name != "" {
+		return r.Name
+	}
+	w := &r.Request
+	return w.Method + " " + w.Url + w.UrlPattern + w.UrlPath + w.UrlPathPattern + w.UrlPathTemplate
 }
 
 func (m *Mock) state(scenario string) string {

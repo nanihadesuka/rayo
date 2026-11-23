@@ -38,8 +38,8 @@ emulator-5554, ready in # ms
   ✓ tapOn GET /nothing  # ms
   last calls:
     <time> GET /a -> not mocked
-    <time> GET /q?a=1 -> not mocked
-    <time> GET /q -> not mocked
+    <time> GET /q?a=1 -> not mocked; nearest GET /q: query a: "1", expected "2"
+    <time> GET /q -> not mocked; nearest GET /q: query a: absent, expected "2"
     <time> GET /nothing -> not mocked
     <time> GET /nothing -> not mocked
   saved in .rayo/case
@@ -68,22 +68,29 @@ noAnimations {"timeout":10000}
 adb reverse:forward:tcp:8080;tcp:<free>
 tap {"delay":100,"repeat":1,"sel":{"id":"POST /a {\"x\":[]}"},"timeout":15000}
   app: POST /a {"x":[]} -> 404  not mocked: POST /a
+nearest POST /a: body: nothing at $.x
 tap {"delay":100,"repeat":1,"sel":{"id":"POST /a {\"x\":{}}"},"timeout":15000}
   app: POST /a {"x":{}} -> 404  not mocked: POST /a
+nearest POST /a: body: nothing at $.x
 tap {"delay":100,"repeat":1,"sel":{"id":"POST /a {\"x\":null}"},"timeout":15000}
   app: POST /a {"x":null} -> 404  not mocked: POST /a
+nearest POST /a: body: nothing at $.x
 tap {"delay":100,"repeat":1,"sel":{"id":"POST /a not json"},"timeout":15000}
   app: POST /a not json -> 404  not mocked: POST /a
+nearest POST /a: body: not JSON
 tap {"delay":100,"repeat":1,"sel":{"id":"POST /a"},"timeout":15000}
   app: POST /a -> 404  not mocked: POST /a
+nearest POST /a: body: not JSON
 tap {"delay":100,"repeat":1,"sel":{"id":"POST /a {\"x\":0}"},"timeout":15000}
   app: POST /a {"x":0} -> 200  matched
 tap {"delay":100,"repeat":1,"sel":{"id":"GET /a"},"timeout":15000}
   app: GET /a -> 404  not mocked: GET /a
 tap {"delay":100,"repeat":1,"sel":{"id":"GET /q?a=1"},"timeout":15000}
   app: GET /q?a=1 -> 404  not mocked: GET /q?a=1
+nearest GET /q: query a: "1", expected "2"
 tap {"delay":100,"repeat":1,"sel":{"id":"GET /q"},"timeout":15000}
   app: GET /q -> 404  not mocked: GET /q
+nearest GET /q: query a: absent, expected "2"
 tap {"delay":100,"repeat":1,"sel":{"id":"GET /nothing"},"timeout":15000}
   app: GET /nothing -> 404  not mocked: GET /nothing
 tap {"delay":100,"repeat":1,"sel":{"id":"GET /nothing"},"timeout":15000}
@@ -99,20 +106,20 @@ PNG...
 -- file .rayo/case/logcat.txt --
 the log
 -- file .rayo/case/requests.txt --
-<time> POST /a -> not mocked
+<time> POST /a -> not mocked; nearest POST /a: body: nothing at $.x
     {"x":[]}
-<time> POST /a -> not mocked
+<time> POST /a -> not mocked; nearest POST /a: body: nothing at $.x
     {"x":{}}
-<time> POST /a -> not mocked
+<time> POST /a -> not mocked; nearest POST /a: body: nothing at $.x
     {"x":null}
-<time> POST /a -> not mocked
+<time> POST /a -> not mocked; nearest POST /a: body: not JSON
     not json
-<time> POST /a -> not mocked
+<time> POST /a -> not mocked; nearest POST /a: body: not JSON
 <time> POST /a -> 200
     {"x":0}
 <time> GET /a -> not mocked
-<time> GET /q?a=1 -> not mocked
-<time> GET /q -> not mocked
+<time> GET /q?a=1 -> not mocked; nearest GET /q: query a: "1", expected "2"
+<time> GET /q -> not mocked; nearest GET /q: query a: absent, expected "2"
 <time> GET /nothing -> not mocked
 <time> GET /nothing -> not mocked
 -- file .rayo/case/screen.txt --

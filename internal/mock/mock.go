@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/dop251/goja"
 )
@@ -168,7 +169,11 @@ func (m *Mock) add(r *Rule) error {
 		if err != nil {
 			return fmt.Errorf("can't read the body %s: %w", name, err)
 		}
-		if r.body, err = parseTemplate(string(data)); err != nil {
+		templating := r.Response.templating()
+		if !utf8.Valid(data) { // an image, say: never a template
+			templating = templatedNot
+		}
+		if r.body, err = parseTemplate(string(data), templating); err != nil {
 			return fmt.Errorf("%s: %w", name, err)
 		}
 	}
@@ -180,9 +185,16 @@ func (m *Mock) add(r *Rule) error {
 func (m *Mock) Hosts() map[string]bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.hosts()
+}
+
+func (m *Mock) hosts() map[string]bool {
 	hosts := map[string]bool{}
 	for _, r := range m.rules {
-		for _, u := range []string{r.Request.Url, r.Request.UrlPath, r.Request.UrlPattern, r.Request.UrlPathPattern} {
+		if h := r.Request.Host; h != nil && h.EqualTo != nil {
+			hosts[strings.ToLower(*h.EqualTo)] = true
+		}
+		for _, u := range []string{r.Request.Url, r.Request.UrlPath, r.Request.UrlPattern, r.Request.UrlPathPattern, r.Request.UrlPathTemplate} {
 			u = strings.ReplaceAll(strings.TrimPrefix(u, "^"), `\.`, ".")
 			if host, _, _ := strings.Cut(strings.TrimPrefix(u, "/"), "/"); hostName.MatchString(host) {
 				hosts[strings.ToLower(host)] = true

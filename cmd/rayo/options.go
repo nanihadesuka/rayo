@@ -93,6 +93,16 @@ func text(name, value, about string, at func(o *options) *string) option {
 	}}
 }
 
+func choice(name, value, about string, at func(o *options) *string, values ...string) option {
+	return option{name: name, value: value, about: about, set: func(o *options, v string) error {
+		if !slices.Contains(values, v) {
+			return fmt.Errorf("--%s takes %s or %s, not %q", name, strings.Join(values[:len(values)-1], ", "), values[len(values)-1], v)
+		}
+		*at(o) = v
+		return nil
+	}}
+}
+
 func list(name, about string, at func(o *options) *[]string) option {
 	return option{name: name, value: "a,b", about: about, set: func(o *options, v string) error {
 		*at(o) = strings.Split(v, ",")
@@ -182,27 +192,29 @@ var sections = []section{
 	}},
 	{[]string{cmdTest, cmdLive}, "mocks from the real backend", []option{
 		text("capture", "folder", "call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed", func(o *options) *string { return &o.runner.Capture }),
-		text("capture-from", "url", "the backend, if calls don't begin with /host/", func(o *options) *string { return &o.runner.Backend }),
-		{name: "graphql", value: "match", about: "tell GraphQL calls apart by operation (default), operation+variables, or off; REST calls are as ever", set: func(o *options, v string) error {
-			if v != mock.GraphQLOff && v != mock.GraphQLOperation && v != mock.GraphQLVariables {
-				return fmt.Errorf("--graphql takes operation, operation+variables or off, not %q", v)
-			}
-			o.runner.GraphQL = v
-			return nil
-		}},
-		{name: "graphql-path", value: "regex", about: "paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)", set: func(o *options, v string) error {
-			if _, err := mock.Pattern(v); err != nil {
-				return fmt.Errorf("--graphql-path: %w", err)
-			}
-			o.runner.GraphQLPath = v
-			return nil
-		}},
 		{name: "capture-update", value: "folder", about: "capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it", set: func(o *options, v string) error {
 			o.runner.CaptureUpdate, o.runner.Capture = v, filepath.Join(v, mock.UpdateFolder)
 			return nil
 		}},
 		flag("check", "with --capture-update, fail if the mocks differ from the backend, and change nothing", func(o *options) *bool { return &o.runner.CaptureCheck }),
 		flag("capture-append", "go on with the capture already in the folder, as if in one go", func(o *options) *bool { return &o.runner.CaptureAppend }),
+	}},
+	{[]string{cmdTest, cmdLive, cmdMocks}, "how a capture or an import becomes mocks", []option{
+		text("capture-from", "url", "the backend, if calls don't begin with /host/", func(o *options) *string { return &o.runner.Backend }),
+		choice("graphql", "match", "tell GraphQL calls apart by operation+variables (default), by operation, or off, as any call", func(o *options) *string { return &o.runner.Matching.GraphQL }, mock.GraphQLVariables, mock.GraphQLOperation, mock.GraphQLOff),
+		{name: "graphql-path", value: "regex", about: "paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)", set: func(o *options, v string) error {
+			if _, err := mock.Pattern(v); err != nil {
+				return fmt.Errorf("--graphql-path: %w", err)
+			}
+			o.runner.Matching.GraphQLPath = v
+			return nil
+		}},
+		choice("rest", "match", "match other calls by their body too (body, default), or by method and address alone (off)", func(o *options) *string { return &o.runner.Matching.REST }, mock.RESTBody, mock.RESTOff),
+		list("ignore-params", "names in the query not to match, such as session or depart_at", func(o *options) *[]string { return &o.runner.Matching.IgnoreParams }),
+		list("ignore-body", "names, or paths such as trip.departAt, in JSON bodies and GraphQL variables, and names in forms, not to match", func(o *options) *[]string { return &o.runner.Matching.IgnoreBody }),
+		choice("timestamps", "match", "match dates and times in the query and bodies by their form (format, default), or exactly", func(o *options) *string { return &o.runner.Matching.Timestamps }, mock.TimestampsFormat, mock.TimestampsExact),
+		list("capture-headers", "headers of the request to match too, such as Accept-Language", func(o *options) *[]string { return &o.runner.Matching.Headers }),
+		flag("ignore-host", "match calls whose path begins with a host, whatever the host", func(o *options) *bool { return &o.runner.Matching.IgnoreHost }),
 	}},
 	{[]string{cmdTest, cmdLive}, "how calls reach the mock", []option{
 		{name: "network", value: "way", about: "interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does", set: func(o *options, v string) error {
@@ -239,6 +251,7 @@ const usage = `rayo - runs flows on Android, fast
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
+  rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs

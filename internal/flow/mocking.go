@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -23,10 +22,10 @@ type backend struct {
 	port   int
 	mock   *mock.Mock // nil until the flow uses one
 
-	capturing            bool // the real backend answers
-	real                 string
-	graphql, graphqlPath string
-	secrets              map[string]string
+	capturing bool // the real backend answers
+	real      string
+	matching  mock.Settings
+	secrets   map[string]string
 
 	proxy   bool     // the device's proxy, and not the app, sends calls to the mock
 	hosts   []string // those the proxy opens; empty for the default
@@ -35,7 +34,7 @@ type backend struct {
 }
 
 func newBackend(d *adb.Device, o Options) *backend {
-	return &backend{device: d, port: o.MockPort, capturing: o.Capture != "", real: o.Backend, secrets: o.Env, hosts: o.Hosts, graphql: o.GraphQL, graphqlPath: o.GraphQLPath}
+	return &backend{device: d, port: o.MockPort, capturing: o.Capture != "", real: o.Backend, secrets: o.Env, hosts: o.Hosts, matching: o.Matching}
 }
 
 // opens says which hosts the proxy opens: those asked for; else, capturing, all but the passthrough list;
@@ -66,14 +65,7 @@ func (b *backend) start() (*mock.Mock, error) {
 	}
 	m := mock.New()
 	if b.capturing {
-		var path *regexp.Regexp
-		if b.graphqlPath != "" {
-			var err error
-			if path, err = mock.Pattern(b.graphqlPath); err != nil {
-				return nil, fmt.Errorf("--graphql-path: %w", err)
-			}
-		}
-		m.Forward(b.real, b.secrets, b.graphql, path)
+		m.Forward(b.real, b.secrets, b.matching)
 	}
 	if b.proxy {
 		return b.startProxy(m)
@@ -191,6 +183,9 @@ func (b *backend) calls(reporter Reporter, asJSON bool) ([]byte, error) {
 func (r *Runner) loadMocks(f *Flow) error {
 	if r.backend.capturing {
 		m, err := r.backend.start()
+		if err == nil && r.CaptureUpdate != "" { // made as the mocks were
+			err = m.UseSettingsOf(r.CaptureUpdate)
+		}
 		if err == nil && r.CaptureAppend {
 			var n int
 			if n, err = m.Continue(r.Capture); err == nil {

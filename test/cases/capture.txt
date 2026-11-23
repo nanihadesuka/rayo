@@ -59,6 +59,13 @@ bye {"timeout":5000}
 }
 -- file got/capture.calls.json --
 {
+  "version": 2,
+  "settings": {
+    "graphql": "operation+variables",
+    "graphqlPath": ".*/graphql",
+    "rest": "body",
+    "timestamps": "format"
+  },
   "calls": [
     {
       "method": "GET",
@@ -71,6 +78,9 @@ bye {"timeout":5000}
     {
       "method": "POST",
       "uri": "/b",
+      "request": {
+        "body": "my-code-is-REDACTED"
+      },
       "status": 200,
       "contentType": "text/plain; charset=utf-8",
       "body": "{\n  \"body\": \"my-code-is-REDACTED\",\n  \"method\": \"POST\",\n  \"type\": \"\"\n}\n",
@@ -106,10 +116,18 @@ read it before committing: what looks private is hidden, but not all that is may
 {
   "mappings": [
     {
-      "name": "GET /a?mail=REDACTED&x=1",
+      "name": "GET /a?mail=*&x=1",
       "request": {
         "method": "GET",
-        "urlPattern": "/a\\?mail=[^/?&]*&x=1"
+        "queryParameters": {
+          "mail": {
+            "matches": ".*"
+          },
+          "x": {
+            "equalTo": "1"
+          }
+        },
+        "urlPath": "/a"
       },
       "response": {
         "bodyFileName": "001_get_a.txt",
@@ -120,10 +138,15 @@ read it before committing: what looks private is hidden, but not all that is may
       }
     },
     {
-      "name": "POST /b",
+      "name": "POST /b my-code-is-REDACTED",
       "request": {
+        "bodyPatterns": [
+          {
+            "matches": "my-code-is-.*"
+          }
+        ],
         "method": "POST",
-        "url": "/b"
+        "urlPath": "/b"
       },
       "response": {
         "bodyFileName": "002_post_b.txt",
@@ -137,7 +160,7 @@ read it before committing: what looks private is hidden, but not all that is may
       "name": "GET /status/404",
       "request": {
         "method": "GET",
-        "url": "/status/404"
+        "urlPath": "/status/404"
       },
       "response": {
         "bodyFileName": "001_get_a.txt",

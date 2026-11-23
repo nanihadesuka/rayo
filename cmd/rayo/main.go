@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -23,7 +24,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "1.0.9"
+const version = "1.0.10"
 
 // Exit codes.
 const (
@@ -261,6 +262,9 @@ func (o *options) checkCaptureFolder() error {
 		if o.runner.Backend != "" {
 			return errors.New("--capture-from needs --capture")
 		}
+		if !reflect.DeepEqual(o.runner.Matching, mock.Settings{}) {
+			return errors.New("how a capture becomes mocks (--graphql, --rest, --ignore-params and the like) needs --capture")
+		}
 		if o.runner.CaptureAppend {
 			return errors.New("--capture-append needs --capture")
 		}
@@ -409,16 +413,32 @@ func helpJSON() (string, error) {
 	return b.String(), err
 }
 
-// applyMocks takes the changes of an update into the mocks.
+// applyMocks takes the changes of an update into the mocks, or writes those of a HAR file.
 func applyMocks(args []string) error {
 	o, err := parse(cmdMocks, args)
 	if err != nil {
 		return err
 	}
-	if len(o.args) != 2 || o.args[0] != "apply" {
-		return errors.New("rayo mocks apply [--only a,b] [--prune] <folder>, after rayo test --capture-update <folder>")
+	var notes []string
+	switch {
+	case len(o.args) == 2 && o.args[0] == "apply":
+		if !reflect.DeepEqual(o.runner.Matching, mock.Settings{}) || o.runner.Backend != "" {
+			return errors.New("rayo mocks apply takes the mocks as they were captured: --graphql, --rest and the like are of rayo mocks import")
+		}
+		notes, err = mock.Apply(o.args[1], o.take, o.prune)
+	case len(o.args) == 3 && o.args[0] == "import":
+		if len(o.take) > 0 || o.prune {
+			return errors.New("--only and --prune are of rayo mocks apply")
+		}
+		folder := o.args[2]
+		if list, err := os.ReadDir(folder); err == nil && len(list) > 0 {
+			return fmt.Errorf("%s is there already: import into a new folder", filepath.ToSlash(folder))
+		}
+		notes, err = mock.ImportHAR(o.args[1], folder, o.runner.Backend, o.runner.Matching)
+	default:
+		return errors.New("rayo mocks apply [--only a,b] [--prune] <folder>, after rayo test --capture-update <folder>;\n" +
+			"or rayo mocks import [options] <file.har> <folder>")
 	}
-	notes, err := mock.Apply(o.args[1], o.take, o.prune)
 	if err == nil {
 		fmt.Println(strings.Join(notes, "\n"))
 	}

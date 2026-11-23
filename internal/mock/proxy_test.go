@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestProxy(t *testing.T) {
@@ -68,7 +69,13 @@ func TestProxy(t *testing.T) {
 	if _, err := get(client(false), "https://api.example.com/hello?a=1"); err == nil {
 		t.Fatal("an untrusted CA was accepted")
 	}
-	notes := strings.Join(p.Notes(), "\n")
+	notes := ""
+	for limit := time.Now().Add(2 * time.Second); time.Now().Before(limit); time.Sleep(10 * time.Millisecond) {
+		// the proxy tells it once its side of the handshake ends, which may be after the app's
+		if notes = strings.Join(p.Notes(), "\n"); strings.Contains(notes, "pinned or untrusted CA") {
+			break
+		}
+	}
 	if !strings.Contains(notes, "pinned or untrusted CA: api.example.com, tunnelled") {
 		t.Fatalf("notes: %s", notes)
 	}

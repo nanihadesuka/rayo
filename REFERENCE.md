@@ -44,6 +44,7 @@ rayo - runs flows on Android, fast
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
+  rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
@@ -84,12 +85,20 @@ Options of test: what comes out
 
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
-  --capture-from <url>       the backend, if calls don't begin with /host/
-  --graphql <match>          tell GraphQL calls apart by operation (default), operation+variables, or off; REST calls are as ever
-  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
   --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it
   --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
   --capture-append           go on with the capture already in the folder, as if in one go
+
+Options of test, live and mocks: how a capture or an import becomes mocks
+  --capture-from <url>       the backend, if calls don't begin with /host/
+  --graphql <match>          tell GraphQL calls apart by operation+variables (default), by operation, or off, as any call
+  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
+  --rest <match>             match other calls by their body too (body, default), or by method and address alone (off)
+  --ignore-params <a,b>      names in the query not to match, such as session or depart_at
+  --ignore-body <a,b>        names, or paths such as trip.departAt, in JSON bodies and GraphQL variables, and names in forms, not to match
+  --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly
+  --capture-headers <a,b>    headers of the request to match too, such as Accept-Language
+  --ignore-host              match calls whose path begins with a host, whatever the host
 
 Options of test and live: how calls reach the mock
   --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
@@ -798,19 +807,36 @@ An included flow's mocks are added when it runs. How mocks work, with examples:
 
 ### Mock files
 
-A folder with `mappings/` and `__files/`, or one JSON file of mappings, in WireMock's format.
-Only the following is supported; anything else is an error.
+A folder with `mappings/` and `__files/`, or one JSON file of mappings, in WireMock's format: a folder
+WireMock recorded loads as it is, and WireMock loads rayo's captures. Only the following is supported;
+anything else, such as webhooks or `proxyBaseUrl`, is an error rather than a mock that does less.
 
 | Part | |
 |---|---|
-| Mapping | `id`, `name`, `priority`, `scenarioName`, `requiredScenarioState`, `newScenarioState`, `request`, `response` |
-| `request` | `method`, one of `url` `urlPattern` `urlPath` `urlPathPattern`, `queryParameters`, `headers`, `bodyPatterns` |
-| Matchers | `equalTo`, `contains`, `matches`, `absent`, `matchesJsonPath` (`$.a`, `$[0]`, `$['a']`, `$[*]`, and at the end `$[?(@.a == 1)]`) |
-| `response` | `status`, `headers`, one of `body` `jsonBody` `bodyFileName`, `fixedDelayMilliseconds` |
-| In a body | `{{now}}`, `{{now offset='-8 minutes'}}`, `{{request.path}}` `.url` `.body` `.query.x` `.headers.x`, `{{regexExtract request.query.x '(.+)' 'name'}}` then `{{name.0}}` |
+| Mapping | `id`, `uuid`, `name`, `priority`, `scenarioName`, `requiredScenarioState`, `newScenarioState`, `request`, `response`; `persistent`, `insertionIndex` and `metadata` are taken and do nothing |
+| `request` | `method`; one of `url` `urlPattern` `urlPath` `urlPathPattern` `urlPathTemplate` (`/users/{id}`, with `pathParameters`); `queryParameters`, `headers`, `cookies`, `formParameters`, `basicAuthCredentials`, `host`, `bodyPatterns` |
+| Matchers | `equalTo` (and `caseInsensitive`), `contains`, `doesNotContain`, `matches`, `doesNotMatch`, `absent`, `anything`, `equalToJson` (and `ignoreArrayOrder`, `ignoreExtraElements`), `equalToXml`, `binaryEqualTo`, `matchesJsonPath`, `and`, `or`, `not`; for a query, header, cookie or form, also `hasExactly` and `includes` |
+| `equalToJson` | A JSON value, or a text of one. Keys in any order, numbers by value. Placeholders: `${json-unit.ignore}`, `${json-unit.ignore-element}` (may be absent), `${json-unit.any-string}`, `${json-unit.any-number}`, `${json-unit.any-boolean}`, `${json-unit.regex}pattern` |
+| `matchesJsonPath` | An expression, true if it finds something not empty; or `{ "expression": "$.a", "equalTo": "x" }` with any matcher for what it finds. Jayway's JSONPath: `$.a`, `$['a']`, `$[0]`, `$[-1]`, `$[0,2]`, `$[1:3]`, `$.*`, `$..a`, `length()`, and filters anywhere, with `==` `!=` `<` `>` `&&` `=~ /re/` `in` `nin` `size` `empty` `subsetof` `anyof` `noneof` |
+| `response` | `status`, `statusMessage`, `headers` (a value, or a list of them), one of `body` `jsonBody` `base64Body` `bodyFileName`, `fixedDelayMilliseconds`, `delayDistribution` (`lognormal`, `uniform`, `fixed`), `chunkedDribbleDelay`, `fault` (`CONNECTION_RESET_BY_PEER`, `EMPTY_RESPONSE`, `MALFORMED_RESPONSE_CHUNK`, `RANDOM_DATA_THEN_CLOSE`), `transformers`, `transformerParameters` |
+| In a body | `{{now}}` (with `offset='-8 minutes'`, `format='yyyy-MM-dd'` or `epoch` or `unix`, `timezone='Europe/Madrid'`), `{{request.method}}` `.path` `.url` `.body` `.query.x` `.query.x.[1]` `.headers.x` `.cookies.x` `.pathSegments.[0]`, `{{jsonPath request.body '$.a'}}`, `{{randomValue length=8 type='ALPHANUMERIC'}}` (or `UUID`, `NUMERIC`...), `{{regexExtract request.path '[a-z]+'}}`, `{{regexExtract request.query.x '(.+)' 'name'}}` then `{{name.0}}`, `{{parameters.x}}` |
 
 The lowest `priority` wins (5 by default), then the last one added. Scenarios begin in `Started`.
-Regular expressions are Go's and match the whole value, except in `regexExtract`.
+Regular expressions are Go's and match the whole value, except in `regexExtract`; those WireMock
+writes mean the same in both, but Java's lookarounds aren't supported.
+
+A body is filled in as `transformers` says. Without it, as rayo always has: every `{{ }}` is filled in,
+and one that isn't known is an error. With `"transformers": ["response-template"]`, as WireMock does:
+`{{x}}` is escaped for HTML and `{{{x}}}` isn't. With `"transformers": []`, it is sent as it is. A body
+that isn't text, such as an image, is always sent as it is.
+
+A call whose body is compressed (`Content-Encoding: gzip` or `deflate`) is matched by what it holds.
+Through the proxy, a call is `/host/path`; a mapping without the host, as WireMock's are, answers it
+too when no mapping names that host.
+
+When no mapping answers, the flow fails and says which came nearest, and why, as WireMock's near
+misses do: `POST /availability -> not mocked; nearest POST /availability {"category":"ondemand"}: body:
+$.category: "prebooked", expected "ondemand"`.
 
 ### mock step
 
@@ -913,18 +939,42 @@ In the folder:
 |---|---|
 | `mappings/capture.json`, `__files/` | The mocks: give the folder to the flow's `mock` |
 | `capture.txt` | What to do next, as it was printed |
-| `capture.calls.json` | The calls, hidden as in the mocks, for `--capture-append` |
+| `capture.calls.json` | The calls, and what the app sent, hidden as in the mocks; and how they were made into mocks. For `--capture-append` and `--capture-update` |
 
-How it becomes mocks:
+How it becomes mocks, as WireMock's recorder does by default:
 
-- A call always answered the same is always answered so.
+- A call is matched by its method, its path, its query and its body. The query is matched with
+  `queryParameters`, so the order of its parameters doesn't count. The body as WireMock's
+  `requestBodyPattern: auto`: JSON with `equalToJson`, `ignoreArrayOrder` and `ignoreExtraElements`;
+  a form with `formParameters`; XML with `equalToXml`; other text with `equalTo`; anything else with
+  `binaryEqualTo`. A multipart body, or one over 64 KB, isn't matched. `--rest off` matches by method
+  and address alone. GraphQL calls are told apart [their own way](#graphql).
+- Calls matched the same are the same call. One always answered the same is always answered so.
 - Otherwise there are states, of a scenario called `capture`: `Started`, `1`, `2`... A call that
-  isn't a GET moves to the next, if a later answer changed after it. Of several it may be, the one
-  made the fewest times is taken.
+  isn't a read (a GET, HEAD, OPTIONS or GraphQL query) moves to the next, if a later answer changed
+  after it. Of several it may be, the one made the fewest times is taken. So the same call is
+  answered as often, and in the order, as during the capture: WireMock's `repeatsAsScenarios`.
 - If an answer changed **by itself**, the flow has to say when: `capture.txt` has the `mockState` to
   add, and before which step.
-- A GET is told apart by its whole address. Other calls by address and order, not by body, except
-  GraphQL ones.
+- As `ignoreExtraElements` lets a mapping fit a call with more in it, the mappings that match more
+  get a lower `priority`, from 5: a call is answered by the closest. A mapping written by hand without
+  a priority, loaded after, wins over all of them.
+- What changes from run to run can't be matched as it was. A date and time (ISO 8601) in the query
+  or in a JSON body is matched by its form; `--timestamps exact` matches it as it was. `--ignore-params
+  depart_at,session` leaves parameters of the query out; `--ignore-body nonce,trip.clientTime` leaves
+  names, at any depth, or paths, out of JSON bodies, GraphQL variables and forms; `--ignore-host`
+  matches the path of any host (then, through the proxy, `--hosts` says which to open).
+  `capture.txt` lists what was left out.
+- `--capture-headers Accept-Language` matches these headers of the request too.
+- The headers of the answer are kept, but for those that change by themselves (`Date`, `ETag`, trace
+  ids...).
+- These settings are kept in `capture.calls.json`: `--capture-append` and `--capture-update` make the
+  mocks the same way, unless told otherwise.
+
+`rayo mocks import flows.har mock` makes mocks of a HAR file in the same way, as if captured: one of
+mitmproxy (`mitmdump -nr flows --set hardump=flows.har`), Charles, or a browser. With `--capture-from
+https://api.example.com`, only the calls to it are taken, without the host in the path; else every
+call, with its host, but those to Google, Firebase, analytics and crash reports.
 
 #### Updating mocks
 
@@ -954,6 +1004,8 @@ rayo test --capture-update mock --check --capture-from https://api.example.com f
 
 A changed mapping is written where it was, with its body in the same file of `__files`, so hand-written
 mappings in other files stay where they are. It works the same with the interceptor and the proxy.
+Mocks captured before REST bodies and GraphQL variables were matched have other names: the first
+update of them shows each as `gone` and `new`; `rayo mocks apply --prune` takes the new ones.
 
 #### GraphQL
 
@@ -963,27 +1015,37 @@ as GraphQL when it is a JSON `POST` whose body has `query`, `operationName` or
 `.*/graphql`). Anything else is captured as before.
 
 - Each GraphQL call is told apart by its **operation**, with a `bodyPatterns` entry
-  `matchesJsonPath: $[?(@.operationName == "Geocode")]`. Mocks therefore don't depend on the order
-  of the calls: a `Wallet` query is never answered with a `Geocode` answer.
+  `matchesJsonPath: { expression: $.operationName, equalTo: Geocode }`. Mocks therefore don't depend
+  on the order of the calls: a `Wallet` query is never answered with a `Geocode` answer. Without
+  `operationName`, the name in the query is matched; with neither, the hash of a persisted query, or
+  else the query itself. Only WireMock's matchers are written, so WireMock reads the mocks the same.
 - A **query** counts like a GET and a **mutation** like any other call: only mutations move the
   scenario on, and states whose answers don't differ are joined.
+- Which operation a document runs is read past comments, strings and fragments, also when it has
+  several: the one `operationName` names. That tells a query from a mutation.
 - When the same operation name is sent with **different query documents** (other fields, other
-  fragments), each document gets its own mappings, matched on the query with its spaces and commas
-  normalised. When there is only one document per name, only the name is matched, so a small edit
-  to a query doesn't break the mocks.
-- A persisted query with no name is matched on its hash.
-- With `--graphql operation+variables`, the variables are matched too, value by value, except
-  those under private names or holding something private. `--graphql off` turns all this off.
+  fragments), each document gets its own mappings, matched on the query whatever its spaces and
+  commas. When there is only one document per name, only the name is matched, so a small edit to a
+  query doesn't break the mocks.
+- An automatic persisted query, sent first with its hash alone and then again with the query, gets a
+  mapping for each.
+- The **variables** are matched too, with `equalToJson` on `$.variables`, but for those under private
+  names, those of `--ignore-body`, and dates and times, matched by their form. `--graphql operation`
+  matches the operation alone; `--graphql off` takes GraphQL calls as any other.
+- A batch, an array of operations, is matched by its whole body, and is a read if all of them are
+  queries. A query sent with GET is matched by its address.
 - Only `operationName`, the query text and, if asked for, the variables are kept from the request.
   A query with something private written into it is matched by its name only.
 - When mocking, a GraphQL call that nothing matches is reported with its operation:
   `POST /graphql (GraphQL operation Unknown)`.
 
 Left out, as far as it can be recognised: the values of `-e`; emails and JWTs anywhere; and what is
-under a name such as `access_token`, `password`, `email`, `phone` or `firstName`, also in the address.
-In an address, anything goes in its place. What the app sends isn't kept, nor headers other
-than the answer's `Content-Type`. **Names that aren't in that list are kept, so read the files before
-committing them.** A failure's screenshot and device log are not touched.
+under a name such as `access_token`, `password`, `email`, `phone` or `firstName`, also in the address
+and in what the app sends. In an address or a body, anything goes in its place. The value of every
+cookie, and headers such as `Authorization`, are hidden. An answer that isn't text is kept as it was;
+a body the app sent that isn't text isn't kept if a secret is found in it. **Names that aren't in that
+list are kept, so read the files before committing them.** A failure's screenshot and device log are
+not touched.
 
 ---
 

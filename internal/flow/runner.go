@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/nanihadesuka/rayo/internal/mock"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -26,20 +27,19 @@ const (
 type Options struct {
 	Env           map[string]string // wins over the flow's
 	Profile       bool
-	Timings       bool       // a group's total, and a note while a step takes long
-	MockPort      int        // on the device
-	Recording     *Recording // of flows that don't say; its path is a folder
-	JSON          bool       // the calls of a failure are saved so, and not as text
-	Capture       string     // folder for what the real backend answers; empty to use the mocks
-	Backend       string     // what a capture calls; empty when the path begins with the host
-	CaptureAppend bool       // the capture goes on from the one in its folder
-	CaptureUpdate string     // the mocks the capture is compared with; it is in their .update
-	CaptureCheck  bool       // a difference from them is a failure
-	Scale         float64    // of the default waits; 0 is 1. A step's own timeout isn't scaled
-	Network       string     // how calls reach the mock: interceptor or proxy; empty for the flow's
-	Hosts         []string   // with a proxy, those to open; empty for the default
-	GraphQL       string     // how a capture tells GraphQL calls apart: off, operation or operation+variables; empty for operation
-	GraphQLPath   string     // where GraphQL calls go, besides those whose body says so; empty for .*/graphql
+	Timings       bool          // a group's total, and a note while a step takes long
+	MockPort      int           // on the device
+	Recording     *Recording    // of flows that don't say; its path is a folder
+	JSON          bool          // the calls of a failure are saved so, and not as text
+	Capture       string        // folder for what the real backend answers; empty to use the mocks
+	Backend       string        // what a capture calls; empty when the path begins with the host
+	CaptureAppend bool          // the capture goes on from the one in its folder
+	CaptureUpdate string        // the mocks the capture is compared with; it is in their .update
+	CaptureCheck  bool          // a difference from them is a failure
+	Scale         float64       // of the default waits; 0 is 1. A step's own timeout isn't scaled
+	Network       string        // how calls reach the mock: interceptor or proxy; empty for the flow's
+	Hosts         []string      // with a proxy, those to open; empty for the default
+	Matching      mock.Settings // how a capture becomes mocks; what isn't set is the saved capture's, or the default
 }
 
 // Networks are the ways calls reach the mock.

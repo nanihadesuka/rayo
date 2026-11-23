@@ -13,6 +13,7 @@ rayo - runs flows on Android, fast
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
+  rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
@@ -53,12 +54,20 @@ Options of test: what comes out
 
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
-  --capture-from <url>       the backend, if calls don't begin with /host/
-  --graphql <match>          tell GraphQL calls apart by operation (default), operation+variables, or off; REST calls are as ever
-  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
   --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it
   --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
   --capture-append           go on with the capture already in the folder, as if in one go
+
+Options of test, live and mocks: how a capture or an import becomes mocks
+  --capture-from <url>       the backend, if calls don't begin with /host/
+  --graphql <match>          tell GraphQL calls apart by operation+variables (default), by operation, or off, as any call
+  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
+  --rest <match>             match other calls by their body too (body, default), or by method and address alone (off)
+  --ignore-params <a,b>      names in the query not to match, such as session or depart_at
+  --ignore-body <a,b>        names, or paths such as trip.departAt, in JSON bodies and GraphQL variables, and names in forms, not to match
+  --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly
+  --capture-headers <a,b>    headers of the request to match too, such as Accept-Language
+  --ignore-host              match calls whose path begins with a host, whatever the host
 
 Options of test and live: how calls reach the mock
   --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does

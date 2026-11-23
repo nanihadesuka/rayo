@@ -156,18 +156,18 @@ error: flows/a01.yaml:2: no file flows/nope
        flows/a04.yaml:2: bad/body.json: mapping 1: can't read the body nope.json: no file bad/__files/nope.json
        flows/a05.yaml:2: bad/syntax.json: unexpected end of JSON input
        flows/a06.yaml:2: bad/extra.json: expected only mappings
-       flows/a07.yaml:2: bad/second.json: mapping 2: a request needs one of url, urlPattern, urlPath, urlPathPattern
+       flows/a07.yaml:2: bad/second.json: mapping 2: a request needs one of url, urlPattern, urlPath, urlPathPattern, urlPathTemplate
        flows/a08.yaml:2: no file bad/mappings
        flows/b01.yaml:3: no file flows/nope.json
        flows/b02.yaml:3: mock needs either a file or a request and a response
        flows/b03.yaml:3: mock needs a response
        flows/b04.yaml:3: json: unknown field "metod"
-       flows/b05.yaml:3: a request needs one of url, urlPattern, urlPath, urlPathPattern
-       flows/b06.yaml:3: a request needs one of url, urlPattern, urlPath, urlPathPattern
+       flows/b05.yaml:3: a request needs one of url, urlPattern, urlPath, urlPathPattern, urlPathTemplate
+       flows/b06.yaml:3: a request needs one of url, urlPattern, urlPath, urlPathPattern, urlPathTemplate
        flows/b07.yaml:3: not a status: 99
-       flows/b08.yaml:3: a response takes one of body, jsonBody, bodyFileName
-       flows/b09.yaml:3: a matcher takes one of equalTo, contains, matches, matchesJsonPath, absent
-       flows/b10.yaml:3: can't read the JSONPath "a.b"
+       flows/b08.yaml:3: a response takes one of body, jsonBody, base64Body, bodyFileName
+       flows/b09.yaml:3: a matcher takes one of equalTo, contains, doesNotContain, matches, doesNotMatch, equalToJson, equalToXml, binaryEqualTo, matchesJsonPath, absent, anything, and, or, not, hasExactly, includes
+       flows/b10.yaml:3: can't read the JSONPath "a.b": it begins with $
        flows/b11.yaml:3: error parsing regexp: missing closing ): `(?s)^(?:()$`
        flows/b12.yaml:3: {{oops}}: unknown template
        flows/b13.yaml:3: {{now offset='a while'}}: use offset='-8 minutes'

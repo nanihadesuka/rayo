@@ -153,7 +153,9 @@ what is long or shared goes in `__files/`.
 ## From the real backend
 
 `rayo test --capture` writes such a folder from a real backend, through the interceptor or the proxy.
-REST and GraphQL calls go in the same folder: a GraphQL call is matched by its operation (and, if one
+REST and GraphQL calls go in the same folder. A REST call is matched by its method, address, query and
+body, as WireMock's recorder does, so calls to one endpoint with other bodies get their own answers. A
+GraphQL call is matched by its operation and variables (and, if one
 name is sent with several query documents, by its shape), so a `Wallet` query is never answered with a
 `Geocode` answer, whatever order the app makes them in. See [GraphQL](REFERENCE.md#graphql).
 
@@ -164,3 +166,38 @@ mapping by mapping, what changed; `rayo mocks apply mock` takes all of it, or `-
 All that a mapping can say, and
 the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
 [reference](REFERENCE.md#mock).
+
+## Coming from WireMock or mitmproxy
+
+A mocks folder of WireMock's, `mappings/` and `__files/`, is one of rayo's: give it to a flow's `mock`
+as it is. rayo's captures load in WireMock too: they use only its matchers. What rayo can't do, such as
+webhooks or proxying to a real backend, is an error when the mocks load, not a mock that does less.
+An app that calls one backend, with `--capture-from`, has paths without the host, as WireMock's; through
+the proxy, a mapping without the host answers too.
+
+| WireMock recording | rayo |
+|---|---|
+| `POST /__admin/recordings/start`, then `snapshot` | `rayo test --capture mock flow.yaml` |
+| `requestBodyPattern: auto` (`equalToJson` with `ignoreArrayOrder` and `ignoreExtraElements`, `equalToXml`, `equalTo`) | The default; `--rest off` for none |
+| `repeatsAsScenarios: true` | Always: the same call answered otherwise gets states, of the scenario `capture` |
+| `captureHeaders` | `--capture-headers Accept-Language,X-Api-Version` |
+| `extractBodyCriteria` | Always: every body goes in `__files/` |
+| `persist`, `--root-dir` | The folder of `--capture` |
+| Near misses | Said when a call isn't mocked: the nearest mapping, and what of it didn't fit |
+| `--global-response-templating` | Mappings without `transformers`; with `"transformers": ["response-template"]`, as WireMock's local mode |
+
+| mitmproxy server replay | rayo |
+|---|---|
+| `mitmdump -w flows` | `rayo test --capture mock --network proxy flow.yaml`, or `rayo mocks import flows.har mock` with `mitmdump -nr flows --set hardump=flows.har` |
+| `mitmdump --server-replay flows` | `rayo test flow.yaml`, with `mock: mock` in its header |
+| `server_replay_ignore_params` | `--ignore-params a,b` |
+| `server_replay_ignore_payload_params` | `--ignore-body a,b`, also for JSON and GraphQL variables |
+| `server_replay_ignore_content` | `--rest off` |
+| `server_replay_ignore_host` | `--ignore-host` |
+| Answers given once each, in order (`server_replay_reuse` off) | States: a call made three times is answered as the three times were; after that, as the last |
+| `server_replay_kill_extra` | Always: a call that isn't mocked fails the flow |
+| `server_replay_refresh` | `{{now offset='...'}}` in a body |
+
+Dates and times are matched by their form, not their value, so a call made with the time of the run
+still fits; `--timestamps exact` to match them as they were. All these settings are kept with the
+capture, and used again by `--capture-append` and `--capture-update`.

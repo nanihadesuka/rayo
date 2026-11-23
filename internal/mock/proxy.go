@@ -57,6 +57,9 @@ func Matches(host string, suffixes []string) bool {
 
 // NewProxy puts a proxy in front of a mock, opening the hosts open says.
 func NewProxy(m *Mock, ca *CA, open func(host string) bool) *Proxy {
+	if m.real != nil { // the app follows a redirect, through the proxy again
+		m.real.client.CheckRedirect = noFollow
+	}
 	return &Proxy{mock: m, ca: ca, open: open, passed: map[string]bool{}, refused: map[string]string{}, plainSeen: map[string]bool{}, conns: map[net.Conn]bool{}}
 }
 

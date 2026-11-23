@@ -252,7 +252,7 @@ func TestCaptureGraphQL(t *testing.T) {
 	write(t, filepath.Join(dir, "real.yaml"), "appId: a.b\n---\n"+rest+geo+wallet+place(1)+place(2)+book+wallet+rest)
 	run("test", "--capture", "got", "--capture-from", s.URL, "--graphql", "operation+variables", "real.yaml")
 	mocks, _ := os.ReadFile(filepath.Join(dir, "got", "mappings", "capture.json"))
-	for _, want := range []string{`@.operationName == \"Geocode\"`, `@.variables.id == 2`, `"url": "/profile"`} {
+	for _, want := range []string{`"equalTo": "Geocode"`, `"expression": "$.operationName"`, `"expression": "$.variables"`, `"id": 2`, `"urlPath": "/profile"`} {
 		if !strings.Contains(string(mocks), want) {
 			t.Errorf("no %s in\n%s", want, mocks)
 		}
@@ -378,4 +378,82 @@ func TestCaptureUpdate(t *testing.T) {
 	profile, _ := os.ReadFile(filepath.Join(dir, "mock", "__files", "001_get_profile.json"))
 	has(string(wallet), `"price": 7`)
 	has(string(profile), `"name": "new"`) // after taking them all
+}
+
+// The case of issue 8: the same POST with other bodies is answered by its body, whatever the order and
+// the timing, and a moment in the query, or a parameter asked to be ignored, doesn't break a replay.
+func TestCaptureRESTBodies(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, q *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Total-Count", "2")
+		var b struct{ Category string }
+		_ = json.NewDecoder(q.Body).Decode(&b)
+		switch q.URL.Path {
+		case "/availability":
+			fmt.Fprintf(w, `{"available":%t}`, b.Category == "prebooked")
+		default:
+			fmt.Fprintf(w, `{"route":%q}`, q.URL.Query().Get("from"))
+		}
+	}))
+	defer s.Close()
+	dir := t.TempDir()
+	call := func(category string) string {
+		return fmt.Sprintf("- tapOn: { id: 'POST /availability {\"category\":\"%s\",\"session_token\":\"t%d\"}' }\n", category, len(category))
+	}
+	directions := func(at string) string {
+		return fmt.Sprintf("- tapOn: { id: \"GET /directions?from=a&depart_at=%s&trace=%s\" }\n", at, at[len(at)-2:])
+	}
+	run := func(flow string, args ...string) []string {
+		t.Helper()
+		write(t, filepath.Join(dir, "f.yaml"), flow)
+		d := startDevice(t, "emulator-5554\tdevice\n", false)
+		out, err := d.command(dir, append(append([]string{"test"}, args...), "f.yaml")...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v\n%s", err, out)
+		}
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		var answers []string
+		for _, l := range d.log {
+			if _, a, ok := strings.Cut(l, "  app: "); ok {
+				_, a, _ = strings.Cut(a, " -> ")
+				answers = append(answers, strings.Join(strings.Fields(a), ""))
+			}
+		}
+		return answers
+	}
+	run("appId: a.b\n---\n"+call("ondemand")+call("prebooked")+directions("2026-11-23T18:14:29"),
+		"--capture", "got", "--capture-from", s.URL, "--ignore-params", "trace")
+	mocks, _ := os.ReadFile(filepath.Join(dir, "got", "mappings", "capture.json"))
+	if strings.Contains(string(mocks), "scenarioName") || strings.Contains(string(mocks), "session_token") || strings.Contains(string(mocks), "trace") {
+		t.Errorf("states, a private value or an ignored one:\n%s", mocks)
+	}
+	got := run("appId: a.b\nmock: got\n---\n- network: { delay: 10ms }\n" + call("prebooked") + call("ondemand") + call("prebooked") + directions("2027-01-01T09:00:00"))
+	want := []string{
+		`200application/json{"available":true}`,
+		`200application/json{"available":false}`,
+		`200application/json{"available":true}`,
+		`200application/json{"route":"a"}`,
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("got\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	kept, _ := os.ReadFile(filepath.Join(dir, "got", "capture.calls.json"))
+	for _, w := range []string{`"ignoreParams": [`, `\"category\":\"prebooked\"`} {
+		if !strings.Contains(string(kept), w) {
+			t.Errorf("no %s in\n%s", w, kept)
+		}
+	}
+	// A HAR file, as mitmproxy writes one, becomes the same mocks.
+	har := fmt.Sprintf(`{"log":{"entries":[{"startedDateTime":"2026-11-23T10:00:00Z",
+		"request":{"method":"POST","url":"%s/availability","headers":[],"postData":{"mimeType":"application/json","text":"{\"category\":\"prebooked\"}"}},
+		"response":{"status":200,"headers":[{"name":"Content-Type","value":"application/json"}],"content":{"mimeType":"application/json","text":"{\"available\":true}"}}}]}}`, s.URL)
+	write(t, filepath.Join(dir, "flows.har"), har)
+	d := startDevice(t, "emulator-5554\tdevice\n", false)
+	if out, err := d.command(dir, "mocks", "import", "--capture-from", s.URL, "flows.har", "imported").CombinedOutput(); err != nil || !strings.Contains(string(out), "captured 1 calls") {
+		t.Fatalf("%v\n%s", err, out)
+	}
+	if got := run("appId: a.b\nmock: imported\n---\n" + call("prebooked")); len(got) != 1 || got[0] != `200application/json{"available":true}` {
+		t.Errorf("imported: %v", got)
+	}
 }

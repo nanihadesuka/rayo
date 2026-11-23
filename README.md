@@ -34,9 +34,11 @@ TOTAL 3: 2 passed, 1 failed, 2 retried  68.3 s
 
 - **Fast.** Made for Android only: it waits on the device itself and reacts to the screen, without fixed pauses.
 - **One executable.** Windows, Linux or macOS. It only needs adb, and installs nothing on the device.
-- **[Mock backend](MOCKING.md) built in.** States, slow or broken networks; a call without a mock fails the test.
-- **[Capture](REFERENCE.md#capture).** Run once on the real backend, and its answers become mocks:
-  REST and [GraphQL](REFERENCE.md#graphql) together, GraphQL matched by operation so the order doesn't matter.
+- **[Mock backend](MOCKING.md) built in.** WireMock's format: its mocks load as they are. States, slow or
+  broken networks; a call without a mock fails the test, and says which mock came nearest.
+- **[Capture](REFERENCE.md#capture).** Run once on the real backend, and its answers become mocks, matched
+  as WireMock's recorder does: REST by body too, and [GraphQL](REFERENCE.md#graphql) by operation and
+  variables, so the order doesn't matter; dates and what you name left out. Or import a HAR file of mitmproxy's.
 - **[Update mocks](REFERENCE.md#updating-mocks).** See what the backend changed since, take only the changes
   you want, or fail CI with `--check` when the mocks are behind.
 - **[Videos](REFERENCE.md#startrecording-stoprecording)**, small, of each test or some steps.
@@ -67,6 +69,7 @@ Or build it, with Go: `bash build.sh`.
 | `rayo do '- tapOn: Save'` | The same, from another program |
 | `rayo test --capture mock flow.yaml` | Make mocks from the real backend |
 | `rayo test --capture-update mock flow.yaml` | What changed in the backend since; `rayo mocks apply mock` takes it |
+| `rayo mocks import flows.har mock` | Make mocks of mitmproxy's, a browser's or Charles' calls |
 | `rayo help` | Everything else |
 
 ## Mocking needs an interceptor
