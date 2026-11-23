@@ -12,6 +12,7 @@ rayo - runs flows on Android, fast
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
+  rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
@@ -55,6 +56,8 @@ Options of test and live: mocks from the real backend
   --capture-from <url>       the backend, if calls don't begin with /host/
   --graphql <match>          tell GraphQL calls apart by operation (default), operation+variables, or off; REST calls are as ever
   --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
+  --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it
+  --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
   --capture-append           go on with the capture already in the folder, as if in one go
 
 Options of test and live: how calls reach the mock
@@ -66,6 +69,10 @@ Options of live
   --mock <a,b>               its mocks, relative to it
   --no-run                   don't begin by running the steps it has
   --serve                    only take commands from rayo do, until .quit
+
+Options of mocks
+  --only <a,b>               the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)
+  --prune                    also take out the mocks that weren't called
 
 Options of do
   --screen                   also what is on screen afterwards

@@ -224,6 +224,27 @@ func (r *Runner) saveCapture() error {
 	if err != nil {
 		return fmt.Errorf("couldn't save the capture: %w", err)
 	}
+	if r.CaptureUpdate != "" && len(r.backend.mock.Calls()) > 0 {
+		changes, err := mock.Compare(r.CaptureUpdate, r.Capture)
+		if err != nil {
+			return fmt.Errorf("couldn't compare the capture with %s: %w", filepath.ToSlash(r.CaptureUpdate), err)
+		}
+		report := mock.Report(changes)
+		if r.CaptureCheck {
+			for _, n := range append(notes, report...) {
+				r.reporter.Note(0, n)
+			}
+			if differ := len(changes) - countSame(changes); differ > 0 {
+				return fmt.Errorf("the mocks in %s differ from the backend: %d changes", filepath.ToSlash(r.CaptureUpdate), differ)
+			}
+			return nil
+		}
+		report = append(report, "to take them: rayo mocks apply "+filepath.ToSlash(r.CaptureUpdate)+"   (--only a,b for some; --prune to take out those gone)")
+		notes = append(notes, report...)
+		if err := os.WriteFile(filepath.Join(r.Capture, "changes.txt"), []byte(strings.Join(report, "\n")+"\n"), 0o644); err != nil {
+			return err
+		}
+	}
 	for _, n := range notes {
 		r.reporter.Note(0, n)
 	}
@@ -380,4 +401,14 @@ func awaitRequest(c *call) error {
 		return errNoMock
 	}
 	return c.r.backend.mock.Await(c.ctx, arg(c, keyMethod), arg(c, keyCallPath), arg(c, keyBody), c.limit)
+}
+
+func countSame(changes []mock.Change) int {
+	n := 0
+	for _, c := range changes {
+		if c.Kind == mock.KindSame {
+			n++
+		}
+	}
+	return n
 }

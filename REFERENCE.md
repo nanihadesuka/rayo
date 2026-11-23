@@ -43,6 +43,7 @@ rayo - runs flows on Android, fast
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
+  rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
@@ -86,6 +87,8 @@ Options of test and live: mocks from the real backend
   --capture-from <url>       the backend, if calls don't begin with /host/
   --graphql <match>          tell GraphQL calls apart by operation (default), operation+variables, or off; REST calls are as ever
   --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
+  --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it
+  --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
   --capture-append           go on with the capture already in the folder, as if in one go
 
 Options of test and live: how calls reach the mock
@@ -97,6 +100,10 @@ Options of live
   --mock <a,b>               its mocks, relative to it
   --no-run                   don't begin by running the steps it has
   --serve                    only take commands from rayo do, until .quit
+
+Options of mocks
+  --only <a,b>               the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)
+  --prune                    also take out the mocks that weren't called
 
 Options of do
   --screen                   also what is on screen afterwards
@@ -918,6 +925,35 @@ How it becomes mocks:
   add, and before which step.
 - A GET is told apart by its whole address. Other calls by address and order, not by body, except
   GraphQL ones.
+
+#### Updating mocks
+
+When the backend changes, capture again beside the mocks instead of over them:
+
+```sh
+rayo test --capture-update mock --capture-from https://api.example.com flow.yaml
+```
+
+The new capture goes to `mock/.update/`, and each of its mappings is compared with the mapping of
+the same name (and state) in `mock/`, including hand-written ones. What is printed, and kept in
+`mock/.update/changes.txt`, is each mapping that is `changed` (status, headers, and the paths in the
+body that differ, such as `body.data.wallet.price: 5 -> 7`), `new` or `gone`. Then take what you
+want:
+
+```sh
+rayo mocks apply mock                                   # all the changes and new ones
+rayo mocks apply --only graphql:Wallet,"GET /profile" mock   # those whose name has one of these
+rayo mocks apply --prune mock                           # also take out those gone
+```
+
+In CI, `--check` fails the run when anything differs, and changes nothing:
+
+```sh
+rayo test --capture-update mock --check --capture-from https://api.example.com flow.yaml
+```
+
+A changed mapping is written where it was, with its body in the same file of `__files`, so hand-written
+mappings in other files stay where they are. It works the same with the interceptor and the proxy.
 
 #### GraphQL
 

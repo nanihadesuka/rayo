@@ -35,7 +35,10 @@ TOTAL 3: 2 passed, 1 failed, 2 retried  68.3 s
 - **Fast.** Made for Android only: it waits on the device itself and reacts to the screen, without fixed pauses.
 - **One executable.** Windows, Linux or macOS. It only needs adb, and installs nothing on the device.
 - **[Mock backend](MOCKING.md) built in.** States, slow or broken networks; a call without a mock fails the test.
-- **[Capture](REFERENCE.md#capture).** Run once on the real backend, and its answers become mocks.
+- **[Capture](REFERENCE.md#capture).** Run once on the real backend, and its answers become mocks:
+  REST and [GraphQL](REFERENCE.md#graphql) together, GraphQL matched by operation so the order doesn't matter.
+- **[Update mocks](REFERENCE.md#updating-mocks).** See what the backend changed since, take only the changes
+  you want, or fail CI with `--check` when the mocks are behind.
 - **[Videos](REFERENCE.md#startrecording-stoprecording)**, small, of each test or some steps.
 - **Pretend location and trips.** [`setLocation`](REFERENCE.md#setlocation) puts the device anywhere;
   [`travel`](REFERENCE.md#travel) moves it along a route at a real speed. For any app, without changing it.
@@ -63,13 +66,15 @@ Or build it, with Go: `bash build.sh`.
 | `rayo live new.yaml --app com.example.app` | Write a test while it runs |
 | `rayo do '- tapOn: Save'` | The same, from another program |
 | `rayo test --capture mock flow.yaml` | Make mocks from the real backend |
+| `rayo test --capture-update mock flow.yaml` | What changed in the backend since; `rayo mocks apply mock` takes it |
 | `rayo help` | Everything else |
 
 ## Mocking needs an interceptor
 
 For mocking and capturing, the app has to send its calls to rayo, at `http://127.0.0.1:8080` on the
 device. That takes a small [interceptor](MOCKING.md#in-your-app) in the app, which can be **only in the
-debug build**. Everything else works with any app as it is.
+debug build**, or, with no code, the device's [proxy](MOCKING.md#proxy) (`--network proxy`) and a CA the
+debug build trusts. Everything else works with any app as it is.
 
 ## Many tests
 

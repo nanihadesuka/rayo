@@ -150,6 +150,17 @@ Here paying moves `order` to `paid`. What the backend does by itself, the flow s
 It isn't required: an answer can be in its mapping, with `body` or `jsonBody`. A few lines go there;
 what is long or shared goes in `__files/`.
 
-`rayo test --capture` writes such a folder from a real backend. All that a mapping can say, and
+## From the real backend
+
+`rayo test --capture` writes such a folder from a real backend, through the interceptor or the proxy.
+REST and GraphQL calls go in the same folder: a GraphQL call is matched by its operation (and, if one
+name is sent with several query documents, by its shape), so a `Wallet` query is never answered with a
+`Geocode` answer, whatever order the app makes them in. See [GraphQL](REFERENCE.md#graphql).
+
+When the backend changes, `rayo test --capture-update mock` captures again beside the mocks and says,
+mapping by mapping, what changed; `rayo mocks apply mock` takes all of it, or `--only` some. With
+`--check` it fails instead, for CI. See [Updating mocks](REFERENCE.md#updating-mocks).
+
+All that a mapping can say, and
 the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
 [reference](REFERENCE.md#mock).

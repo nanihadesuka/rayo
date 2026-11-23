@@ -32,6 +32,8 @@ type Options struct {
 	Capture       string     // folder for what the real backend answers; empty to use the mocks
 	Backend       string     // what a capture calls; empty when the path begins with the host
 	CaptureAppend bool       // the capture goes on from the one in its folder
+	CaptureUpdate string     // the mocks the capture is compared with; it is in their .update
+	CaptureCheck  bool       // a difference from them is a failure
 	Scale         float64    // of the default waits; 0 is 1. A step's own timeout isn't scaled
 	Network       string     // how calls reach the mock: interceptor or proxy; empty for the flow's
 	Hosts         []string   // with a proxy, those to open; empty for the default

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -45,6 +46,10 @@ type options struct {
 
 	// Of do.
 	screen, json bool
+
+	// Of mocks.
+	take  []string
+	prune bool
 }
 
 // option is all there is to know about one: to add one, add it to the table below.
@@ -71,6 +76,7 @@ const (
 	cmdHierarchy = "hierarchy"
 	cmdDevices   = "devices"
 	cmdCA        = "ca"
+	cmdMocks     = "mocks"
 )
 
 func flag(name, about string, at func(o *options) *bool) option {
@@ -191,6 +197,11 @@ var sections = []section{
 			o.runner.GraphQLPath = v
 			return nil
 		}},
+		{name: "capture-update", value: "folder", about: "capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it", set: func(o *options, v string) error {
+			o.runner.CaptureUpdate, o.runner.Capture = v, filepath.Join(v, mock.UpdateFolder)
+			return nil
+		}},
+		flag("check", "with --capture-update, fail if the mocks differ from the backend, and change nothing", func(o *options) *bool { return &o.runner.CaptureCheck }),
 		flag("capture-append", "go on with the capture already in the folder, as if in one go", func(o *options) *bool { return &o.runner.CaptureAppend }),
 	}},
 	{[]string{cmdTest, cmdLive}, "how calls reach the mock", []option{
@@ -209,6 +220,10 @@ var sections = []section{
 		flag("no-run", "don't begin by running the steps it has", func(o *options) *bool { return &o.noRun }),
 		flag("serve", "only take commands from rayo do, until .quit", func(o *options) *bool { return &o.serve }),
 	}},
+	{[]string{cmdMocks}, "", []option{
+		list("only", "the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)", func(o *options) *[]string { return &o.take }),
+		flag("prune", "also take out the mocks that weren't called", func(o *options) *bool { return &o.prune }),
+	}},
 	{[]string{cmdDo}, "", []option{
 		flag("screen", "also what is on screen afterwards", func(o *options) *bool { return &o.screen }),
 		flag("json", "for a program", func(o *options) *bool { return &o.json }),
@@ -223,6 +238,7 @@ const usage = `rayo - runs flows on Android, fast
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
+  rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs

@@ -323,3 +323,59 @@ func TestCaptureGraphQLShapes(t *testing.T) {
 		t.Errorf("got %v", got)
 	}
 }
+
+// An update captures again beside the mocks, says what changed, and takes only what is chosen.
+func TestCaptureUpdate(t *testing.T) {
+	price, name := 5, "old"
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, q *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if q.URL.Path == "/graphql" {
+			fmt.Fprintf(w, `{"data":{"wallet":{"price":%d}}}`, price)
+			return
+		}
+		fmt.Fprintf(w, `{"name":%q}`, name)
+	}))
+	defer s.Close()
+	dir := t.TempDir()
+	flow := "appId: a.b\n---\n- tapOn: { id: \"GET /profile\" }\n" +
+		"- tapOn: { id: 'POST /graphql {\"operationName\":\"Wallet\",\"query\":\"query Wallet { x }\"}' }\n"
+	write(t, filepath.Join(dir, "f.yaml"), flow)
+	rayo := func(args ...string) string {
+		t.Helper()
+		d := startDevice(t, "emulator-5554\tdevice\n", false)
+		out, err := d.command(dir, args...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v\n%s", err, out)
+		}
+		return string(out)
+	}
+	has := func(out string, wants ...string) {
+		t.Helper()
+		for _, w := range wants {
+			if !strings.Contains(out, w) {
+				t.Errorf("no %q in\n%s", w, out)
+			}
+		}
+	}
+	rayo("test", "--capture", "mock", "--capture-from", s.URL, "f.yaml")
+	price, name = 7, "new"
+	out := rayo("test", "--capture-update", "mock", "--capture-from", s.URL, "f.yaml")
+	has(out, "0 same, 2 changed, 0 new, 0 gone", "changed POST /graphql graphql:Wallet", "body.data.wallet.price: 5 -> 7", `body.name: "old" -> "new"`)
+	report, _ := os.ReadFile(filepath.Join(dir, "mock", ".update", "changes.txt"))
+	has(string(report), "rayo mocks apply mock")
+	has(rayo("mocks", "apply", "--only", "graphql:Wallet", "mock"), "took 1 changes", "graphql:Wallet")
+	has(rayo("test", "--capture-update", "mock", "--capture-from", s.URL, "f.yaml"), "1 same, 1 changed", "changed GET /profile")
+	write(t, filepath.Join(dir, "m.yaml"), strings.Replace(flow, "---", "mock: mock\n---", 1))
+	rayo("test", "m.yaml") // the mocks still load
+	d := startDevice(t, "emulator-5554\tdevice\n", false)
+	check, err := d.command(dir, "test", "--capture-update", "mock", "--check", "--capture-from", s.URL, "f.yaml").CombinedOutput()
+	if err == nil || !strings.Contains(string(check), "differ from the backend: 1 changes") {
+		t.Errorf("--check: %v\n%s", err, check)
+	}
+	has(rayo("mocks", "apply", "mock"), "took 1 changes")
+	has(rayo("test", "--capture-update", "mock", "--check", "--capture-from", s.URL, "f.yaml"), "2 same, 0 changed")
+	wallet, _ := os.ReadFile(filepath.Join(dir, "mock", "__files", "002_post_Wallet.json"))
+	profile, _ := os.ReadFile(filepath.Join(dir, "mock", "__files", "001_get_profile.json"))
+	has(string(wallet), `"price": 7`)
+	has(string(profile), `"name": "new"`) // after taking them all
+}

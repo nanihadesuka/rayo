@@ -23,7 +23,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "1.0.7"
+const version = "1.0.8"
 
 // Exit codes.
 const (
@@ -79,6 +79,8 @@ func run(ctx context.Context, command string, args []string) error {
 		return err
 	case cmdCA:
 		return exportCA(args)
+	case cmdMocks:
+		return applyMocks(args)
 	case "version", "--version", "-v":
 		fmt.Println("rayo " + version)
 		return nil
@@ -259,6 +261,20 @@ func (o *options) checkCaptureFolder() error {
 		}
 		return nil
 	}
+	if o.runner.CaptureCheck && o.runner.CaptureUpdate == "" {
+		return errors.New("--check needs --capture-update")
+	}
+	if o.runner.CaptureUpdate != "" {
+		if o.runner.CaptureAppend {
+			return errors.New("--capture-update makes a capture of its own; --capture-append goes on with one")
+		}
+		if _, err := os.Stat(filepath.Join(o.runner.CaptureUpdate, "mappings")); err != nil {
+			return fmt.Errorf("--capture-update: %s has no mocks to compare with", filepath.ToSlash(o.runner.CaptureUpdate))
+		}
+		if err := mock.ClearUpdate(o.runner.CaptureUpdate); err != nil {
+			return err
+		}
+	}
 	list, err := os.ReadDir(folder)
 	switch {
 	case o.runner.CaptureAppend && err != nil:
@@ -386,6 +402,22 @@ func helpJSON() (string, error) {
 		"suiteFlow": schema.Docs(suite.FlowFields), "app": schema.Docs(suite.AppFields), "device": schema.Docs(suite.DeviceFields),
 	})
 	return b.String(), err
+}
+
+// applyMocks takes the changes of an update into the mocks.
+func applyMocks(args []string) error {
+	o, err := parse(cmdMocks, args)
+	if err != nil {
+		return err
+	}
+	if len(o.args) != 2 || o.args[0] != "apply" {
+		return errors.New("rayo mocks apply [--only a,b] [--prune] <folder>, after rayo test --capture-update <folder>")
+	}
+	notes, err := mock.Apply(o.args[1], o.take, o.prune)
+	if err == nil {
+		fmt.Println(strings.Join(notes, "\n"))
+	}
+	return err
 }
 
 // exportCA writes the certificate of this computer's CA, for an app to trust in its debug build.
