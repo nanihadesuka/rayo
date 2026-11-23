@@ -1,6 +1,7 @@
 package suite
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
@@ -40,12 +41,46 @@ var DeviceFields = []schema.Field[adb.Setup]{
 var FlowFields = []schema.Field[entry]{
 	schema.TextField("file", "file", "The flow", func(e *entry) *string { return &e.file }).Needed(),
 	schema.NumberField("retries", "a number from 0", "How many times it is tried again if it fails", 0, 0, func(e *entry, v int) { e.retries = &v }).Optional("the suite's"),
+	{Name: "mock", Takes: "a path or a list", About: "Who answers as the backend, as a flow's `mock`, relative to the suite; the flow's own `mock` wins, see [Mocks of a suite](#mocks-of-a-suite)",
+		Schema: schema.AnyOf(schema.Type("string"), schema.List(schema.Type("string"))), Read: func(e *entry, n *yaml.Node) (err error) {
+			e.mock, err = readMocks(n)
+			return err
+		}},
+	networkField(func(e *entry) *string { return &e.network }).Optional("the suite's"),
+}
+
+// networkField is the suite's network, and that of one of its flows.
+func networkField[T any](to func(*T) *string) schema.Field[T] {
+	return schema.Field[T]{Name: "network", Takes: "`interceptor` or `proxy`", About: "How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite)",
+		Schema: schema.Enum(flow.Interceptor, flow.Proxy), Read: func(t *T, n *yaml.Node) error {
+			if n.Kind != yaml.ScalarNode || n.Value != flow.Interceptor && n.Value != flow.Proxy {
+				return errors.New("takes interceptor or proxy")
+			}
+			*to(t) = n.Value
+			return nil
+		}}
+}
+
+// readMocks reads a path or a list of them, and checks that each loads.
+func readMocks(n *yaml.Node) ([]string, error) {
+	list := []*yaml.Node{n}
+	if n.Kind == yaml.SequenceNode {
+		list = n.Content
+	}
+	var paths []string
+	for _, c := range list {
+		if c.Kind != yaml.ScalarNode || c.Value == "" {
+			return nil, &schema.Error{Line: c.Line, What: "takes the path of a mock, or a list of them"}
+		}
+		paths = append(paths, c.Value)
+	}
+	return paths, nil
 }
 
 // Fields are those of a suite.
 var Fields = []schema.Field[Suite]{
 	schema.TextField("name", "text", "Shown in the results", func(s *Suite) *string { return &s.Name }).Optional("the file"),
-	{Name: "flows", Takes: "a list", Required: true, About: "Files, run in this order; or mappings with file and retries, see [below](#a-flow-of-a-suite)",
+	{Name: "flows", Takes: "a list", Required: true, About: "Files, run in this order; or mappings with file, retries, mock and network, see [below](#a-flow-of-a-suite)",
 		Schema: schema.S{"type": "array", "minItems": 1, "items": schema.AnyOf(schema.Type("string"), schema.Of(FlowFields))}, Read: readFlows},
 	schema.NumberField("retries", "a number from 0", "How many times a flow that fails is tried again, see [Retries](#retries)", 0, 0, func(s *Suite, v int) { s.Retries = &v }).Optional(fmt.Sprint(DefaultRetries)),
 	{Name: "app", Takes: "a mapping", About: "Installed before the flows, see [below](#the-app-of-a-suite)", Schema: schema.Of(AppFields), Read: func(s *Suite, n *yaml.Node) error {
@@ -61,6 +96,7 @@ var Fields = []schema.Field[Suite]{
 		return err
 	}},
 	schema.NumberField("timeoutScale", "0.1 to 10", "Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins", LowestScale, HighestScale, func(s *Suite, v float64) { s.TimeoutScale = v }).Optional("1"),
+	networkField(func(s *Suite) *string { return &s.Network }).Optional("each flow's, else `interceptor`"),
 	schema.TextField("output", "folder", "As `--output`, which wins", func(s *Suite) *string { return &s.Output }).Optional("`.rayo` where rayo runs"),
 	{Name: "results", Takes: "a file or a list", About: "As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit)",
 		Schema: func() schema.S { f := schema.Pattern(`\.(txt|json|xml)$`); return schema.AnyOf(f, schema.List(f)) }(), Read: readResults},

@@ -1,0 +1,15 @@
+-- args --
+test s.rayo.yaml
+-- s.rayo.yaml --
+flows:
+  - file: flow.yaml
+    mock: missing.json
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: { id: GET /a }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml:2: mock: no file missing.json

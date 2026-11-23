@@ -69,7 +69,7 @@
       "type": "object"
     },
     "flows": {
-      "description": "Files, run in this order; or mappings with file and retries (required)",
+      "description": "Files, run in this order; or mappings with file, retries, mock and network (required)",
       "items": {
         "anyOf": [
           {
@@ -84,6 +84,27 @@
                   "string",
                   "number",
                   "boolean"
+                ]
+              },
+              "mock": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ],
+                "description": "Who answers as the backend, as a flow's mock, relative to the suite; the flow's own mock wins"
+              },
+              "network": {
+                "description": "How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: the suite's)",
+                "enum": [
+                  "interceptor",
+                  "proxy"
                 ]
               },
               "retries": {
@@ -108,6 +129,13 @@
         "string",
         "number",
         "boolean"
+      ]
+    },
+    "network": {
+      "description": "How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: each flow's, else interceptor)",
+      "enum": [
+        "interceptor",
+        "proxy"
       ]
     },
     "output": {

@@ -1,0 +1,97 @@
+-- args --
+test s.rayo.yaml
+-- s.rayo.yaml --
+flows:
+  - file: tests/a.yaml
+    mock: mocks/a.json
+  - file: tests/b.yaml
+    mock: [mocks/common.json, mocks/b.json]
+  - file: tests/own.yaml
+    mock: mocks/a.json
+-- tests/a.yaml --
+appId: a.b
+---
+- tapOn: { id: GET /a }
+-- tests/b.yaml --
+appId: a.b
+---
+- tapOn: { id: GET /common }
+- tapOn: { id: GET /b }
+-- tests/own.yaml --
+appId: a.b
+mock: ../mocks/b.json
+---
+- tapOn: { id: GET /b }
+- tapOn: { id: GET /a }
+-- mocks/a.json --
+{"mappings":[{"request":{"urlPath":"/a"},"response":{"body":"a"}}]}
+-- mocks/b.json --
+{"mappings":[{"request":{"urlPath":"/b"},"response":{"body":"b"}}]}
+-- mocks/common.json --
+{"mappings":[{"request":{"urlPath":"/common"},"response":{"body":"common"}}]}
+==== out ====
+-- exit --
+1
+-- stdout --
+[1/3] PASS a  # s
+[2/3] PASS b  # s
+[3/3] FAIL own  # s
+  why: the app called what isn't mocked:
+        GET /a
+  cause: test
+  before:
+    tapOn GET /b
+    tapOn GET /a
+  calls:
+    <time> GET /b -> 200
+    <time> GET /a -> not mocked
+  screen:
+    a screen
+  saved: .rayo/own
+
+PASS a  # s
+PASS b  # s
+FAIL own  # s
+
+TOTAL 3: 2 passed, 1 failed  # s
+-- stderr --
+error: failed: own
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+adb reverse:forward:tcp:8080;tcp:<free>
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /a"},"timeout":15000}
+  app: GET /a -> 200  a
+adb reverse:killforward:tcp:8080
+adb reverse:forward:tcp:8080;tcp:<free>
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /common"},"timeout":15000}
+  app: GET /common -> 200  common
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /b"},"timeout":15000}
+  app: GET /b -> 200  b
+adb reverse:killforward:tcp:8080
+adb reverse:forward:tcp:8080;tcp:<free>
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /b"},"timeout":15000}
+  app: GET /b -> 200  b
+tap {"delay":100,"repeat":1,"sel":{"id":"GET /a"},"timeout":15000}
+  app: GET /a -> 404  not mocked: GET /a
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
+bye {"timeout":5000}
+-- file .rayo/failed.json --
+{
+  "<dir>/tests/own.yaml": "FAIL"
+}
+-- file .rayo/own/failure.png --
+PNG...
+-- file .rayo/own/logcat.txt --
+the log
+-- file .rayo/own/requests.txt --
+<time> GET /b -> 200
+<time> GET /a -> not mocked
+-- file .rayo/own/screen.txt --
+a screen

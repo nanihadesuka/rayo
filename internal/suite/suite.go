@@ -2,6 +2,7 @@
 package suite
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/nanihadesuka/rayo/internal/adb"
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/mock"
 	"github.com/nanihadesuka/rayo/internal/schema"
 	"gopkg.in/yaml.v3"
 )
@@ -31,6 +33,7 @@ type Suite struct {
 	RecordFolder string
 	TimeoutScale float64           // 0 if not said
 	Env          map[string]string // for every flow; -e wins
+	Network      string            // for every flow that doesn't say; --network wins
 
 	Path string
 }
@@ -44,7 +47,9 @@ const DefaultRetries = 1
 // entry is a flow of a suite: its file, or a mapping with what is only for it.
 type entry struct {
 	file    string
-	retries *int // nil for the suite's
+	retries *int     // nil for the suite's
+	mock    []string // for the flow, if its header has none
+	network string   // for the flow, if its header doesn't say; else the suite's
 	line    int
 }
 
@@ -59,6 +64,33 @@ func (s *Suite) RetriesOf(f *flow.Flow) int {
 		return *s.Retries
 	}
 	return DefaultRetries
+}
+
+// fill gives each flow of the suite the mock and network the suite says for it, unless its own
+// header says: a flow's header wins over its entry, and that over the suite's network. --network
+// wins over all of them when the flow runs.
+func (s *Suite) fill(flows []*flow.Flow) error {
+	for _, f := range flows {
+		var e entry
+		for _, o := range s.Flows {
+			if s.Relative(o.file) == f.Path {
+				e = o
+			}
+		}
+		if len(f.Mock) == 0 {
+			for _, m := range e.mock {
+				path, err := filepath.Abs(s.Relative(m))
+				if err != nil {
+					return err
+				}
+				f.Mock = append(f.Mock, &yaml.Node{Kind: yaml.ScalarNode, Value: path, Line: e.line})
+			}
+		}
+		if f.Network == "" {
+			f.Network = cmp.Or(e.network, s.Network)
+		}
+	}
+	return nil
 }
 
 type app struct{ ID, APK string }
@@ -90,6 +122,11 @@ func read(path string) (*Suite, error) {
 	for _, e := range s.Flows {
 		if info, err := os.Stat(s.Relative(e.file)); err != nil || info.IsDir() {
 			return nil, fmt.Errorf("%s:%d: no such flow: %s", where, e.line, e.file)
+		}
+		for _, m := range e.mock {
+			if err := mock.New().Load(s.Relative(m)); err != nil {
+				return nil, fmt.Errorf("%s:%d: mock: %v", where, e.line, err)
+			}
 		}
 	}
 	return s, nil
@@ -178,6 +215,11 @@ func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 	}
 	if len(flows) == 0 {
 		return nil, nil, fmt.Errorf("no flows in %s", strings.Join(paths, ", "))
+	}
+	if s != nil {
+		if err := s.fill(flows); err != nil {
+			return nil, nil, err
+		}
 	}
 	return flows, s, nil
 }

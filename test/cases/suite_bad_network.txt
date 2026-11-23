@@ -1,0 +1,14 @@
+-- args --
+test s.rayo.yaml
+-- s.rayo.yaml --
+network: wifi
+flows: [flow.yaml]
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: { id: GET /a }
+==== out ====
+-- exit --
+1
+-- stderr --
+error: s.rayo.yaml:1: network: takes interceptor or proxy

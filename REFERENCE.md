@@ -1101,12 +1101,13 @@ flows:
 | Key | Takes | |
 |---|---|---|
 | `name` | text | Shown in the results (default: the file) |
-| `flows` | a list | Files, run in this order; or mappings with file and retries, see [below](#a-flow-of-a-suite) (required) |
+| `flows` | a list | Files, run in this order; or mappings with file, retries, mock and network, see [below](#a-flow-of-a-suite) (required) |
 | `retries` | a number from 0 | How many times a flow that fails is tried again, see [Retries](#retries) (default: 1) |
 | `app` | a mapping | Installed before the flows, see [below](#the-app-of-a-suite) |
 | `device` | a mapping | How it is while the flows run, see [Device setup](#device-setup) |
 | `env` | values | Variables for every flow, as `-e`, which wins; they may use `${...}`, such as `${rayo.file}`, see [Variables](#variables) |
 | `timeoutScale` | 0.1 to 10 | Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins (default: 1) |
+| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite) (default: each flow's, else `interceptor`) |
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
 | `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
@@ -1120,7 +1121,32 @@ flows:
 |---|---|---|
 | `file` | file | The flow (required) |
 | `retries` | a number from 0 | How many times it is tried again if it fails (default: the suite's) |
+| `mock` | a path or a list | Who answers as the backend, as a flow's `mock`, relative to the suite; the flow's own `mock` wins, see [Mocks of a suite](#mocks-of-a-suite) |
+| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite) (default: the suite's) |
 <!-- end -->
+
+#### Mocks of a suite
+
+A suite can say which mocks each flow runs on, and how the app's calls reach them, so that the same
+flow files run unchanged against the real backend and on mocks, with no wrapper flows:
+
+```yaml
+name: Shop (mocked)
+network: proxy                  # for every flow; --network wins
+flows:
+  - file: tests/checkout.yaml
+    mock: mocks/checkout        # a path or a list, relative to the suite
+    retries: 2
+  - file: tests/login.yaml
+    mock: [mocks/common, mocks/login]
+  - file: tests/pinned_host.yaml
+    mock: mocks/pinned_host
+    network: interceptor        # this flow, the other way
+```
+
+What wins, first to last: `--network`; the flow's own `mock` and `network`; its entry in the suite;
+the suite's `network`. A flow whose header has a `mock` runs on that one only, not on its entry's.
+The paths are checked when the suite is read, as a flow's are.
 
 #### The app of a suite
 
@@ -1133,7 +1159,8 @@ flows:
 
 #### What goes where
 
-Mocks, shared steps and permissions belong in each flow, so that it can be read and run alone. The
+Shared steps and permissions belong in each flow, so that it can be read and run alone; mocks too,
+unless the same flow also runs without them, see [Mocks of a suite](#mocks-of-a-suite). The
 device is chosen as always: use `--emulator` if the flows must never run on a real one.
 
 `rayo check` takes suites too. When a folder is given, its suites aren't run.
