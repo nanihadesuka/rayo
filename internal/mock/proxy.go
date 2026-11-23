@@ -20,11 +20,11 @@ import (
 // hosts pass untouched. Calls sent to it as to the mock itself, by an app that still rewrites its URLs,
 // reach the mock too.
 type Proxy struct {
-	mock   *Mock
-	ca     *CA
-	open   func(host string) bool
+	mock *Mock
+	ca   *CA
+	open func(host string) bool
 	// Asked says whether a host was named, as with --hosts: then a browser's calls to it are decrypted too.
-	Asked func(host string) bool
+	Asked  func(host string) bool
 	server *http.Server
 
 	mu        sync.Mutex

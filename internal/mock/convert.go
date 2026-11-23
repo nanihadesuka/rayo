@@ -297,7 +297,10 @@ func (b *builder) prepare(calls []captured) {
 // splitByAuth matches by whether the app sent an Authorization header a read that answers one way
 // with it and another without, such as GET /users/me before and after logging in: so it needs no state.
 func (b *builder) splitByAuth(calls []captured) {
-	type sides struct{ with, without *captured; mixed bool }
+	type sides struct {
+		with, without *captured
+		mixed         bool
+	}
 	by := map[string]*sides{}
 	for i := range calls {
 		c := &calls[i]

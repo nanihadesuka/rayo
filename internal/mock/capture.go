@@ -22,17 +22,17 @@ import (
 // Settings are how a capture becomes mocks: what tells calls apart, and what doesn't. They are kept
 // with the capture, so that one that goes on from it, or updates it, makes the same mocks.
 type Settings struct {
-	GraphQL      string   `json:"graphql,omitempty"`      // GraphQLOff, GraphQLOperation or GraphQLVariables
-	GraphQLPath  string   `json:"graphqlPath,omitempty"`  // a pattern of paths of GraphQL calls
-	REST         string   `json:"rest,omitempty"`         // RESTBody or RESTOff
-	IgnoreParams []string `json:"ignoreParams,omitempty"` // names of the query not to match
-	IgnoreBody   []string `json:"ignoreBody,omitempty"`   // names, or dotted paths, of the body not to match
-	Timestamps   string   `json:"timestamps,omitempty"`   // TimestampsFormat or TimestampsExact
-	Headers      []string `json:"headers,omitempty"`      // of the request, to match
-	IgnoreHost   bool     `json:"ignoreHost,omitempty"`   // any host, for paths that begin with one
+	GraphQL      string   `json:"graphql,omitempty"`       // GraphQLOff, GraphQLOperation or GraphQLVariables
+	GraphQLPath  string   `json:"graphqlPath,omitempty"`   // a pattern of paths of GraphQL calls
+	REST         string   `json:"rest,omitempty"`          // RESTBody or RESTOff
+	IgnoreParams []string `json:"ignoreParams,omitempty"`  // names of the query not to match
+	IgnoreBody   []string `json:"ignoreBody,omitempty"`    // names, or dotted paths, of the body not to match
+	Timestamps   string   `json:"timestamps,omitempty"`    // TimestampsFormat or TimestampsExact
+	Headers      []string `json:"headers,omitempty"`       // of the request, to match
+	IgnoreHost   bool     `json:"ignoreHost,omitempty"`    // any host, for paths that begin with one
 	PathIDs      bool     `json:"ignorePathIds,omitempty"` // match UUIDs and ULIDs in paths by their form
-	Stateless    []string `json:"stateless,omitempty"`    // globs of host/path whose calls only read, whatever the method
-	RedactValues []string `json:"redactValues,omitempty"` // name=value: what a private field of a body becomes
+	Stateless    []string `json:"stateless,omitempty"`     // globs of host/path whose calls only read, whatever the method
+	RedactValues []string `json:"redactValues,omitempty"`  // name=value: what a private field of a body becomes
 }
 
 // Values of Settings.
@@ -597,8 +597,8 @@ func (r *real) cleanNamed(name string, v any, hide bool) any {
 }
 
 var (
-	dates  = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
-	phones = regexp.MustCompile(`^\+?[\d\s().-]{6,}$`)
+	dates   = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+	phones  = regexp.MustCompile(`^\+?[\d\s().-]{6,}$`)
 	numeric = regexp.MustCompile(`^[\d\s-]+$`)
 )
 
