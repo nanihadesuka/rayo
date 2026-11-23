@@ -33,7 +33,15 @@ type Options struct {
 	Backend       string     // what a capture calls; empty when the path begins with the host
 	CaptureAppend bool       // the capture goes on from the one in its folder
 	Scale         float64    // of the default waits; 0 is 1. A step's own timeout isn't scaled
+	Network       string     // how calls reach the mock: interceptor or proxy; empty for the flow's
+	Hosts         []string   // with a proxy, those to open; empty for the default
 }
+
+// Networks are the ways calls reach the mock.
+const (
+	Interceptor = "interceptor"
+	Proxy       = "proxy"
+)
 
 // scaled is a default wait, times Scale.
 func (o *Options) scaled(d time.Duration) time.Duration {
@@ -83,6 +91,7 @@ func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
 	if e := r.saveCapture(); e != nil {
 		err = errors.Join(err, e)
 	}
+	r.noteProxy()
 	r.reset()
 	if err != nil && ctx.Err() == nil {
 		if r.failure == nil {
@@ -112,6 +121,7 @@ func (r *Runner) prepare(ctx context.Context, f *Flow, folder string) {
 	for _, name := range evidenceFiles { // of an earlier run
 		_ = os.Remove(filepath.Join(folder, name))
 	}
+	r.backend.proxy = r.Network == Proxy || r.Network == "" && f.Network == Proxy
 	r.script = newScript(ctx, func(text string) { r.reporter.Note(2, text) })
 }
 

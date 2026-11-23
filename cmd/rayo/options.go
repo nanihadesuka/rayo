@@ -69,6 +69,7 @@ const (
 	cmdDo        = "do"
 	cmdHierarchy = "hierarchy"
 	cmdDevices   = "devices"
+	cmdCA        = "ca"
 )
 
 func flag(name, about string, at func(o *options) *bool) option {
@@ -177,6 +178,16 @@ var sections = []section{
 		text("capture-from", "url", "the backend, if calls don't begin with /host/", func(o *options) *string { return &o.runner.Backend }),
 		flag("capture-append", "go on with the capture already in the folder, as if in one go", func(o *options) *bool { return &o.runner.CaptureAppend }),
 	}},
+	{[]string{cmdTest, cmdLive}, "how calls reach the mock", []option{
+		{name: "network", value: "way", about: "interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does", set: func(o *options, v string) error {
+			if v != flow.Interceptor && v != flow.Proxy {
+				return fmt.Errorf("--network takes interceptor or proxy, not %q", v)
+			}
+			o.runner.Network = v
+			return nil
+		}},
+		list("hosts", "with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)", func(o *options) *[]string { return &o.runner.Hosts }),
+	}},
 	{[]string{cmdLive}, "", []option{
 		text("app", "package", "of a flow that isn't there yet", func(o *options) *string { return &o.app }),
 		list("mock", "its mocks, relative to it", func(o *options) *[]string { return &o.mocks }),
@@ -197,6 +208,7 @@ const usage = `rayo - runs flows on Android, fast
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
+  rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
   rayo version

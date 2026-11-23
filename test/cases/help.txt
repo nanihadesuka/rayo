@@ -12,6 +12,7 @@ rayo - runs flows on Android, fast
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
+  rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
   rayo version
@@ -53,6 +54,10 @@ Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
   --capture-from <url>       the backend, if calls don't begin with /host/
   --capture-append           go on with the capture already in the folder, as if in one go
+
+Options of test and live: how calls reach the mock
+  --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
+  --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)
 
 Options of live
   --app <package>            of a flow that isn't there yet

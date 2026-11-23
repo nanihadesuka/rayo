@@ -38,6 +38,13 @@ func init() {
 			h.flow.Mock, err = h.p.mocks(n)
 			return schema.Placed(err)
 		}},
+		{Name: "network", Takes: "`interceptor` or `proxy`", Default: "`interceptor`, or `--network`", About: "How the app's calls reach the mock, see [Proxy](#proxy)", Schema: schema.Enum(Interceptor, Proxy), Read: func(h *header, n *yaml.Node) error {
+			if n.Value != Interceptor && n.Value != Proxy || n.Kind != yaml.ScalarNode {
+				return errors.New("takes interceptor or proxy")
+			}
+			h.flow.Network = n.Value
+			return nil
+		}},
 		{Name: "record", Takes: "`true`, `false` or a file", Default: "the suite's", About: "A video of the flow, see [Recording a whole flow](#recording-a-whole-flow)", Schema: schema.Type("boolean", "string"), Read: func(h *header, n *yaml.Node) (err error) {
 			h.flow.Recording, err = readRecording(n)
 			return err

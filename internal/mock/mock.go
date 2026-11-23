@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -173,4 +174,20 @@ func (m *Mock) add(r *Rule) error {
 	}
 	m.rules = append(m.rules, r)
 	return nil
+}
+
+// Hosts are those the mocks answer for: where a call's path begins with /host/.
+func (m *Mock) Hosts() map[string]bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	hosts := map[string]bool{}
+	for _, r := range m.rules {
+		for _, u := range []string{r.Request.Url, r.Request.UrlPath, r.Request.UrlPattern, r.Request.UrlPathPattern} {
+			u = strings.ReplaceAll(strings.TrimPrefix(u, "^"), `\.`, ".")
+			if host, _, _ := strings.Cut(strings.TrimPrefix(u, "/"), "/"); hostName.MatchString(host) {
+				hosts[strings.ToLower(host)] = true
+			}
+		}
+	}
+	return hosts
 }

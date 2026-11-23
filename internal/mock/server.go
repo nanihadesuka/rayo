@@ -31,7 +31,12 @@ func (m *Mock) Start() (port int, err error) {
 }
 
 // Close also cuts the calls being answered.
-func (m *Mock) Close() error { return m.server.Close() }
+func (m *Mock) Close() error {
+	if m.server == nil { // behind a proxy
+		return nil
+	}
+	return m.server.Close()
+}
 
 // Err is what went wrong while serving.
 func (m *Mock) Err() error {

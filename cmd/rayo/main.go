@@ -17,12 +17,13 @@ import (
 	"github.com/nanihadesuka/rayo/internal/agent"
 	"github.com/nanihadesuka/rayo/internal/flow"
 	"github.com/nanihadesuka/rayo/internal/live"
+	"github.com/nanihadesuka/rayo/internal/mock"
 	"github.com/nanihadesuka/rayo/internal/report"
 	"github.com/nanihadesuka/rayo/internal/schema"
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "1.0.5"
+const version = "1.0.6"
 
 // Exit codes.
 const (
@@ -76,6 +77,8 @@ func run(ctx context.Context, command string, args []string) error {
 			fmt.Println(strings.Join(list, "\n"))
 		}
 		return err
+	case cmdCA:
+		return exportCA(args)
 	case "version", "--version", "-v":
 		fmt.Println("rayo " + version)
 		return nil
@@ -383,4 +386,44 @@ func helpJSON() (string, error) {
 		"suiteFlow": schema.Docs(suite.FlowFields), "app": schema.Docs(suite.AppFields), "device": schema.Docs(suite.DeviceFields),
 	})
 	return b.String(), err
+}
+
+// exportCA writes the certificate of this computer's CA, for an app to trust in its debug build.
+func exportCA(args []string) error {
+	o, err := parse(cmdCA, args)
+	if err != nil {
+		return err
+	}
+	if len(o.args) != 2 || o.args[0] != "export" {
+		return errors.New("rayo ca export <file>, such as app/src/debug/res/raw/rayo_ca.pem")
+	}
+	ca, err := mock.LoadCA()
+	if err != nil {
+		return err
+	}
+	file := o.args[1]
+	if dir := filepath.Dir(file); dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+	}
+	if err := os.WriteFile(file, ca.PEM(), 0o644); err != nil {
+		return err
+	}
+	name := strings.TrimSuffix(filepath.Base(file), filepath.Ext(file))
+	fmt.Printf(`wrote %s, the certificate of %s; its key stays there.
+
+For --network proxy, trust it in the debug build only, in app/src/debug/res/xml/network_security_config.xml:
+
+  <network-security-config>
+      <debug-overrides>
+          <trust-anchors>
+              <certificates src="@raw/%s" />
+          </trust-anchors>
+      </debug-overrides>
+  </network-security-config>
+
+and android:networkSecurityConfig="@xml/network_security_config" on <application> in the manifest.
+`, filepath.ToSlash(file), filepath.ToSlash(ca.Path), name)
+	return nil
 }

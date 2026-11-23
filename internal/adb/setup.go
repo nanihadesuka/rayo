@@ -48,11 +48,30 @@ func (d *Device) Apply(s *Setup) (undo func() error, err error) {
 	if len(set) == 0 {
 		return func() error { return nil }, nil
 	}
+	return d.hold(was, set, back, "set up the device", true)
+}
+
+// SetProxy makes the device's HTTP proxy an address of it, and returns what puts the one before back. The
+// device puts it back by itself if the connection closes, however this process died: a proxy left with
+// nothing behind it would leave the device without a network.
+func (d *Device) SetProxy(address string) (undo func() error, err error) {
+	return d.hold(
+		[]string{"proxy=$(settings get global http_proxy)"},
+		[]string{"settings put global http_proxy " + address},
+		[]string{`if [ "$proxy" = null ] || [ -z "$proxy" ]; then proxy=:0; fi; settings put global http_proxy "$proxy"`},
+		"set the device's proxy", false)
+}
+
+// hold runs set in a shell that stays open, and back when it is told to or the connection closes.
+func (d *Device) hold(was, set, back []string, what string, settle bool) (undo func() error, err error) {
 	script := append([]string{"trap '' HUP PIPE"}, was...)
 	for _, c := range set {
 		script = append(script, "{ "+c+"; } 2>&1")
 	}
-	script = append(script, "sleep 1", "echo rayo:ready", "read -r line", "{ "+strings.Join(back, "; ")+"; } >/dev/null 2>&1", "echo rayo:done")
+	if settle { // for the screen to take it
+		script = append(script, "sleep 1")
+	}
+	script = append(script, "echo rayo:ready", "read -r line", "{ "+strings.Join(back, "; ")+"; } >/dev/null 2>&1", "echo rayo:done")
 	c, err := d.Open("exec:" + strings.Join(script, "\n"))
 	if err != nil {
 		return nil, err
@@ -83,10 +102,10 @@ func (d *Device) Apply(s *Setup) (undo func() error, err error) {
 	said, err := await("rayo:ready")
 	if err != nil {
 		c.Close() // which undoes it
-		return nil, fmt.Errorf("couldn't set up the device: %w %s", err, said)
+		return nil, fmt.Errorf("couldn't %s: %w %s", what, err, said)
 	}
 	if said != "" {
-		return nil, errors.Join(fmt.Errorf("couldn't set up the device: %s", said), undo())
+		return nil, errors.Join(fmt.Errorf("couldn't %s: %s", what, said), undo())
 	}
 	return undo, nil
 }

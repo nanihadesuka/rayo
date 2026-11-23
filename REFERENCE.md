@@ -43,6 +43,7 @@ rayo - runs flows on Android, fast
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
+  rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
   rayo version
@@ -85,6 +86,10 @@ Options of test and live: mocks from the real backend
   --capture-from <url>       the backend, if calls don't begin with /host/
   --capture-append           go on with the capture already in the folder, as if in one go
 
+Options of test and live: how calls reach the mock
+  --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
+  --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)
+
 Options of live
   --app <package>            of a flow that isn't there yet
   --mock <a,b>               its mocks, relative to it
@@ -119,6 +124,7 @@ appId: com.example.app
 | `tags` | a list | To choose flows, see [Tags](#tags) |
 | `env` | values | Variables for it, see [Variables](#variables) |
 | `mock` | a path or a list | Who answers as the backend, see [Mock](#mock) |
+| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, see [Proxy](#proxy) (default: `interceptor`, or `--network`) |
 | `record` | `true`, `false` or a file | A video of the flow, see [Recording a whole flow](#recording-a-whole-flow) (default: the suite's) |
 | `onFlowStart` | commands | Run first |
 | `onFlowComplete` | commands | Run last, also after a failure |

@@ -6316,6 +6316,13 @@
             "boolean"
           ]
         },
+        "network": {
+          "description": "How the app's calls reach the mock (default: interceptor, or --network)",
+          "enum": [
+            "interceptor",
+            "proxy"
+          ]
+        },
         "onFlowComplete": {
           "$ref": "#/$defs/commands",
           "description": "Run last, also after a failure"

@@ -25,10 +25,29 @@ type backend struct {
 	capturing bool // the real backend answers
 	real      string
 	secrets   map[string]string
+
+	proxy   bool     // the device's proxy, and not the app, sends calls to the mock
+	hosts   []string // those the proxy opens; empty for the default
+	proxied *mock.Proxy
+	unset   func() error // puts the device's proxy back
 }
 
 func newBackend(d *adb.Device, o Options) *backend {
-	return &backend{device: d, port: o.MockPort, capturing: o.Capture != "", real: o.Backend, secrets: o.Env}
+	return &backend{device: d, port: o.MockPort, capturing: o.Capture != "", real: o.Backend, secrets: o.Env, hosts: o.Hosts}
+}
+
+// opens says which hosts the proxy opens: those asked for; else, capturing, all but the passthrough list;
+// else those the mocks know, so that a call to another host passes untouched.
+func (b *backend) opens(m *mock.Mock) func(host string) bool {
+	return func(host string) bool {
+		switch {
+		case len(b.hosts) > 0:
+			return mock.Matches(host, b.hosts)
+		case b.capturing:
+			return !mock.Matches(host, mock.Passthrough)
+		}
+		return m.Hosts()[strings.ToLower(host)]
+	}
 }
 
 // during says which step the calls from now on belong to.
@@ -47,6 +66,9 @@ func (b *backend) start() (*mock.Mock, error) {
 	if b.capturing {
 		m.Forward(b.real, b.secrets)
 	}
+	if b.proxy {
+		return b.startProxy(m)
+	}
 	port, err := m.Start()
 	if err != nil {
 		return nil, err
@@ -58,13 +80,48 @@ func (b *backend) start() (*mock.Mock, error) {
 	return m, nil
 }
 
+func (b *backend) startProxy(m *mock.Mock) (*mock.Mock, error) {
+	ca, err := mock.LoadCA()
+	if err != nil {
+		return nil, err
+	}
+	p := mock.NewProxy(m, ca, b.opens(m))
+	port, err := p.Start()
+	if err != nil {
+		return nil, err
+	}
+	if err := b.device.Reverse(b.port, port); err != nil {
+		return nil, errors.Join(err, p.Close())
+	}
+	unset, err := b.device.SetProxy(fmt.Sprintf("127.0.0.1:%d", b.port))
+	if err != nil {
+		return nil, errors.Join(err, b.device.Unreverse(b.port), p.Close())
+	}
+	b.mock, b.proxied, b.unset = m, p, unset
+	return m, nil
+}
+
 func (b *backend) close() error {
 	if b.mock == nil {
 		return nil
 	}
-	err := errors.Join(b.device.Unreverse(b.port), b.mock.Close())
-	b.mock = nil
+	var err error
+	if b.unset != nil { // first, or the device calls a port with nothing behind it
+		err = b.unset()
+	}
+	err = errors.Join(err, b.device.Unreverse(b.port), b.proxied.Close(), b.mock.Close())
+	b.mock, b.proxied, b.unset = nil, nil, nil
 	return err
+}
+
+// noteProxy says which hosts the proxy left alone.
+func (r *Runner) noteProxy() {
+	if r.backend.proxied == nil {
+		return
+	}
+	for _, n := range r.backend.proxied.Notes() {
+		r.reporter.Note(1, n)
+	}
 }
 
 // check is an error if the app called something without a mock.

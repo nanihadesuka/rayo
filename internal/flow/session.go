@@ -74,6 +74,7 @@ func (r *Runner) Live(ctx context.Context, f *Flow, folder string, talk func(s *
 	if e := r.saveCapture(); e != nil {
 		err = errors.Join(err, e)
 	}
+	r.noteProxy()
 	r.reset()
 	return err
 }

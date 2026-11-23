@@ -25,6 +25,7 @@ type Flow struct {
 	Tags       []string
 	Env        map[string]string
 	Mock       []*yaml.Node // paths
+	Network    string       // interceptor or proxy; empty if the flow doesn't say
 	Steps      []*Step
 	OnStart    []*Step
 	OnComplete []*Step

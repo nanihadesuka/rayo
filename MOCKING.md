@@ -64,6 +64,43 @@ The host goes in the path so that several can be mocked, and so that a capture k
 a mapping for `https://api.example.com/products` has the path `/api.example.com/products`. An app
 with one backend may leave it out, as the examples here do; to capture it, use `--capture-from`.
 
+## Proxy
+
+The interceptor only sees the calls made through the app's own client. A third-party SDK that brings its
+own client, such as a payment SDK that polls a URL from an answer, still calls the real server: a capture
+misses those calls without saying so, and a mock run sends them live. With `--network proxy`, or
+`network: proxy` in a flow's header, the device's HTTP proxy sends every call to rayo instead.
+
+```
+rayo ca export app/src/debug/res/raw/rayo_ca.pem      # once per computer
+rayo test --capture mock/ --network proxy flow.yaml   # capture
+rayo test --network proxy flow.yaml                   # mock
+```
+
+| | `interceptor` (default) | `proxy` |
+|---|---|---|
+| What it sees | Calls made through the app's own client | Every HTTP(S) call on the device: the app, SDKs, WebViews |
+| In the app | The interceptor, and cleartext to `127.0.0.1` | No code: the debug build trusts rayo's CA |
+| On the device | `adb reverse` | `adb reverse`, and `http_proxy` while the flow runs |
+| Fails when | An SDK uses its own client | A library pins certificates: that host is tunnelled, and said so |
+
+Both write and read the same folders, with the host in the path, so a capture made one way replays the
+other way. An app that still rewrites its URLs works behind the proxy too.
+
+- **The CA** is made the first time, in `~/.rayo` (`ca.pem`, and `ca-key.pem`, which never leaves it).
+  `rayo ca export` writes the certificate and the `network_security_config` that trusts it in
+  `debug-overrides` only. A release build ignores it.
+- **Hosts.** The proxy decrypts only some hosts and tunnels the rest untouched: those of `--hosts`, and
+  their subdomains; else, capturing, all but Google's, Firebase's, analytics and crash reports; else
+  those the mocks have in their paths. Then a call to a host of the mocks that none fits fails as
+  `not mocked`, and a call to another host goes to the real one. The hosts left alone are listed after the flow.
+- **Pinning.** A host whose TLS the app refuses is listed as `pinned or untrusted CA: <host>, tunnelled`,
+  and tunnelled from then on, instead of failing the run.
+- **Plain `http://`** passes untouched, and is listed.
+- **Clean-up.** The proxy is set by a shell on the device that puts the one before back when the flow
+  ends, and also when the connection closes, however rayo stopped: a device isn't left with a proxy
+  with nothing behind it.
+
 ## What happens on a call
 
 1. The app calls `http://127.0.0.1:8080/...` on the device, which reaches rayo.
