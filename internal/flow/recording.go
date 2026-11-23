@@ -63,7 +63,11 @@ const smallSize = "r=$(wm size | sed -n '$s/.*: //p'); w=${r%x*}; h=${r#*x}; n=$
 // startRecording uses Android's recorder. It stops by itself if the connection closes.
 func (r *Runner) startRecording(to string) error {
 	if r.video != nil {
-		return errors.New("a recording is going on")
+		// The same file again, as when a live session replays a flow from its start: it goes on.
+		if filepath.Clean(r.video.to) == filepath.Clean(to) {
+			return nil
+		}
+		return fmt.Errorf("a recording to %s is going on", filepath.ToSlash(r.video.to))
 	}
 	v := &video{on: fmt.Sprintf("/data/local/tmp/rayo-%d.mp4", os.Getpid()), to: to}
 	var err error

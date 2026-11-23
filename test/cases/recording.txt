@@ -24,7 +24,7 @@ emulator-5554, ready in # ms
   ✗ startRecording  # ms
   saved in .rayo/case
 [1/1] FAIL case  # s
-  why: a recording is going on
+  why: a recording to .rayo/case/three.mp4 is going on
   cause: test
   step: startRecording
   at: flow.yaml:9
