@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"strings"
 	"time"
 
@@ -59,10 +58,7 @@ type Session struct{ r *Runner }
 // Live runs a flow for as long as talk lasts, and then puts back what it changed.
 func (r *Runner) Live(ctx context.Context, f *Flow, folder string, talk func(s *Session) error) error {
 	r.prepare(ctx, f, folder)
-	env := map[string]string{}
-	maps.Copy(env, f.Env)
-	maps.Copy(env, r.Env)
-	err := r.script.with(env, func() error {
+	err := r.withEnv(f, func() error {
 		err := r.begin(f)
 		if err == nil {
 			err = r.steps(ctx, f.OnStart, 0)

@@ -124,8 +124,9 @@ var (
 	keyNotVisible = newKey("notVisible", anElement, "Not on screen")
 	keyPlatform   = newKey("platform", aPlatform, "Android")
 	keyTrue       = newKey("true", aScript, "An expression that holds")
+	keyPeek       = newKey("timeout", aTime, "How long visible and notVisible may take (700ms); 0 looks once")
 
-	whenKeys = []anyKey{keyVisible, keyNotVisible, keyPlatform, keyTrue}
+	whenKeys = []anyKey{keyVisible, keyNotVisible, keyPlatform, keyTrue, keyPeek}
 )
 
 // Apps.
@@ -171,6 +172,7 @@ var (
 	keyRetries   = newKey("retries", aNumber, "How many more times (1)")
 	keyCondition = newKey("condition", aScript, "An expression")
 	keyScript    = newKey("script", aScript, "A line of it")
+	keyQuiet     = newKey("quiet", aTime, "How long nothing may change (500ms)")
 )
 
 // Device.

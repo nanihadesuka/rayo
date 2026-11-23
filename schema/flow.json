@@ -5743,6 +5743,27 @@
                       ],
                       "description": "A failure doesn't fail the flow"
                     },
+                    "quiet": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            {
+                              "pattern": "^[0-9_.]+(ms|s|m|h)?([0-9.]+(ms|s|m))*$",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "How long nothing may change (500ms)"
+                    },
                     "timeout": {
                       "anyOf": [
                         {
@@ -6195,6 +6216,27 @@
             }
           ],
           "description": "Android"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "pattern": "^[0-9_.]+(ms|s|m|h)?([0-9.]+(ms|s|m))*$",
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "pattern": "\\$\\{",
+              "type": "string"
+            }
+          ],
+          "description": "How long visible and notVisible may take (700ms); 0 looks once"
         },
         "true": {
           "anyOf": [

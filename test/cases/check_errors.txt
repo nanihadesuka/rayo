@@ -253,7 +253,7 @@ error: flows/a01.yaml:3: unknown command "tapOm", did you mean tapOn?
        flows/a14.yaml: yaml: line 1: did not find expected node content
        flows/b01.yaml:3: no file flows/nope.yaml
        flows/b02.yaml:3: runFlow needs either a file or commands
-       flows/b03.yaml:3: when doesn't take "visble" (it takes notVisible, platform, true, visible)
+       flows/b03.yaml:3: when doesn't take "visble" (it takes notVisible, platform, timeout, true, visible)
        flows/b04.yaml:3: tapOn doesn't take "nope" (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)
        flows/b05.yaml: flows run each other in a circle
        flows/b06.yaml:3: no such file: nope.js
@@ -282,7 +282,7 @@ error: flows/a01.yaml:3: unknown command "tapOm", did you mean tapOn?
        flows/e01.yaml:3: permissions: camera: not one of allow, deny, unset: "alow"
        flows/e02.yaml:3: permissions: takes a mapping
        flows/e03.yaml:3: arguments: takes a mapping
-       flows/e04.yaml:3: when: takes visible, notVisible, platform, true
+       flows/e04.yaml:3: when: takes visible, notVisible, platform, true, timeout
        flows/e05.yaml:3: env: takes a mapping
        flows/e06.yaml:3: platform: not one of Android, iOS, Web: "Windows"
        flows/e07.yaml:3: points: takes a list

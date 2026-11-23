@@ -5,6 +5,7 @@ import (
 	"maps"
 	"math"
 	"slices"
+	"time"
 
 	"github.com/nanihadesuka/rayo/internal/agent"
 	"gopkg.in/yaml.v3"
@@ -80,11 +81,14 @@ func (c *call) group(run func(steps []*Step) error) error {
 			return err
 		}
 		steps = slices.Concat(f.OnStart, f.Steps, f.OnComplete)
-		for k, v := range f.Env {
-			if _, set := env[k]; !set {
-				env[k] = v
+		// The file's header is a default: what the caller, its env or -e set wins.
+		return c.r.script.with(env, func() error {
+			defaults, err := c.r.script.header(f.Env)
+			if err != nil {
+				return err
 			}
-		}
+			return c.r.script.with(defaults, func() error { return run(steps) })
+		})
 	}
 	return c.r.script.with(env, func() error { return run(steps) })
 }
@@ -108,6 +112,17 @@ func (r *Runner) holds(ctx context.Context, when *yaml.Node) (bool, error) {
 			return false, err
 		}
 	}
+	limit := peekTimeout
+	if n := get(when, keyPeek); n != nil {
+		n, err := r.script.resolve(n)
+		if err == nil {
+			err = filledIn(n, keyPeek.check)
+		}
+		if err != nil {
+			return false, err
+		}
+		limit = keyPeek.value(n).(time.Duration)
+	}
 	for _, c := range []struct {
 		key *Key[agent.Args]
 		op  string
@@ -123,7 +138,7 @@ func (r *Runner) holds(ctx context.Context, when *yaml.Node) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		if _, err := r.agent.Do(ctx, c.op, agent.Args{"sel": selector(n)}, peekTimeout); err != nil {
+		if _, err := r.agent.Do(ctx, c.op, agent.Args{"sel": selector(n)}, limit); err != nil {
 			return false, r.agent.Dead() // otherwise it just doesn't hold
 		}
 	}

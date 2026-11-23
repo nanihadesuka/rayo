@@ -182,7 +182,9 @@ func init() {
 				return err
 			}},
 		"waitForAnimationToEnd": {untested: true, about: "Waits until nothing has changed for a while",
-			alone: true, run: func(c *call) error { return c.do("settle", agent.Args{"quiet": 200}) }},
+			keys: []anyKey{keyQuiet}, alone: true, run: func(c *call) error {
+				return c.do("settle", agent.Args{"quiet": argOr(c, keyQuiet, 500*time.Millisecond).Milliseconds()})
+			}},
 
 		// Control
 		"runFlow": {about: "Runs another flow, or commands right here",

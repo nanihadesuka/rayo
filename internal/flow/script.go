@@ -132,6 +132,40 @@ func (s *script) with(env map[string]string, fn func() error) (err error) {
 	return fn()
 }
 
+// header evaluates the values of a file's env, where it is included: each ${...} sees the variables
+// set outside, and one that isn't set is undefined, so ${ X || "default" } works. A name that is set
+// already is left out, as the header only gives defaults.
+func (s *script) header(env map[string]string) (map[string]string, error) {
+	declared := []string{}
+	for k := range env {
+		if !s.defined(k) {
+			if err := s.vm.Set(k, goja.Undefined()); err != nil {
+				return nil, err
+			}
+			declared = append(declared, k)
+		}
+	}
+	defer func() {
+		for _, k := range declared {
+			_ = s.vm.GlobalObject().Delete(k)
+		}
+	}()
+	values := map[string]string{}
+	for _, k := range declared {
+		v, err := s.fill(env[k])
+		if err != nil {
+			return nil, fmt.Errorf("env %s: %w", k, err)
+		}
+		values[k] = v
+	}
+	return values, nil
+}
+
+func (s *script) defined(name string) bool {
+	v := s.vm.Get(name)
+	return v != nil && !goja.IsUndefined(v)
+}
+
 func (s *script) run(file string) error {
 	code, err := os.ReadFile(file)
 	if err != nil {

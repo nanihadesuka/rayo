@@ -142,13 +142,34 @@ final class Input {
     return false;
   }
 
+  /** What the input method service says; the windows accessibility lists can lag behind it. */
+  static boolean imeShown() {
+    try {
+      String state = Shell.shell("dumpsys input_method");
+      if (state.contains("mInputShown=true") || state.contains("mIsInputViewShown=true")) return true;
+      return !state.contains("mInputShown=");
+    } catch (Exception e) {
+      return true; // can't tell, so the windows decide
+    }
+  }
+
+  static boolean keyboardOpen() { return keyboardShown() && imeShown(); }
+
   static void hideKeyboard(long deadline) throws Exception {
     settle(60, 300); // it may be opening
-    if (!keyboardShown()) return;
+    if (!keyboardOpen()) return; // nothing to do
     key(KeyEvent.KEYCODE_BACK);
-    while (keyboardShown()) {
-      if (SystemClock.uptimeMillis() >= deadline) throw new Failure("the keyboard didn't close");
-      awaitChange(seen(), deadline);
+    // Some windows, such as a Custom Tab, ignore an injected Back for the keyboard: then as the shell does.
+    long fallback = SystemClock.uptimeMillis() + 1500;
+    boolean again = false;
+    while (keyboardOpen()) {
+      long now = SystemClock.uptimeMillis();
+      if (now >= deadline) throw new Failure("the keyboard didn't close");
+      if (!again && now >= fallback) {
+        again = true;
+        Shell.shell("input keyevent 4"); // only while it is still open, so it is not a Back for the app
+      }
+      awaitChange(seen(), Math.min(deadline, now + 250));
     }
   }
 }

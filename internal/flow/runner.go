@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -68,10 +67,7 @@ func NewRunner(d *adb.Device, a *agent.Agent, reporter Reporter, o Options) *Run
 func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
 	start := time.Now()
 	r.prepare(ctx, f, folder)
-	env := map[string]string{}
-	maps.Copy(env, f.Env)
-	maps.Copy(env, r.Env)
-	err := r.script.with(env, func() error { return r.run(ctx, f) })
+	err := r.withEnv(f, func() error { return r.run(ctx, f) })
 	if e := r.saveCapture(); e != nil {
 		err = errors.Join(err, e)
 	}
@@ -83,6 +79,17 @@ func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
 		r.diagnose(err, r.log)
 	}
 	return Result{Flow: f, Err: err, Elapsed: time.Since(start), Failure: r.failure, Warnings: r.warnings, Recordings: r.recordings}
+}
+
+// withEnv sets -e, and then the flow's header for what -e doesn't set.
+func (r *Runner) withEnv(f *Flow, fn func() error) error {
+	return r.script.with(r.Env, func() error {
+		header, err := r.script.header(f.Env)
+		if err != nil {
+			return err
+		}
+		return r.script.with(header, fn)
+	})
 }
 
 // prepare forgets the flow before.

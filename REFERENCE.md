@@ -394,7 +394,7 @@ Adds text to the focused field, waiting for one to be focused.
 
 ### hideKeyboard
 
-🧪 Closes the keyboard if it is open, and waits until it has.
+🧪 Closes the keyboard if it is open, and waits until it has. Does nothing when none is open.
 
 ### pressKey
 
@@ -460,7 +460,22 @@ The same two, usually with a longer `timeout`.
 
 ### waitForAnimationToEnd
 
-🧪 Waits until nothing has changed for 200 ms. Goes on when the time is over, without failing.
+🧪 Waits until nothing on screen has changed for `quiet` (500 ms). Goes on when the `timeout` is
+over, without failing.
+
+It can't know about what hasn't begun: a dialog that comes a second later may still be missing. To
+wait for something late, wait for it by name, as `extendedWaitUntil` or a `when` with a longer
+`timeout`.
+
+<!-- generated: keys waitForAnimationToEnd -->
+| Key | Takes | |
+|---|---|---|
+| `quiet` | time | How long nothing may change (500ms) |
+<!-- end -->
+
+```yaml
+- waitForAnimationToEnd: { quiet: 1s, timeout: 5s }
+```
 
 ---
 
@@ -508,7 +523,15 @@ The same two, usually with a longer `timeout`.
 
 ### when
 
-🧪 A condition for `runFlow`, `runScript` and, as `while`, `repeat`. All must hold.
+🧪 A condition for `runFlow`, `runScript` and, as `while`, `repeat`. All must hold. `visible` and
+`notVisible` wait up to `timeout` (0.7 s) for it; `timeout: 0` looks once, for a guard that
+usually doesn't hold.
+
+```yaml
+- runFlow:
+    when: { visible: "Allow notifications", timeout: 3s }
+    commands: [ { tapOn: "Not now" } ]
+```
 
 <!-- generated: when -->
 | Key | Takes | |
@@ -517,6 +540,7 @@ The same two, usually with a longer `timeout`.
 | `notVisible` | selector | Not on screen |
 | `platform` | Android/iOS/Web | Android |
 | `true` | JavaScript | An expression that holds |
+| `timeout` | time | How long visible and notVisible may take (700ms); 0 looks once |
 <!-- end -->
 
 ---
@@ -1309,9 +1333,16 @@ They know the keys and values. What depends on other files, or on several keys a
 Used as `${NAME}`. The first that has it wins:
 
 1. `env` of the `runFlow` or `runScript` running now
-2. `env` of the included file
-3. `-e NAME=value`
-4. `env` in the flow's header
+2. `-e NAME=value`
+3. What is set where the file is included
+4. `env` in the file's header: a default, for what nothing above sets
+
+Header values may be expressions, which see the variables above; one not set is `undefined`:
+
+```yaml
+env:
+  CITY: ${ CITY || "Springfield" }
+```
 
 ### Tags
 
@@ -1378,7 +1409,7 @@ and a flow that failed first has its failed tries in `system-out`.
 | `assertNotVisible` | 5 s |
 | `scrollUntilVisible` | 20 s |
 | With `optional: true` | 3 s, except the two above |
-| `when` and `while` | 0.7 s each for `visible` and `notVisible` |
+| `when` and `while` | 0.7 s each for `visible` and `notVisible`, or their `timeout` |
 
 ---
 
@@ -1390,6 +1421,8 @@ and a flow that failed first has its failed tries in `system-out`.
   error, never ignored.
 - `setLocation` and `travel` need Android 12 or newer.
 - WebViews show only what they expose to accessibility.
+- What a dialog, sheet or other window covers is not on screen: only what is on top can be found
+  or tapped. Close the dialog first, for example with a `when` guard.
 - Only one tool can automate a device at a time: not while another runs.
 - What is marked 🧪 is **written but not tested on a
   device yet**, and so are relative selectors and tags.
