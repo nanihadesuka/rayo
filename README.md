@@ -87,6 +87,7 @@ flows:
 app: { id: com.example.app, apk: app-debug.apk }
 results: [.results/results.txt, .results/junit.xml]
 record: true
+env: { CITY: Springfield, MAESTRO_FILENAME: "${rayo.file}" }   # for every flow; -e wins
 device: { size: 1080x2400, dpi: 420, darkMode: true }
 ```
 

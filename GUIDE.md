@@ -140,6 +140,27 @@ rayo test -e PASSWORD=secret login.yaml
 - type: { id: password, value: "${PASSWORD}" }
 ```
 
+## Give a subflow a default
+
+A name nobody set is `undefined`, so the header can fall back:
+
+```yaml
+env:
+  PICKUP: ${ PICKUP || "Main Street 1" }
+```
+
+## Set variables for every flow
+
+In the suite, under `-e`, which wins; values may use `${...}`:
+
+```yaml
+env:
+  API: staging
+  MAESTRO_FILENAME: ${rayo.file}   # flows from Maestro expect it: the file's name, without extension
+```
+
+See [Variables](REFERENCE.md#variables).
+
 ## Close a dialog that only appears sometimes
 
 ```yaml
