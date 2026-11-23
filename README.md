@@ -8,6 +8,11 @@ Android only. One portable executable. Flows in YAML.</p>
 <p align="center"><a href="https://github.com/nanihadesuka/rayo/actions/workflows/check.yml?query=branch%3Amain"><img src="https://github.com/nanihadesuka/rayo/actions/workflows/check.yml/badge.svg?branch=main" alt="check"></a>
 <a href="https://github.com/nanihadesuka/rayo/releases/latest"><img src="https://img.shields.io/github/v/release/nanihadesuka/rayo" alt="release"></a></p>
 
+<p align="center"><a href="https://github.com/nanihadesuka/rayo/releases/latest/download/rayo-windows-amd64.zip"><img src="https://img.shields.io/badge/download-Windows%20x64-0078D6" alt="Download for Windows x64"></a>
+<a href="https://github.com/nanihadesuka/rayo/releases/latest/download/rayo-linux-amd64.tar.gz"><img src="https://img.shields.io/badge/download-Linux%20x64-E95420" alt="Download for Linux x64"></a>
+<a href="https://github.com/nanihadesuka/rayo/releases/latest/download/rayo-macos-arm64.tar.gz"><img src="https://img.shields.io/badge/download-macOS%20Apple%20silicon-555555" alt="Download for macOS Apple silicon"></a><br>
+<sub>Others (arm64 Windows and Linux, Intel Macs) are in the <a href="https://github.com/nanihadesuka/rayo/releases/latest">release</a>.</sub></p>
+
 <p align="center"><a href="LICENSE">MIT License</a> © 2026 <a href="https://github.com/nanihadesuka">Sergio Nettleton</a><br>
 <a href="https://nanihadesuka.github.io/rayo/">Documentation</a> · <a href="https://github.com/nanihadesuka/rayo/releases/latest">Download</a></p>
 
