@@ -115,7 +115,7 @@ func (r *Runner) holds(ctx context.Context, when *yaml.Node) (bool, error) {
 			return false, err
 		}
 	}
-	limit := peekTimeout
+	limit := r.scaled(peekTimeout)
 	if n := get(when, keyPeek); n != nil {
 		n, err := r.script.resolve(n)
 		if err == nil {

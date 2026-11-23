@@ -111,6 +111,14 @@ var sections = []section{
 			o.runner.Env[k] = value
 			return nil
 		}},
+		{name: "timeout-scale", value: "factor", about: "multiply the default waits, not a step's own timeout (default 1)", set: func(o *options, v string) error {
+			f, err := strconv.ParseFloat(v, 64)
+			if err != nil || f < suite.LowestScale || f > suite.HighestScale {
+				return fmt.Errorf("--timeout-scale takes %v to %v, not %q", suite.LowestScale, suite.HighestScale, v)
+			}
+			o.runner.Scale = f
+			return nil
+		}},
 		{name: "mock-port", value: "port", about: "where the app finds the mock on the device (default 8080)", set: func(o *options, v string) error {
 			n, err := strconv.ParseUint(v, 10, 16)
 			if err != nil || n == 0 {

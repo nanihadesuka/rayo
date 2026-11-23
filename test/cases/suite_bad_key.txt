@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:1: unknown key "flow" (it takes name, flows, retries, app, device, output, results, record, recordFolder)
+error: s.rayo.yaml:1: unknown key "flow" (it takes name, flows, retries, app, device, timeoutScale, output, results, record, recordFolder)

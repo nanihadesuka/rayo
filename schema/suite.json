@@ -139,6 +139,12 @@
       "description": "How many times a flow that fails is tried again (default: 1)",
       "minimum": 0,
       "type": "integer"
+    },
+    "timeoutScale": {
+      "description": "Multiplies the default waits; --timeout-scale wins (default: 1)",
+      "maximum": 10,
+      "minimum": 0.1,
+      "type": "number"
     }
   },
   "required": [

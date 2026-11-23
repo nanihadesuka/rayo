@@ -1,0 +1,7 @@
+-- args --
+test --timeout-scale 0 flow.yaml
+==== out ====
+-- exit --
+1
+-- stderr --
+error: --timeout-scale takes 0.1 to 10, not "0"

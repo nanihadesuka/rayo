@@ -29,9 +29,13 @@ type Suite struct {
 	Device       *adb.Setup
 	Record       bool
 	RecordFolder string
+	TimeoutScale float64 // 0 if not said
 
 	Path string
 }
+
+// LowestScale and HighestScale bound timeoutScale and --timeout-scale.
+const LowestScale, HighestScale = 0.1, 10.0
 
 // DefaultRetries is how many times a flow is tried again, if nothing says.
 const DefaultRetries = 1

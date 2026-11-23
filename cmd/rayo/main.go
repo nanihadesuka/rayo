@@ -22,7 +22,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "1.0.3"
+const version = "1.0.4"
 
 // Exit codes.
 const (
@@ -145,6 +145,9 @@ func test(ctx context.Context, args []string) (err error) {
 			title = group.Name
 		}
 		o.into(group.Relative(group.Output))
+		if o.runner.Scale == 0 {
+			o.runner.Scale = group.TimeoutScale
+		}
 		o.runner.Recording = &flow.Recording{On: group.Record, Path: group.Relative(group.RecordFolder)}
 		if o.results == nil {
 			for _, file := range group.Results {

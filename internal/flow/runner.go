@@ -31,6 +31,15 @@ type Options struct {
 	JSON      bool       // the calls of a failure are saved so, and not as text
 	Capture   string     // folder for what the real backend answers; empty to use the mocks
 	Backend   string     // what a capture calls; empty when the path begins with the host
+	Scale     float64    // of the default waits; 0 is 1. A step's own timeout isn't scaled
+}
+
+// scaled is a default wait, times Scale.
+func (o *Options) scaled(d time.Duration) time.Duration {
+	if o.Scale <= 0 {
+		return d
+	}
+	return time.Duration(float64(d) * o.Scale)
 }
 
 // Runner runs flows on a device, one at a time.
@@ -299,7 +308,7 @@ func (r *Runner) call(ctx context.Context, s *Step, k command, optional bool, de
 	if k.limit != 0 {
 		c.limit = k.limit
 	}
-	c.limit = keyTimeout.or(v, c.limit)
+	c.limit = keyTimeout.or(v, r.scaled(c.limit))
 	return k.run(c)
 }
 

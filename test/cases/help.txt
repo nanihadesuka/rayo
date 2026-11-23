@@ -25,6 +25,7 @@ Options of test, live and do
 
 Options of test and live
   -e, --env <KEY=VALUE>      a variable for the flows
+  --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
   --mock-port <port>         where the app finds the mock on the device (default 8080)
   --animations               leave the device's animations on
   --profile                  where the time of each step went

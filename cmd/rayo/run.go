@@ -157,6 +157,9 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 		sum.Order = fmt.Sprintf("--shuffle=%d", o.seed)
 		fmt.Println("order:", sum.Order)
 	}
+	if o.runner.Timings && o.runner.Scale > 0 && o.runner.Scale != 1 {
+		fmt.Printf("default waits ×%v\n", o.runner.Scale)
+	}
 	folders := map[string]int{}
 	var row streak
 	stop := "" // why the rest won't run

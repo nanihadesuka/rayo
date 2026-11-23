@@ -56,6 +56,7 @@ Options of test, live and do
 
 Options of test and live
   -e, --env <KEY=VALUE>      a variable for the flows
+  --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
   --mock-port <port>         where the app finds the mock on the device (default 8080)
   --animations               leave the device's animations on
   --profile                  where the time of each step went
@@ -929,6 +930,7 @@ flows:
 | `retries` | a number from 0 | How many times a flow that fails is tried again, see [Retries](#retries) (default: 1) |
 | `app` | a mapping | Installed before the flows, see [below](#the-app-of-a-suite) |
 | `device` | a mapping | How it is while the flows run, see [Device setup](#device-setup) |
+| `timeoutScale` | 0.1 to 10 | Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins (default: 1) |
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
 | `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
@@ -1391,6 +1393,7 @@ first in `<flow>_retry1` and so on. Those of an earlier run are removed when the
 - every step with its time, and `◂` with the total of each `runFlow`, `repeat` and `retry`
 - `… still on <step> after 10 s` every 5 s while a step runs, so a hang shows where it is
 - after each flow, its 5 slowest steps; at the end, the 10 slowest flows
+- `default waits ×2` at the start, with a [`--timeout-scale`](#default-times) other than 1
 
 ### Profile
 
@@ -1431,6 +1434,10 @@ and a flow that failed first has its failed tries in `system-out`.
 | `scrollUntilVisible` | 20 s |
 | With `optional: true` | 3 s, except the two above |
 | `when` and `while` | 0.7 s each for `visible` and `notVisible`, or their `timeout` |
+
+`--timeout-scale <factor>`, or `timeoutScale:` in a suite, multiplies all of these: `2` for a slow CI emulator,
+`0.5` for a fast local one. It takes 0.1 to 10; the option wins over the suite, and the default is 1. A step's own
+`timeout:` is not scaled, and `timeout: 0` stays 0. With `--timings`, a factor other than 1 is shown at the start.
 
 ---
 
