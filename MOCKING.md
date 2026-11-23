@@ -170,6 +170,52 @@ When the backend changes, `rayo test --capture-update mock` captures again besid
 mapping by mapping, what changed; `rayo mocks apply mock` takes all of it, or `--only` some. With
 `--check` it fails instead, for CI. See [Updating mocks](REFERENCE.md#updating-mocks).
 
+## Keeping mocks up to date
+
+A capture is made once. When the app or the backend changes after it, don't capture again from
+nothing: these are the ways to bring the mocks up to date, keeping what still holds and the mappings
+written by hand.
+
+**Knowing that they are out of date.** A flow run on its mocks fails when the app calls what no
+mapping answers, and says which calls, and the nearest mapping:
+
+```
+the app called what isn't mocked:
+    GET /api/users/me/badges
+```
+
+A mapping that is no longer called doesn't fail anything: an update shows it as `gone`.
+
+**The app makes a call more, or one less, or the backend answers otherwise.** Update from the real
+backend, only the flows that changed, then take what you want:
+
+```sh
+rayo test --capture-update mock --only checkout flows/   # captures into mock/.update, and says what changed
+rayo mocks apply mock                                    # takes the changed and the new
+rayo mocks apply --only "GET /api/users/me/badges" mock  # or only these
+rayo mocks apply --prune mock                            # also takes out those gone
+```
+
+The update makes its mocks as the capture made them (with the settings kept in
+`capture.calls.json`), so a mapping that didn't change is the same, and isn't touched. Look at what
+is printed, or at `mock/.update/changes.txt`, before applying.
+
+**A new flow, on mocks that are there.** Go on with the capture, as if it had been made in one go:
+
+```sh
+rayo test --capture mock --capture-append --only newFlow flows/
+```
+
+**In CI.** Find out, without changing anything, whether the backend still answers as the mocks say:
+
+```sh
+rayo test --capture-update mock --check flows/
+```
+
+Each of these calls the real backend, for the flows it runs: it has to be reachable, with the
+accounts and data the flows need. `--only` keeps that to the flows that changed. Commit the mocks
+after `rayo mocks apply`, and leave `mock/.update/` out (add it to `.gitignore`).
+
 All that a mapping can say, and
 the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
 [reference](REFERENCE.md#mock).

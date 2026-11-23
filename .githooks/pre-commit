@@ -1,0 +1,14 @@
+#!/bin/sh
+# Refuses a commit whose staged Go files gofmt would change.
+# Checks the staged contents, so CRLF in a Windows checkout doesn't count.
+bad=""
+for f in $(git diff --cached --name-only --diff-filter=ACMR -- '*.go'); do
+	if [ -n "$(git show ":$f" | gofmt -l)" ]; then
+		bad="$bad $f"
+	fi
+done
+if [ -n "$bad" ]; then
+	echo "gofmt: not formatted:$bad"
+	echo "run: gofmt -w$bad && git add$bad"
+	exit 1
+fi
