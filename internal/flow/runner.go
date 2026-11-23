@@ -134,7 +134,7 @@ func (r *Runner) prepare(ctx context.Context, f *Flow, folder string) {
 	for _, name := range evidenceFiles { // of an earlier run
 		_ = os.Remove(filepath.Join(folder, name))
 	}
-	r.backend.proxy = r.Network == Proxy || r.Network == "" && f.Network == Proxy
+	r.backend.proxy = r.Network == Proxy || r.Network == "" && f.Network == Proxy // again in begin, if ${...}
 	r.script = newScript(ctx, func(text string) { r.reporter.Note(2, text) })
 	// rayo.file is the flow's file name without its extension: -e or a suite's env may give it
 	// another name, such as MAESTRO_FILENAME: ${rayo.file}.

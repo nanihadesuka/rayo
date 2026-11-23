@@ -6306,7 +6306,7 @@
               "type": "array"
             }
           ],
-          "description": "Who answers as the backend"
+          "description": "Who answers as the backend; ${...} too, where an empty path loads nothing"
         },
         "name": {
           "description": "Shown in the output (default: the file's, or the folder's for flow.yaml)",
@@ -6317,11 +6317,19 @@
           ]
         },
         "network": {
-          "description": "How the app's calls reach the mock (default: interceptor, or --network)",
-          "enum": [
-            "interceptor",
-            "proxy"
-          ]
+          "anyOf": [
+            {
+              "enum": [
+                "interceptor",
+                "proxy"
+              ]
+            },
+            {
+              "pattern": "\\$\\{",
+              "type": "string"
+            }
+          ],
+          "description": "How the app's calls reach the mock; ${...} too, such as ${NETWORK} from -e, where empty is the default (default: interceptor, or --network)"
         },
         "onFlowComplete": {
           "$ref": "#/$defs/commands",

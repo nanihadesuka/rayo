@@ -19,17 +19,18 @@ import (
 
 // Flow is one file, checked before anything runs.
 type Flow struct {
-	Path       string
-	Name       string
-	App        string
-	Tags       []string
-	Env        map[string]string
-	Mock       []*yaml.Node // paths
-	Network    string       // interceptor or proxy; empty if the flow doesn't say
-	Steps      []*Step
-	OnStart    []*Step
-	OnComplete []*Step
-	Recording  *Recording // nil if the flow doesn't say
+	Path        string
+	Name        string
+	App         string
+	Tags        []string
+	Env         map[string]string
+	Mock        []*yaml.Node // paths
+	Network     string       // interceptor or proxy, or ${...} that gives one; empty if the flow doesn't say
+	NetworkLine int
+	Steps       []*Step
+	OnStart     []*Step
+	OnComplete  []*Step
+	Recording   *Recording // nil if the flow doesn't say
 }
 
 // Step is a command in a flow. It keeps its YAML: ${...} is only known when it runs.
@@ -142,7 +143,7 @@ func (p *reader) mocks(v *yaml.Node) ([]*yaml.Node, error) {
 		if n.Kind != yaml.ScalarNode || n.Value == "" {
 			return nil, p.fail(n, "expected the path of a mock")
 		}
-		if hasExpression(v) {
+		if hasExpression(n) {
 			continue
 		}
 		if err := m.Load(relative(p.path, n.Value)); err != nil {

@@ -34,14 +34,15 @@ func init() {
 			h.flow.Env, err = variablesIn(n)
 			return err
 		}},
-		{Name: "mock", Takes: "a path or a list", About: "Who answers as the backend, see [Mock](#mock)", Schema: schema.AnyOf(schema.Type("string"), schema.List(schema.Type("string"))), Read: func(h *header, n *yaml.Node) (err error) {
+		{Name: "mock", Takes: "a path or a list", About: "Who answers as the backend, see [Mock](#mock); `${...}` too, where an empty path loads nothing", Schema: schema.AnyOf(schema.Type("string"), schema.List(schema.Type("string"))), Read: func(h *header, n *yaml.Node) (err error) {
 			h.flow.Mock, err = h.p.mocks(n)
 			return schema.Placed(err)
 		}},
-		{Name: "network", Takes: "`interceptor` or `proxy`", Default: "`interceptor`, or `--network`", About: "How the app's calls reach the mock, see [Proxy](#proxy)", Schema: schema.Enum(Interceptor, Proxy), Read: func(h *header, n *yaml.Node) error {
-			if n.Value != Interceptor && n.Value != Proxy || n.Kind != yaml.ScalarNode {
-				return errors.New("takes interceptor or proxy")
+		{Name: "network", Takes: "`interceptor` or `proxy`", Default: "`interceptor`, or `--network`", About: "How the app's calls reach the mock, see [Proxy](#proxy); `${...}` too, such as `${NETWORK}` from `-e`, where empty is the default", Schema: schema.AnyOf(schema.Enum(Interceptor, Proxy), schema.Pattern(`\$\{`)), Read: func(h *header, n *yaml.Node) error {
+			if n.Kind != yaml.ScalarNode || n.Value != Interceptor && n.Value != Proxy && !hasExpression(n) {
+				return errors.New("takes interceptor or proxy, or ${...} that gives one")
 			}
+			h.flow.NetworkLine = n.Line
 			h.flow.Network = n.Value
 			return nil
 		}},

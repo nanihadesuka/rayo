@@ -199,6 +199,9 @@ func (r *Runner) loadMocks(f *Flow) error {
 		if err != nil {
 			return problem(f.Path, n.Line, "%v", err)
 		}
+		if path == "" { // ${...} said none, such as against the real backend
+			continue
+		}
 		m, err := r.backend.start()
 		if err != nil {
 			return err

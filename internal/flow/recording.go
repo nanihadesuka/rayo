@@ -142,5 +142,15 @@ func (r *Runner) begin(f *Flow) error {
 			return err
 		}
 	}
+	if r.Network == "" && strings.Contains(f.Network, "${") {
+		way, err := r.script.fill(f.Network)
+		if err != nil {
+			return problem(f.Path, f.NetworkLine, "network: %v", err)
+		}
+		if way != "" && way != Interceptor && way != Proxy {
+			return problem(f.Path, f.NetworkLine, "network: takes interceptor or proxy, not %q", way)
+		}
+		r.backend.proxy = way == Proxy
+	}
 	return r.loadMocks(f)
 }

@@ -144,8 +144,8 @@ appId: com.example.app
 | `name` | text | Shown in the output (default: the file's, or the folder's for `flow.yaml`) |
 | `tags` | a list | To choose flows, see [Tags](#tags) |
 | `env` | values | Variables for it, see [Variables](#variables) |
-| `mock` | a path or a list | Who answers as the backend, see [Mock](#mock) |
-| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, see [Proxy](#proxy) (default: `interceptor`, or `--network`) |
+| `mock` | a path or a list | Who answers as the backend, see [Mock](#mock); `${...}` too, where an empty path loads nothing |
+| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, see [Proxy](#proxy); `${...}` too, such as `${NETWORK}` from `-e`, where empty is the default (default: `interceptor`, or `--network`) |
 | `record` | `true`, `false` or a file | A video of the flow, see [Recording a whole flow](#recording-a-whole-flow) (default: the suite's) |
 | `onFlowStart` | commands | Run first |
 | `onFlowComplete` | commands | Run last, also after a failure |
@@ -806,7 +806,16 @@ mock:
 - network: offline
 ```
 
-An included flow's mocks are added when it runs. How mocks work, with examples:
+An included flow's mocks are added when it runs. `mock` and `network` may use `${...}`, from `-e`
+or a suite's `env`, so that one suite runs both mocked and against the real backend, with no flow
+around each: a path that comes out empty loads nothing, and an empty `network` is the default.
+
+```yaml
+mock: ${MOCKS ? MOCKS + '/' + rayo.file : ''}   # rayo test -e MOCKS=mocks -e NETWORK=proxy all.rayo.yaml
+network: ${NETWORK || ''}
+```
+
+How mocks work, with examples:
 [Mocking](MOCKING.md).
 
 ### Mock files
