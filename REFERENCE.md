@@ -1016,6 +1016,7 @@ flows:
 | `retries` | a number from 0 | How many times a flow that fails is tried again, see [Retries](#retries) (default: 1) |
 | `app` | a mapping | Installed before the flows, see [below](#the-app-of-a-suite) |
 | `device` | a mapping | How it is while the flows run, see [Device setup](#device-setup) |
+| `env` | values | Variables for every flow, as `-e`, which wins; they may use `${...}`, such as `${rayo.file}`, see [Variables](#variables) |
 | `timeoutScale` | 0.1 to 10 | Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins (default: 1) |
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
@@ -1438,15 +1439,30 @@ Used as `${NAME}`. The first that has it wins:
 
 1. `env` of the `runFlow` or `runScript` running now
 2. `-e NAME=value`
-3. What is set where the file is included
-4. `env` in the file's header: a default, for what nothing above sets
+3. `env` of the suite, for all its flows
+4. What is set where the file is included
+5. `env` in the file's header: a default, for what nothing above sets
 
-Header values may be expressions, which see the variables above; one not set is `undefined`:
+In `${...}` and conditions, a name that nothing sets is `undefined`, not an error, so defaults work
+with `||` or `??`. Only a whole `${...}` that ends up `undefined` fails, as there is nothing to write:
 
 ```yaml
 env:
   CITY: ${ CITY || "Springfield" }
 ```
+
+Values of `-e`, of a suite's `env` and of a header may all use `${...}`. Besides the variables,
+rayo gives `rayo.file`, the flow's file name without its extension, and `rayo.platform`. To give one of
+them a name that flows from another tool expect, set it once for all of them:
+
+```yaml
+# all.rayo.yaml
+flows: [login.yaml, book.yaml]
+env:
+  MAESTRO_FILENAME: ${rayo.file}
+```
+
+or, without a suite, `rayo test -e 'MAESTRO_FILENAME=${rayo.file}' flows/`.
 
 ### Tags
 

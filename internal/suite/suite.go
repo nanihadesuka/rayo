@@ -29,7 +29,8 @@ type Suite struct {
 	Device       *adb.Setup
 	Record       bool
 	RecordFolder string
-	TimeoutScale float64 // 0 if not said
+	TimeoutScale float64           // 0 if not said
+	Env          map[string]string // for every flow; -e wins
 
 	Path string
 }

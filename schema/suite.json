@@ -57,6 +57,17 @@
       },
       "type": "object"
     },
+    "env": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
+      },
+      "description": "Variables for every flow, as -e, which wins; they may use ${...}, such as ${rayo.file}",
+      "type": "object"
+    },
     "flows": {
       "description": "Files, run in this order; or mappings with file and retries (required)",
       "items": {

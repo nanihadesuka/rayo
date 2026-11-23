@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/nanihadesuka/rayo/internal/adb"
@@ -108,7 +109,15 @@ func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
 
 // withEnv sets -e, and then the flow's header for what -e doesn't set.
 func (r *Runner) withEnv(f *Flow, fn func() error) error {
-	return r.script.with(r.Env, func() error {
+	env := map[string]string{} // -e and a suite's env may use ${...}, as a header does
+	for k, v := range r.Env {
+		filled, err := r.script.fill(v)
+		if err != nil {
+			return fmt.Errorf("variable %s: %w", k, err)
+		}
+		env[k] = filled
+	}
+	return r.script.with(env, func() error {
 		header, err := r.script.header(f.Env)
 		if err != nil {
 			return err
@@ -127,6 +136,9 @@ func (r *Runner) prepare(ctx context.Context, f *Flow, folder string) {
 	}
 	r.backend.proxy = r.Network == Proxy || r.Network == "" && f.Network == Proxy
 	r.script = newScript(ctx, func(text string) { r.reporter.Note(2, text) })
+	// rayo.file is the flow's file name without its extension: -e or a suite's env may give it
+	// another name, such as MAESTRO_FILENAME: ${rayo.file}.
+	_ = r.script.vm.Get("rayo").ToObject(r.script.vm).Set("file", strings.TrimSuffix(filepath.Base(f.Path), filepath.Ext(f.Path)))
 }
 
 // reset undoes what the flow changed, so the next one starts the same whatever this one did. One that

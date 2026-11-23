@@ -57,6 +57,11 @@ func newScript(ctx context.Context, log func(text string)) *script {
 	}
 	set(client, "request", func(url string, options goja.Value) goja.Value { return s.http("", url, options) })
 	set(vm, "http", client)
+	// What ${...} and conditions run in: a name that isn't set is undefined there, as in Maestro, so
+	// ${ X || "default" } works whoever set X, or nobody.
+	if _, err := vm.RunString(`Object.defineProperty(globalThis, "` + scope + `", {value: new Proxy(globalThis, {has: (t, k) => typeof k === "string"})})`); err != nil {
+		panic(err) // the same code each time
+	}
 	return s
 }
 
@@ -178,6 +183,13 @@ func (s *script) run(file string) error {
 
 const scriptTimeout = 60 * time.Second
 
+const scope = "__rayo_scope__"
+
+// expression evaluates code where a name that isn't set is undefined.
+func (s *script) expression(name, code string) (goja.Value, error) {
+	return s.eval(name, "with ("+scope+") {\n"+code+"\n}")
+}
+
 func (s *script) eval(name, code string) (goja.Value, error) {
 	ctx, cancel := context.WithTimeoutCause(s.ctx, scriptTimeout, errors.New("the script took over 60 s"))
 	defer cancel()
@@ -204,7 +216,7 @@ func (s *script) fill(text string) (string, error) {
 	var failed error
 	result := expression.ReplaceAllStringFunc(text, func(m string) string {
 		code := expression.FindStringSubmatch(m)[1]
-		v, err := s.eval("expression", code)
+		v, err := s.expression("expression", code)
 		if err == nil && goja.IsUndefined(v) {
 			err = fmt.Errorf("it is undefined")
 		}
@@ -255,7 +267,7 @@ func code(text string) string {
 
 // truthy evaluates "${a == b}" or "a == b".
 func (s *script) truthy(text string) (bool, error) {
-	v, err := s.eval("condition", code(text))
+	v, err := s.expression("condition", code(text))
 	if err != nil {
 		return false, err
 	}

@@ -166,3 +166,6 @@ func keyTable(keys []anyKey, plain anyKey) string {
 	}
 	return b.String()
 }
+
+// Variables reads a mapping of variables, as a header's env.
+func Variables(n *yaml.Node) (map[string]string, error) { return variablesIn(n) }

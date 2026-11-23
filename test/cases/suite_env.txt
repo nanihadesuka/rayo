@@ -1,0 +1,35 @@
+-- args --
+test --retries 0 -e WHO=cli all.rayo.yaml
+-- all.rayo.yaml --
+flows: [login.yaml]
+env:
+  MAESTRO_FILENAME: ${rayo.file}
+  WHO: suite
+  PLACE: home
+-- login.yaml --
+appId: a.b
+env:
+  PLACE: header
+---
+- assertTrue: ${MAESTRO_FILENAME == "login"}
+- assertTrue: ${WHO == "cli"}
+- assertTrue: ${PLACE == "home"}
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] login
+  ✓ assertTrue ${MAESTRO_FILENAME == "login"}  # ms
+  ✓ assertTrue ${WHO == "cli"}  # ms
+  ✓ assertTrue ${PLACE == "home"}  # ms
+[1/1] PASS login  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+bye {"timeout":5000}

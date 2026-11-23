@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/nanihadesuka/rayo/internal/adb"
+	"github.com/nanihadesuka/rayo/internal/flow"
 	"github.com/nanihadesuka/rayo/internal/report"
 	"github.com/nanihadesuka/rayo/internal/schema"
 	"gopkg.in/yaml.v3"
@@ -54,6 +55,10 @@ var Fields = []schema.Field[Suite]{
 	{Name: "device", Takes: "a mapping", About: "How it is while the flows run, see [Device setup](#device-setup)", Schema: schema.Of(DeviceFields), Read: func(s *Suite, n *yaml.Node) error {
 		s.Device = &adb.Setup{}
 		return schema.Read(DeviceFields, s.Device, n)
+	}},
+	{Name: "env", Takes: "values", About: "Variables for every flow, as `-e`, which wins; they may use `${...}`, such as `${rayo.file}`, see [Variables](#variables)", Schema: schema.Map(schema.Text()), Read: func(s *Suite, n *yaml.Node) (err error) {
+		s.Env, err = flow.Variables(n)
+		return err
 	}},
 	schema.NumberField("timeoutScale", "0.1 to 10", "Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins", LowestScale, HighestScale, func(s *Suite, v float64) { s.TimeoutScale = v }).Optional("1"),
 	schema.TextField("output", "folder", "As `--output`, which wins", func(s *Suite) *string { return &s.Output }).Optional("`.rayo` where rayo runs"),
