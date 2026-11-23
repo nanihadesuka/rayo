@@ -66,3 +66,22 @@ func TestIgnorePathIDs(t *testing.T) {
 		t.Error("ulid")
 	}
 }
+
+func TestSplitByAuth(t *testing.T) {
+	out := call("GET", "/api.x.com/users/me", `{"error":"forbidden"}`, 403)
+	in := call("GET", "/api.x.com/users/me", `{"name":"Alex"}`, 200)
+	in.request.Auth = true
+	login := call("POST", "/api.x.com/login", `{}`, 200)
+	rules := mappingsOf(t, Settings{}, out, login, in, in)
+	if len(rules) != 3 {
+		t.Fatalf("want 3 mappings, got %+v", rules)
+	}
+	for _, r := range rules {
+		if r.Next != "" || r.Required != "" {
+			t.Errorf("a state: %+v", r)
+		}
+		if strings.Contains(r.Name, "users/me") && r.Request["headers"] == nil {
+			t.Errorf("no header matcher: %+v", r)
+		}
+	}
+}

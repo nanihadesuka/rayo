@@ -121,6 +121,7 @@ type request struct {
 	Base64      bool                `json:"base64,omitempty"`    // a body that isn't text
 	Unmatched   string              `json:"unmatched,omitempty"` // why the body isn't kept, if it isn't
 	Headers     map[string][]string `json:"headers,omitempty"`   // those of Settings.Headers
+	Auth        bool                `json:"auth,omitempty"`      // it had an Authorization header
 }
 
 // kept is how a captured call is written, to go on with the capture later.
@@ -507,7 +508,7 @@ const maxMatched = 64 << 10
 
 // cleanRequest keeps what the app sent, without what is private, to match it later.
 func (r *real) cleanRequest(q *http.Request, body []byte) *request {
-	k := &request{ContentType: q.Header.Get("Content-Type")}
+	k := &request{ContentType: q.Header.Get("Content-Type"), Auth: q.Header.Get("Authorization") != ""}
 	for _, name := range r.settings.Headers {
 		for _, v := range q.Header.Values(name) {
 			if privateHeader(name) {

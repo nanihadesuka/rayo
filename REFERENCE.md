@@ -973,6 +973,9 @@ How it becomes mocks, as WireMock's recorder does by default:
   'api.shop.com/quotes/**,*/availability'` says which paths only read, whatever the method, such as a
   POST that searches: they answer in any state, as often as the app calls them. `*` is any text but
   `/`, `**` any text, from the host when calls begin with one.
+- A read that answers one way when the app sends `Authorization` and another when it doesn't, such
+  as `GET /users/me` before and after logging in, is matched by whether the header is there, not by
+  a state: `(signed in)` and `(signed out)` in its name.
 - `--capture-headers Accept-Language` matches these headers of the request too.
 - The headers of the answer are kept, but for those that change by themselves (`Date`, `ETag`, trace
   ids...).

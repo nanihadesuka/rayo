@@ -274,10 +274,13 @@ func (b *builder) prepare(calls []captured) {
 		c.stateless = stateless(b.s.Stateless, c.uri)
 	}
 	shapes(calls)
+	for i := range calls {
+		calls[i].spec = b.spec(&calls[i])
+	}
+	b.splitByAuth(calls)
 	keys := map[string]map[string]bool{} // of each label
 	for i := range calls {
-		sp := b.spec(&calls[i])
-		calls[i].spec = sp
+		sp := calls[i].spec
 		if keys[sp.label] == nil {
 			keys[sp.label] = map[string]bool{}
 		}
@@ -288,6 +291,55 @@ func (b *builder) prepare(calls []captured) {
 		if sp := calls[i].spec; len(keys[sp.label]) > 1 {
 			sp.label += " #" + hash8(sp.key)
 		}
+	}
+}
+
+// splitByAuth matches by whether the app sent an Authorization header a read that answers one way
+// with it and another without, such as GET /users/me before and after logging in: so it needs no state.
+func (b *builder) splitByAuth(calls []captured) {
+	type sides struct{ with, without *captured; mixed bool }
+	by := map[string]*sides{}
+	for i := range calls {
+		c := &calls[i]
+		if !c.read() || c.request == nil {
+			continue
+		}
+		s := by[c.spec.key]
+		if s == nil {
+			s = &sides{}
+			by[c.spec.key] = s
+		}
+		side := &s.without
+		if c.request.Auth {
+			side = &s.with
+		}
+		if *side != nil && (*side).answer() != c.answer() {
+			s.mixed = true
+		}
+		*side = c
+	}
+	for i := range calls {
+		c := &calls[i]
+		s := by[c.spec.key]
+		if s == nil || s.mixed || s.with == nil || s.without == nil || s.with.answer() == s.without.answer() {
+			continue
+		}
+		sp := *c.spec
+		q := maps.Clone(sp.request)
+		headers := map[string]any{}
+		if h, ok := q["headers"].(map[string]any); ok {
+			headers = maps.Clone(h)
+		}
+		if c.request.Auth {
+			headers["Authorization"] = map[string]any{"matches": ".+"}
+			sp.label += " (signed in)"
+		} else {
+			headers["Authorization"] = map[string]any{"absent": true}
+			sp.label += " (signed out)"
+		}
+		q["headers"] = headers
+		sp.request, sp.key, sp.weight = q, sp.key+" auth:"+strconv.FormatBool(c.request.Auth), sp.weight+1
+		c.spec = &sp
 	}
 }
 
