@@ -5,7 +5,8 @@
 <p align="center"><b>End-to-end tests for Android, fast as lightning.</b><br>
 Android only. One portable executable. Flows in YAML.</p>
 
-<p align="center"><a href="https://github.com/nanihadesuka/rayo/actions/workflows/check.yml?query=branch%3Amain"><img src="https://github.com/nanihadesuka/rayo/actions/workflows/check.yml/badge.svg?branch=main" alt="check"></a></p>
+<p align="center"><a href="https://github.com/nanihadesuka/rayo/actions/workflows/check.yml?query=branch%3Amain"><img src="https://github.com/nanihadesuka/rayo/actions/workflows/check.yml/badge.svg?branch=main" alt="check"></a>
+<a href="https://github.com/nanihadesuka/rayo/releases/latest"><img src="https://img.shields.io/github/v/release/nanihadesuka/rayo" alt="release"></a></p>
 
 <p align="center"><a href="LICENSE">MIT License</a> © 2026 <a href="https://github.com/nanihadesuka">Sergio Nettleton</a><br>
 <a href="https://nanihadesuka.github.io/rayo/">Documentation</a> · <a href="https://github.com/nanihadesuka/rayo/releases/latest">Download</a></p>
