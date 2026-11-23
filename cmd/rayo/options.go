@@ -161,6 +161,7 @@ var sections = []section{
 			}
 			return nil
 		}},
+		flag("timings", "each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs", func(o *options) *bool { return &o.runner.Timings }),
 		flag("failures-only", "leave the flows that passed out of the results", func(o *options) *bool { return &o.failuresOnly }),
 	}},
 	{[]string{cmdTest}, "mocks from the real backend", []option{
@@ -305,7 +306,7 @@ func (o *options) none(command string) error {
 
 // steps says whether to show every step, and not only how each flow went.
 func (o *options) steps(flows []*flow.Flow) bool {
-	return o.verbose || o.runner.Profile || len(flows) == 1
+	return o.verbose || o.runner.Profile || o.runner.Timings || len(flows) == 1
 }
 
 // into settles the output folder: the option, or else the suite's.

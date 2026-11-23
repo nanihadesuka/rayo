@@ -51,6 +51,9 @@ func judge(ctx context.Context, o flow.Result) Status {
 	return Failed
 }
 
+// Took is how long all its tries took.
+func (o *Outcome) Took() time.Duration { return o.took() }
+
 func (o *Outcome) took() (total time.Duration) {
 	for _, t := range o.Tries {
 		total += t.Elapsed

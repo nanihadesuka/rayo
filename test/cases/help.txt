@@ -45,6 +45,7 @@ Options of test: how they run
 Options of test: what comes out
   -v, --verbose              every step (always, for a single flow)
   --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
+  --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
   --failures-only            leave the flows that passed out of the results
 
 Options of test: mocks from the real backend

@@ -25,6 +25,7 @@ const (
 type Options struct {
 	Env       map[string]string // wins over the flow's
 	Profile   bool
+	Timings   bool       // a group's total, and a note while a step takes long
 	MockPort  int        // on the device
 	Recording *Recording // of flows that don't say; its path is a folder
 	JSON      bool       // the calls of a failure are saved so, and not as text
@@ -54,6 +55,7 @@ type Runner struct {
 	video      *video   // being recorded
 	recordings []string // saved
 	airplane   string   // how airplane mode was before the flow changed it
+	skipped    bool     // the step running now said it was skipped
 }
 
 // NewRunner makes a Runner; what happens goes to the reporter.
@@ -179,10 +181,16 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 	if !k.group {
 		r.backend.during(s)
 	}
+	r.skipped = false
+	slow := func() {}
+	if r.Timings && !k.group {
+		slow = r.whileSlow(s.describe(), depth, start)
+	}
 	optional, err := r.optional(s)
 	if err == nil {
 		err = r.call(ctx, s, k, optional, depth)
 	}
+	slow()
 	report := StepReport{Depth: depth, Text: s.describe(), Took: time.Since(start)}
 	if r.Profile && !k.group {
 		report.Profile = r.agent.Explain(report.Took)
@@ -202,7 +210,15 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 	}
 	if !k.group || report.Status == Optional {
 		r.reporter.Step(report)
+	} else if r.Timings && !r.skipped {
+		total := report
+		total.Status = Finished
+		if report.Status == Failed {
+			total.Text += " (failed)"
+		}
+		r.reporter.Step(total)
 	}
+	r.skipped = false
 	var known *StepError
 	if errors.As(err, &known) {
 		known.From = append(known.From, s)
@@ -210,6 +226,28 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 		err = &StepError{Step: s, Err: err}
 	}
 	return err
+}
+
+// slowNote is how often a step that takes long is told of.
+const slowNote = 5 * time.Second
+
+// whileSlow notes a step that is still running, every few seconds, so that a hang shows where it
+// is, until stop is called.
+func (r *Runner) whileSlow(text string, depth int, start time.Time) (stop func()) {
+	done := make(chan struct{})
+	go func() {
+		tick := time.NewTicker(slowNote)
+		defer tick.Stop()
+		for {
+			select {
+			case <-done:
+				return
+			case <-tick.C:
+				r.reporter.Note(depth+1, fmt.Sprintf("… still on %s after %d s", text, int(time.Since(start).Seconds())))
+			}
+		}
+	}()
+	return func() { close(done) }
 }
 
 // StepError says which step an error is of.

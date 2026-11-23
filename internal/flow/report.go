@@ -12,13 +12,15 @@ import (
 // Status is how a step went.
 type Status int
 
-// How a step can go. Started is a group's, whose commands come next.
+// How a step can go. Started is a group's, whose commands come next; Finished is its end, with
+// --timings.
 const (
 	Passed Status = iota
 	Failed
 	Optional // failed, but that is fine
 	Skipped
 	Started
+	Finished
 )
 
 // StepReport is what there is to say about a step.
@@ -30,7 +32,7 @@ type StepReport struct {
 	Profile string // where the time went, if asked for
 }
 
-var marks = map[Status]string{Passed: "✓", Failed: "✗", Optional: "–", Skipped: "–", Started: "▸"}
+var marks = map[Status]string{Passed: "✓", Failed: "✗", Optional: "–", Skipped: "–", Started: "▸", Finished: "◂"}
 
 // Line is how it is printed.
 func (s StepReport) Line() string {

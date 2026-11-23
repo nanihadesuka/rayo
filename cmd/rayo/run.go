@@ -162,6 +162,7 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	stop := "" // why the rest won't run
 	verbose := o.steps(flows)
 	s.reporter.(*console).verbose = verbose
+	s.reporter.(*console).timings = o.runner.Timings
 	for i, f := range flows {
 		out := report.Outcome{Flow: f, Retries: o.retriesOf(f)}
 		if stop != "" {
@@ -207,6 +208,7 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	sum.Took = time.Since(sum.Began)
 	fmt.Println()
 	fmt.Print(sum.Text(o.failuresOnly, true))
+	s.reporter.(*console).slowestFlows(sum.Outcomes)
 	err := sum.SaveLast(report.LastFile(o.output))
 	for _, file := range o.results {
 		err = errors.Join(err, sum.Write(file, o.failuresOnly))

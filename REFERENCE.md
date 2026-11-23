@@ -25,7 +25,7 @@ The tables between `generated` marks come from the code, as do `rayo help` and t
 | [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [Capture](#capture) |
 | [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Causes](#causes) · [Outcomes](#outcomes) · [Results](#results) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
-| [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
+| [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Timings](#timings) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
 | [Default times](#default-times) · [Limitations](#limitations) | |
 
 ---
@@ -76,6 +76,7 @@ Options of test: how they run
 Options of test: what comes out
   -v, --verbose              every step (always, for a single flow)
   --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
+  --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
   --failures-only            leave the flows that passed out of the results
 
 Options of test: mocks from the real backend
@@ -1370,6 +1371,14 @@ first in `<flow>_retry1` and so on. Those of an earlier run are removed when the
 | 1 | A flow failed or didn't run, or an error |
 | 2 | No command given |
 | 130 | Interrupted with Ctrl-C; what was set up on the device is undone |
+
+### Timings
+
+`rayo test --timings` shows where a run is slow or stuck, without the internals of `--profile`:
+
+- every step with its time, and `◂` with the total of each `runFlow`, `repeat` and `retry`
+- `… still on <step> after 10 s` every 5 s while a step runs, so a hang shows where it is
+- after each flow, its 5 slowest steps; at the end, the 10 slowest flows
 
 ### Profile
 

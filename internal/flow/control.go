@@ -59,6 +59,9 @@ func repeat(c *call) error {
 }
 
 func (c *call) show(status Status) {
+	if status == Skipped {
+		c.r.skipped = true
+	}
 	c.r.reporter.Step(StepReport{Depth: c.depth, Status: status, Text: c.s.describe()})
 }
 
