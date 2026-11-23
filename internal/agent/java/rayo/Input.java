@@ -184,9 +184,17 @@ final class Input {
     for (int i = 0; i < count; i++) key(KeyEvent.KEYCODE_DEL);
   }
 
+  /**
+   * An input method window as tall as a keyboard: with a hardware keyboard, the IME may keep a small toolbar
+   * window, and Back would then close what is under it instead.
+   */
   static boolean keyboardShown() {
+    android.graphics.Rect b = new android.graphics.Rect();
+    int tall = Math.max(screen().height() / 8, 1);
     for (AccessibilityWindowInfo w : ui.getWindows()) {
-      if (w.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) return true;
+      if (w.getType() != AccessibilityWindowInfo.TYPE_INPUT_METHOD) continue;
+      w.getBoundsInScreen(b);
+      if (b.height() >= tall) return true;
     }
     return false;
   }

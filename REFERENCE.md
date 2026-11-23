@@ -427,7 +427,8 @@ Adds text to the focused field, waiting for one to be focused.
 🧪 Closes the keyboard if it is open with one Back, and waits until it has. Does nothing when none is
 open. It never sends a second Back, which could close the window under the keyboard, such as a
 Custom Tab: if the keyboard is still open at the `timeout`, it fails. To try again, use `back` or
-`retry`.
+`retry`. A keyboard is open when the input method's window is at least an eighth of the screen: with
+a hardware keyboard, the small toolbar the input method may show isn't one, so nothing is sent.
 
 ### pressKey
 
