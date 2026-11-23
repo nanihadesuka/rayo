@@ -22,7 +22,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "1.0.4"
+const version = "1.0.5"
 
 // Exit codes.
 const (
@@ -238,18 +238,30 @@ func test(ctx context.Context, args []string) (err error) {
 
 // checkCapture refuses what would call the real backend more than once, or lose an earlier capture.
 func (o *options) checkCapture(flows []*flow.Flow) error {
+	if o.runner.Capture != "" && (len(flows) != 1 || o.retries > 0 || o.continuous) {
+		return errors.New("--capture runs one flow, once")
+	}
+	return o.checkCaptureFolder()
+}
+
+// checkCaptureFolder refuses a capture that would write over another, or go on from none.
+func (o *options) checkCaptureFolder() error {
 	folder := o.runner.Capture
 	if folder == "" {
 		if o.runner.Backend != "" {
 			return errors.New("--capture-from needs --capture")
 		}
+		if o.runner.CaptureAppend {
+			return errors.New("--capture-append needs --capture")
+		}
 		return nil
 	}
-	if len(flows) != 1 || o.retries > 0 || o.continuous {
-		return errors.New("--capture runs one flow, once")
-	}
-	if list, err := os.ReadDir(folder); err == nil && len(list) > 0 {
-		return fmt.Errorf("%s is there already", filepath.ToSlash(folder))
+	list, err := os.ReadDir(folder)
+	switch {
+	case o.runner.CaptureAppend && err != nil:
+		return fmt.Errorf("--capture-append: %s isn't there", filepath.ToSlash(folder))
+	case !o.runner.CaptureAppend && err == nil && len(list) > 0:
+		return fmt.Errorf("%s is there already; --capture-append goes on with it", filepath.ToSlash(folder))
 	}
 	return nil
 }
@@ -263,6 +275,9 @@ func runLive(ctx context.Context, args []string) error {
 		return errors.New("which flow? give a file, there already or not")
 	}
 	o.into("")
+	if err := o.checkCaptureFolder(); err != nil {
+		return err
+	}
 	p := live.Params{Path: o.args[0], App: o.app, Mocks: o.mocks, Output: o.output, NoRun: o.noRun, Serve: o.serve}
 	return live.Run(ctx, p, func(reporter flow.Reporter) (*flow.Runner, func(), error) {
 		d, err := adb.Pick(o.device, o.emulator)

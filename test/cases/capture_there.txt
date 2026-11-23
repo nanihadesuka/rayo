@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: got is there already
+error: got is there already; --capture-append goes on with it

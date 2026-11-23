@@ -71,13 +71,17 @@ func (r *Runner) Live(ctx context.Context, f *Flow, folder string, talk func(s *
 		}
 		return err
 	})
+	if e := r.saveCapture(); e != nil {
+		err = errors.Join(err, e)
+	}
 	r.reset()
 	return err
 }
 
 // Done is how some steps went.
 type Done struct {
-	Passed   int // how many, from the first
+	Passed   int   // how many, from the first
+	Marks    []int // of each that passed, what Captured was before it
 	Err      error
 	Failure  *Failure
 	Warnings []string
@@ -94,10 +98,15 @@ func (s *Session) Do(ctx context.Context, steps []*Step) Done {
 	}
 	var d Done
 	for _, step := range steps {
+		mark := s.Captured()
 		if d.Err = r.step(ctx, step, 0); d.Err != nil {
+			if n := s.Drop(mark); n > 0 {
+				r.reporter.Note(1, fmt.Sprintf("the %d calls of the step that failed aren't kept in the capture", n))
+			}
 			break
 		}
 		d.Passed++
+		d.Marks = append(d.Marks, mark)
 	}
 	if d.Err != nil && ctx.Err() == nil {
 		r.evidence(ctx)
@@ -114,6 +123,25 @@ func (s *Session) Do(ctx context.Context, steps []*Step) Done {
 	}
 	d.Warnings = r.warnings
 	return d
+}
+
+// Capturing says whether the real backend answers, and what it does is kept.
+func (s *Session) Capturing() bool { return s.r.backend.capturing }
+
+// Captured is how many calls have been captured so far: a mark for Drop. 0 when not capturing.
+func (s *Session) Captured() int {
+	if !s.Capturing() || s.r.backend.mock == nil {
+		return 0
+	}
+	return s.r.backend.mock.Captured()
+}
+
+// Drop forgets the calls captured since a mark, and returns how many.
+func (s *Session) Drop(mark int) int {
+	if !s.Capturing() || s.r.backend.mock == nil {
+		return 0
+	}
+	return s.r.backend.mock.Drop(mark)
 }
 
 // Screen is the elements on it.

@@ -3,6 +3,7 @@ package mock
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"mime"
@@ -154,6 +155,39 @@ func nextOf(states []*state, at int, endpoint string) (next int, reachable bool)
 	return 0, false
 }
 
+// callsFile keeps the calls of a capture as they were, so that another can go on from it.
+const callsFile = "capture.calls.json"
+
+type keptCapture struct {
+	Calls []kept   `json:"calls"`
+	Files []string `json:"files"` // in __files, written from them
+}
+
+// Continue goes on with the capture in a folder: its calls come before those made from now on, as if
+// in one go, and SaveCapture writes all of them there again.
+func (m *Mock) Continue(folder string) (int, error) {
+	data, err := os.ReadFile(filepath.Join(folder, callsFile))
+	if errors.Is(err, os.ErrNotExist) {
+		return 0, fmt.Errorf("%s has no %s to go on from: it isn't a capture, or one of rayo before 1.0.5", filepath.ToSlash(folder), callsFile)
+	}
+	if err != nil {
+		return 0, err
+	}
+	var k keptCapture
+	if err := json.Unmarshal(data, &k); err != nil {
+		return 0, fmt.Errorf("%s: %w", filepath.ToSlash(filepath.Join(folder, callsFile)), err)
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	before := make([]captured, 0, len(k.Calls)+len(m.real.captured))
+	for _, c := range k.Calls {
+		before = append(before, c.toCaptured())
+	}
+	m.real.captured = append(before, m.real.captured...)
+	m.real.earlier = k.Files
+	return len(k.Calls), nil
+}
+
 // SaveCapture writes a folder of mocks, and returns what to say about it.
 func (m *Mock) SaveCapture(folder string) ([]string, error) {
 	m.mu.Lock()
@@ -163,10 +197,23 @@ func (m *Mock) SaveCapture(folder string) ([]string, error) {
 	if len(calls) == 0 {
 		notes = append(notes, "nothing captured: no call of the app was answered")
 	} else {
-		states, err := writeMocks(folder, calls)
+		for _, name := range m.real.earlier { // written again from all the calls
+			if err := os.Remove(filepath.Join(folder, "__files", name)); err != nil && !errors.Is(err, os.ErrNotExist) {
+				return nil, err
+			}
+		}
+		states, files, err := writeMocks(folder, calls)
 		if err != nil {
 			return nil, err
 		}
+		k := keptCapture{Files: files}
+		for _, c := range calls {
+			k.Calls = append(k.Calls, c.toKept())
+		}
+		if err := writeJSON(filepath.Join(folder, callsFile), k); err != nil {
+			return nil, err
+		}
+		m.real.earlier = files
 		notes = report(folder, calls, states)
 	}
 	if len(m.real.skipped) > 0 {
@@ -181,7 +228,7 @@ func (m *Mock) SaveCapture(folder string) ([]string, error) {
 	return notes, os.WriteFile(filepath.Join(folder, "capture.txt"), []byte(strings.Join(notes, "\n")+"\n"), 0o644)
 }
 
-func writeMocks(folder string, calls []captured) ([]*state, error) {
+func writeMocks(folder string, calls []captured) ([]*state, []string, error) {
 	vary := varying(calls)
 	states := cut(calls, vary)
 	last := map[string]*captured{}
@@ -209,7 +256,7 @@ func writeMocks(folder string, calls []captured) ([]*state, error) {
 		if c.read() && vary[e] {
 			for i := range states {
 				if err := add(answerIn(states, i, e), 0, stateName(i), ""); err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			}
 			continue
@@ -227,15 +274,16 @@ func writeMocks(folder string, calls []captured) ([]*state, error) {
 			}
 			if reachable || vary[e] {
 				if err := add(states[next].by, 0, stateName(i), to); err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			}
 		}
 		if err := add(c, priority, "", ""); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
-	return states, writeJSON(filepath.Join(folder, "mappings", "capture.json"), map[string]any{"mappings": rules})
+	written := slices.Sorted(maps.Values(files.names))
+	return states, written, writeJSON(filepath.Join(folder, "mappings", "capture.json"), map[string]any{"mappings": rules})
 }
 
 func report(folder string, calls []captured, states []*state) []string {

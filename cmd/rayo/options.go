@@ -172,9 +172,10 @@ var sections = []section{
 		flag("timings", "each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs", func(o *options) *bool { return &o.runner.Timings }),
 		flag("failures-only", "leave the flows that passed out of the results", func(o *options) *bool { return &o.failuresOnly }),
 	}},
-	{[]string{cmdTest}, "mocks from the real backend", []option{
-		text("capture", "folder", "call the real backend, and write what it answers as mocks", func(o *options) *string { return &o.runner.Capture }),
+	{[]string{cmdTest, cmdLive}, "mocks from the real backend", []option{
+		text("capture", "folder", "call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed", func(o *options) *string { return &o.runner.Capture }),
 		text("capture-from", "url", "the backend, if calls don't begin with /host/", func(o *options) *string { return &o.runner.Backend }),
+		flag("capture-append", "go on with the capture already in the folder, as if in one go", func(o *options) *bool { return &o.runner.CaptureAppend }),
 	}},
 	{[]string{cmdLive}, "", []option{
 		text("app", "package", "of a flow that isn't there yet", func(o *options) *string { return &o.app }),

@@ -23,15 +23,16 @@ const (
 
 // Options of a Runner.
 type Options struct {
-	Env       map[string]string // wins over the flow's
-	Profile   bool
-	Timings   bool       // a group's total, and a note while a step takes long
-	MockPort  int        // on the device
-	Recording *Recording // of flows that don't say; its path is a folder
-	JSON      bool       // the calls of a failure are saved so, and not as text
-	Capture   string     // folder for what the real backend answers; empty to use the mocks
-	Backend   string     // what a capture calls; empty when the path begins with the host
-	Scale     float64    // of the default waits; 0 is 1. A step's own timeout isn't scaled
+	Env           map[string]string // wins over the flow's
+	Profile       bool
+	Timings       bool       // a group's total, and a note while a step takes long
+	MockPort      int        // on the device
+	Recording     *Recording // of flows that don't say; its path is a folder
+	JSON          bool       // the calls of a failure are saved so, and not as text
+	Capture       string     // folder for what the real backend answers; empty to use the mocks
+	Backend       string     // what a capture calls; empty when the path begins with the host
+	CaptureAppend bool       // the capture goes on from the one in its folder
+	Scale         float64    // of the default waits; 0 is 1. A step's own timeout isn't scaled
 }
 
 // scaled is a default wait, times Scale.

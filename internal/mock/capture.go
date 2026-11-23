@@ -23,6 +23,7 @@ type real struct {
 	step     string
 	captured []captured
 	skipped  []string
+	earlier  []string // files in __files of the capture gone on from
 }
 
 // captured is a call and its answer, with nothing private in them.
@@ -32,6 +33,42 @@ type captured struct {
 	contentType string
 	body        string
 	step        string // when it was made
+}
+
+// kept is how a captured call is written, to go on with the capture later.
+type kept struct {
+	Method      string `json:"method"`
+	URI         string `json:"uri"`
+	Status      int    `json:"status"`
+	ContentType string `json:"contentType,omitempty"`
+	Body        string `json:"body"`
+	Step        string `json:"step,omitempty"`
+}
+
+func (c captured) toKept() kept {
+	return kept{c.method, c.uri, c.status, c.contentType, c.body, c.step}
+}
+func (k kept) toCaptured() captured {
+	return captured{k.Method, k.URI, k.Status, k.ContentType, k.Body, k.Step}
+}
+
+// Captured is how many calls have been captured: a mark for Drop.
+func (m *Mock) Captured() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return len(m.real.captured)
+}
+
+// Drop forgets the calls captured since a mark, and returns how many there were.
+func (m *Mock) Drop(mark int) int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	n := len(m.real.captured) - mark
+	if n <= 0 {
+		return 0
+	}
+	m.real.captured = m.real.captured[:mark]
+	return n
 }
 
 func (c captured) read() bool { return c.method == http.MethodGet || c.method == http.MethodHead }
@@ -55,7 +92,7 @@ func (m *Mock) Forward(base string, secrets map[string]string) {
 func (m *Mock) During(step string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.real.step = step
+	m.real.step = m.real.cleanText(step) // it is kept with the calls
 }
 
 var hostName = regexp.MustCompile(`^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$`)
@@ -162,7 +199,9 @@ func private(name string) bool {
 
 func (r *real) cleanText(text string) string {
 	for _, s := range r.secrets {
-		text = strings.ReplaceAll(text, s, redacted)
+		for _, form := range []string{s, url.QueryEscape(s), url.PathEscape(s)} { // as in an address too
+			text = strings.ReplaceAll(text, form, redacted)
+		}
 	}
 	return jwts.ReplaceAllString(emails.ReplaceAllString(text, nobody), redacted)
 }

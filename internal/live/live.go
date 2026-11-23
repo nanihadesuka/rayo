@@ -10,6 +10,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +25,10 @@ const liveHelp = `  - tapOn: { id: save }   any command, or a list; what passes 
   .steps                  the steps kept
   .undo                   forget the last step; the device stays as it is
   .save                   add the steps to the flow's file
+  .retry                  read the flow's file again, and run its steps from the one that failed
+  .from <n>               the same, from its n-th step
+  .rewind [n]             forget the last n steps done (1), and the calls they made to a capture;
+                          move the app back to where it was by hand
   .help
   .quit                   end, without saving
 `
@@ -54,6 +60,15 @@ type live struct {
 	unsaved []string
 	session *flow.Session
 	out     *liveOutput
+	done    []done // the steps that passed, in order
+	next    int    // the first of the file's steps not done
+}
+
+// done is a step that passed.
+type done struct {
+	text string // to show
+	file int    // its place among the file's steps; -1 if typed
+	mark int    // what Captured was before it
 }
 
 // liveOutput keeps what a request prints.
@@ -106,10 +121,12 @@ func Run(ctx context.Context, p Params, start Start) error {
 		return err
 	}
 	defer end()
-	return runner.Live(ctx, f, filepath.Join(p.Output, "live"), func(session *flow.Session) error {
+	err = runner.Live(ctx, f, filepath.Join(p.Output, "live"), func(session *flow.Session) error {
 		l.session = session
 		return l.talk(ctx, p, f)
 	})
+	fmt.Print(l.out.take()) // what was said as it ended, such as of a capture
+	return err
 }
 
 const idle = time.Hour // until a session no one uses ends
@@ -121,6 +138,9 @@ func (l *live) talk(ctx context.Context, p Params, f *flow.Flow) error {
 		return err
 	}
 	defer closeServer()
+	if p.NoRun {
+		l.next = len(f.Steps)
+	}
 	if len(f.Steps) > 0 && !p.NoRun {
 		fmt.Print(l.do(ctx, f.Steps, nil, false).Text())
 		if err := l.session.Dead(); err != nil {
@@ -193,15 +213,8 @@ func readCommands(in io.Reader, give func(text string)) {
 }
 
 func (l *live) handle(ctx context.Context, q Request) Reply {
-	text := strings.TrimSpace(q.Text)
-	if strings.HasPrefix(text, ".") {
-		out, err := l.meta(ctx, text)
-		a := l.reply()
-		a.Output = out
-		if err != nil {
-			a.OK, a.Error = false, err.Error()
-		}
-		return a
+	if text := strings.TrimSpace(q.Text); strings.HasPrefix(text, ".") {
+		return l.command(ctx, text, q.Screen)
 	}
 	written, err := flow.ParseSteps(l.path, q.Text)
 	if err != nil {
@@ -224,6 +237,16 @@ func (l *live) reply() Reply {
 // do runs steps, and keeps those that pass if they have a text.
 func (l *live) do(ctx context.Context, steps []*flow.Step, texts []string, screen bool) Reply {
 	d := l.session.Do(ctx, steps)
+	for i := range d.Passed {
+		k := done{text: "- " + steps[i].Text() + "\n", file: -1, mark: d.Marks[i]}
+		if texts != nil {
+			k.text = texts[i]
+		} else {
+			k.file = l.next
+			l.next++
+		}
+		l.done = append(l.done, k)
+	}
 	if texts != nil {
 		l.unsaved = append(l.unsaved, texts[:d.Passed]...)
 	}
@@ -244,8 +267,43 @@ func (l *live) do(ctx context.Context, steps []*flow.Step, texts []string, scree
 	return a
 }
 
-func (l *live) meta(ctx context.Context, text string) (string, error) {
-	switch text {
+func (l *live) failed(err error) Reply {
+	a := l.reply()
+	a.OK, a.Error = false, err.Error()
+	return a
+}
+
+// command is one of those that begin with a dot.
+func (l *live) command(ctx context.Context, text string, screen bool) Reply {
+	name, arg, _ := strings.Cut(text, " ")
+	arg = strings.TrimSpace(arg)
+	if name == ".retry" || name == ".from" { // they run steps, and answer as steps do
+		steps, err := l.fileSteps(name, arg)
+		if err != nil {
+			return l.failed(err)
+		}
+		return l.do(ctx, steps, nil, screen)
+	}
+	out, err := l.meta(ctx, name, arg)
+	if err != nil {
+		a := l.failed(err)
+		a.Output = out
+		return a
+	}
+	a := l.reply()
+	a.Output = out
+	return a
+}
+
+// meta is a command that only answers with text.
+func (l *live) meta(ctx context.Context, name, arg string) (string, error) {
+	if name == ".rewind" {
+		return l.rewind(arg)
+	}
+	if arg != "" {
+		return "", fmt.Errorf("%s takes nothing", name)
+	}
+	switch name {
 	case ".help":
 		return liveHelp, nil
 	case ".quit":
@@ -258,16 +316,102 @@ func (l *live) meta(ctx context.Context, text string) (string, error) {
 	case ".steps":
 		return strings.Join(l.unsaved, ""), nil
 	case ".undo":
-		if len(l.unsaved) == 0 {
-			return "", errors.New("no steps to forget")
-		}
-		last := l.unsaved[len(l.unsaved)-1]
-		l.unsaved = l.unsaved[:len(l.unsaved)-1]
-		return "forgot " + last, nil
+		return l.undo()
 	case ".save":
 		return l.save()
 	}
-	return "", fmt.Errorf("unknown %s, see .help", text)
+	return "", fmt.Errorf("unknown %s, see .help", name)
+}
+
+// undo forgets the last step typed and not saved, and its calls if none were made after them.
+func (l *live) undo() (string, error) {
+	if len(l.unsaved) == 0 {
+		return "", errors.New("no steps to forget")
+	}
+	i := l.lastTyped()
+	if i == len(l.done)-1 { // its calls are the last ones
+		return l.forget(1), nil
+	}
+	l.done = slices.Delete(l.done, i, i+1) // steps of the file came after it: their calls stay
+	text := l.unsaved[len(l.unsaved)-1]
+	l.unsaved = l.unsaved[:len(l.unsaved)-1]
+	return "forgot " + text, nil
+}
+
+// lastTyped is where the newest typed step is in done; while some aren't saved, it is the last of them.
+func (l *live) lastTyped() int {
+	for i := len(l.done) - 1; i >= 0; i-- {
+		if l.done[i].file < 0 {
+			return i
+		}
+	}
+	return -1
+}
+
+// fileSteps are the file's steps, read again, from the one that failed or the n-th.
+func (l *live) fileSteps(name, arg string) ([]*flow.Step, error) {
+	if l.isNew {
+		return nil, errors.New("the flow isn't in its file yet: .save first")
+	}
+	data, err := os.ReadFile(l.path)
+	if err != nil {
+		return nil, err
+	}
+	f, err := flow.Parse(l.path, data)
+	if err != nil {
+		return nil, err
+	}
+	from := l.next
+	if name == ".from" {
+		if from, err = strconv.Atoi(arg); err != nil || from < 1 || from > len(f.Steps) {
+			return nil, fmt.Errorf(".from takes the number of one of the file's %d steps, not %q", len(f.Steps), arg)
+		}
+		from--
+	} else if arg != "" {
+		return nil, errors.New(".retry takes nothing; .from <n> runs from the n-th step")
+	}
+	if from >= len(f.Steps) {
+		return nil, fmt.Errorf("all the %d steps of the file are done; .from <n> runs some again", len(f.Steps))
+	}
+	l.next = from
+	return f.Steps[from:], nil
+}
+
+// rewind forgets the last n steps done, and the calls they made.
+func (l *live) rewind(arg string) (string, error) {
+	n := 1
+	if arg != "" {
+		var err error
+		if n, err = strconv.Atoi(arg); err != nil || n < 1 {
+			return "", fmt.Errorf(".rewind takes how many steps, not %q", arg)
+		}
+	}
+	if n > len(l.done) {
+		return "", fmt.Errorf("only %d steps have been done", len(l.done))
+	}
+	return l.forget(n) + "the app stays as it is: move it back by hand; .retry runs the file's steps from there\n", nil
+}
+
+// forget forgets the last n steps done, and the calls made since the first of them.
+func (l *live) forget(n int) string {
+	gone := l.done[len(l.done)-n:]
+	l.done = l.done[:len(l.done)-n]
+	dropped := l.session.Drop(gone[0].mark)
+	var b strings.Builder
+	for i := len(gone) - 1; i >= 0; i-- {
+		g := gone[i]
+		if g.file >= 0 {
+			l.next = min(l.next, g.file)
+		} else if len(l.unsaved) > 0 {
+			l.unsaved = l.unsaved[:len(l.unsaved)-1]
+		}
+		b.WriteString("forgot ")
+		b.WriteString(g.text)
+	}
+	if l.session.Capturing() {
+		fmt.Fprintf(&b, "dropped %d calls from the capture\n", dropped)
+	}
+	return b.String()
 }
 
 // save adds the steps to the file, which stays as it was if the result isn't a flow.
@@ -288,15 +432,33 @@ func (l *live) save() (string, error) {
 		return "", fmt.Errorf("%s is there by now", filepath.ToSlash(l.path))
 	}
 	data = append(data, strings.Join(l.unsaved, "")...)
-	if _, err := flow.Parse(l.path, data); err != nil {
+	f, err := flow.Parse(l.path, data)
+	if err != nil {
 		return "", fmt.Errorf("can't add to the file: %w", err)
 	}
 	if err := report.WriteFile(l.path, data); err != nil {
 		return "", err
 	}
 	n := len(l.unsaved)
+	if l.next == len(f.Steps)-n { // all the file's steps before them are done
+		l.nowInFile(n, len(f.Steps))
+	}
 	l.isNew, l.unsaved = false, nil
 	return fmt.Sprintf("saved %d steps in %s\n", n, filepath.ToSlash(l.path)), nil
+}
+
+// nowInFile makes the newest n typed steps done the file's last ones, which end at end, so that
+// .retry and .rewind treat them as such.
+func (l *live) nowInFile(n, end int) {
+	at := end
+	for i := len(l.done) - 1; i >= 0 && n > 0; i-- {
+		if l.done[i].file < 0 {
+			at--
+			l.done[i].file = at
+			n--
+		}
+	}
+	l.next = end
 }
 
 // Text is how it is printed.

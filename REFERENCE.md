@@ -80,9 +80,10 @@ Options of test: what comes out
   --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
   --failures-only            leave the flows that passed out of the results
 
-Options of test: mocks from the real backend
-  --capture <folder>         call the real backend, and write what it answers as mocks
+Options of test and live: mocks from the real backend
+  --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
   --capture-from <url>       the backend, if calls don't begin with /host/
+  --capture-append           go on with the capture already in the folder, as if in one go
 
 Options of live
   --app <package>            of a flow that isn't there yet
@@ -876,12 +877,28 @@ While capturing, the flow's mocks are left out and `mock`, `mockState` and `netw
 a flow that has them can be captured again. `waitForRequest` works. What was captured is also kept
 if the flow fails or is interrupted.
 
+A long flow whose calls do something real (an order, a payment) is better captured in a
+[live session](#live-sessions), which a failure doesn't end:
+
+```
+rayo live --serve --capture mock -e PASSWORD=... flow.yaml &
+rayo do .retry          # after fixing the step that failed, in the file
+rayo do .rewind 2       # forget the last 2 steps and their calls; move the app back by hand
+rayo do .quit           # writes the capture
+```
+
+The calls of a step that fails, and of those rewound, are left out, so what is written is one
+capture, as if the flow had run once without them. Without the session, `--capture-append` goes on
+with a capture that is there already, in another run: its calls come first and the states go on
+from them.
+
 In the folder:
 
 | | |
 |---|---|
 | `mappings/capture.json`, `__files/` | The mocks: give the folder to the flow's `mock` |
 | `capture.txt` | What to do next, as it was printed |
+| `capture.calls.json` | The calls, hidden as in the mocks, for `--capture-append` |
 
 How it becomes mocks:
 
@@ -1297,6 +1314,9 @@ The mock, the variables and `output` last for the whole session. When it ends, a
 | `.steps` | What is kept and not saved yet |
 | `.undo` | Forgets the last one. **The device stays as it is** |
 | `.save` | Adds them to the file |
+| `.retry` | Reads the file again and runs its steps from the one that failed, so a step can be fixed in the file and tried again |
+| `.from <n>` | The same, from its n-th step |
+| `.rewind [n]` | Forgets the last n steps done (1), typed or of the file, and the calls they made to a [capture](#capture). **The device stays as it is**: move the app back by hand, then `.retry` |
 | `.help`, `.quit` | `.quit` doesn't save, but prints what is lost |
 
 Typed, a command is a line; one that ends in `:` goes on until an empty line. The leading `- ` may

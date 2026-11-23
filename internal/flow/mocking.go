@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -123,7 +124,13 @@ func (b *backend) calls(reporter Reporter, asJSON bool) ([]byte, error) {
 // loadMocks adds those of a flow's header.
 func (r *Runner) loadMocks(f *Flow) error {
 	if r.backend.capturing {
-		_, err := r.backend.start()
+		m, err := r.backend.start()
+		if err == nil && r.CaptureAppend {
+			var n int
+			if n, err = m.Continue(r.Capture); err == nil {
+				r.reporter.Note(1, fmt.Sprintf("going on from the %d calls captured in %s", n, filepath.ToSlash(r.Capture)))
+			}
+		}
 		return err
 	}
 	for _, n := range f.Mock {

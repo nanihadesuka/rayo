@@ -57,6 +57,47 @@ bye {"timeout":5000}
   "method": "POST",
   "type": ""
 }
+-- file got/capture.calls.json --
+{
+  "calls": [
+    {
+      "method": "GET",
+      "uri": "/a?mail=REDACTED&x=1",
+      "status": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "body": "{\n  \"body\": \"\",\n  \"method\": \"GET\",\n  \"type\": \"\"\n}\n",
+      "step": "flow.yaml:3 tapOn GET /a?mail=REDACTED&x=1"
+    },
+    {
+      "method": "POST",
+      "uri": "/b",
+      "status": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "body": "{\n  \"body\": \"my-code-is-REDACTED\",\n  \"method\": \"POST\",\n  \"type\": \"\"\n}\n",
+      "step": "flow.yaml:5 tapOn POST /b my-code-is-REDACTED"
+    },
+    {
+      "method": "GET",
+      "uri": "/status/404",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8",
+      "body": "{\n  \"body\": \"\",\n  \"method\": \"GET\",\n  \"type\": \"\"\n}\n",
+      "step": "flow.yaml:7 tapOn GET /status/404"
+    },
+    {
+      "method": "GET",
+      "uri": "/status/404",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8",
+      "body": "{\n  \"body\": \"\",\n  \"method\": \"GET\",\n  \"type\": \"\"\n}\n",
+      "step": "flow.yaml:8 tapOn GET /status/404"
+    }
+  ],
+  "files": [
+    "001_get_a.txt",
+    "002_post_b.txt"
+  ]
+}
 -- file got/capture.txt --
 captured 4 calls, in 1 states: got
 to use it, set mock in the flow's header to its path, relative to the flow
