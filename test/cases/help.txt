@@ -69,6 +69,7 @@ Options of test, live and mocks: how a capture or an import becomes mocks
   --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly
   --capture-headers <a,b>    headers of the request to match too, such as Accept-Language
   --ignore-host              match calls whose path begins with a host, whatever the host
+  --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)
 
 Options of test and live: how calls reach the mock
   --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does

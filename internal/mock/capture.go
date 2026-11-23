@@ -30,6 +30,7 @@ type Settings struct {
 	Timestamps   string   `json:"timestamps,omitempty"`   // TimestampsFormat or TimestampsExact
 	Headers      []string `json:"headers,omitempty"`      // of the request, to match
 	IgnoreHost   bool     `json:"ignoreHost,omitempty"`   // any host, for paths that begin with one
+	Stateless    []string `json:"stateless,omitempty"`    // globs of host/path whose calls only read, whatever the method
 	RedactValues []string `json:"redactValues,omitempty"` // name=value: what a private field of a body becomes
 }
 
@@ -59,7 +60,7 @@ func (s Settings) Or(other Settings) Settings {
 		GraphQL: pick(s.GraphQL, other.GraphQL), GraphQLPath: pick(s.GraphQLPath, other.GraphQLPath), REST: pick(s.REST, other.REST),
 		IgnoreParams: list(s.IgnoreParams, other.IgnoreParams), IgnoreBody: list(s.IgnoreBody, other.IgnoreBody),
 		Timestamps: pick(s.Timestamps, other.Timestamps), Headers: list(s.Headers, other.Headers), IgnoreHost: s.IgnoreHost || other.IgnoreHost,
-		RedactValues: list(s.RedactValues, other.RedactValues),
+		RedactValues: list(s.RedactValues, other.RedactValues), Stateless: list(s.Stateless, other.Stateless),
 	}
 }
 
@@ -108,7 +109,8 @@ type captured struct {
 	request     *request   // nil in a capture made before requests were kept
 	op          *operation // of a GraphQL call, worked out from request; or kept, in a capture made before
 
-	spec *spec // how it is matched: worked out when the mocks are written
+	spec      *spec // how it is matched: worked out when the mocks are written
+	stateless bool  // it only reads, as Settings.Stateless says
 }
 
 // request is what the app sent, as kept: only what isn't private.
@@ -176,6 +178,9 @@ func (m *Mock) Drop(mark int) int {
 
 // read is a call that changes nothing: a GET, or a GraphQL query.
 func (c captured) read() bool {
+	if c.stateless {
+		return true
+	}
 	if c.op != nil {
 		return !c.op.Mutation
 	}
@@ -193,6 +198,36 @@ func (c captured) endpoint() string {
 
 func (c captured) answer() string {
 	return fmt.Sprintf("%d\n%s\n%t\n%s", c.status, c.contentType, c.binary, c.body)
+}
+
+// Glob is a pattern of a path, such as api.shop.com/quotes/** : * is any text but /, ** any text.
+func Glob(pattern string) (*regexp.Regexp, error) {
+	var b strings.Builder
+	b.WriteString("^/?")
+	for i, part := range strings.Split(strings.TrimPrefix(pattern, "/"), "**") {
+		if i > 0 {
+			b.WriteString(".*")
+		}
+		for j, p := range strings.Split(part, "*") {
+			if j > 0 {
+				b.WriteString("[^/]*")
+			}
+			b.WriteString(regexp.QuoteMeta(p))
+		}
+	}
+	b.WriteString("$")
+	return regexp.Compile(b.String())
+}
+
+// stateless says whether a call's path is one of the globs.
+func stateless(globs []string, uri string) bool {
+	path, _, _ := strings.Cut(uri, "?")
+	for _, g := range globs {
+		if re, err := Glob(g); err == nil && re.MatchString(path) {
+			return true
+		}
+	}
+	return false
 }
 
 // Forward passes every call to the real backend. Without a base, /host/path goes to https://host/path.

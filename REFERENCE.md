@@ -100,6 +100,7 @@ Options of test, live and mocks: how a capture or an import becomes mocks
   --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly
   --capture-headers <a,b>    headers of the request to match too, such as Accept-Language
   --ignore-host              match calls whose path begins with a host, whatever the host
+  --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)
 
 Options of test and live: how calls reach the mock
   --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
@@ -966,6 +967,10 @@ How it becomes mocks, as WireMock's recorder does by default:
   names, at any depth, or paths, out of JSON bodies, GraphQL variables and forms; `--ignore-host`
   matches the path of any host (then, through the proxy, `--hosts` says which to open).
   `capture.txt` lists what was left out.
+- A call that changes nothing, as GET, keeps the state; any other may change it. `--stateless
+  'api.shop.com/quotes/**,*/availability'` says which paths only read, whatever the method, such as a
+  POST that searches: they answer in any state, as often as the app calls them. `*` is any text but
+  `/`, `**` any text, from the host when calls begin with one.
 - `--capture-headers Accept-Language` matches these headers of the request too.
 - The headers of the answer are kept, but for those that change by themselves (`Date`, `ETag`, trace
   ids...).

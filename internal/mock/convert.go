@@ -256,9 +256,11 @@ func quote(s string) string {
 // prepare works out how each call is matched.
 func (b *builder) prepare(calls []captured) {
 	for i := range calls {
-		if c := &calls[i]; c.request != nil {
+		c := &calls[i]
+		if c.request != nil {
 			c.op = graphQL(b.s, c.method, c.uri, c.request, b.loose)
 		}
+		c.stateless = stateless(b.s.Stateless, c.uri)
 	}
 	shapes(calls)
 	keys := map[string]map[string]bool{} // of each label
