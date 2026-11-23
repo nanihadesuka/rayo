@@ -84,6 +84,8 @@ Options of test: what comes out
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
   --capture-from <url>       the backend, if calls don't begin with /host/
+  --graphql <match>          tell GraphQL calls apart by operation (default), operation+variables, or off; REST calls are as ever
+  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
   --capture-append           go on with the capture already in the folder, as if in one go
 
 Options of test and live: how calls reach the mock
@@ -914,7 +916,32 @@ How it becomes mocks:
   made the fewest times is taken.
 - If an answer changed **by itself**, the flow has to say when: `capture.txt` has the `mockState` to
   add, and before which step.
-- A GET is told apart by its whole address. Other calls by address and order, not by body.
+- A GET is told apart by its whole address. Other calls by address and order, not by body, except
+  GraphQL ones.
+
+#### GraphQL
+
+GraphQL and REST calls are captured together, through the interceptor or the proxy. A call is taken
+as GraphQL when it is a JSON `POST` whose body has `query`, `operationName` or
+`extensions.persistedQuery.sha256Hash`, or one to a path matching `--graphql-path` (default
+`.*/graphql`). Anything else is captured as before.
+
+- Each GraphQL call is told apart by its **operation**, with a `bodyPatterns` entry
+  `matchesJsonPath: $[?(@.operationName == "Geocode")]`. Mocks therefore don't depend on the order
+  of the calls: a `Wallet` query is never answered with a `Geocode` answer.
+- A **query** counts like a GET and a **mutation** like any other call: only mutations move the
+  scenario on, and states whose answers don't differ are joined.
+- When the same operation name is sent with **different query documents** (other fields, other
+  fragments), each document gets its own mappings, matched on the query with its spaces and commas
+  normalised. When there is only one document per name, only the name is matched, so a small edit
+  to a query doesn't break the mocks.
+- A persisted query with no name is matched on its hash.
+- With `--graphql operation+variables`, the variables are matched too, value by value, except
+  those under private names or holding something private. `--graphql off` turns all this off.
+- Only `operationName`, the query text and, if asked for, the variables are kept from the request.
+  A query with something private written into it is matched by its name only.
+- When mocking, a GraphQL call that nothing matches is reported with its operation:
+  `POST /graphql (GraphQL operation Unknown)`.
 
 Left out, as far as it can be recognised: the values of `-e`; emails and JWTs anywhere; and what is
 under a name such as `access_token`, `password`, `email`, `phone` or `firstName`, also in the address.

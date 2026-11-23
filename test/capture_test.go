@@ -195,3 +195,131 @@ func TestCaptureLive(t *testing.T) {
 	mocks, _ := os.ReadFile(filepath.Join(dir, "got", "mappings", "capture.json"))
 	has(string(mocks), "POST /login", "POST /pay")
 }
+
+// REST and GraphQL calls in one capture: GraphQL ones are told apart by their operation, so their
+// mocks answer whatever the order, and only a mutation moves the scenario on.
+func TestCaptureGraphQL(t *testing.T) {
+	booked := false
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, q *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if q.URL.Path != "/graphql" {
+			fmt.Fprintf(w, `{"rest":%q}`, q.URL.Path)
+			return
+		}
+		var b struct {
+			OperationName string `json:"operationName"`
+			Variables     struct{ Id int }
+		}
+		_ = json.NewDecoder(q.Body).Decode(&b)
+		switch b.OperationName {
+		case "Book":
+			booked = true
+			fmt.Fprint(w, `{"data":{"book":true}}`)
+		case "Wallet":
+			fmt.Fprintf(w, `{"data":{"wallet":{"booked":%t}}}`, booked)
+		case "Place":
+			fmt.Fprintf(w, `{"data":{"place":%d}}`, b.Variables.Id)
+		default:
+			fmt.Fprintf(w, `{"data":{"%s":1}}`, b.OperationName)
+		}
+	}))
+	defer s.Close()
+	dir := t.TempDir()
+	gql := func(op, query string, vars string) string {
+		return fmt.Sprintf("- tapOn: { id: 'POST /graphql {\"operationName\":\"%s\",\"query\":\"%s %s { x }\",\"variables\":%s}' }\n", op, query, op, vars)
+	}
+	rest := "- tapOn: { id: \"GET /profile\" }\n"
+	geo, wallet := gql("Geocode", "query", "{}"), gql("Wallet", "query", "{}")
+	place := func(id int) string { return gql("Place", "query", fmt.Sprintf(`{"id":%d}`, id)) }
+	book := gql("Book", "mutation", "{}")
+	run := func(args ...string) []string {
+		d := startDevice(t, "emulator-5554\tdevice\n", false)
+		out, err := d.command(dir, args...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v\n%s", err, out)
+		}
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		var answers []string
+		for _, l := range d.log {
+			if strings.HasPrefix(l, "  app: ") {
+				_, a, _ := strings.Cut(l, " -> ")
+				answers = append(answers, strings.Join(strings.Fields(a), ""))
+			}
+		}
+		return answers
+	}
+	write(t, filepath.Join(dir, "real.yaml"), "appId: a.b\n---\n"+rest+geo+wallet+place(1)+place(2)+book+wallet+rest)
+	run("test", "--capture", "got", "--capture-from", s.URL, "--graphql", "operation+variables", "real.yaml")
+	mocks, _ := os.ReadFile(filepath.Join(dir, "got", "mappings", "capture.json"))
+	for _, want := range []string{`@.operationName == \"Geocode\"`, `@.variables.id == 2`, `"url": "/profile"`} {
+		if !strings.Contains(string(mocks), want) {
+			t.Errorf("no %s in\n%s", want, mocks)
+		}
+	}
+	// Another order: wallet before geocode, the places swapped.
+	write(t, filepath.Join(dir, "mocked.yaml"), "appId: a.b\nmock: got\n---\n"+wallet+rest+place(2)+geo+place(1)+book+rest+wallet)
+	got := run("test", "mocked.yaml")
+	want := []string{
+		`200application/json{"data":{"wallet":{"booked":false}}}`,
+		`200application/json{"rest":"/profile"}`,
+		`200application/json{"data":{"place":2}}`,
+		`200application/json{"data":{"Geocode":1}}`,
+		`200application/json{"data":{"place":1}}`,
+		`200application/json{"data":{"book":true}}`,
+		`200application/json{"rest":"/profile"}`,
+		`200application/json{"data":{"wallet":{"booked":true}}}`,
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("got\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	write(t, filepath.Join(dir, "missing.yaml"), "appId: a.b\nmock: got\n---\n"+gql("Unknown", "query", "{}"))
+	d := startDevice(t, "emulator-5554\tdevice\n", false)
+	out, err := d.command(dir, "test", "--retries", "0", "missing.yaml").CombinedOutput()
+	if err == nil || !strings.Contains(string(out), "POST /graphql (GraphQL operation Unknown)") {
+		t.Errorf("%v\n%s", err, out)
+	}
+}
+
+// One operation name asked with two shapes: each shape gets its own answer, whatever the order.
+func TestCaptureGraphQLShapes(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, q *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var b struct{ Query string }
+		_ = json.NewDecoder(q.Body).Decode(&b)
+		if strings.Contains(b.Query, "balance") {
+			fmt.Fprint(w, `{"data":{"wallet":{"balance":5}}}`)
+		} else {
+			fmt.Fprint(w, `{"data":{"wallet":{"cards":[]}}}`)
+		}
+	}))
+	defer s.Close()
+	dir := t.TempDir()
+	ask := func(fields string) string {
+		return fmt.Sprintf("- tapOn: { id: 'POST /api/graphql {\"operationName\":\"Wallet\",\"query\":\"query Wallet {  wallet { %s } }\"}' }\n", fields)
+	}
+	run := func(flow string, args ...string) []string {
+		write(t, filepath.Join(dir, "f.yaml"), flow)
+		d := startDevice(t, "emulator-5554\tdevice\n", false)
+		out, err := d.command(dir, append(append([]string{"test"}, args...), "f.yaml")...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v\n%s", err, out)
+		}
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		var answers []string
+		for _, l := range d.log {
+			if _, a, ok := strings.Cut(l, "  app: "); ok {
+				_, a, _ = strings.Cut(a, " -> ")
+				answers = append(answers, strings.Join(strings.Fields(a), ""))
+			}
+		}
+		return answers
+	}
+	run("appId: a.b\n---\n"+ask("balance")+ask("cards"), "--capture", "got", "--capture-from", s.URL)
+	got := run("appId: a.b\nmock: got\n---\n" + ask("cards") + ask("balance"))
+	want := `200application/json{"data":{"wallet":{"cards":[]}}} 200application/json{"data":{"wallet":{"balance":5}}}`
+	if strings.Join(got, " ") != want {
+		t.Errorf("got %v", got)
+	}
+}

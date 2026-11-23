@@ -53,6 +53,8 @@ Options of test: what comes out
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
   --capture-from <url>       the backend, if calls don't begin with /host/
+  --graphql <match>          tell GraphQL calls apart by operation (default), operation+variables, or off; REST calls are as ever
+  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
   --capture-append           go on with the capture already in the folder, as if in one go
 
 Options of test and live: how calls reach the mock

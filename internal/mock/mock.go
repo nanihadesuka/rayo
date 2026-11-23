@@ -191,3 +191,11 @@ func (m *Mock) Hosts() map[string]bool {
 	}
 	return hosts
 }
+
+// What is the call as said when it isn't mocked: with its GraphQL operation, if it has one.
+func (c *Call) What() string {
+	if op := OperationOf(c.Body); op != "" && c.Method == "POST" {
+		return c.Method + " " + c.URI + " (GraphQL operation " + op + ")"
+	}
+	return c.Method + " " + c.URI
+}

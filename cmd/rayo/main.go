@@ -23,7 +23,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "1.0.6"
+const version = "1.0.7"
 
 // Exit codes.
 const (

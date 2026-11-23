@@ -119,7 +119,7 @@ func (s *Session) Do(ctx context.Context, steps []*Step) Done {
 	for i, c := range d.Calls {
 		d.Calls[i].Body = ""
 		if c.Unmocked {
-			r.warnings = append(r.warnings, "the app called what isn't mocked: "+c.Method+" "+c.URI)
+			r.warnings = append(r.warnings, "the app called what isn't mocked: "+c.What())
 		}
 	}
 	d.Warnings = r.warnings

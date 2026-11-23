@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/mock"
 	"github.com/nanihadesuka/rayo/internal/report"
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
@@ -176,6 +177,20 @@ var sections = []section{
 	{[]string{cmdTest, cmdLive}, "mocks from the real backend", []option{
 		text("capture", "folder", "call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed", func(o *options) *string { return &o.runner.Capture }),
 		text("capture-from", "url", "the backend, if calls don't begin with /host/", func(o *options) *string { return &o.runner.Backend }),
+		{name: "graphql", value: "match", about: "tell GraphQL calls apart by operation (default), operation+variables, or off; REST calls are as ever", set: func(o *options, v string) error {
+			if v != mock.GraphQLOff && v != mock.GraphQLOperation && v != mock.GraphQLVariables {
+				return fmt.Errorf("--graphql takes operation, operation+variables or off, not %q", v)
+			}
+			o.runner.GraphQL = v
+			return nil
+		}},
+		{name: "graphql-path", value: "regex", about: "paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)", set: func(o *options, v string) error {
+			if _, err := mock.Pattern(v); err != nil {
+				return fmt.Errorf("--graphql-path: %w", err)
+			}
+			o.runner.GraphQLPath = v
+			return nil
+		}},
 		flag("capture-append", "go on with the capture already in the folder, as if in one go", func(o *options) *bool { return &o.runner.CaptureAppend }),
 	}},
 	{[]string{cmdTest, cmdLive}, "how calls reach the mock", []option{

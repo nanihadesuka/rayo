@@ -35,6 +35,8 @@ type Options struct {
 	Scale         float64    // of the default waits; 0 is 1. A step's own timeout isn't scaled
 	Network       string     // how calls reach the mock: interceptor or proxy; empty for the flow's
 	Hosts         []string   // with a proxy, those to open; empty for the default
+	GraphQL       string     // how a capture tells GraphQL calls apart: off, operation or operation+variables; empty for operation
+	GraphQLPath   string     // where GraphQL calls go, besides those whose body says so; empty for .*/graphql
 }
 
 // Networks are the ways calls reach the mock.

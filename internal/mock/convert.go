@@ -30,13 +30,13 @@ type state struct {
 
 // rule is a mapping as it is written: Rule can't tell what was left out.
 type rule struct {
-	Name     string            `json:"name"`
-	Priority int               `json:"priority,omitempty"`
-	Scenario string            `json:"scenarioName,omitempty"`
-	Required string            `json:"requiredScenarioState,omitempty"`
-	Next     string            `json:"newScenarioState,omitempty"`
-	Request  map[string]string `json:"request"`
-	Response map[string]any    `json:"response"`
+	Name     string         `json:"name"`
+	Priority int            `json:"priority,omitempty"`
+	Scenario string         `json:"scenarioName,omitempty"`
+	Required string         `json:"requiredScenarioState,omitempty"`
+	Next     string         `json:"newScenarioState,omitempty"`
+	Request  map[string]any `json:"request"`
+	Response map[string]any `json:"response"`
 }
 
 func stateName(i int) string {
@@ -229,6 +229,7 @@ func (m *Mock) SaveCapture(folder string) ([]string, error) {
 }
 
 func writeMocks(folder string, calls []captured) ([]*state, []string, error) {
+	shapes(calls)
 	vary := varying(calls)
 	states := cut(calls, vary)
 	last := map[string]*captured{}
@@ -307,14 +308,25 @@ func report(folder string, calls []captured, states []*state) []string {
 }
 
 // request matches the whole address, except what was hidden of it.
-func request(c *captured) map[string]string {
-	q := map[string]string{"method": c.method}
+func request(c *captured) map[string]any {
+	q := map[string]any{"method": c.method}
+	if p := bodyPatterns(c); p != nil {
+		q["bodyPatterns"] = p
+	}
 	if strings.Contains(c.uri, redacted) {
 		q["urlPattern"] = strings.ReplaceAll(regexp.QuoteMeta(c.uri), redacted, `[^/?&]*`)
 	} else {
 		q["url"] = c.uri
 	}
 	return q
+}
+
+// bodyPatterns tell a GraphQL call apart by its operation.
+func bodyPatterns(c *captured) []map[string]string {
+	if c.op == nil {
+		return nil
+	}
+	return []map[string]string{{"matchesJsonPath": c.op.condition()}}
 }
 
 // bodies are kept one file each, only once.
@@ -337,6 +349,9 @@ func (b *bodies) response(c *captured) (map[string]any, error) {
 	if !ok {
 		path, _, _ := strings.Cut(c.uri, "?")
 		path = strings.TrimRight(path, "/")
+		if c.op != nil && c.op.Name != "" {
+			path = c.op.Name
+		}
 		what := strings.Trim(notInNames.ReplaceAllString(path[strings.LastIndex(path, "/")+1:], "_"), "_")
 		ext := ".txt"
 		if kind, _, _ := mime.ParseMediaType(c.contentType); strings.HasSuffix(kind, "json") {

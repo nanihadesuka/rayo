@@ -24,6 +24,9 @@ type real struct {
 	captured []captured
 	skipped  []string
 	earlier  []string // files in __files of the capture gone on from
+
+	graphql     string // GraphQLOff, GraphQLOperation or GraphQLVariables
+	graphqlPath *regexp.Regexp
 }
 
 // captured is a call and its answer, with nothing private in them.
@@ -32,24 +35,26 @@ type captured struct {
 	status      int
 	contentType string
 	body        string
-	step        string // when it was made
+	step        string     // when it was made
+	op          *operation // of a GraphQL call
 }
 
 // kept is how a captured call is written, to go on with the capture later.
 type kept struct {
-	Method      string `json:"method"`
-	URI         string `json:"uri"`
-	Status      int    `json:"status"`
-	ContentType string `json:"contentType,omitempty"`
-	Body        string `json:"body"`
-	Step        string `json:"step,omitempty"`
+	Method      string     `json:"method"`
+	URI         string     `json:"uri"`
+	Status      int        `json:"status"`
+	ContentType string     `json:"contentType,omitempty"`
+	Body        string     `json:"body"`
+	Step        string     `json:"step,omitempty"`
+	GraphQL     *operation `json:"graphql,omitempty"`
 }
 
 func (c captured) toKept() kept {
-	return kept{c.method, c.uri, c.status, c.contentType, c.body, c.step}
+	return kept{c.method, c.uri, c.status, c.contentType, c.body, c.step, c.op}
 }
 func (k kept) toCaptured() captured {
-	return captured{k.Method, k.URI, k.Status, k.ContentType, k.Body, k.Step}
+	return captured{k.Method, k.URI, k.Status, k.ContentType, k.Body, k.Step, k.GraphQL}
 }
 
 // Captured is how many calls have been captured: a mark for Drop.
@@ -71,16 +76,34 @@ func (m *Mock) Drop(mark int) int {
 	return n
 }
 
-func (c captured) read() bool { return c.method == http.MethodGet || c.method == http.MethodHead }
+// read is a call that changes nothing: a GET, or a GraphQL query.
+func (c captured) read() bool {
+	if c.op != nil {
+		return !c.op.Mutation
+	}
+	return c.method == http.MethodGet || c.method == http.MethodHead
+}
 
 // endpoint tells calls apart. Those that change something are told apart by their order too.
-func (c captured) endpoint() string { return c.method + " " + c.uri }
+func (c captured) endpoint() string {
+	if c.op != nil {
+		return c.method + " " + c.uri + " " + c.op.label()
+	}
+	return c.method + " " + c.uri
+}
 
 func (c captured) answer() string { return fmt.Sprintf("%d\n%s\n%s", c.status, c.contentType, c.body) }
 
 // Forward passes every call to the real backend. Without a base, /host/path goes to https://host/path.
-func (m *Mock) Forward(base string, secrets map[string]string) {
-	m.real = &real{base: strings.TrimSuffix(base, "/"), client: &http.Client{Timeout: time.Minute}}
+// GraphQL calls are told apart by their operation, as graphql says, those to graphqlPath among them.
+func (m *Mock) Forward(base string, secrets map[string]string, graphql string, graphqlPath *regexp.Regexp) {
+	if graphql == "" {
+		graphql = GraphQLOperation
+	}
+	if graphqlPath == nil {
+		graphqlPath, _ = Pattern(DefaultGraphQLPath)
+	}
+	m.real = &real{base: strings.TrimSuffix(base, "/"), client: &http.Client{Timeout: time.Minute}, graphql: graphql, graphqlPath: graphqlPath}
 	for _, v := range secrets {
 		if len(v) >= 4 { // anything shorter would be found everywhere
 			m.real.secrets = append(m.real.secrets, v)
@@ -159,7 +182,7 @@ func (m *Mock) pass(w http.ResponseWriter, q *http.Request, body []byte) {
 		panic(http.ErrAbortHandler) // closes the connection without an answer
 	}
 	call.Outcome = fmt.Sprint(res.StatusCode)
-	c := captured{method: q.Method, uri: uri, status: res.StatusCode, contentType: res.Header.Get("Content-Type"), step: step}
+	c := captured{method: q.Method, uri: uri, status: res.StatusCode, contentType: res.Header.Get("Content-Type"), step: step, op: r.graphQL(q.Method, q.URL.EscapedPath(), body)}
 	if c.body, err = r.cleanBody(data); err != nil {
 		r.skipped = append(r.skipped, c.endpoint()+": "+err.Error())
 	} else {

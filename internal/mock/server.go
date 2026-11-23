@@ -121,6 +121,10 @@ func (m *Mock) answer(q *http.Request, body string) (a answer) {
 	if best == nil {
 		call.Outcome, call.Unmocked = "not mocked", true
 		a.status, a.body = 404, "not mocked: "+q.Method+" "+call.URI
+		if op := OperationOf(body); op != "" && q.Method == http.MethodPost {
+			call.Outcome = "not mocked: GraphQL operation " + op
+			a.body += ", GraphQL operation " + op
+		}
 		return a
 	}
 	if best.NewScenarioState != "" {
