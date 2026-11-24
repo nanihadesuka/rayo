@@ -118,7 +118,7 @@ func (u Unpassed) Explain() string {
 		}
 	}
 	b.WriteString(f.Verdict + "\n")
-	add("why", f.Error.Cause)
+	add("why", f.Error.Message)
 	if f.Error.File != "" {
 		add("at", fmt.Sprintf("%s:%d", f.Error.File, f.Error.Line))
 	}

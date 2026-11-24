@@ -14,7 +14,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at launchApp: step failed
   why: appId isn't a package name: "a; rm -rf"
-  cause: test
+  blame: test
   step: launchApp
   at: flow.yaml:3
   saved: .rayo/case_failure.png
@@ -48,17 +48,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at launchApp: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "flow.yaml",
         "line": 3,
         "step": "launchApp",
-        "cause": "appId isn't a package name: \"a; rm -rf\"",
+        "message": "appId isn't a package name: \"a; rm -rf\"",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

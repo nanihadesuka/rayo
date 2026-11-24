@@ -97,15 +97,17 @@ func TestLiveServed(t *testing.T) {
 	}
 	has(do(0, "--screen", "- tapOn: { id: GET /a }\n- tapOn: { id: GET /no }"), "✓ tapOn GET /a", "isn't mocked: GET /no", "  a screen")
 	var a struct {
-		OK            bool
-		Failure       struct{ Error struct{ Cause, Step string } }
+		OK      bool
+		Failure struct {
+			Error struct{ Message, Step string }
+		}
 		SchemaVersion int
 		Calls         []any
 		Screen        []string
 		Unsaved       int
 	}
 	out := do(1, "--format", "json", "- back\n- tapOn: { id: missing }\n- tapOn: never")
-	if err := json.Unmarshal([]byte(out), &a); err != nil || a.OK || a.Failure.Error.Cause != "not on screen: missing" || a.SchemaVersion != 3 || a.Unsaved != 3 {
+	if err := json.Unmarshal([]byte(out), &a); err != nil || a.OK || a.Failure.Error.Message != "not on screen: missing" || a.SchemaVersion != 3 || a.Unsaved != 3 {
 		t.Errorf("%v %+v\n%s", err, a, out)
 	}
 	has(do(1, "- tapOm: x"), "unknown command")

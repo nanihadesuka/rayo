@@ -73,7 +73,7 @@ How it would look, if `pay` failed once and the app had a bug in `offline`:
 [4/4] FAIL offline  41.9 s  (failed 2 times)
   try: 1
   why: not on screen: You are offline
-  cause: app, the app crashed: java.net.ConnectException: unexpected end of stream
+  blame: app, the app crashed: java.net.ConnectException: unexpected end of stream
   step: assertVisible You are offline
   at: tests/offline/flow.yaml:7
   crash: FATAL EXCEPTION: main

@@ -25,7 +25,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at Open it: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: Open it
   at: sub.yaml:3
   from: sub.yaml:3 retry retries: 1
@@ -64,17 +64,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at Open it: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "sub.yaml",
         "line": 3,
         "step": "Open it",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [
         {

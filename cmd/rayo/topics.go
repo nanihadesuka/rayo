@@ -37,7 +37,7 @@ screen.txt, logcat.txt and requests.txt, cut to the failure window.
   rayo test --emulator --rerun-failed all.suite.yaml  only what failed last time
   rayo live --emulator f.yaml                        run its steps, then try commands where it stopped
 
-The cause is app if the app crashed or hung, device if the device was lost, and else test.
+The blame is app if the app crashed or hung, device if the device was lost, and else test.
 `},
 	{"record-mocks", "record mocks from the real backend", `With mock: in the header, rayo answers as the backend. To make the mocks, capture what the real
 one answers, once, then keep them up to date:

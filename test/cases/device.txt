@@ -29,7 +29,7 @@ emulator-5554, ready in # ms
   case failed at shell boom: step failed
   why: exit code 1
     it broke
-  cause: test
+  blame: test
   step: shell boom
   at: flow.yaml:10
   before:
@@ -84,17 +84,17 @@ PNG...
     "failure": {
       "try": 1,
       "verdict": "case failed at shell boom: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "flow.yaml",
         "line": 10,
         "step": "shell boom",
-        "cause": "exit code 1\nit broke",
+        "message": "exit code 1\nit broke",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [

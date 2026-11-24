@@ -22,14 +22,14 @@ appId: a.b
 [1/3] FAIL a  # s
   a failed at tapOn missing: device error
   why: not on screen: missing
-  cause: device, Android restarted during the flow
+  blame: device, Android restarted during the flow
   step: tapOn missing
   at: a.yaml:3
   saved: .rayo/a_failure.png
 [2/3] FAIL b  # s
   b failed at tapOn missing: device error
   why: not on screen: missing
-  cause: device, Android restarted during the flow
+  blame: device, Android restarted during the flow
   step: tapOn missing
   at: b.yaml:3
   saved: .rayo/b_failure.png
@@ -81,17 +81,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn missing: device error",
-      "kind": "device error",
+      "cause": "device error",
       "error": {
         "file": "a.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "device",
+      "blame": "device",
       "because": "Android restarted during the flow",
       "from": [],
       "before": [],
@@ -110,17 +110,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "b failed at tapOn missing: device error",
-      "kind": "device error",
+      "cause": "device error",
       "error": {
         "file": "b.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "device",
+      "blame": "device",
       "because": "Android restarted during the flow",
       "from": [],
       "before": [],

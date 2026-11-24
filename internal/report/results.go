@@ -85,7 +85,7 @@ func (o *Outcome) Attempts() string {
 }
 
 // failing is the step that failed, where it is written and what went wrong, of its last try that failed.
-func (o *Outcome) failing() (step, at, why string, cause flow.Cause) {
+func (o *Outcome) failing() (step, at, why, cause string, blame flow.Blame) {
 	for i := len(o.Tries) - 1; i >= 0; i-- {
 		t := o.Tries[i]
 		if t.Err == nil {
@@ -97,11 +97,11 @@ func (o *Outcome) failing() (step, at, why string, cause flow.Cause) {
 			step, at, why = e.Step.Text(), e.Step.Place(), strings.Join(strings.Fields(e.Err.Error()), " ")
 		}
 		if t.Failure != nil {
-			cause = t.Failure.Cause
+			cause, blame = t.Failure.Cause, t.Failure.Blame
 		}
-		return step, at, why, cause
+		return step, at, why, cause, blame
 	}
-	return "", "", "", ""
+	return "", "", "", "", ""
 }
 
 func stamp(t time.Time) string {
@@ -228,13 +228,13 @@ func (o *Outcome) mdLine() string {
 	if o.Status == Interrupted {
 		return line + ", interrupted"
 	}
-	if step, at, why, cause := o.failing(); why != "" {
+	if step, at, why, _, blame := o.failing(); why != "" {
 		if step != "" {
 			line += fmt.Sprintf(": `%s` at %s", step, at)
 		}
 		line += ": " + why
-		if cause != "" {
-			line += " (" + string(cause) + ")"
+		if blame != "" {
+			line += " (" + string(blame) + ")"
 		}
 	}
 	return line
@@ -252,10 +252,10 @@ func (s *Summary) fromTemplate() ([]byte, error) {
 		inner := flowBlock.FindStringSubmatch(block)[1]
 		var b strings.Builder
 		for _, o := range s.Shown() {
-			step, at, why, cause := o.failing()
+			step, at, why, cause, blame := o.failing()
 			b.WriteString(strings.NewReplacer("{name}", o.Flow.Name, "{file}", filepath.ToSlash(o.Flow.Path), "{status}", string(o.Status),
 				"{attempts}", o.Attempts(), "{tries}", fmt.Sprint(len(o.Tries)), "{duration}", fmt.Sprintf("%.1f s", o.took().Seconds()),
-				"{started}", stamp(o.Began), "{step}", step, "{at}", at, "{error}", why, "{cause}", string(cause)).Replace(inner))
+				"{started}", stamp(o.Began), "{step}", step, "{at}", at, "{error}", why, "{cause}", cause, "{blame}", string(blame)).Replace(inner))
 		}
 		return b.String()
 	})

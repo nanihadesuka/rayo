@@ -20,8 +20,8 @@ const (
 	StepFailed   = "step failed" // anything else, such as a script or a command that failed
 )
 
-// Kinds are all of them.
-var Kinds = []string{NotOnScreen, Timeout, AppCrashed, UnmockedCall, DeviceError, StepFailed}
+// Causes are all of them.
+var Causes = []string{NotOnScreen, Timeout, AppCrashed, UnmockedCall, DeviceError, StepFailed}
 
 // DefaultWindow is how long before the failing step began the files of a failure begin.
 const DefaultWindow = 10 * time.Second
@@ -36,13 +36,13 @@ const (
 // Details are all of them.
 var Details = []string{Brief, Normal, Full}
 
-// kindOf is what went wrong, from the error and what diagnose found.
-func kindOf(err error, f *Failure) string {
+// causeOf is what went wrong, from the error and what diagnose found.
+func causeOf(err error, f *Failure) string {
 	text := err.Error()
 	switch {
-	case f.Cause == Dev:
+	case f.Blame == Dev:
 		return DeviceError
-	case f.Cause == App:
+	case f.Blame == App:
 		return AppCrashed
 	case strings.Contains(text, "isn't mocked"):
 		return UnmockedCall

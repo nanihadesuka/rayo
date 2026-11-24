@@ -45,7 +45,7 @@ emulator-5554, ready in # ms
         GET /q?a=1
         GET /q
         GET /nothing
-  cause: test
+  blame: test
   before:
     tapOn GET /q
     tapOn GET /nothing
@@ -140,17 +140,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at the end: unmocked call",
-      "kind": "unmocked call",
+      "cause": "unmocked call",
       "error": {
         "file": "",
         "line": 0,
         "step": "",
-        "cause": "the app called what isn't mocked:\n    POST /a\n    GET /a\n    GET /q?a=1\n    GET /q\n    GET /nothing",
+        "message": "the app called what isn't mocked:\n    POST /a\n    GET /a\n    GET /q?a=1\n    GET /q\n    GET /nothing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [

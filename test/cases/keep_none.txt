@@ -23,13 +23,13 @@ appId: a.b
   try: 1
   c failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: c.yaml:3
   try: 2
   c failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: c.yaml:3
 
@@ -83,17 +83,17 @@ bye {"timeout":5000}
     "failure": {
       "try": 2,
       "verdict": "c failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "c.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

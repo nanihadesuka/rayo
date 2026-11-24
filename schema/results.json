@@ -23,8 +23,8 @@
             "description": "Its first try, in UTC; empty if it didn't run",
             "type": "string"
           },
-          "cause": {
-            "description": "Of a flow that failed, or empty",
+          "blame": {
+            "description": "Of a flow that failed, whose fault it is, or empty",
             "enum": [
               "test",
               "app",
@@ -47,6 +47,14 @@
                     "type": "string"
                   },
                   "type": "array"
+                },
+                "blame": {
+                  "description": "Whose fault it is: test, app or device",
+                  "enum": [
+                    "test",
+                    "app",
+                    "device"
+                  ]
                 },
                 "calls": {
                   "description": "The last 5 to the mock, and before them those that went wrong in the failure window",
@@ -91,11 +99,14 @@
                   "type": "array"
                 },
                 "cause": {
-                  "description": "test, app or device",
+                  "description": "What went wrong",
                   "enum": [
-                    "test",
-                    "app",
-                    "device"
+                    "not on screen",
+                    "timeout",
+                    "app crashed",
+                    "unmocked call",
+                    "device error",
+                    "step failed"
                   ]
                 },
                 "crash": {
@@ -106,10 +117,6 @@
                   "additionalProperties": false,
                   "description": "What went wrong, at which step",
                   "properties": {
-                    "cause": {
-                      "description": "What is wrong",
-                      "type": "string"
-                    },
                     "expected": {
                       "description": "What it takes, if that can be said",
                       "type": "string"
@@ -126,6 +133,10 @@
                       "description": "0 if not known",
                       "type": "integer"
                     },
+                    "message": {
+                      "description": "What is wrong",
+                      "type": "string"
+                    },
                     "nearest": {
                       "description": "Of that, the closest to what is written",
                       "type": "string"
@@ -139,7 +150,7 @@
                     "file",
                     "line",
                     "step",
-                    "cause",
+                    "message",
                     "expected",
                     "nearest",
                     "fix"
@@ -173,17 +184,6 @@
                   },
                   "type": "array"
                 },
-                "kind": {
-                  "description": "What went wrong",
-                  "enum": [
-                    "not on screen",
-                    "timeout",
-                    "app crashed",
-                    "unmocked call",
-                    "device error",
-                    "step failed"
-                  ]
-                },
                 "nearest": {
                   "description": "Of 'not on screen', the elements on it most like what was looked for",
                   "items": {
@@ -207,16 +207,16 @@
                   "type": "integer"
                 },
                 "verdict": {
-                  "description": "In a line: '<flow> failed at <step>: <kind>'",
+                  "description": "In a line: '<flow> failed at <step>: <cause>'",
                   "type": "string"
                 }
               },
               "required": [
                 "try",
                 "verdict",
-                "kind",
-                "error",
                 "cause",
+                "error",
+                "blame",
                 "because",
                 "from",
                 "before",
@@ -295,7 +295,7 @@
           "name",
           "file",
           "status",
-          "cause",
+          "blame",
           "began",
           "seconds",
           "attempts",

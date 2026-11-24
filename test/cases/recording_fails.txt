@@ -15,7 +15,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at the end: step failed
   why: the recording didn't start: EOF
-  cause: test
+  blame: test
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
@@ -48,17 +48,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at the end: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "",
         "line": 0,
         "step": "",
-        "cause": "the recording didn't start: EOF",
+        "message": "the recording didn't start: EOF",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

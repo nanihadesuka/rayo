@@ -26,7 +26,7 @@ bogus: 1
       "file": "flows/a.yaml",
       "line": 3,
       "step": "",
-      "cause": "unknown command /"tapOm/", did you mean tapOn?",
+      "message": "unknown command /"tapOm/", did you mean tapOn?",
       "expected": "",
       "nearest": "tapOn",
       "fix": "tapOn"
@@ -35,7 +35,7 @@ bogus: 1
       "file": "flows/b.yaml",
       "line": 3,
       "step": "",
-      "cause": "tapOn doesn't take /"idd/" (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)",
+      "message": "tapOn doesn't take /"idd/" (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)",
       "expected": "above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text",
       "nearest": "",
       "fix": ""
@@ -44,7 +44,7 @@ bogus: 1
       "file": "flows/c.yaml",
       "line": 2,
       "step": "",
-      "cause": "unknown key /"bogus/" (it takes appId, name, tags, env, mock, network, record, onFlowStart, onFlowComplete)",
+      "message": "unknown key /"bogus/" (it takes appId, name, tags, env, mock, network, record, onFlowStart, onFlowComplete)",
       "expected": "appId, name, tags, env, mock, network, record, onFlowStart, onFlowComplete",
       "nearest": "",
       "fix": ""

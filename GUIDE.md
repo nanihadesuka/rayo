@@ -109,7 +109,7 @@ It says why, where, what came before, and what was on screen:
 ```
 [2/3] FAIL pay  9.1 s  (failed 2 times)
   why: not on screen: pay_button
-  cause: test
+  blame: test
   step: tapOn pay_button
   at: tests/pay.yaml:12
   screen:

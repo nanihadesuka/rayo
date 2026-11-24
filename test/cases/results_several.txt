@@ -54,7 +54,7 @@ bye {"timeout":5000}
       "name": "a",
       "file": "a.yaml",
       "status": "PASS",
-      "cause": "",
+      "blame": "",
       "began": "<now>",
       "seconds": #,
       "attempts": "",

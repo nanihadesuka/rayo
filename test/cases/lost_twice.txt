@@ -20,7 +20,7 @@ appId: a.b
   a failed at tapOn crash: device error
   why: lost the device: EOF
     noise before
-  cause: device, the connection to the device was lost
+  blame: device, the connection to the device was lost
   step: tapOn crash
   at: a.yaml:3
   saved: .rayo/a_failure.png
@@ -28,7 +28,7 @@ appId: a.b
   b failed at tapOn crash: device error
   why: lost the device: EOF
     noise before
-  cause: device, the connection to the device was lost
+  blame: device, the connection to the device was lost
   step: tapOn crash
   at: b.yaml:3
   saved: .rayo/b_failure.png
@@ -77,17 +77,17 @@ the log
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn crash: device error",
-      "kind": "device error",
+      "cause": "device error",
       "error": {
         "file": "a.yaml",
         "line": 3,
         "step": "tapOn crash",
-        "cause": "lost the device: EOF\nnoise before",
+        "message": "lost the device: EOF\nnoise before",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "device",
+      "blame": "device",
       "because": "the connection to the device was lost",
       "from": [],
       "before": [],
@@ -106,17 +106,17 @@ the log
     "failure": {
       "try": 1,
       "verdict": "b failed at tapOn crash: device error",
-      "kind": "device error",
+      "cause": "device error",
       "error": {
         "file": "b.yaml",
         "line": 3,
         "step": "tapOn crash",
-        "cause": "lost the device: EOF\nnoise before",
+        "message": "lost the device: EOF\nnoise before",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "device",
+      "blame": "device",
       "because": "the connection to the device was lost",
       "from": [],
       "before": [],

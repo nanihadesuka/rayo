@@ -27,21 +27,21 @@ appId: a.b
 [1/3] FAIL a  # s
   a failed at tapOn flaky 1: step failed
   why: flaked
-  cause: test
+  blame: test
   step: tapOn flaky 1
   at: a.yaml:3
   saved: .rayo/a_failure.png
 [2/3] FAIL b  # s
   b failed at tapOn flaky 2: step failed
   why: flaked
-  cause: test
+  blame: test
   step: tapOn flaky 2
   at: b.yaml:3
   saved: .rayo/b_failure.png
 [3/3] FAIL c  # s
   c failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: c.yaml:3
   saved: .rayo/c_failure.png
@@ -102,17 +102,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn flaky 1: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "a.yaml",
         "line": 3,
         "step": "tapOn flaky 1",
-        "cause": "flaked",
+        "message": "flaked",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -131,17 +131,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "b failed at tapOn flaky 2: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "b.yaml",
         "line": 3,
         "step": "tapOn flaky 2",
-        "cause": "flaked",
+        "message": "flaked",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -160,17 +160,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "c failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "c.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -191,7 +191,7 @@ FAIL a  # s
   file: a.yaml
   a failed at tapOn flaky 1: step failed
   why: flaked
-  cause: test
+  blame: test
   step: tapOn flaky 1
   at: a.yaml:3
   saved: .rayo/a_failure.png
@@ -199,7 +199,7 @@ FAIL b  # s
   file: b.yaml
   b failed at tapOn flaky 2: step failed
   why: flaked
-  cause: test
+  blame: test
   step: tapOn flaky 2
   at: b.yaml:3
   saved: .rayo/b_failure.png
@@ -207,7 +207,7 @@ FAIL c  # s
   file: c.yaml
   c failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: c.yaml:3
   saved: .rayo/c_failure.png

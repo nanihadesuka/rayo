@@ -16,7 +16,7 @@ test flow.yaml second.yaml
   case failed at tapOn crash: device error
   why: lost the device: EOF
     noise before
-  cause: device, the connection to the device was lost
+  blame: device, the connection to the device was lost
   step: tapOn crash
   at: flow.yaml:3
   saved: .rayo/case_failure.png
@@ -57,17 +57,17 @@ the log
     "failure": {
       "try": 1,
       "verdict": "case failed at tapOn crash: device error",
-      "kind": "device error",
+      "cause": "device error",
       "error": {
         "file": "flow.yaml",
         "line": 3,
         "step": "tapOn crash",
-        "cause": "lost the device: EOF\nnoise before",
+        "message": "lost the device: EOF\nnoise before",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "device",
+      "blame": "device",
       "because": "the connection to the device was lost",
       "from": [],
       "before": [],

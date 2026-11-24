@@ -7,32 +7,32 @@ import (
 	"time"
 )
 
-// Cause is what a failure comes from.
-type Cause string
+// Blame is whose fault a failure is.
+type Blame string
 
 // Test is all that isn't known to come from elsewhere.
 const (
-	Test Cause = "test"
-	App  Cause = "app"    // it crashed, hung or isn't there
-	Dev  Cause = "device" // it was lost, restarted or hung
+	Test Blame = "test"
+	App  Blame = "app"    // it crashed, hung or isn't there
+	Dev  Blame = "device" // it was lost, restarted or hung
 )
 
 // diagnose says where a failure comes from. It only blames what it has evidence of.
 func (r *Runner) diagnose(err error, log string) {
 	f := r.failure
-	f.Cause = Test
+	f.Blame = Test
 	trouble, unusable := r.health()
 	switch {
 	case trouble != "":
-		f.Cause, f.Because, f.Unusable = Dev, trouble, unusable
+		f.Blame, f.Because, f.Unusable = Dev, trouble, unusable
 	case r.agent.Dead() != nil:
-		f.Cause, f.Because = Dev, "the connection to the device was lost"
+		f.Blame, f.Because = Dev, "the connection to the device was lost"
 	case f.Crash != "":
-		f.Cause, f.Because = App, signature(f.Crash)
+		f.Blame, f.Because = App, signature(f.Crash)
 	case r.systemTrouble(log) != "":
-		f.Cause, f.Because = Dev, r.systemTrouble(log)
+		f.Blame, f.Because = Dev, r.systemTrouble(log)
 	case strings.Contains(err.Error(), "is not installed"):
-		f.Cause, f.Because = App, "the app is not installed"
+		f.Blame, f.Because = App, "the app is not installed"
 	}
 }
 

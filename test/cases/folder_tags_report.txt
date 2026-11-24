@@ -38,7 +38,7 @@ emulator-5554, ready in # ms
 [2/2] FAIL c  # s
   c failed at this & that: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: this & that
   at: flows/c/flow.yaml:4
   saved: dbg/c_failure.png
@@ -76,17 +76,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "c failed at this & that: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "flows/c/flow.yaml",
         "line": 4,
         "step": "this & that",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -103,6 +103,6 @@ a screen
 <testsuite name="rayo" tests="2" failures="1" errors="0" skipped="0" time="#">
   <testcase name="First one" file="flows/a.yaml" time="#"></testcase>
   <testcase name="c" file="flows/c/flow.yaml" time="#">
-    <failure>  c failed at this &amp; that: not on screen&#xA;  why: not on screen: missing&#xA;  cause: test&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  saved: dbg/c_failure.png&#xA;</failure>
+    <failure>  c failed at this &amp; that: not on screen&#xA;  why: not on screen: missing&#xA;  blame: test&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  saved: dbg/c_failure.png&#xA;</failure>
   </testcase>
 </testsuite>

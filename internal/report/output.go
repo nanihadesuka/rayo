@@ -65,7 +65,7 @@ type Problem struct {
 	File     string `json:"file" about:"Where it is written; empty if it isn't of a file"`
 	Line     int    `json:"line" about:"0 if not known"`
 	Step     string `json:"step" about:"Of a flow that failed, the step"`
-	Cause    string `json:"cause" about:"What is wrong"`
+	Message  string `json:"message" about:"What is wrong"`
 	Expected string `json:"expected" about:"What it takes, if that can be said"`
 	Nearest  string `json:"nearest" about:"Of that, the closest to what is written"`
 	Fix      string `json:"fix" about:"What to write instead, if that can be said"`
@@ -73,14 +73,14 @@ type Problem struct {
 
 // ProblemOf describes an error.
 func ProblemOf(err error) Problem {
-	p := Problem{Cause: err.Error()}
+	p := Problem{Message: err.Error()}
 	var step *flow.StepError
 	var wrong *flow.Problem
 	switch {
 	case errors.As(err, &step):
-		p.Step, p.File, p.Line, p.Cause = step.Step.Text(), filepath.ToSlash(step.Step.Path), step.Step.Line, step.Err.Error()
+		p.Step, p.File, p.Line, p.Message = step.Step.Text(), filepath.ToSlash(step.Step.Path), step.Step.Line, step.Err.Error()
 	case errors.As(err, &wrong):
-		p.File, p.Line, p.Cause = filepath.ToSlash(wrong.Path), wrong.Line, wrong.What
+		p.File, p.Line, p.Message = filepath.ToSlash(wrong.Path), wrong.Line, wrong.What
 		p.Expected, p.Nearest, p.Fix = wrong.Expected, wrong.Nearest, wrong.Fix
 	}
 	return p

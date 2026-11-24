@@ -14,7 +14,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at inputText ${output.nothing}: step failed
   why: ${output.nothing}: it is undefined
-  cause: test
+  blame: test
   step: inputText ${output.nothing}
   at: flow.yaml:3
   saved: .rayo/case_failure.png
@@ -48,17 +48,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at inputText ${output.nothing}: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "flow.yaml",
         "line": 3,
         "step": "inputText ${output.nothing}",
-        "cause": "${output.nothing}: it is undefined",
+        "message": "${output.nothing}: it is undefined",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

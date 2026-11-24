@@ -14,7 +14,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at openLink nobody.opens://this: step failed
   why: Error: Activity not started, unable to resolve Intent
-  cause: test
+  blame: test
   step: openLink nobody.opens://this
   at: flow.yaml:3
   saved: .rayo/case_failure.png
@@ -49,17 +49,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at openLink nobody.opens://this: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "flow.yaml",
         "line": 3,
         "step": "openLink nobody.opens://this",
-        "cause": "Error: Activity not started, unable to resolve Intent",
+        "message": "Error: Activity not started, unable to resolve Intent",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

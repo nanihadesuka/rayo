@@ -21,7 +21,7 @@ emulator-5554, ready in # ms
   case failed at the end: unmocked call
   why: the app called what isn't mocked:
         GET /late
-  cause: test
+  blame: test
   before:
     tapOn GET /a
     tapOn GET /late
@@ -68,17 +68,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at the end: unmocked call",
-      "kind": "unmocked call",
+      "cause": "unmocked call",
       "error": {
         "file": "",
         "line": 0,
         "step": "",
-        "cause": "the app called what isn't mocked:\n    GET /late",
+        "message": "the app called what isn't mocked:\n    GET /late",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [

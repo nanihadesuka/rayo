@@ -15,7 +15,7 @@ appId: a.b
 [1/2] FAIL a  # s
   a failed at tapOn android hangs: device error
   why: not on screen: home
-  cause: device, Android's interface hung
+  blame: device, Android's interface hung
   step: tapOn android hangs
   at: a.yaml:3
   saved: .rayo/a_failure.png
@@ -58,17 +58,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn android hangs: device error",
-      "kind": "device error",
+      "cause": "device error",
       "error": {
         "file": "a.yaml",
         "line": 3,
         "step": "tapOn android hangs",
-        "cause": "not on screen: home",
+        "message": "not on screen: home",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "device",
+      "blame": "device",
       "because": "Android's interface hung",
       "from": [],
       "before": [],

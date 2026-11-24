@@ -14,7 +14,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at setLocation latitude: 141, longitude: 2: step failed
   why: not a location: 141.0000000,2.0000000
-  cause: test
+  blame: test
   step: setLocation latitude: 141, longitude: 2
   at: flow.yaml:3
   saved: .rayo/case_failure.png
@@ -48,17 +48,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at setLocation latitude: 141, longitude: 2: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "flow.yaml",
         "line": 3,
         "step": "setLocation latitude: 141, longitude: 2",
-        "cause": "not a location: 141.0000000,2.0000000",
+        "message": "not a location: 141.0000000,2.0000000",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

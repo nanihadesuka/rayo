@@ -106,11 +106,11 @@ const (
 // after takes a try into account, and returns why to stop, if so.
 func (r *streak) after(o *report.Outcome, keepGoing bool) string {
 	f := o.Failure
-	if o.Err == nil || f == nil || f.Cause == flow.Test {
+	if o.Err == nil || f == nil || f.Blame == flow.Test {
 		*r = streak{}
 		return ""
 	}
-	if f.Cause == flow.Dev {
+	if f.Blame == flow.Dev {
 		r.device++
 		r.app, r.crash = 0, ""
 		switch {

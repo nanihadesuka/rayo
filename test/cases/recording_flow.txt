@@ -21,7 +21,7 @@ appId: a.b
 [1/3] FAIL a  # s
   a failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: a.yaml:4
   saved: .rayo/a_failure.png
@@ -30,7 +30,7 @@ appId: a.b
 [3/3] FAIL c  # s
   c failed at stopRecording: step failed
   why: nothing is being recorded
-  cause: test
+  blame: test
   step: stopRecording
   at: c.yaml:3
   saved: .rayo/c_failure.png
@@ -88,17 +88,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "a.yaml",
         "line": 4,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -117,17 +117,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "c failed at stopRecording: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "c.yaml",
         "line": 3,
         "step": "stopRecording",
-        "cause": "nothing is being recorded",
+        "message": "nothing is being recorded",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -148,7 +148,7 @@ FAIL a  # s
   file: a.yaml
   a failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: a.yaml:4
   saved: .rayo/a_failure.png
@@ -159,7 +159,7 @@ FAIL c  # s
   file: c.yaml
   c failed at stopRecording: step failed
   why: nothing is being recorded
-  cause: test
+  blame: test
   step: stopRecording
   at: c.yaml:3
   saved: .rayo/c_failure.png

@@ -26,7 +26,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at startRecording: step failed
   why: a recording to .rayo/case_three.mp4 is going on
-  cause: test
+  blame: test
   step: startRecording
   at: flow.yaml:9
   before:
@@ -83,17 +83,17 @@ a video ........................................................................
     "failure": {
       "try": 1,
       "verdict": "case failed at startRecording: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "flow.yaml",
         "line": 9,
         "step": "startRecording",
-        "cause": "a recording to .rayo/case_three.mp4 is going on",
+        "message": "a recording to .rayo/case_three.mp4 is going on",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [

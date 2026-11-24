@@ -23,7 +23,7 @@ The tables between `generated` marks come from the code, as do `rayo help` and t
 | [Device](#device) | [setLocation](#setlocation) · [travel](#travel) · [setAirplaneMode](#setairplanemode) · [takeScreenshot](#takescreenshot) · [startRecording](#startrecording-stoprecording) · [stopRecording](#startrecording-stoprecording) · [camera](#camera) · [shell](#shell) |
 | [Server](#server) | [http](#http) |
 | [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [Capture](#capture) |
-| [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Causes](#causes) · [Outcomes](#outcomes) · [Results](#results) · [For a program](#for-a-program) · [Exit codes](#exit-codes) · [Errors](#errors) · [Events](#events) |
+| [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Blame](#blame) · [Outcomes](#outcomes) · [Results](#results) · [For a program](#for-a-program) · [Exit codes](#exit-codes) · [Errors](#errors) · [Events](#events) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
 | [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Timings](#timings) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
 | [Default times](#default-times) · [Limitations](#limitations) | |
@@ -1359,7 +1359,7 @@ flows:
 `--retries 0` turns it off. With `-c` and no suite it is 0. It is retried at once, before the next flow. `NOT_RUN` and `INTERRUPTED` aren't, nor when capturing.
 
 If it passes at last it is `FLAKY`, not `PASS`, with a note of where each try failed, its
-[cause](#causes) and the folder with the rest. Each has its own video too.
+[blame](#blame) and the folder with the rest. Each has its own video too.
 
 ```
 [2/3] FLAKY scan  31.0 s  (failed once, then passed)
@@ -1383,7 +1383,7 @@ A run whose flows all passed, some of them `FLAKY`, exits `0`; with `--flaky-fai
 `flaky-fails-build: true` in the suite, it exits `4`, see [Exit codes](#exit-codes).
 
 In JUnit, as Maven Surefire writes it, which Jenkins, GitLab and most CI read: the `testcase` passes, and
-has a `flakyFailure` for each try that failed, its `message` the error, its `type` the [cause](#causes) and its
+has a `flakyFailure` for each try that failed, its `message` the error, its `type` the [blame](#blame) and its
 `stackTrace` all there is to know, as in a `.txt`. It isn't counted in `failures`.
 
 ```xml
@@ -1396,11 +1396,11 @@ has a `flakyFailure` for each try that failed, its `message` the error, its `typ
 
 To run only some steps again, use [retry](#retry).
 
-### Causes
+### Blame
 
-Not every failure is the test's. Each has a `cause`:
+Not every failure is the test's. Each says whose fault it is, its `blame`:
 
-| Cause | When |
+| Blame | When |
 |---|---|
 | `app` | The app crashed or hung during the flow, or isn't installed |
 | `device` | It doesn't answer, is starting, restarted, its interface hung, or the connection was lost |
@@ -1419,7 +1419,7 @@ For `device`, each try counts. A failure that is the test's, or a pass, starts t
 ```
 [3/9] FAIL pay  4.1 s
   why: not on screen: home
-  cause: app, the app crashed: java.lang.IllegalStateException: oops
+  blame: app, the app crashed: java.lang.IllegalStateException: oops
   ...
 [4/9] NOT_RUN scan  (app: 3 flows in a row, the app crashed: ...)
 
@@ -1439,7 +1439,7 @@ Every flow asked for has one; none is left out of the count.
 | `FLAKY` | It failed, and passed when [retried](#retries) | 0, or 4 with [`flaky-fails-build`](#flaky-flows) |
 | `FAIL` | | 1 |
 | `INTERRUPTED` | Ctrl-C while it ran | 130 |
-| `NOT_RUN` | With the reason: interrupted, `--fail-fast`, or the run [stopped](#causes) | 1 |
+| `NOT_RUN` | With the reason: interrupted, `--fail-fast`, or the run [stopped](#blame) | 1 |
 
 If the connection is lost, the flow fails and the next goes on with a new one. `--rerun-failed` runs what is in `<output>/failed.json`: what
 failed, was interrupted or didn't run, until it passes.
@@ -1457,15 +1457,15 @@ How much is printed is `--detail`, or `detail:` in a suite:
 | `normal` | The default: as below; every step of a single flow |
 | `full` | Also `screen`, and every step of every flow; the [files](#failures) of a failure are whole |
 
-The cause of a verdict:
+The cause of a verdict, `cause` in JSON, is what went wrong; [`blame`](#blame) is whose fault it is, and `message` of an [error](#errors) is the text:
 
 | | |
 |---|---|
 | `not on screen` | What a step looked for wasn't there; `nearest` says what was most like it |
 | `timeout` | Something didn't happen in time, or stayed on screen |
-| `app crashed` | The app crashed, hung or isn't installed, see [Causes](#causes) |
+| `app crashed` | The app crashed, hung or isn't installed, see [Blame](#blame) |
 | `unmocked call` | The app called what no [mock](#mock) answers |
-| `device error` | The device was lost, restarted or hung, see [Causes](#causes) |
+| `device error` | The device was lost, restarted or hung, see [Blame](#blame) |
 | `step failed` | Anything else, such as a script or a command that failed |
 
 ```
@@ -1499,7 +1499,7 @@ The list at the end is only there if something didn't pass. Under a failure:
 | `try` | Which, if there were several |
 | | The verdict, a line without a key |
 | `why` | The error |
-| `cause` | `test`, `app` or `device`, see [Causes](#causes) |
+| `blame` | `test`, `app` or `device`, and what shows it, see [Blame](#blame) |
 | `step`, `at` | The step that failed, and where it is written |
 | `from` | The step that ran that flow, and so on outwards |
 | `crash` | The app crashed or hung during the flow: what the device log says |
@@ -1581,7 +1581,8 @@ step that failed and why. `--timings` and `--profile` are only for the screen, w
 | `{name}`, `{file}`, `{status}` | Its [outcome](#outcomes) |
 | `{attempts}`, `{tries}` | Such as `passed on retry 2`, empty for one try; how many |
 | `{duration}`, `{started}` | All its tries; when the first began |
-| `{step}`, `{at}`, `{error}`, `{cause}` | Of its last try that failed: the step, where it is written, what went wrong and the [cause](#causes) |
+| `{step}`, `{at}`, `{error}` | Of its last try that failed: the step, where it is written, and what went wrong |
+| `{cause}`, `{blame}` | Of that try: the cause of its verdict, such as `not on screen`; `test`, `app` or `device`, see [Blame](#blame) |
 
 In a `.txt`, a line that begins with an outcome is a flow: `grep -E '^(FAIL|NOT_RUN)' results.txt`. What
 follows is about it: `  key: value`, or `  key:` and lines with four spaces. `TOTAL` is the last line.
@@ -1607,7 +1608,7 @@ In a `.json`, every key is always there: what there is none of is `""`, `0` or `
       "name": "scan",
       "file": "tests/scan/flow.yaml",
       "status": "FAIL",
-      "cause": "test",
+      "blame": "test",
       "began": "2026-11-22T21:11:36Z",
       "seconds": 9.114,
       "attempts": "",
@@ -1625,9 +1626,11 @@ In a `.json`, every key is always there: what there is none of is `""`, `0` or `
           "try": 1,
           "error": {
             "file": "shared/flows/dock.yaml", "line": 8, "step": "tapOn finished_close",
-            "cause": "not on screen: finished_close", "expected": "", "nearest": "", "fix": ""
+            "message": "not on screen: finished_close", "expected": "", "nearest": "", "fix": ""
           },
-          "cause": "test",
+          "verdict": "scan failed at tapOn finished_close: not on screen",
+          "cause": "not on screen",
+          "blame": "test",
           "because": "",
           "from": [{ "step": "runFlow ../../shared/flows/dock.yaml", "file": "tests/scan/flow.yaml", "line": 23 }],
           "before": ["extendedWaitUntil finished"],
@@ -1651,7 +1654,7 @@ The run:
 | `run` | text | The suite's name, or what was run |
 | `device` | text | Its serial |
 | `order` | text | `--shuffle=<seed>`, if shuffled |
-| `stopped` | text | Why, if it stopped before the end, see [Causes](#causes) |
+| `stopped` | text | Why, if it stopped before the end, see [Blame](#blame) |
 | `ok` | true or false | Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code |
 | `summary` | mapping | The run at a glance, see below |
 | `flows` | list | Those that show says, see below |
@@ -1684,7 +1687,7 @@ Each of `flows`:
 | `name` | text | The flow's |
 | `file` | text | The flow's |
 | `status` | text | One of the [outcomes](#outcomes) |
-| `cause` | text | Of a flow that failed, or empty, see [Causes](#causes) |
+| `blame` | text | Of a flow that failed, whose fault it is, or empty, see [Blame](#blame) |
 | `began` | text | Its first try, in UTC; empty if it didn't run |
 | `seconds` | number | All its tries |
 | `attempts` | text | Such as 'passed on retry 2' or 'failed 3 times'; empty for one try |
@@ -1706,10 +1709,10 @@ Each of `failures`:
 | Key | | |
 |---|---|---|
 | `try` | number | From 1 |
-| `verdict` | text | In a line: '<flow> failed at <step>: <kind>' |
-| `kind` | text | What went wrong, see [Failures](#failures) |
+| `verdict` | text | In a line: '<flow> failed at <step>: <cause>' |
+| `cause` | text | What went wrong, see [Results](#results) |
 | `error` | mapping | What went wrong, at which step, see [Errors](#errors) |
-| `cause` | text | `test`, `app` or `device`, see [Causes](#causes) |
+| `blame` | text | Whose fault it is: `test`, `app` or `device`, see [Blame](#blame) |
 | `because` | text | What shows that it isn't the test |
 | `from` | list | The step that ran that flow, and so on outwards |
 | `before` | list | The last 3 steps that passed |
@@ -1721,7 +1724,7 @@ Each of `failures`:
 <!-- end -->
 
 ```
-jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].error.cause)"' results.json
+jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].verdict)"' results.json
 (Get-Content results.json -Raw | ConvertFrom-Json).flows | Where-Object status -eq FAIL
 ```
 
@@ -1800,14 +1803,14 @@ Mistakes in what is written and flows that failed are told the same way, as data
 | `file` | text | Where it is written; empty if it isn't of a file |
 | `line` | number | 0 if not known |
 | `step` | text | Of a flow that failed, the step |
-| `cause` | text | What is wrong |
+| `message` | text | What is wrong |
 | `expected` | text | What it takes, if that can be said |
 | `nearest` | text | Of that, the closest to what is written |
 | `fix` | text | What to write instead, if that can be said |
 <!-- end -->
 
 ```json
-{ "file": "flows/login.yaml", "line": 3, "step": "", "cause": "unknown command \"tapOm\", did you mean tapOn?",
+{ "file": "flows/login.yaml", "line": 3, "step": "", "message": "unknown command \"tapOm\", did you mean tapOn?",
   "expected": "", "nearest": "tapOn", "fix": "tapOn" }
 ```
 

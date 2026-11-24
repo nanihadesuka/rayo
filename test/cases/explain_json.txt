@@ -5,9 +5,9 @@ explain .rayo --format json
   "/x/pay.yaml": {
     "status": "FAIL", "name": "pay", "file": "pay.yaml", "why": "",
     "failure": {
-      "try": 2, "verdict": "pay failed at tapOn Pay: not on screen", "kind": "not on screen",
-      "error": { "file": "shared/pay.yaml", "line": 4, "step": "tapOn Pay", "cause": "not on screen: Pay", "expected": "", "nearest": "", "fix": "" },
-      "cause": "test", "because": "",
+      "try": 2, "verdict": "pay failed at tapOn Pay: not on screen", "cause": "not on screen",
+      "error": { "file": "shared/pay.yaml", "line": 4, "step": "tapOn Pay", "message": "not on screen: Pay", "expected": "", "nearest": "", "fix": "" },
+      "blame": "test", "because": "",
       "from": [{ "step": "runFlow shared/pay.yaml", "file": "pay.yaml", "line": 7 }],
       "before": ["tapOn Cart"],
       "nearest": ["id: com.shop:id/pay | text: Pay now  [0,0][100,50]"],
@@ -32,17 +32,17 @@ explain .rayo --format json
       "failure": {
         "try": 2,
         "verdict": "pay failed at tapOn Pay: not on screen",
-        "kind": "not on screen",
+        "cause": "not on screen",
         "error": {
           "file": "shared/pay.yaml",
           "line": 4,
           "step": "tapOn Pay",
-          "cause": "not on screen: Pay",
+          "message": "not on screen: Pay",
           "expected": "",
           "nearest": "",
           "fix": ""
         },
-        "cause": "test",
+        "blame": "test",
         "because": "",
         "from": [
           {

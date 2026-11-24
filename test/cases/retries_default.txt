@@ -19,14 +19,14 @@ appId: a.b
   try: 1
   b failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: b.yaml:3
   saved: .rayo/b_failure.png
   try: 2
   b failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: b.yaml:3
   saved: .rayo/b_retry1_failure.png
@@ -87,17 +87,17 @@ a screen
     "failure": {
       "try": 2,
       "verdict": "b failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "b.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

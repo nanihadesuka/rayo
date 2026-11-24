@@ -24,7 +24,7 @@ appId: a.b
   try: 1
   a failed at tapOn app crashes: app crashed
   why: not on screen: home
-  cause: app, the app crashed: java.lang.IllegalStateException: oops
+  blame: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
   at: a.yaml:3
   crash: FATAL EXCEPTION: main
@@ -34,7 +34,7 @@ appId: a.b
   try: 2
   a failed at tapOn app crashes: app crashed
   why: not on screen: home
-  cause: app, the app crashed: java.lang.IllegalStateException: oops
+  blame: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
   at: a.yaml:3
   crash: FATAL EXCEPTION: main
@@ -45,7 +45,7 @@ appId: a.b
   try: 1
   b failed at tapOn app crashes: app crashed
   why: not on screen: home
-  cause: app, the app crashed: java.lang.IllegalStateException: oops
+  blame: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
   at: b.yaml:3
   crash: FATAL EXCEPTION: main
@@ -55,7 +55,7 @@ appId: a.b
   try: 2
   b failed at tapOn app crashes: app crashed
   why: not on screen: home
-  cause: app, the app crashed: java.lang.IllegalStateException: oops
+  blame: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
   at: b.yaml:3
   crash: FATAL EXCEPTION: main
@@ -65,7 +65,7 @@ appId: a.b
 [3/4] FAIL c  # s
   c failed at tapOn app crashes: app crashed
   why: not on screen: home
-  cause: app, the app crashed: java.lang.IllegalStateException: oops
+  blame: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
   at: c.yaml:3
   crash: FATAL EXCEPTION: main
@@ -169,17 +169,17 @@ a screen
     "failure": {
       "try": 2,
       "verdict": "a failed at tapOn app crashes: app crashed",
-      "kind": "app crashed",
+      "cause": "app crashed",
       "error": {
         "file": "a.yaml",
         "line": 3,
         "step": "tapOn app crashes",
-        "cause": "not on screen: home",
+        "message": "not on screen: home",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "app",
+      "blame": "app",
       "because": "the app crashed: java.lang.IllegalStateException: oops",
       "from": [],
       "before": [],
@@ -198,17 +198,17 @@ a screen
     "failure": {
       "try": 2,
       "verdict": "b failed at tapOn app crashes: app crashed",
-      "kind": "app crashed",
+      "cause": "app crashed",
       "error": {
         "file": "b.yaml",
         "line": 3,
         "step": "tapOn app crashes",
-        "cause": "not on screen: home",
+        "message": "not on screen: home",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "app",
+      "blame": "app",
       "because": "the app crashed: java.lang.IllegalStateException: oops",
       "from": [],
       "before": [],
@@ -227,17 +227,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "c failed at tapOn app crashes: app crashed",
-      "kind": "app crashed",
+      "cause": "app crashed",
       "error": {
         "file": "c.yaml",
         "line": 3,
         "step": "tapOn app crashes",
-        "cause": "not on screen: home",
+        "message": "not on screen: home",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "app",
+      "blame": "app",
       "because": "the app crashed: java.lang.IllegalStateException: oops",
       "from": [],
       "before": [],
@@ -301,7 +301,7 @@ a screen
       "name": "a",
       "file": "a.yaml",
       "status": "FAIL",
-      "cause": "app",
+      "blame": "app",
       "began": "<now>",
       "seconds": #,
       "attempts": "failed 2 times",
@@ -318,17 +318,17 @@ a screen
         {
           "try": 1,
           "verdict": "a failed at tapOn app crashes: app crashed",
-          "kind": "app crashed",
+          "cause": "app crashed",
           "error": {
             "file": "a.yaml",
             "line": 3,
             "step": "tapOn app crashes",
-            "cause": "not on screen: home",
+            "message": "not on screen: home",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "app",
+          "blame": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
@@ -343,17 +343,17 @@ a screen
         {
           "try": 2,
           "verdict": "a failed at tapOn app crashes: app crashed",
-          "kind": "app crashed",
+          "cause": "app crashed",
           "error": {
             "file": "a.yaml",
             "line": 3,
             "step": "tapOn app crashes",
-            "cause": "not on screen: home",
+            "message": "not on screen: home",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "app",
+          "blame": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
@@ -371,7 +371,7 @@ a screen
       "name": "b",
       "file": "b.yaml",
       "status": "FAIL",
-      "cause": "app",
+      "blame": "app",
       "began": "<now>",
       "seconds": #,
       "attempts": "failed 2 times",
@@ -388,17 +388,17 @@ a screen
         {
           "try": 1,
           "verdict": "b failed at tapOn app crashes: app crashed",
-          "kind": "app crashed",
+          "cause": "app crashed",
           "error": {
             "file": "b.yaml",
             "line": 3,
             "step": "tapOn app crashes",
-            "cause": "not on screen: home",
+            "message": "not on screen: home",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "app",
+          "blame": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
@@ -413,17 +413,17 @@ a screen
         {
           "try": 2,
           "verdict": "b failed at tapOn app crashes: app crashed",
-          "kind": "app crashed",
+          "cause": "app crashed",
           "error": {
             "file": "b.yaml",
             "line": 3,
             "step": "tapOn app crashes",
-            "cause": "not on screen: home",
+            "message": "not on screen: home",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "app",
+          "blame": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
@@ -441,7 +441,7 @@ a screen
       "name": "c",
       "file": "c.yaml",
       "status": "FAIL",
-      "cause": "app",
+      "blame": "app",
       "began": "<now>",
       "seconds": #,
       "attempts": "",
@@ -458,17 +458,17 @@ a screen
         {
           "try": 1,
           "verdict": "c failed at tapOn app crashes: app crashed",
-          "kind": "app crashed",
+          "cause": "app crashed",
           "error": {
             "file": "c.yaml",
             "line": 3,
             "step": "tapOn app crashes",
-            "cause": "not on screen: home",
+            "message": "not on screen: home",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "app",
+          "blame": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
@@ -486,7 +486,7 @@ a screen
       "name": "d",
       "file": "d.yaml",
       "status": "NOT_RUN",
-      "cause": "",
+      "blame": "",
       "began": "",
       "seconds": #,
       "attempts": "",

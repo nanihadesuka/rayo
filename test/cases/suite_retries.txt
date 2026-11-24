@@ -33,7 +33,7 @@ appId: a.b
 [3/3] FAIL c  # s
   c failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: c.yaml:3
   saved: .rayo/c_failure.png
@@ -107,17 +107,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "c failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "c.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -174,7 +174,7 @@ a screen
       "name": "a",
       "file": "a.yaml",
       "status": "FLAKY",
-      "cause": "",
+      "blame": "",
       "began": "<now>",
       "seconds": #,
       "attempts": "passed on retry 1",
@@ -191,17 +191,17 @@ a screen
         {
           "try": 1,
           "verdict": "a failed at tapOn flaky 1: step failed",
-          "kind": "step failed",
+          "cause": "step failed",
           "error": {
             "file": "a.yaml",
             "line": 3,
             "step": "tapOn flaky 1",
-            "cause": "flaked",
+            "message": "flaked",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "test",
+          "blame": "test",
           "because": "",
           "from": [],
           "before": [],
@@ -219,7 +219,7 @@ a screen
       "name": "b",
       "file": "b.yaml",
       "status": "FLAKY",
-      "cause": "",
+      "blame": "",
       "began": "<now>",
       "seconds": #,
       "attempts": "passed on retry 2",
@@ -236,17 +236,17 @@ a screen
         {
           "try": 1,
           "verdict": "b failed at tapOn flaky 2: step failed",
-          "kind": "step failed",
+          "cause": "step failed",
           "error": {
             "file": "b.yaml",
             "line": 3,
             "step": "tapOn flaky 2",
-            "cause": "flaked",
+            "message": "flaked",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "test",
+          "blame": "test",
           "because": "",
           "from": [],
           "before": [],
@@ -261,17 +261,17 @@ a screen
         {
           "try": 2,
           "verdict": "b failed at tapOn flaky 2: step failed",
-          "kind": "step failed",
+          "cause": "step failed",
           "error": {
             "file": "b.yaml",
             "line": 3,
             "step": "tapOn flaky 2",
-            "cause": "flaked",
+            "message": "flaked",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "test",
+          "blame": "test",
           "because": "",
           "from": [],
           "before": [],
@@ -289,7 +289,7 @@ a screen
       "name": "c",
       "file": "c.yaml",
       "status": "FAIL",
-      "cause": "test",
+      "blame": "test",
       "began": "<now>",
       "seconds": #,
       "attempts": "",
@@ -306,17 +306,17 @@ a screen
         {
           "try": 1,
           "verdict": "c failed at tapOn missing: not on screen",
-          "kind": "not on screen",
+          "cause": "not on screen",
           "error": {
             "file": "c.yaml",
             "line": 3,
             "step": "tapOn missing",
-            "cause": "not on screen: missing",
+            "message": "not on screen: missing",
             "expected": "",
             "nearest": "",
             "fix": ""
           },
-          "cause": "test",
+          "blame": "test",
           "because": "",
           "from": [],
           "before": [],

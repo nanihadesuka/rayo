@@ -111,8 +111,8 @@ func (r *Runner) Run(ctx context.Context, f *Flow, a Attempt) Result {
 			r.failure = &Failure{}
 		}
 		r.diagnose(err, r.log)
-		r.failure.Kind = kindOf(err, r.failure)
-		if r.failure.Kind == NotOnScreen {
+		r.failure.Cause = causeOf(err, r.failure)
+		if r.failure.Cause == NotOnScreen {
 			r.failure.Nearest = Nearest(r.failure.Screen, wanted(err), 5)
 		}
 	}

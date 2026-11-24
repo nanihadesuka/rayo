@@ -39,7 +39,7 @@ mock: ../mocks/b.json
   own failed at the end: unmocked call
   why: the app called what isn't mocked:
         GET /a
-  cause: test
+  blame: test
   before:
     tapOn GET /b
     tapOn GET /a
@@ -91,17 +91,17 @@ bye {"timeout":5000}
     "failure": {
       "try": 1,
       "verdict": "own failed at the end: unmocked call",
-      "kind": "unmocked call",
+      "cause": "unmocked call",
       "error": {
         "file": "",
         "line": 0,
         "step": "",
-        "cause": "the app called what isn't mocked:\n    GET /a",
+        "message": "the app called what isn't mocked:\n    GET /a",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [

@@ -27,7 +27,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at waitForRequest path: /pay: step failed
   why: the app didn't call it
-  cause: test
+  blame: test
   step: waitForRequest path: /pay
   at: flow.yaml:9
   before:
@@ -79,17 +79,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at waitForRequest path: /pay: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "flow.yaml",
         "line": 9,
         "step": "waitForRequest path: /pay",
-        "cause": "the app didn't call it",
+        "message": "the app didn't call it",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [

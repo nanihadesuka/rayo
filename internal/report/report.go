@@ -93,7 +93,7 @@ func (o *Outcome) Line() string {
 	return line
 }
 
-// Verdict is a failed try in a line: "<flow> failed at <step>: <cause>", the cause one of flow.Kinds.
+// Verdict is a failed try in a line: "<flow> failed at <step>: <cause>", the cause one of flow.Causes.
 func (o *Outcome) Verdict(t flow.Result) string {
 	at := "the end"
 	var step *flow.StepError
@@ -101,8 +101,8 @@ func (o *Outcome) Verdict(t flow.Result) string {
 		at = step.Step.Text()
 	}
 	kind := flow.StepFailed
-	if t.Failure != nil && t.Failure.Kind != "" {
-		kind = t.Failure.Kind
+	if t.Failure != nil && t.Failure.Cause != "" {
+		kind = t.Failure.Cause
 	}
 	return fmt.Sprintf("%s failed at %s: %s", o.Flow.Name, at, kind)
 }
@@ -142,7 +142,7 @@ func (o *Outcome) Details(detail string) string {
 		var step *flow.StepError
 		if errors.As(t.Err, &step) {
 			add("why", step.Err.Error())
-			o.addCause(add, t)
+			o.addBlame(add, t)
 			add("step", step.Step.Text())
 			add("at", step.Step.Place())
 			for _, from := range step.From {
@@ -150,7 +150,7 @@ func (o *Outcome) Details(detail string) string {
 			}
 		} else {
 			add("why", t.Err.Error())
-			o.addCause(add, t)
+			o.addBlame(add, t)
 		}
 		if f == nil {
 			continue
@@ -182,13 +182,13 @@ func (o *Outcome) Details(detail string) string {
 	return b.String()
 }
 
-func (o *Outcome) addCause(add func(key, value string), t flow.Result) {
-	if f := t.Failure; f != nil && f.Cause != "" {
-		because := string(f.Cause)
+func (o *Outcome) addBlame(add func(key, value string), t flow.Result) {
+	if f := t.Failure; f != nil && f.Blame != "" {
+		because := string(f.Blame)
 		if f.Because != "" {
 			because += ", " + f.Because
 		}
-		add("cause", because)
+		add("blame", because)
 	}
 }
 
@@ -204,7 +204,7 @@ func (o *Outcome) flakyFailures(detail string) []flakyFailure {
 		one := Outcome{Flow: o.Flow, Status: Failed, Tries: []flow.Result{t}}
 		f := flakyFailure{message: fmt.Sprintf("try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " ")), text: one.Details(detail)}
 		if t.Failure != nil {
-			f.cause = string(t.Failure.Cause)
+			f.cause = string(t.Failure.Blame)
 		}
 		list = append(list, f)
 	}
@@ -229,7 +229,7 @@ func (o *Outcome) Notes() string {
 		}
 		fmt.Fprintf(&b, "  try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " "))
 		if f := t.Failure; f != nil {
-			fmt.Fprintf(&b, "  (%s)", f.Cause)
+			fmt.Fprintf(&b, "  (%s)", f.Blame)
 			if f.Saved != "" {
 				fmt.Fprintf(&b, "  %s", f.Saved)
 			}
@@ -274,18 +274,18 @@ func (s *Summary) count(is Status) int {
 	return n
 }
 
-// cause is of the last try of a flow that failed.
-func (o *Outcome) cause() flow.Cause {
+// blame is of the last try of a flow that failed.
+func (o *Outcome) blame() flow.Blame {
 	if o.Status == Failed && o.Failure != nil {
-		return o.Failure.Cause
+		return o.Failure.Blame
 	}
 	return ""
 }
 
-func (s *Summary) caused(by flow.Cause) int {
+func (s *Summary) blamed(by flow.Blame) int {
 	n := 0
 	for _, o := range s.Outcomes {
-		if o.cause() == by {
+		if o.blame() == by {
 			n++
 		}
 	}
@@ -341,8 +341,8 @@ func (s *Summary) Text(brief bool) string {
 		fmt.Fprintf(&b, "STOPPED %s\n", s.Stopped)
 	}
 	var causes []string
-	for _, c := range []flow.Cause{flow.App, flow.Dev} {
-		if n := s.caused(c); n > 0 {
+	for _, c := range []flow.Blame{flow.App, flow.Dev} {
+		if n := s.blamed(c); n > 0 {
 			causes = append(causes, fmt.Sprintf("%d %s", n, c))
 		}
 	}

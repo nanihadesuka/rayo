@@ -17,7 +17,7 @@ appId: a.b
 [1/2] FAIL a  # s
   a failed at tapOn missing: device error
   why: not on screen: missing
-  cause: device, the device is starting
+  blame: device, the device is starting
   step: tapOn missing
   at: a.yaml:3
   saved: .rayo/a_failure.png
@@ -57,17 +57,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn missing: device error",
-      "kind": "device error",
+      "cause": "device error",
       "error": {
         "file": "a.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "device",
+      "blame": "device",
       "because": "the device is starting",
       "from": [],
       "before": [],

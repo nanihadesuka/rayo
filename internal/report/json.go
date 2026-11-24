@@ -22,7 +22,7 @@ type jsonRun struct {
 	Run           string      `json:"run" about:"The suite's name, or what was run"`
 	Device        string      `json:"device" about:"Its serial"`
 	Order         string      `json:"order" about:"'--shuffle=<seed>', if shuffled"`
-	Stopped       string      `json:"stopped" about:"Why, if it stopped before the end, see [Causes](#causes)"`
+	Stopped       string      `json:"stopped" about:"Why, if it stopped before the end, see [Blame](#blame)"`
 	OK            bool        `json:"ok" about:"Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code"`
 	Summary       jsonSummary `json:"summary" about:"The run at a glance, see below"`
 	Flows         []jsonFlow  `json:"flows" about:"Those that show says, see below"`
@@ -32,7 +32,7 @@ type jsonFlow struct {
 	Name         string     `json:"name" about:"The flow's"`
 	File         string     `json:"file" about:"The flow's"`
 	Status       Status     `json:"status" about:"One of the [outcomes](#outcomes)" enum:"PASS,FLAKY,FAIL,INTERRUPTED,NOT_RUN"`
-	Cause        flow.Cause `json:"cause" about:"Of a flow that failed, or empty, see [Causes](#causes)" enum:"test,app,device,"`
+	Blame        flow.Blame `json:"blame" about:"Of a flow that failed, whose fault it is, or empty, see [Blame](#blame)" enum:"test,app,device,"`
 	Began        string     `json:"began" about:"Its first try, in UTC; empty if it didn't run"`
 	Seconds      float64    `json:"seconds" about:"All its tries"`
 	Attempts     string     `json:"attempts" about:"Such as 'passed on retry 2' or 'failed 3 times'; empty for one try"`
@@ -51,10 +51,10 @@ type jsonFlow struct {
 // Failure is one, for a program.
 type Failure struct {
 	Try     int         `json:"try" about:"From 1"`
-	Verdict string      `json:"verdict" about:"In a line: '<flow> failed at <step>: <kind>'"`
-	Kind    string      `json:"kind" about:"What went wrong, see [Failures](#failures)" enum:"not on screen,timeout,app crashed,unmocked call,device error,step failed"`
+	Verdict string      `json:"verdict" about:"In a line: '<flow> failed at <step>: <cause>'"`
+	Cause   string      `json:"cause" about:"What went wrong, see [Results](#results)" enum:"not on screen,timeout,app crashed,unmocked call,device error,step failed"`
 	Error   Problem     `json:"error" about:"What went wrong, at which step, see [Errors](#errors)"`
-	Cause   flow.Cause  `json:"cause" about:"'test', 'app' or 'device', see [Causes](#causes)" enum:"test,app,device"`
+	Blame   flow.Blame  `json:"blame" about:"Whose fault it is: 'test', 'app' or 'device', see [Blame](#blame)" enum:"test,app,device"`
 	Because string      `json:"because" about:"What shows that it isn't the test"`
 	From    []jsonStep  `json:"from" about:"The step that ran that flow, and so on outwards"`
 	Before  []string    `json:"before" about:"The last 3 steps that passed"`
@@ -93,7 +93,7 @@ func Lines(text string) []string {
 
 // FailureOf describes a failure.
 func FailureOf(err error, e *flow.Failure) Failure {
-	x := Failure{Try: 1, Error: ProblemOf(err), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}, Nearest: []string{}, Kind: flow.StepFailed}
+	x := Failure{Try: 1, Error: ProblemOf(err), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}, Nearest: []string{}, Cause: flow.StepFailed}
 	var step *flow.StepError
 	if errors.As(err, &step) {
 		for _, s := range step.From {
@@ -101,16 +101,16 @@ func FailureOf(err error, e *flow.Failure) Failure {
 		}
 	}
 	if e != nil {
-		x.Cause, x.Because = e.Cause, e.Because
+		x.Blame, x.Because = e.Blame, e.Because
 		x.Before, x.Calls, x.Crash, x.Saved = List(e.Before), List(e.Calls), e.Crash, e.Saved
 		x.Screen = Lines(e.Screen)
-		x.Kind, x.Nearest = e.Kind, List(e.Nearest)
+		x.Cause, x.Nearest = e.Cause, List(e.Nearest)
 	}
 	return x
 }
 
 func (o *Outcome) json() jsonFlow {
-	f := jsonFlow{Name: o.Flow.Name, File: filepath.ToSlash(o.Flow.Path), Status: o.Status, Cause: o.cause(), Seconds: seconds(o.took()),
+	f := jsonFlow{Name: o.Flow.Name, File: filepath.ToSlash(o.Flow.Path), Status: o.Status, Blame: o.blame(), Seconds: seconds(o.took()),
 		Began: stamp(o.Began), Attempts: o.Attempts(), Tries: len(o.Tries), TimesFailed: o.TimesFailed(), Retries: o.Retries, NotRunReason: o.Why, Warnings: List(o.Warnings), Recordings: []string{}, Failures: []Failure{}}
 	for i, t := range o.Tries {
 		f.Recordings = append(f.Recordings, t.Recordings...)
@@ -121,7 +121,7 @@ func (o *Outcome) json() jsonFlow {
 		x.Try, x.Verdict = i+1, o.Verdict(t)
 		f.Failures = append(f.Failures, x)
 	}
-	f.Step, f.At, f.Why, _ = o.failing()
+	f.Step, f.At, f.Why, _, _ = o.failing()
 	return f
 }
 

@@ -71,11 +71,11 @@ type Failure struct {
 	Calls    []mock.Call // the last ones to the backend
 	Screen   string      // the elements on it
 	Crash    string      // of the app, from the device log
-	Cause    Cause
+	Blame    Blame
 	Because  string   // of a cause that isn't the test
 	Unusable bool     // nothing can run on the device
 	Saved    string   // the first file of the rest; the others are named alike
-	Kind     string   // what went wrong, one of Kinds
+	Cause    string   // what went wrong, one of Causes
 	Nearest  []string // of not on screen, the elements most like what was looked for
 }
 

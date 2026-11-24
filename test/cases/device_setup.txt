@@ -19,7 +19,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL a  # s
   a failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: a.yaml:3
   saved: .rayo/a_failure.png
@@ -69,17 +69,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "a.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

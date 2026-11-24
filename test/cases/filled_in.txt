@@ -49,56 +49,56 @@ appId: a.b
 [2/9] FAIL a  # s
   a failed at tapOn x: timeout
   why: timeout: not a time: "soon" (use 500 or 10s)
-  cause: test
+  blame: test
   step: tapOn x
   at: a.yaml:3
   saved: .rayo/a_failure.png
 [3/9] FAIL b  # s
   b failed at repeat times: ${'many'}: step failed
   why: times: not a whole number: "many"
-  cause: test
+  blame: test
   step: repeat times: ${'many'}
   at: b.yaml:3
   saved: .rayo/b_failure.png
 [4/9] FAIL c  # s
   c failed at swipe ${'nowhere'}: step failed
   why: direction: not one of UP, DOWN, LEFT, RIGHT: "nowhere"
-  cause: test
+  blame: test
   step: swipe ${'nowhere'}
   at: c.yaml:3
   saved: .rayo/c_failure.png
 [5/9] FAIL d  # s
   d failed at travel [2]: step failed
   why: points: not a location: "x"
-  cause: test
+  blame: test
   step: travel [2]
   at: d.yaml:3
   saved: .rayo/d_failure.png
 [6/9] FAIL e  # s
   e failed at waitForAnimationToEnd: step failed
   why: optional: not one of true, false: "maybe"
-  cause: test
+  blame: test
   step: waitForAnimationToEnd
   at: e.yaml:3
   saved: .rayo/e_failure.png
 [7/9] FAIL f  # s
   f failed at runFlow ${'Windows'}: step failed
   why: platform: not one of Android, iOS, Web: "Windows"
-  cause: test
+  blame: test
   step: runFlow ${'Windows'}
   at: f.yaml:3
   saved: .rayo/f_failure.png
 [8/9] FAIL g  # s
   g failed at launchApp ${'alow'}: step failed
   why: permissions: camera: not one of allow, deny, unset: "alow"
-  cause: test
+  blame: test
   step: launchApp ${'alow'}
   at: g.yaml:3
   saved: .rayo/g_failure.png
 [9/9] FAIL h  # s
   h failed at runFlow x, index: ${'one'}: step failed
   why: index: not a whole number: "one"
-  cause: test
+  blame: test
   step: runFlow x, index: ${'one'}
   at: h.yaml:3
   saved: .rayo/h_failure.png
@@ -206,17 +206,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn x: timeout",
-      "kind": "timeout",
+      "cause": "timeout",
       "error": {
         "file": "a.yaml",
         "line": 3,
         "step": "tapOn x",
-        "cause": "timeout: not a time: \"soon\" (use 500 or 10s)",
+        "message": "timeout: not a time: \"soon\" (use 500 or 10s)",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -235,17 +235,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "b failed at repeat times: ${'many'}: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "b.yaml",
         "line": 3,
         "step": "repeat times: ${'many'}",
-        "cause": "times: not a whole number: \"many\"",
+        "message": "times: not a whole number: \"many\"",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -264,17 +264,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "c failed at swipe ${'nowhere'}: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "c.yaml",
         "line": 3,
         "step": "swipe ${'nowhere'}",
-        "cause": "direction: not one of UP, DOWN, LEFT, RIGHT: \"nowhere\"",
+        "message": "direction: not one of UP, DOWN, LEFT, RIGHT: \"nowhere\"",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -293,17 +293,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "d failed at travel [2]: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "d.yaml",
         "line": 3,
         "step": "travel [2]",
-        "cause": "points: not a location: \"x\"",
+        "message": "points: not a location: \"x\"",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -322,17 +322,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "e failed at waitForAnimationToEnd: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "e.yaml",
         "line": 3,
         "step": "waitForAnimationToEnd",
-        "cause": "optional: not one of true, false: \"maybe\"",
+        "message": "optional: not one of true, false: \"maybe\"",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -351,17 +351,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "f failed at runFlow ${'Windows'}: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "f.yaml",
         "line": 3,
         "step": "runFlow ${'Windows'}",
-        "cause": "platform: not one of Android, iOS, Web: \"Windows\"",
+        "message": "platform: not one of Android, iOS, Web: \"Windows\"",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -380,17 +380,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "g failed at launchApp ${'alow'}: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "g.yaml",
         "line": 3,
         "step": "launchApp ${'alow'}",
-        "cause": "permissions: camera: not one of allow, deny, unset: \"alow\"",
+        "message": "permissions: camera: not one of allow, deny, unset: \"alow\"",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -409,17 +409,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "h failed at runFlow x, index: ${'one'}: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "h.yaml",
         "line": 3,
         "step": "runFlow x, index: ${'one'}",
-        "cause": "index: not a whole number: \"one\"",
+        "message": "index: not a whole number: \"one\"",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],

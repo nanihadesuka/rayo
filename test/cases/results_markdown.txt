@@ -37,14 +37,14 @@ appId: a.b
   try: 1
   c failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: c.yaml:3
   saved: .rayo/c_failure.png
   try: 2
   c failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: c.yaml:3
   saved: .rayo/c_retry1_failure.png
@@ -106,17 +106,17 @@ a screen
     "failure": {
       "try": 2,
       "verdict": "c failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "c.yaml",
         "line": 3,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [],
@@ -142,6 +142,6 @@ a screen
 - **a** # s, passed on retry 1: `tapOn flaky 1` at a.yaml:3: flaked (test)
 -- file out.txt --
 FAIL Rides: 1 passed, 1 flaky, 1 failed, 0 not run, 3 in all
-- FLAKY a [passed on retry 1] tapOn flaky 1 a.yaml:3 flaked test
-- FAIL c [failed 2 times] tapOn missing c.yaml:3 not on screen: missing test
+- FLAKY a [passed on retry 1] tapOn flaky 1 a.yaml:3 flaked step failed
+- FAIL c [failed 2 times] tapOn missing c.yaml:3 not on screen: missing not on screen
 

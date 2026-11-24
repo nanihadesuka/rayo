@@ -31,7 +31,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: flow.yaml:11
   before:
@@ -101,17 +101,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "flow.yaml",
         "line": 11,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [

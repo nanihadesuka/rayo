@@ -16,7 +16,7 @@ appId: a.b
 [1/2] FAIL a  # s
   a failed at tapOn missing: not on screen
   why: not on screen: missing
-  cause: test
+  blame: test
   step: tapOn missing
   at: a.yaml:4
   before:
@@ -61,17 +61,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn missing: not on screen",
-      "kind": "not on screen",
+      "cause": "not on screen",
       "error": {
         "file": "a.yaml",
         "line": 4,
         "step": "tapOn missing",
-        "cause": "not on screen: missing",
+        "message": "not on screen: missing",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [

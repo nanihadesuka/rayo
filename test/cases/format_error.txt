@@ -13,7 +13,7 @@ test --format json --bogus a.yaml
       "file": "",
       "line": 0,
       "step": "",
-      "cause": "unknown option --bogus",
+      "message": "unknown option --bogus",
       "expected": "",
       "nearest": "",
       "fix": ""

@@ -51,7 +51,7 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at runScript js/bad.js: step failed
   why: Error: on purpose
-  cause: test
+  blame: test
   step: runScript js/bad.js
   at: flow.yaml:15
   before:
@@ -91,17 +91,17 @@ a screen
     "failure": {
       "try": 1,
       "verdict": "case failed at runScript js/bad.js: step failed",
-      "kind": "step failed",
+      "cause": "step failed",
       "error": {
         "file": "flow.yaml",
         "line": 15,
         "step": "runScript js/bad.js",
-        "cause": "Error: on purpose",
+        "message": "Error: on purpose",
         "expected": "",
         "nearest": "",
         "fix": ""
       },
-      "cause": "test",
+      "blame": "test",
       "because": "",
       "from": [],
       "before": [
