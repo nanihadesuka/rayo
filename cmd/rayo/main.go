@@ -26,7 +26,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "1.0.14"
+const version = "2.0.0"
 
 func main() {
 	if len(os.Args) < 2 {
