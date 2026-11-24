@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:1: flows: unknown key "retry" (it takes file, retries, mock, network, unmocked)
+error: s.rayo.yaml:1: flows: unknown key "retry" (it takes file, retries, mock, network, unmocked, capture)

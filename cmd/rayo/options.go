@@ -38,6 +38,7 @@ type options struct {
 	results                []string // files
 	failuresOnly           bool
 	suite                  *suite.Suite
+	updateOwn              bool // --capture-update of the flow's own mock
 
 	// Of live.
 	app          string
@@ -192,7 +193,11 @@ var sections = []section{
 	}},
 	{[]string{cmdTest, cmdLive}, "mocks from the real backend", []option{
 		text("capture", "folder", "call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed", func(o *options) *string { return &o.runner.Capture }),
-		{name: "capture-update", value: "folder", about: "capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it", set: func(o *options, v string) error {
+		{name: "capture-update", value: "folder", about: "capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it. Given a suite instead, the folder is the flow's mock", set: func(o *options, v string) error {
+			if strings.HasSuffix(v, ".rayo.yaml") { // the flow's mock, once it is known
+				o.args, o.updateOwn = append(o.args, v), true
+				return nil
+			}
 			o.runner.CaptureUpdate, o.runner.Capture = v, filepath.Join(v, mock.UpdateFolder)
 			return nil
 		}},

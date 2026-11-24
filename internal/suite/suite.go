@@ -35,6 +35,7 @@ type Suite struct {
 	Env          map[string]string // for every flow; -e wins
 	Network      string            // for every flow that doesn't say; --network wins
 	Unmocked     *mock.Unmocked    // calls without a mock that don't fail any flow; nil for none
+	Capture      *Capture          // for every flow; nil if not said
 
 	Path string
 }
@@ -52,6 +53,7 @@ type entry struct {
 	mock     []string       // for the flow, if its header has none
 	network  string         // for the flow, if its header doesn't say; else the suite's
 	unmocked *mock.Unmocked // added to the suite's, for the flow
+	capture  *Capture       // over the suite's, for the flow
 	line     int
 }
 
@@ -66,6 +68,16 @@ func (s *Suite) RetriesOf(f *flow.Flow) int {
 		return *s.Retries
 	}
 	return DefaultRetries
+}
+
+// CaptureOf is how a capture of a flow is made, as its entry says over the suite; nil if neither says.
+func (s *Suite) CaptureOf(f *flow.Flow) *Capture {
+	for _, e := range s.Flows {
+		if s.Relative(e.file) == f.Path {
+			return e.capture.Or(s.Capture)
+		}
+	}
+	return s.Capture
 }
 
 // fill gives each flow of the suite the mock and network the suite says for it, unless its own

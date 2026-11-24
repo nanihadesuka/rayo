@@ -380,6 +380,43 @@ func TestCaptureUpdate(t *testing.T) {
 	has(string(profile), `"name": "new"`) // after taking them all
 }
 
+// The case of issue 18: a suite says how its flows are captured, so re-recording one's mock needs only
+// --capture-update with the suite; the flow's entry wins over the suite, and an option over both.
+func TestCaptureUpdateOfSuite(t *testing.T) {
+	name := "old"
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, q *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"name":%q}`, name)
+	}))
+	defer s.Close()
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "f.yaml"), "appId: a.b\n---\n- tapOn: { id: \"GET /profile?_ts=1\" }\n")
+	write(t, filepath.Join(dir, "s.rayo.yaml"), "capture:\n  from: "+s.URL+"\n  ignoreParams: [nope]\nflows:\n"+
+		"  - file: f.yaml\n    mock: [common, mock]\n    capture:\n      ignoreParams: [_ts]\n")
+	write(t, filepath.Join(dir, "common", "mappings", "x.json"), `{"mappings":[]}`)
+	rayo := func(args ...string) string {
+		t.Helper()
+		d := startDevice(t, "emulator-5554\tdevice\n", false)
+		out, err := d.command(dir, args...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v\n%s", err, out)
+		}
+		return string(out)
+	}
+	rayo("test", "--capture", "mock", "--capture-from", s.URL, "--ignore-params", "_ts", "f.yaml")
+	name = "new"
+	out := rayo("test", "--capture-update", "s.rayo.yaml")
+	if !strings.Contains(out, "0 same, 1 changed") {
+		t.Errorf("no change in\n%s", out)
+	}
+	settings, _ := os.ReadFile(filepath.Join(dir, "mock", ".update", "mappings", "capture.json"))
+	if strings.Contains(string(settings), "queryParameters") {
+		t.Errorf("not the flow's settings:\n%s", settings)
+	}
+	rayo("mocks", "apply", "mock")
+	rayo("test", "s.rayo.yaml") // replays, with ?_ts ignored
+}
+
 // The case of issue 8: the same POST with other bodies is answered by its body, whatever the order and
 // the timing, and a moment in the query, or a parameter asked to be ignored, doesn't break a replay.
 func TestCaptureRESTBodies(t *testing.T) {

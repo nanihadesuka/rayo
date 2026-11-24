@@ -29,6 +29,140 @@
       ],
       "type": "object"
     },
+    "capture": {
+      "additionalProperties": false,
+      "description": "How a capture calls the backend and becomes mocks, as the options of the same names, which win",
+      "properties": {
+        "captureHeaders": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "As --capture-headers"
+        },
+        "from": {
+          "description": "As --capture-from",
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "graphql": {
+          "description": "As --graphql",
+          "enum": [
+            "operation+variables",
+            "operation",
+            "off"
+          ]
+        },
+        "graphqlPath": {
+          "description": "As --graphql-path",
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "hosts": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "As --hosts"
+        },
+        "ignoreBody": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "As --ignore-body"
+        },
+        "ignoreHost": {
+          "description": "As --ignore-host",
+          "type": "boolean"
+        },
+        "ignoreParams": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "As --ignore-params"
+        },
+        "ignorePathIds": {
+          "description": "As --ignore-path-ids",
+          "type": "boolean"
+        },
+        "redactValue": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "As --redact-value: what a private field of a body becomes, such as phone: \"+4915100000000\"",
+          "type": "object"
+        },
+        "rest": {
+          "description": "As --rest",
+          "enum": [
+            "body",
+            "off"
+          ]
+        },
+        "stateless": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "As --stateless"
+        },
+        "timestamps": {
+          "description": "As --timestamps",
+          "enum": [
+            "format",
+            "exact"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "device": {
       "additionalProperties": false,
       "description": "How it is while the flows run",
@@ -69,7 +203,7 @@
       "type": "object"
     },
     "flows": {
-      "description": "Files, run in this order; or mappings with file, retries, mock, network and unmocked (required)",
+      "description": "Files, run in this order; or mappings with file, retries, mock, network, unmocked and capture (required)",
       "items": {
         "anyOf": [
           {
@@ -78,6 +212,140 @@
           {
             "additionalProperties": false,
             "properties": {
+              "capture": {
+                "additionalProperties": false,
+                "description": "How a capture calls the backend and becomes mocks, as the options of the same names, which win (default: the suite's; what it says wins over it)",
+                "properties": {
+                  "captureHeaders": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ],
+                    "description": "As --capture-headers"
+                  },
+                  "from": {
+                    "description": "As --capture-from",
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean"
+                    ]
+                  },
+                  "graphql": {
+                    "description": "As --graphql",
+                    "enum": [
+                      "operation+variables",
+                      "operation",
+                      "off"
+                    ]
+                  },
+                  "graphqlPath": {
+                    "description": "As --graphql-path",
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean"
+                    ]
+                  },
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ],
+                    "description": "As --hosts"
+                  },
+                  "ignoreBody": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ],
+                    "description": "As --ignore-body"
+                  },
+                  "ignoreHost": {
+                    "description": "As --ignore-host",
+                    "type": "boolean"
+                  },
+                  "ignoreParams": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ],
+                    "description": "As --ignore-params"
+                  },
+                  "ignorePathIds": {
+                    "description": "As --ignore-path-ids",
+                    "type": "boolean"
+                  },
+                  "redactValue": {
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "number",
+                        "boolean"
+                      ]
+                    },
+                    "description": "As --redact-value: what a private field of a body becomes, such as phone: \"+4915100000000\"",
+                    "type": "object"
+                  },
+                  "rest": {
+                    "description": "As --rest",
+                    "enum": [
+                      "body",
+                      "off"
+                    ]
+                  },
+                  "stateless": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ],
+                    "description": "As --stateless"
+                  },
+                  "timestamps": {
+                    "description": "As --timestamps",
+                    "enum": [
+                      "format",
+                      "exact"
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "file": {
                 "description": "The flow (required)",
                 "type": [

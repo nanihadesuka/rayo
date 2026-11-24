@@ -1,9 +1,12 @@
 package suite
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
+	"strings"
 
 	"github.com/nanihadesuka/rayo/internal/adb"
 	"github.com/nanihadesuka/rayo/internal/flow"
@@ -111,6 +114,107 @@ func readNames(n *yaml.Node) ([]string, error) {
 	return names, nil
 }
 
+// Capture is how a capture of a suite's flows calls the backend and becomes mocks: the options of
+// the same names, which win.
+type Capture struct {
+	Settings mock.Settings
+	Hosts    []string
+	From     string
+}
+
+// Or fills what c doesn't say with what other does.
+func (c *Capture) Or(other *Capture) *Capture {
+	switch {
+	case c == nil:
+		return other
+	case other == nil:
+		return c
+	}
+	hosts := c.Hosts
+	if len(hosts) == 0 {
+		hosts = other.Hosts
+	}
+	return &Capture{Settings: c.Settings.Or(other.Settings), Hosts: hosts, From: cmp.Or(c.From, other.From)}
+}
+
+func names[T any](name, about string, to func(*T) *[]string) schema.Field[T] {
+	return schema.Field[T]{Name: name, Takes: "a name or a list", About: about, Schema: schema.AnyOf(schema.Type("string"), schema.List(schema.Type("string"))),
+		Read: func(t *T, n *yaml.Node) (err error) {
+			*to(t), err = readNames(n)
+			return err
+		}}
+}
+
+func choiceField[T any](name, about string, to func(*T) *string, values ...string) schema.Field[T] {
+	return schema.Field[T]{Name: name, Takes: "`" + strings.Join(values, "`, `") + "`", About: about, Schema: schema.Enum(anys(values)...), Read: func(t *T, n *yaml.Node) error {
+		if n.Kind != yaml.ScalarNode || !slices.Contains(values, n.Value) {
+			return fmt.Errorf("takes %s, not %q", strings.Join(values, ", "), n.Value)
+		}
+		*to(t) = n.Value
+		return nil
+	}}
+}
+
+func anys(list []string) []any {
+	var out []any
+	for _, s := range list {
+		out = append(out, s)
+	}
+	return out
+}
+
+// CaptureFields are those of capture.
+var CaptureFields = []schema.Field[Capture]{
+	names("hosts", "As `--hosts`", func(c *Capture) *[]string { return &c.Hosts }),
+	schema.TextField("from", "url", "As `--capture-from`", func(c *Capture) *string { return &c.From }),
+	choiceField("graphql", "As `--graphql`", func(c *Capture) *string { return &c.Settings.GraphQL }, mock.GraphQLVariables, mock.GraphQLOperation, mock.GraphQLOff),
+	schema.TextField("graphqlPath", "regex", "As `--graphql-path`", func(c *Capture) *string { return &c.Settings.GraphQLPath }),
+	choiceField("rest", "As `--rest`", func(c *Capture) *string { return &c.Settings.REST }, mock.RESTBody, mock.RESTOff),
+	names("ignoreParams", "As `--ignore-params`", func(c *Capture) *[]string { return &c.Settings.IgnoreParams }),
+	names("ignoreBody", "As `--ignore-body`", func(c *Capture) *[]string { return &c.Settings.IgnoreBody }),
+	choiceField("timestamps", "As `--timestamps`", func(c *Capture) *string { return &c.Settings.Timestamps }, mock.TimestampsFormat, mock.TimestampsExact),
+	names("captureHeaders", "As `--capture-headers`", func(c *Capture) *[]string { return &c.Settings.Headers }),
+	schema.FlagField("ignoreHost", "As `--ignore-host`", func(c *Capture) *bool { return &c.Settings.IgnoreHost }),
+	schema.FlagField("ignorePathIds", "As `--ignore-path-ids`", func(c *Capture) *bool { return &c.Settings.PathIDs }),
+	{Name: "stateless", Takes: "a path or a list", About: "As `--stateless`", Schema: schema.AnyOf(schema.Type("string"), schema.List(schema.Type("string"))), Read: func(c *Capture, n *yaml.Node) (err error) {
+		if c.Settings.Stateless, err = readNames(n); err != nil {
+			return err
+		}
+		for _, g := range c.Settings.Stateless {
+			if _, err := mock.Glob(g); err != nil {
+				return &schema.Error{Line: n.Line, What: err.Error()}
+			}
+		}
+		return nil
+	}},
+	{Name: "redactValue", Takes: "values", About: "As `--redact-value`: what a private field of a body becomes, such as `phone: \"+4915100000000\"`", Schema: schema.Map(schema.Text()), Read: func(c *Capture, n *yaml.Node) error {
+		values, err := flow.Variables(n)
+		if err != nil {
+			return err
+		}
+		for _, k := range slices.Sorted(maps.Keys(values)) {
+			c.Settings.RedactValues = append(c.Settings.RedactValues, k+"="+values[k])
+		}
+		return nil
+	}},
+}
+
+// captureField is the suite's capture, and that of one of its flows.
+func captureField[T any](to func(*T) **Capture) schema.Field[T] {
+	return schema.Field[T]{Name: "capture", Takes: "a mapping", About: "How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow)",
+		Schema: schema.Of(CaptureFields), Read: func(t *T, n *yaml.Node) error {
+			c := &Capture{}
+			if err := schema.Read(CaptureFields, c, n); err != nil {
+				return err
+			}
+			if err := c.Settings.Check(); err != nil {
+				return &schema.Error{Line: n.Line, What: err.Error()}
+			}
+			*to(t) = c
+			return nil
+		}}
+}
+
 // FlowFields are those of a flow of the list that isn't only its file.
 var FlowFields = []schema.Field[entry]{
 	schema.TextField("file", "file", "The flow", func(e *entry) *string { return &e.file }).Needed(),
@@ -122,6 +226,7 @@ var FlowFields = []schema.Field[entry]{
 		}},
 	networkField(func(e *entry) *string { return &e.network }).Optional("the suite's"),
 	unmockedField(func(e *entry) **mock.Unmocked { return &e.unmocked }).Optional("the suite's; its calls are added to them"),
+	captureField(func(e *entry) **Capture { return &e.capture }).Optional("the suite's; what it says wins over it"),
 }
 
 // networkField is the suite's network, and that of one of its flows.
@@ -155,7 +260,7 @@ func readMocks(n *yaml.Node) ([]string, error) {
 // Fields are those of a suite.
 var Fields = []schema.Field[Suite]{
 	schema.TextField("name", "text", "Shown in the results", func(s *Suite) *string { return &s.Name }).Optional("the file"),
-	{Name: "flows", Takes: "a list", Required: true, About: "Files, run in this order; or mappings with file, retries, mock, network and unmocked, see [below](#a-flow-of-a-suite)",
+	{Name: "flows", Takes: "a list", Required: true, About: "Files, run in this order; or mappings with file, retries, mock, network, unmocked and capture, see [below](#a-flow-of-a-suite)",
 		Schema: schema.S{"type": "array", "minItems": 1, "items": schema.AnyOf(schema.Type("string"), schema.Of(FlowFields))}, Read: readFlows},
 	schema.NumberField("retries", "a number from 0", "How many times a flow that fails is tried again, see [Retries](#retries)", 0, 0, func(s *Suite, v int) { s.Retries = &v }).Optional(fmt.Sprint(DefaultRetries)),
 	{Name: "app", Takes: "a mapping", About: "Installed before the flows, see [below](#the-app-of-a-suite)", Schema: schema.Of(AppFields), Read: func(s *Suite, n *yaml.Node) error {
@@ -173,6 +278,7 @@ var Fields = []schema.Field[Suite]{
 	schema.NumberField("timeoutScale", "0.1 to 10", "Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins", LowestScale, HighestScale, func(s *Suite, v float64) { s.TimeoutScale = v }).Optional("1"),
 	networkField(func(s *Suite) *string { return &s.Network }).Optional("each flow's, else `interceptor`"),
 	unmockedField(func(s *Suite) **mock.Unmocked { return &s.Unmocked }).Optional("none: each fails the flow"),
+	captureField(func(s *Suite) **Capture { return &s.Capture }),
 	schema.TextField("output", "folder", "As `--output`, which wins", func(s *Suite) *string { return &s.Output }).Optional("`.rayo` where rayo runs"),
 	{Name: "results", Takes: "a file or a list", About: "As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit)",
 		Schema: func() schema.S { f := schema.Pattern(`\.(txt|json|xml)$`); return schema.AnyOf(f, schema.List(f)) }(), Read: readResults},

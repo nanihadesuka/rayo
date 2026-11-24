@@ -85,7 +85,7 @@ Options of test: what comes out
 
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
-  --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it
+  --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it. Given a suite instead, the folder is the flow's mock
   --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
   --capture-append           go on with the capture already in the folder, as if in one go
   --redact-value <name=value> what a private field of a body becomes, such as phone=+4915100000000 (default one of the same form: a date stays a date); again for more
@@ -1102,7 +1102,7 @@ flows:
 | Key | Takes | |
 |---|---|---|
 | `name` | text | Shown in the results (default: the file) |
-| `flows` | a list | Files, run in this order; or mappings with file, retries, mock, network and unmocked, see [below](#a-flow-of-a-suite) (required) |
+| `flows` | a list | Files, run in this order; or mappings with file, retries, mock, network, unmocked and capture, see [below](#a-flow-of-a-suite) (required) |
 | `retries` | a number from 0 | How many times a flow that fails is tried again, see [Retries](#retries) (default: 1) |
 | `app` | a mapping | Installed before the flows, see [below](#the-app-of-a-suite) |
 | `device` | a mapping | How it is while the flows run, see [Device setup](#device-setup) |
@@ -1110,6 +1110,7 @@ flows:
 | `timeoutScale` | 0.1 to 10 | Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins (default: 1) |
 | `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite) (default: each flow's, else `interceptor`) |
 | `unmocked` | a mapping | Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking) (default: none: each fails the flow) |
+| `capture` | a mapping | How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow) |
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
 | `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
@@ -1126,6 +1127,7 @@ flows:
 | `mock` | a path or a list | Who answers as the backend, as a flow's `mock`, relative to the suite; the flow's own `mock` wins, see [Mocks of a suite](#mocks-of-a-suite) |
 | `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite) (default: the suite's) |
 | `unmocked` | a mapping | Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking) (default: the suite's; its calls are added to them) |
+| `capture` | a mapping | How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow) (default: the suite's; what it says wins over it) |
 <!-- end -->
 
 #### Mocks of a suite
@@ -1192,6 +1194,56 @@ An ignored call, when a mapping:
 | `host` | host | Of the call, or of its subdomains (default: any) |
 | `path` | a path | Of the call, without the host; `*` is any text but `/`, `**` any (default: any) |
 | `graphql` | a name or a list | GraphQL operations (default: any call) |
+<!-- end -->
+
+#### Capturing a suite's flow
+
+How a capture calls the backend and becomes mocks belongs to the suite, as it describes its backend.
+`capture` says it for every flow, and a flow's entry over it; each key is the option of the same
+name, which wins over both:
+
+```yaml
+network: proxy
+capture:
+  hosts: [a.example.com, b.example.com]
+  ignoreParams: [_pollTs]
+  ignoreBody: [nonce, deviceData]
+  ignorePathIds: true
+  stateless: [a.example.com/graphql]
+  redactValue: { phone: "+4915100000000" }
+flows:
+  - file: flows/checkout.yaml
+    mock: mocks/checkout
+    capture:                    # what it says wins over the suite's, key by key
+      ignoreBody: [nonce, deviceData, cartId]
+```
+
+Then re-recording a flow's mock needs no script: `--capture-update` with the suite, instead of a
+folder, updates the flow's own mock, the last of its `mock`:
+
+```sh
+rayo test --capture-update suite.rayo.yaml --only checkout
+rayo mocks apply mocks/checkout
+```
+
+`capture` is read only while capturing.
+
+<!-- generated: suite capture -->
+| Key | Takes | |
+|---|---|---|
+| `hosts` | a name or a list | As `--hosts` |
+| `from` | url | As `--capture-from` |
+| `graphql` | `operation+variables`, `operation`, `off` | As `--graphql` |
+| `graphqlPath` | regex | As `--graphql-path` |
+| `rest` | `body`, `off` | As `--rest` |
+| `ignoreParams` | a name or a list | As `--ignore-params` |
+| `ignoreBody` | a name or a list | As `--ignore-body` |
+| `timestamps` | `format`, `exact` | As `--timestamps` |
+| `captureHeaders` | a name or a list | As `--capture-headers` |
+| `ignoreHost` | `true` or `false` | As `--ignore-host` |
+| `ignorePathIds` | `true` or `false` | As `--ignore-path-ids` |
+| `stateless` | a path or a list | As `--stateless` |
+| `redactValue` | values | As `--redact-value`: what a private field of a body becomes, such as `phone: "+4915100000000"` |
 <!-- end -->
 
 #### The app of a suite

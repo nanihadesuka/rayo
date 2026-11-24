@@ -180,6 +180,9 @@ func test(ctx context.Context, args []string) (err error) {
 		fmt.Println("nothing failed last time")
 		return nil
 	}
+	if err := o.suiteCapture(flows); err != nil {
+		return err
+	}
 	if err := o.checkCapture(flows); err != nil {
 		return err
 	}
@@ -245,6 +248,47 @@ func test(ctx context.Context, args []string) (err error) {
 			fmt.Println("error:", err)
 		}
 	}
+}
+
+// suiteCapture settles a capture of a suite's flow: into its own mock, for --capture-update of a suite,
+// and as the suite says for what the options don't.
+func (o *options) suiteCapture(flows []*flow.Flow) error {
+	if o.updateOwn {
+		if len(flows) != 1 {
+			return errors.New("--capture-update runs one flow, once: say which with --only")
+		}
+		f := flows[0]
+		if len(f.Mock) == 0 {
+			return fmt.Errorf("--capture-update: %s has no mock to update", f.Name)
+		}
+		folder := f.Mock[len(f.Mock)-1].Value // its own, after those shared
+		if strings.Contains(folder, "${") {
+			return fmt.Errorf("--capture-update: the mock of %s is %s; give the folder", f.Name, folder)
+		}
+		if !filepath.IsAbs(folder) {
+			folder = filepath.Join(filepath.Dir(f.Path), filepath.FromSlash(folder))
+		}
+		wd, _ := os.Getwd()
+		if rel, err := filepath.Rel(wd, folder); err == nil && !strings.HasPrefix(rel, "..") {
+			folder = rel
+		}
+		o.runner.CaptureUpdate, o.runner.Capture = folder, filepath.Join(folder, mock.UpdateFolder)
+	}
+	if o.runner.Capture == "" || o.suite == nil || len(flows) != 1 {
+		return nil
+	}
+	c := o.suite.CaptureOf(flows[0])
+	if c == nil {
+		return nil
+	}
+	o.runner.Matching = o.runner.Matching.Or(c.Settings)
+	if len(o.runner.Hosts) == 0 {
+		o.runner.Hosts = c.Hosts
+	}
+	if o.runner.Backend == "" {
+		o.runner.Backend = c.From
+	}
+	return nil
 }
 
 // checkCapture refuses what would call the real backend more than once, or lose an earlier capture.
@@ -371,6 +415,7 @@ func helpOn(name string) (string, error) {
 	case "suite":
 		return "A suite, *.rayo.yaml:\n\n" + schema.Help(suite.Fields) + "\nflows, when not only a file:\n\n" + schema.Help(suite.FlowFields) +
 			"\nunmocked:\n\n" + schema.Help(suite.UnmockedFields) + "\nan ignored call, when not text:\n\n" + schema.Help(suite.IgnoredFields) +
+			"\ncapture:\n\n" + schema.Help(suite.CaptureFields) +
 			"\napp:\n\n" + schema.Help(suite.AppFields) + "\ndevice:\n\n" + schema.Help(suite.DeviceFields), nil
 	}
 	if text := helpOf(name); text != "" {
@@ -410,7 +455,7 @@ func helpJSON() (string, error) {
 	err := e.Encode(map[string]any{
 		"options": all, "flow": flow.Describe(), "header": flow.HeaderDocs(), "suite": schema.Docs(suite.Fields),
 		"suiteFlow": schema.Docs(suite.FlowFields), "app": schema.Docs(suite.AppFields), "device": schema.Docs(suite.DeviceFields),
-		"unmocked": schema.Docs(suite.UnmockedFields), "ignored": schema.Docs(suite.IgnoredFields),
+		"unmocked": schema.Docs(suite.UnmockedFields), "ignored": schema.Docs(suite.IgnoredFields), "capture": schema.Docs(suite.CaptureFields),
 	})
 	return b.String(), err
 }
