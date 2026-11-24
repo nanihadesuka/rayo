@@ -33,7 +33,7 @@ bash build.sh --agent    # also the device part, needs a JDK and the Android SDK
 
 What files and commands may hold is said once, in tables of the code (`options.go`, `keys.go`,
 `commands.go`, `flow/schema.go`, `suite/fields.go`). From them come the checks, `rayo help`, the JSON Schemas
-in `schema/`, the tables of the reference and the page in `docs/`; a test fails if any is out of date.
+in `schema/`, the tables of the reference, the page in `docs/`, and `rayo help all` as `man/rayo.1` and `llms.txt`; a test fails if any is out of date.
 
 `test/` runs the real rayo against a pretend device and compares all that comes out, also every
 trip to the device: `go test ./test` (5 s), `-update` to accept a change. What only a real one can tell:

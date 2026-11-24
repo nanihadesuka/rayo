@@ -46,9 +46,18 @@ rayo - runs flows on Android, fast
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
-  rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
+  rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
+  rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
   rayo version
+
+Topics, rayo help <topic>
+  write-a-flow               write a flow
+  debug-a-flow               debug a failing flow
+  record-mocks               record mocks from the real backend
+  run-in-ci                  run in a CI
+  limits                     limitations and gotchas
+  exit-codes                 exit codes
 
 Options of test, live and hierarchy
   --device <serial>          when several are connected

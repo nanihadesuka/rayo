@@ -1,0 +1,12 @@
+-- args --
+help exit-codes
+==== out ====
+-- exit --
+0
+-- stdout --
+exit codes:
+
+  0    all went well
+  1    a flow failed, or there was an error
+  2    rayo without a command
+  130  interrupted, with Ctrl-C
