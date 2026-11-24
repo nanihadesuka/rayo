@@ -161,8 +161,8 @@ func TestHelpAll(t *testing.T) {
 
 // The full example is right, and all its files are told of.
 func TestFullExample(t *testing.T) {
-	for _, what := range []string{"../examples/shop/all.suite.yaml", "../examples"} {
-		if out, err := exec.Command(rayo, "check", what).CombinedOutput(); err != nil {
+	for _, what := range [][]string{{"../examples/shop/all.suite.yaml"}, {"../examples/shop/tests/browse", "../examples/shop/tests/declined", "../examples/shop/tests/offline", "../examples/shop/tests/pay"}} {
+		if out, err := exec.Command(rayo, append([]string{"check"}, what...)...).CombinedOutput(); err != nil {
 			t.Errorf("%s", out)
 		}
 	}

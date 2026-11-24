@@ -1,0 +1,28 @@
+-- args --
+check --format json e2e
+-- e2e/all.suite.yaml --
+flows: [a.yaml]
+-- e2e/a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+0
+-- stdout --
+{
+  "schemaVersion": 3,
+  "ok": true,
+  "count": 1,
+  "flows": [
+    {
+      "name": "a",
+      "file": "e2e/a.yaml",
+      "tags": [],
+      "mocks": [],
+      "retries": 1
+    }
+  ]
+}
+-- stderr --
+skipped e2e/all.suite.yaml (a suite; name it to run it)

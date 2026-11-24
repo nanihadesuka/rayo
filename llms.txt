@@ -146,7 +146,7 @@ Commands: assertNotVisible, assertTrue, assertVisible, back, camera, clearState,
 
 ## suite
 
-A suite, *.suite.yaml, lists flows that run together. A folder means its suite, if it holds one, else its flows:
+A suite, *.suite.yaml, lists flows that run together. A folder is the flows directly in it; a suite runs only when its file is given:
 
   name             text                       Shown in the results (default: the file)
   flows            a list                     Files, run in this order; or mappings with file, retries, mock, network, unmocked and capture (required)

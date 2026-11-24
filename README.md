@@ -90,7 +90,7 @@ debug build trusts. Everything else works with any app as it is.
 ## Many tests
 
 A suite, `*.suite.yaml`, says what runs together and how. All but `flows` is optional. A folder
-with a suite in it runs that suite.
+is the flows directly in it; a suite runs only when its file is given.
 
 ```yaml
 flows:
