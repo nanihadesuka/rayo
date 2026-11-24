@@ -17,7 +17,7 @@ rayo - runs flows on Android, fast
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
-  rayo schema flow, suite or results               its JSON Schema, for editors and programs
+  rayo schema <name>                               a JSON Schema: flow, suite, results, or of --format json
   rayo version
 
 Topics, rayo help <topic>
@@ -101,4 +101,6 @@ Options of mocks
 
 Options of do
   --screen                   also what is on screen afterwards
-  --json                     for a program
+
+Options of test, check, devices, hierarchy, do and mocks
+  --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs

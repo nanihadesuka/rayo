@@ -9,6 +9,6 @@ appId: a.b
 - tapOn: { id: GET /a }
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: s.suite.yaml:1: network: takes interceptor or proxy

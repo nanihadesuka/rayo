@@ -3,9 +3,7 @@ package flow
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -283,7 +281,7 @@ func checkFileOrCommands(p *reader, s *Step) error {
 			return err
 		}
 		if err != nil {
-			return fmt.Errorf("%s:%d: %w", filepath.ToSlash(p.path), file.Line, err)
+			return &Problem{Path: p.path, Line: file.Line, What: err.Error(), Err: err}
 		}
 	}
 	if (file == nil) == (s.Sub == nil) {

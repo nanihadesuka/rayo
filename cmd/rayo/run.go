@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -152,16 +153,18 @@ func (o *options) retriesOf(f *flow.Flow) int {
 func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) error {
 	o := s.o
 	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now()}
+	say := human()
 	if o.shuffle {
 		sum.Order = fmt.Sprintf("--shuffle=%d", o.seed)
-		fmt.Println("order:", sum.Order)
+		fmt.Fprintln(say, "order:", sum.Order)
 	}
 	if o.runner.Timings && o.runner.Scale > 0 && o.runner.Scale != 1 {
-		fmt.Printf("default waits ×%v\n", o.runner.Scale)
+		fmt.Fprintf(say, "default waits ×%v\n", o.runner.Scale)
 	}
 	folders := map[string]int{}
 	var row streak
-	stop := "" // why the rest won't run
+	stop := ""    // why the rest won't run
+	lost := false // the device, for that
 	verbose := o.steps(flows)
 	s.reporter.(*console).verbose = verbose
 	s.reporter.(*console).timings = o.runner.Timings
@@ -175,6 +178,7 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 				name = fmt.Sprintf("%s_%d", name, folders[strings.ToLower(name)])
 			}
 			s.reporter.(*console).begin(i+1, len(flows), f.Name)
+			stream(report.Started(f, i+1, len(flows)))
 			for try := 0; ; try++ {
 				result := s.runner.Run(ctx, f, flow.Attempt{Out: o.output, Flow: name, Try: try})
 				if result.Err == nil && o.keep == suite.KeepFailed { // what is kept is to see why it failed
@@ -184,11 +188,15 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 					result.Recordings = nil
 				}
 				out.Judge(ctx, result)
+				for _, e := range report.Tried(&out, i+1, len(flows)) {
+					stream(e)
+				}
 				if ctx.Err() == nil {
 					stop = row.after(&out, o.keepGoing)
+					lost = strings.HasPrefix(stop, "device:")
 					if stop == "" && s.agent.Dead() != nil {
 						if err := s.restart(); err != nil {
-							stop = fmt.Sprintf("the device was lost: %v", err)
+							stop, lost = fmt.Sprintf("the device was lost: %v", err), true
 						}
 					}
 					sum.Stopped = stop
@@ -197,7 +205,7 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 					break
 				}
 				if verbose {
-					fmt.Printf("  failed, retry %d of %d: %v\n", try+1, out.Retries, out.Err)
+					fmt.Fprintf(say, "  failed, retry %d of %d: %v\n", try+1, out.Retries, out.Err)
 				}
 			}
 			switch {
@@ -209,14 +217,40 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 		}
 		sum.Outcomes = append(sum.Outcomes, out)
 		s.reporter.(*console).end(i+1, len(flows), &out)
+		stream(report.Finished(&out, i+1, len(flows)))
 	}
 	sum.Took = time.Since(sum.Began)
-	fmt.Println()
-	fmt.Print(sum.Text(o.failuresOnly, true))
+	fmt.Fprintln(say)
+	fmt.Fprint(say, sum.Text(o.failuresOnly, true))
 	s.reporter.(*console).slowestFlows(sum.Outcomes)
 	err := sum.SaveLast(report.LastFile(o.output))
 	for _, file := range o.results {
 		err = errors.Join(err, sum.Write(file, o.failuresOnly))
 	}
-	return errors.Join(err, sum.Err())
+	failed := sum.Err()
+	if failed != nil && lost {
+		failed = ofDevice(failed)
+	}
+	failed = exiting(report.ExitFailed, failed)
+	if printing != report.Human && failed != nil {
+		failed = &exitError{exitOf(failed), errShown} // the results say it
+	}
+	switch printing {
+	case report.JSON:
+		data, e := sum.JSON(o.failuresOnly)
+		if e == nil {
+			_, e = os.Stdout.Write(data)
+		}
+		err = errors.Join(err, e)
+	case report.NDJSON:
+		err = errors.Join(err, emit(sum.Outcome(o.failuresOnly, exitOf(failed))))
+	}
+	return errors.Join(err, failed)
+}
+
+// stream prints an event, with --format ndjson.
+func stream(e report.Event) {
+	if printing == report.NDJSON {
+		_ = emit(e)
+	}
 }

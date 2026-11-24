@@ -6,6 +6,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: --results takes a .txt, .json or .xml (JUnit) file, not "out.html"

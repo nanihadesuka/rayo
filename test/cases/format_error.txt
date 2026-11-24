@@ -1,0 +1,22 @@
+-- args --
+test --format json --bogus a.yaml
+==== out ====
+-- exit --
+2
+-- stdout --
+{
+  "schemaVersion": 2,
+  "ok": false,
+  "exit": 2,
+  "errors": [
+    {
+      "file": "",
+      "line": 0,
+      "step": "",
+      "cause": "unknown option --bogus",
+      "expected": "",
+      "nearest": "",
+      "fix": ""
+    }
+  ]
+}

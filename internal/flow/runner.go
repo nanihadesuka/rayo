@@ -357,9 +357,9 @@ func (s *Step) recheck(v *yaml.Node) error {
 // filledIn checks a value without saying where, as the step's line is already in the message.
 func filledIn(n *yaml.Node, check func(p *reader, n *yaml.Node) error) error {
 	err := check(&reader{filled: true}, n)
-	var f *flaw
+	var f *Problem
 	if errors.As(err, &f) {
-		return errors.New(f.what)
+		return errors.New(f.What)
 	}
 	return err
 }

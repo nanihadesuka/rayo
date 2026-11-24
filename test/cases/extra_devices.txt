@@ -2,6 +2,6 @@
 devices x
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: devices takes no "x"

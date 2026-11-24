@@ -8,6 +8,6 @@ appId: a.b
 - tapOn: { id: x }
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: s.suite.yaml:1: flows: needs file

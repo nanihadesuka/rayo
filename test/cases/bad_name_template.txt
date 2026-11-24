@@ -7,6 +7,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: --name-template needs {flow}, {attempt}, {kind} and {ext}, so that no two files have one name, not "{flow}.{ext}"

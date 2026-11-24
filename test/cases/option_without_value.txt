@@ -2,6 +2,6 @@
 test flow.yaml --device
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: no file flow.yaml

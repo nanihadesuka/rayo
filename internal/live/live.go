@@ -35,14 +35,15 @@ const liveHelp = `  - tapOn: { id: save }   any command, or a list; what passes 
 
 // Reply is how a request went. Every key is always there.
 type Reply struct {
-	OK       bool            `json:"ok"`
-	Output   string          `json:"output"`
-	Error    string          `json:"error"`
-	Failure  *report.Failure `json:"failure"`
-	Warnings []string        `json:"warnings"`
-	Calls    []mock.Call     `json:"calls"`
-	Screen   []string        `json:"screen"` // if asked for
-	Unsaved  int             `json:"unsaved"`
+	SchemaVersion int             `json:"schemaVersion" about:"Changes if the meaning of a key does"`
+	OK            bool            `json:"ok" about:"The steps passed"`
+	Output        string          `json:"output" about:"What rayo do prints, without --format"`
+	Error         string          `json:"error" about:"Of steps that failed, or of a command"`
+	Failure       *report.Failure `json:"failure" about:"Of a step that failed, as in the results"`
+	Warnings      []string        `json:"warnings" about:"Such as calls without a mock"`
+	Calls         []mock.Call     `json:"calls" about:"To the mock meanwhile"`
+	Screen        []string        `json:"screen" about:"With --screen, or after a failure"`
+	Unsaved       int             `json:"unsaved" about:"Steps not saved to the flow yet"`
 }
 
 // Request is what is asked of a session.
@@ -231,7 +232,7 @@ func (l *live) handle(ctx context.Context, q Request) Reply {
 }
 
 func (l *live) reply() Reply {
-	return Reply{OK: true, Warnings: []string{}, Calls: []mock.Call{}, Screen: []string{}, Unsaved: len(l.unsaved)}
+	return Reply{SchemaVersion: report.SchemaVersion, OK: true, Warnings: []string{}, Calls: []mock.Call{}, Screen: []string{}, Unsaved: len(l.unsaved)}
 }
 
 // do runs steps, and keeps those that pass if they have a text.

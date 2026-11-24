@@ -104,7 +104,7 @@ a screen
 }
 -- file out.json --
 {
-  "version": 1,
+  "schemaVersion": 2,
   "run": "s.suite.yaml",
   "device": "emulator-5554",
   "began": "<now>",
@@ -134,12 +134,17 @@ a screen
       "failures": [
         {
           "try": 1,
-          "why": "flaked",
+          "error": {
+            "file": "a.yaml",
+            "line": 3,
+            "step": "tapOn flaky 1",
+            "cause": "flaked",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "test",
           "because": "",
-          "step": "tapOn flaky 1",
-          "file": "a.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],
@@ -166,12 +171,17 @@ a screen
       "failures": [
         {
           "try": 1,
-          "why": "flaked",
+          "error": {
+            "file": "b.yaml",
+            "line": 3,
+            "step": "tapOn flaky 2",
+            "cause": "flaked",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "test",
           "because": "",
-          "step": "tapOn flaky 2",
-          "file": "b.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],
@@ -183,12 +193,17 @@ a screen
         },
         {
           "try": 2,
-          "why": "flaked",
+          "error": {
+            "file": "b.yaml",
+            "line": 3,
+            "step": "tapOn flaky 2",
+            "cause": "flaked",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "test",
           "because": "",
-          "step": "tapOn flaky 2",
-          "file": "b.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],
@@ -215,12 +230,17 @@ a screen
       "failures": [
         {
           "try": 1,
-          "why": "not on screen: missing",
+          "error": {
+            "file": "c.yaml",
+            "line": 3,
+            "step": "tapOn missing",
+            "cause": "not on screen: missing",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "test",
           "because": "",
-          "step": "tapOn missing",
-          "file": "c.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],

@@ -1,0 +1,57 @@
+-- args --
+test --format ndjson --retries 1 a.yaml b.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- tapOn: { id: missing }
+==== out ====
+-- exit --
+1
+-- stdout --
+{"schemaVersion":2,"event":"flowStarted","flow":"a","file":"a.yaml","index":1,"of":2,"try":0,"status":"","error":null,"result":null,"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"attempt","flow":"a","file":"a.yaml","index":1,"of":2,"try":1,"status":"PASS","error":null,"result":null,"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"flowFinished","flow":"a","file":"a.yaml","index":1,"of":2,"try":1,"status":"PASS","error":null,"result":{"name":"a","file":"a.yaml","status":"PASS","cause":"","seconds": #,"tries":1,"timesFailed":0,"retries":1,"notRunReason":"","warnings":[],"recordings":[],"failures":[]},"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"flowStarted","flow":"b","file":"b.yaml","index":2,"of":2,"try":0,"status":"","error":null,"result":null,"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"stepFailed","flow":"b","file":"b.yaml","index":2,"of":2,"try":1,"status":"","error":{"file":"b.yaml","line":3,"step":"tapOn missing","cause":"not on screen: missing","expected":"","nearest":"","fix":""},"result":null,"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"attempt","flow":"b","file":"b.yaml","index":2,"of":2,"try":1,"status":"FAIL","error":{"file":"b.yaml","line":3,"step":"tapOn missing","cause":"not on screen: missing","expected":"","nearest":"","fix":""},"result":null,"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"stepFailed","flow":"b","file":"b.yaml","index":2,"of":2,"try":2,"status":"","error":{"file":"b.yaml","line":3,"step":"tapOn missing","cause":"not on screen: missing","expected":"","nearest":"","fix":""},"result":null,"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"attempt","flow":"b","file":"b.yaml","index":2,"of":2,"try":2,"status":"FAIL","error":{"file":"b.yaml","line":3,"step":"tapOn missing","cause":"not on screen: missing","expected":"","nearest":"","fix":""},"result":null,"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"flowFinished","flow":"b","file":"b.yaml","index":2,"of":2,"try":2,"status":"FAIL","error":null,"result":{"name":"b","file":"b.yaml","status":"FAIL","cause":"test","seconds": #,"tries":2,"timesFailed":2,"retries":1,"notRunReason":"","warnings":[],"recordings":[],"failures":[{"try":1,"error":{"file":"b.yaml","line":3,"step":"tapOn missing","cause":"not on screen: missing","expected":"","nearest":"","fix":""},"cause":"test","because":"","from":[],"before":[],"calls":[],"screen":["a screen"],"crash":"","saved":".rayo/b_failure.png"},{"try":2,"error":{"file":"b.yaml","line":3,"step":"tapOn missing","cause":"not on screen: missing","expected":"","nearest":"","fix":""},"cause":"test","because":"","from":[],"before":[],"calls":[],"screen":["a screen"],"crash":"","saved":".rayo/b_retry1_failure.png"}]},"results":null,"exit":0,"errors":[]}
+{"schemaVersion":2,"event":"outcome","flow":"","file":"","index":0,"of":2,"try":0,"status":"","error":null,"result":null,"results":{"schemaVersion":2,"run":"a.yaml b.yaml","device":"emulator-5554","began":"<now>","seconds": #,"order":"","stopped":"","ok":false,"total":2,"passed":1,"failed":1,"interrupted":0,"notRun":0,"retried":1,"flows":[{"name":"a","file":"a.yaml","status":"PASS","cause":"","seconds": #,"tries":1,"timesFailed":0,"retries":1,"notRunReason":"","warnings":[],"recordings":[],"failures":[]},{"name":"b","file":"b.yaml","status":"FAIL","cause":"test","seconds": #,"tries":2,"timesFailed":2,"retries":1,"notRunReason":"","warnings":[],"recordings":[],"failures":[{"try":1,"error":{"file":"b.yaml","line":3,"step":"tapOn missing","cause":"not on screen: missing","expected":"","nearest":"","fix":""},"cause":"test","because":"","from":[],"before":[],"calls":[],"screen":["a screen"],"crash":"","saved":".rayo/b_failure.png"},{"try":2,"error":{"file":"b.yaml","line":3,"step":"tapOn missing","cause":"not on screen: missing","expected":"","nearest":"","fix":""},"cause":"test","because":"","from":[],"before":[],"calls":[],"screen":["a screen"],"crash":"","saved":".rayo/b_retry1_failure.png"}]}]},"exit":1,"errors":[]}
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+key {"code":4,"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
+bye {"timeout":5000}
+-- file .rayo/b_failure.png --
+PNG...
+-- file .rayo/b_logcat.txt --
+the log
+-- file .rayo/b_retry1_failure.png --
+PNG...
+-- file .rayo/b_retry1_logcat.txt --
+the log
+-- file .rayo/b_retry1_screen.txt --
+a screen
+-- file .rayo/b_screen.txt --
+a screen
+-- file .rayo/failed.json --
+{
+  "<dir>/b.yaml": "FAIL"
+}

@@ -2,6 +2,6 @@
 test --shuffle=x a.yaml
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: --shuffle takes a number, not "x"

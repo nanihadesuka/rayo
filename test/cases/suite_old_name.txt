@@ -8,6 +8,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: staging.rayo.yaml: suites are now *.suite.yaml, rename it: staging.rayo.yaml -> staging.suite.yaml

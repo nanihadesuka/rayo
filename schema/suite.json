@@ -488,6 +488,14 @@
       "minItems": 1,
       "type": "array"
     },
+    "format": {
+      "description": "What is printed, as --format, which wins (default: human)",
+      "enum": [
+        "human",
+        "json",
+        "ndjson"
+      ]
+    },
     "keep": {
       "description": "As --keep, which wins: the files of the attempts that failed, of all, or none (default: failed)",
       "enum": [

@@ -1,0 +1,15 @@
+-- args --
+check --format json flows
+-- flows/a.yaml --
+appId: a.b
+---
+- tapOn: { id: a }
+==== out ====
+-- exit --
+0
+-- stdout --
+{
+  "schemaVersion": 2,
+  "ok": true,
+  "flows": 1
+}

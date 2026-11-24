@@ -23,7 +23,7 @@ The tables between `generated` marks come from the code, as do `rayo help` and t
 | [Device](#device) | [setLocation](#setlocation) · [travel](#travel) · [setAirplaneMode](#setairplanemode) · [takeScreenshot](#takescreenshot) · [startRecording](#startrecording-stoprecording) · [stopRecording](#startrecording-stoprecording) · [camera](#camera) · [shell](#shell) |
 | [Server](#server) | [http](#http) |
 | [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [Capture](#capture) |
-| [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Causes](#causes) · [Outcomes](#outcomes) · [Results](#results) |
+| [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Causes](#causes) · [Outcomes](#outcomes) · [Results](#results) · [For a program](#for-a-program) · [Exit codes](#exit-codes) · [Errors](#errors) · [Events](#events) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
 | [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Timings](#timings) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
 | [Default times](#default-times) · [Limitations](#limitations) | |
@@ -48,7 +48,7 @@ rayo - runs flows on Android, fast
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
-  rayo schema flow, suite or results               its JSON Schema, for editors and programs
+  rayo schema <name>                               a JSON Schema: flow, suite, results, or of --format json
   rayo version
 
 Topics, rayo help <topic>
@@ -132,7 +132,9 @@ Options of mocks
 
 Options of do
   --screen                   also what is on screen afterwards
-  --json                     for a program
+
+Options of test, check, devices, hierarchy, do and mocks
+  --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs
 ```
 
 ---
@@ -1126,6 +1128,7 @@ flows:
 | `capture` | a mapping | How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow) |
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
+| `format` | `human`, `json` or `ndjson` | What is printed, as `--format`, which wins, see [For a program](#for-a-program) (default: `human`) |
 | `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
 | `recordFolder` | folder | Where the videos go; needs `record: true` (default: `output`) |
 | `keep` | `failed`, `all`, `none` | As `--keep`, which wins: the files of the attempts that failed, of all, or none, see [What is kept](#what-is-kept) (default: `failed`) |
@@ -1472,7 +1475,7 @@ In a `.json`, every key is always there: what there is none of is `""`, `0` or `
 
 ```json
 {
-  "version": 1,
+  "schemaVersion": 2,
   "run": "Rides",
   "device": "emulator-5554",
   "began": "2026-11-22T21:11:18Z",
@@ -1497,12 +1500,12 @@ In a `.json`, every key is always there: what there is none of is `""`, `0` or `
       "failures": [
         {
           "try": 1,
-          "why": "not on screen: finished_close",
+          "error": {
+            "file": "shared/flows/dock.yaml", "line": 8, "step": "tapOn finished_close",
+            "cause": "not on screen: finished_close", "expected": "", "nearest": "", "fix": ""
+          },
           "cause": "test",
           "because": "",
-          "step": "tapOn finished_close",
-          "file": "shared/flows/dock.yaml",
-          "line": 8,
           "from": [{ "step": "runFlow ../../shared/flows/dock.yaml", "file": "tests/scan/flow.yaml", "line": 23 }],
           "before": ["extendedWaitUntil finished"],
           "calls": [{ "at": "2026-11-22T21:11:40.250Z", "method": "GET", "uri": "/trips", "outcome": "200", "mocked": true, "body": "" }],
@@ -1521,7 +1524,7 @@ The run:
 <!-- generated: results -->
 | Key | | |
 |---|---|---|
-| `version` | number | Changes if the meaning of a key does |
+| `schemaVersion` | number | Changes if the meaning of a key does |
 | `run` | text | The suite's name, or what was run |
 | `device` | text | Its serial |
 | `began` | text | In UTC |
@@ -1563,12 +1566,9 @@ Each of `failures`:
 | Key | | |
 |---|---|---|
 | `try` | number | From 1 |
-| `why` | text | The error |
+| `error` | mapping | What went wrong, at which step, see [Errors](#errors) |
 | `cause` | text | `test`, `app` or `device`, see [Causes](#causes) |
 | `because` | text | What shows that it isn't the test |
-| `step` | text | The step that failed |
-| `file` | text | Where it is written |
-| `line` | number |  |
 | `from` | list | The step that ran that flow, and so on outwards |
 | `before` | list | The last 3 steps that passed |
 | `calls` | list | The last 5 to the mock |
@@ -1578,8 +1578,100 @@ Each of `failures`:
 <!-- end -->
 
 ```
-jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].why)"' results.json
+jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].error.cause)"' results.json
 (Get-Content results.json -Raw | ConvertFrom-Json).flows | Where-Object status -eq FAIL
+```
+
+### For a program
+
+`--format` says what is printed: `human`, the default; `json`, for a program; `ndjson`, the same on
+one line. `test`, `check`, `devices`, `hierarchy`, `do` and `mocks` take it, and a suite's `format`
+too, which `--format` wins over. With `json` or `ndjson`, only that goes to the standard output.
+
+| Command | `--format json` prints | Schema |
+|---|---|---|
+| `test` | The [results](#results), as a `.json` of `--results` | `rayo schema results` |
+| `check` | `schemaVersion`, `ok` and how many `flows` are fine | `rayo schema check` |
+| `devices` | `schemaVersion` and the `devices` | `rayo schema devices` |
+| `hierarchy` | `schemaVersion` and the `screen`, a line each | `rayo schema hierarchy` |
+| `do` | See [From other programs](#from-other-programs) | `rayo schema do` |
+| `mocks` | `schemaVersion` and the `notes` | `rayo schema mocks` |
+
+If a command can't do what it was asked, it prints instead:
+
+<!-- generated: errors -->
+| Key | | |
+|---|---|---|
+| `schemaVersion` | number | Changes if the meaning of a key does |
+| `ok` | true or false | false |
+| `exit` | number | The exit code, see [Exit codes](#exit-codes) |
+| `errors` | list | One for each, see [Errors](#errors) |
+<!-- end -->
+
+`schemaVersion` changes if the meaning of a key does; every key is always there.
+
+### Exit codes
+
+The same whatever `--format` says:
+
+<!-- generated: exit codes -->
+| Code | | |
+|---|---|---|
+| `0` | passed | Every flow passed, or the command did what it was asked |
+| `1` | failed | A flow failed, was interrupted or didn't run; or a step sent with `rayo do` failed |
+| `2` | configuration | Something written is wrong: an option, a flow, a suite or a mock; nothing ran |
+| `3` | device | No device to run on, or it was lost or unusable, so the flows couldn't run or didn't all run |
+| `4` | flaky | Reserved: every flow passed, some only after failing; for now such a run exits `0` |
+| `130` | interrupted | Ctrl-C |
+<!-- end -->
+
+### Errors
+
+Mistakes in what is written and flows that failed are told the same way, as data:
+
+<!-- generated: error -->
+| Key | | |
+|---|---|---|
+| `file` | text | Where it is written; empty if it isn't of a file |
+| `line` | number | 0 if not known |
+| `step` | text | Of a flow that failed, the step |
+| `cause` | text | What is wrong |
+| `expected` | text | What it takes, if that can be said |
+| `nearest` | text | Of that, the closest to what is written |
+| `fix` | text | What to write instead, if that can be said |
+<!-- end -->
+
+```json
+{ "file": "flows/login.yaml", "line": 3, "step": "", "cause": "unknown command \"tapOm\", did you mean tapOn?",
+  "expected": "", "nearest": "tapOn", "fix": "tapOn" }
+```
+
+### Events
+
+`rayo test --format ndjson` prints a line as each thing happens, so a program needn't wait for the
+end: `flowStarted`; for each try, `stepFailed` if a step failed, then `attempt`; `flowFinished`, after
+all its tries; and last `outcome`, with the results. If the run can't begin, the only line is `error`.
+
+<!-- generated: event -->
+| Key | | |
+|---|---|---|
+| `schemaVersion` | number | Changes if the meaning of a key does |
+| `event` | text | What happened, see [Events](#events) |
+| `flow` | text | Its name; empty in outcome and error |
+| `file` | text | The flow's |
+| `index` | number | Of the flow, from 1 |
+| `of` | number | Flows to run |
+| `try` | number | Of stepFailed and attempt, from 1 |
+| `status` | text | Of attempt, PASS or FAIL; of flowFinished, the flow's [outcome](#outcomes) |
+| `error` | mapping or null | Of stepFailed and of an attempt that failed, see [Errors](#errors) |
+| `result` | mapping or null | Of flowFinished, the flow as in the [results](#results) |
+| `results` | mapping or null | Of outcome, the [results](#results), as --format json |
+| `exit` | number | Of outcome and error, the exit code, see [Exit codes](#exit-codes) |
+| `errors` | list | Of error, as rayo prints them with --format json |
+<!-- end -->
+
+```
+rayo test --format ndjson all.rayo.yaml | jq -c 'select(.event == "stepFailed") | .error'
 ```
 
 ---
@@ -1630,13 +1722,13 @@ be left out.
 ### From other programs
 
 `rayo do` sends commands to the live session, from the same folder or with the same `--output`.
-Each call answers when the steps have run; its exit code is 1 if one failed.
+Each call answers when the steps have run; its exit code is 1 if one failed, see [Exit codes](#exit-codes).
 
 ```
 rayo live --serve --emulator tests/new/flow.yaml &     # until .quit, or an hour unused
 rayo do .screen
 rayo do --screen '- tapOn: { id: login }'
-rayo do --json - < steps.yaml
+rayo do --format json - < steps.yaml
 rayo do .save
 rayo do .quit
 ```
@@ -1644,7 +1736,7 @@ rayo do .quit
 | Option | |
 |---|---|
 | `--screen` | Also what is on screen afterwards. After a failure it always comes |
-| `--json` | `ok`, `output`, `error`, `failure` (as in the [results](#results), or `null`), `warnings`, `calls` to the mock meanwhile, `screen`, `unsaved` steps |
+| `--format json` | `schemaVersion`, `ok`, `output`, `error`, `failure` (as in the [results](#results), or `null`), `warnings`, `calls` to the mock meanwhile, `screen`, `unsaved` steps; `rayo schema do` |
 | `-` | Commands from standard input |
 
 Calls the app makes without a mock are warnings here: the session goes on. A run of the saved

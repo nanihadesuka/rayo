@@ -6,7 +6,9 @@ help exit-codes
 -- stdout --
 exit codes:
 
-  0    all went well
-  1    a flow failed, or there was an error
-  2    rayo without a command
-  130  interrupted, with Ctrl-C
+  0    passed         Every flow passed, or the command did what it was asked
+  1    failed         A flow failed, was interrupted or didn't run; or a step sent with rayo do failed
+  2    configuration  Something written is wrong: an option, a flow, a suite or a mock; nothing ran
+  3    device         No device to run on, or it was lost or unusable, so the flows couldn't run or didn't all run
+  4    flaky          Reserved: every flow passed, some only after failing; for now such a run exits 0
+  130  interrupted    Ctrl-C

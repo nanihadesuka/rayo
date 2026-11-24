@@ -171,7 +171,7 @@ a screen
 }
 -- file e2e/results/results.json --
 {
-  "version": 1,
+  "schemaVersion": 2,
   "run": "Everything",
   "device": "emulator-5554",
   "began": "<now>",
@@ -201,12 +201,17 @@ a screen
       "failures": [
         {
           "try": 1,
-          "why": "not on screen: home",
+          "error": {
+            "file": "e2e/shared/sub.yaml",
+            "line": 3,
+            "step": "tapOn app crashes",
+            "cause": "not on screen: home",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
-          "step": "tapOn app crashes",
-          "file": "e2e/shared/sub.yaml",
-          "line": 3,
           "from": [
             {
               "step": "runFlow ../shared/sub.yaml",
@@ -236,12 +241,17 @@ a screen
         },
         {
           "try": 2,
-          "why": "not on screen: home",
+          "error": {
+            "file": "e2e/shared/sub.yaml",
+            "line": 3,
+            "step": "tapOn app crashes",
+            "cause": "not on screen: home",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
-          "step": "tapOn app crashes",
-          "file": "e2e/shared/sub.yaml",
-          "line": 3,
           "from": [
             {
               "step": "runFlow ../shared/sub.yaml",
@@ -300,12 +310,17 @@ a screen
       "failures": [
         {
           "try": 1,
-          "why": "flaked",
+          "error": {
+            "file": "e2e/c/flow.yaml",
+            "line": 3,
+            "step": "tapOn flaky 1",
+            "cause": "flaked",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
-          "step": "tapOn flaky 1",
-          "file": "e2e/c/flow.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],

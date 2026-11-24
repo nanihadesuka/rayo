@@ -61,6 +61,7 @@ type Suite struct {
 	Retries      *int
 	Output       string
 	Results      []string
+	Format       string // of what is printed; --format wins
 	Device       *adb.Setup
 	Record       bool
 	RecordFolder string
@@ -151,32 +152,31 @@ func read(path string) (*Suite, error) {
 	if err != nil {
 		return nil, err
 	}
-	where := filepath.ToSlash(path)
 	var doc yaml.Node
 	if err := yaml.Unmarshal(data, &doc); err != nil {
-		return nil, fmt.Errorf("%s: %w", where, err)
+		return nil, &flow.Problem{Path: path, What: err.Error(), Err: err}
 	}
 	if len(doc.Content) == 0 {
-		return nil, fmt.Errorf("%s: is empty", where)
+		return nil, &flow.Problem{Path: path, What: "is empty"}
 	}
 	s := &Suite{Path: path}
 	if err := schema.Read(Fields, s, doc.Content[0]); err != nil {
 		var here *schema.Error
 		if errors.As(err, &here) {
-			return nil, fmt.Errorf("%s:%d: %s", where, here.Line, here.What)
+			return nil, &flow.Problem{Path: path, Line: here.Line, What: here.What, Expected: here.Expected}
 		}
-		return nil, fmt.Errorf("%s: %w", where, err)
+		return nil, &flow.Problem{Path: path, What: err.Error(), Err: err}
 	}
 	if s.RecordFolder != "" && !s.Record {
-		return nil, fmt.Errorf("%s: recordFolder needs record: true", where)
+		return nil, &flow.Problem{Path: path, What: "recordFolder needs record: true"}
 	}
 	for _, e := range s.Flows {
 		if info, err := os.Stat(s.Relative(e.file)); err != nil || info.IsDir() {
-			return nil, fmt.Errorf("%s:%d: no such flow: %s", where, e.line, e.file)
+			return nil, &flow.Problem{Path: path, Line: e.line, What: "no such flow: " + e.file}
 		}
 		for _, m := range e.mock {
 			if err := mock.New().Load(s.Relative(m)); err != nil {
-				return nil, fmt.Errorf("%s:%d: mock: %v", where, e.line, err)
+				return nil, &flow.Problem{Path: path, Line: e.line, What: "mock: " + err.Error(), Err: err}
 			}
 		}
 	}
@@ -259,17 +259,17 @@ func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 		files = append(files, p)
 	}
 	var flows []*flow.Flow
-	var bad []string
+	var bad Problems
 	for _, file := range files {
 		f, err := flow.Load(file)
 		if err != nil {
-			bad = append(bad, err.Error())
+			bad = append(bad, err)
 			continue
 		}
 		flows = append(flows, f)
 	}
 	if len(bad) > 0 {
-		return nil, nil, errors.New(strings.Join(bad, "\n       "))
+		return nil, nil, bad
 	}
 	if len(flows) == 0 {
 		return nil, nil, fmt.Errorf("no flows in %s", strings.Join(paths, ", "))
@@ -281,3 +281,16 @@ func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 	}
 	return flows, s, nil
 }
+
+// Problems are those of several flows, each on a line of its own.
+type Problems []error
+
+func (p Problems) Error() string {
+	var lines []string
+	for _, err := range p {
+		lines = append(lines, err.Error())
+	}
+	return strings.Join(lines, "\n       ")
+}
+
+func (p Problems) Unwrap() []error { return p }

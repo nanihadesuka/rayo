@@ -8,6 +8,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
-error: s.suite.yaml:1: unknown key "flow" (it takes name, flows, retries, app, device, env, timeoutScale, network, unmocked, capture, output, results, record, recordFolder, keep, artifacts, name-template)
+error: s.suite.yaml:1: unknown key "flow" (it takes name, flows, retries, app, device, env, timeoutScale, network, unmocked, capture, output, results, format, record, recordFolder, keep, artifacts, name-template)

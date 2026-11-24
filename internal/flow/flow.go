@@ -44,19 +44,28 @@ type Step struct {
 }
 
 func problem(path string, line int, format string, a ...any) error {
-	return &flaw{path, line, fmt.Sprintf(format, a...)}
+	return &Problem{Path: path, Line: line, What: fmt.Sprintf(format, a...)}
 }
 
-// flaw is something wrong in a flow.
-type flaw struct {
-	path string
-	line int
-	what string
+// Problem is something wrong in a file, a flow's or a suite's, and what would be right.
+type Problem struct {
+	Path     string
+	Line     int    // 0 if not known
+	What     string // is wrong
+	Expected string // what it takes, if that can be said
+	Nearest  string // of that, the closest to what is written
+	Fix      string // what to write instead, if that can be said
+	Err      error  // what it comes from, if anything
 }
 
-func (f *flaw) Error() string {
-	return fmt.Sprintf("%s:%d: %s", filepath.ToSlash(f.path), f.line, f.what)
+func (p *Problem) Error() string {
+	if p.Line == 0 {
+		return fmt.Sprintf("%s: %s", filepath.ToSlash(p.Path), p.What)
+	}
+	return fmt.Sprintf("%s:%d: %s", filepath.ToSlash(p.Path), p.Line, p.What)
 }
+
+func (p *Problem) Unwrap() error { return p.Err }
 
 // Load reads a flow and checks it and those it includes.
 func Load(path string) (*Flow, error) { return load(path, 0) }
@@ -65,7 +74,7 @@ var errCircle = errors.New("flows run each other in a circle")
 
 func load(path string, depth int) (*Flow, error) {
 	if depth > 20 {
-		return nil, fmt.Errorf("%s: %w", filepath.ToSlash(path), errCircle)
+		return nil, &Problem{Path: path, What: errCircle.Error(), Err: errCircle}
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -81,14 +90,14 @@ func parse(path string, data []byte, depth int) (*Flow, error) {
 		if err := d.Decode(&n); errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("%s: %v", path, err)
+			return nil, &Problem{Path: path, What: err.Error()}
 		}
 		if len(n.Content) > 0 {
 			docs = append(docs, n.Content[0])
 		}
 	}
 	if len(docs) != 2 || docs[0].Kind != yaml.MappingNode || docs[1].Kind != yaml.SequenceNode {
-		return nil, fmt.Errorf("%s: expected 'appId: ...', then '---', then a list of commands", path)
+		return nil, &Problem{Path: path, What: "expected 'appId: ...', then '---', then a list of commands", Expected: "appId: ..., then ---, then a list of commands"}
 	}
 	f := &Flow{Path: path, Name: flowName(path), Env: map[string]string{}}
 	p := &reader{path: path, depth: depth}
@@ -184,7 +193,11 @@ func (p *reader) step(n *yaml.Node) (*Step, error) {
 	}
 	k, ok := commands[s.Kind]
 	if !ok {
-		return nil, p.fail(n, "unknown command %q%s", s.Kind, suggest(s.Kind))
+		e := p.fail(n, "unknown command %q%s", s.Kind, suggest(s.Kind)).(*Problem)
+		if e.Nearest = nearest(s.Kind); e.Nearest != "" {
+			e.Fix = e.Nearest // as the command's name
+		}
+		return nil, e
 	}
 	v := s.Value
 	switch {
@@ -211,6 +224,14 @@ func (p *reader) step(n *yaml.Node) (*Step, error) {
 }
 
 func suggest(name string) string {
+	if best := nearest(name); best != "" {
+		return fmt.Sprintf(", did you mean %s?", best)
+	}
+	return ""
+}
+
+// nearest is the command closest to a name that isn't one; empty if none is close.
+func nearest(name string) string {
 	best := ""
 	for k := range commands {
 		near := strings.EqualFold(k, name) ||
@@ -219,10 +240,7 @@ func suggest(name string) string {
 			best = k
 		}
 	}
-	if best == "" {
-		return ""
-	}
-	return fmt.Sprintf(", did you mean %s?", best)
+	return best
 }
 
 // mapping checks the keys of a mapping and their values.
@@ -243,7 +261,9 @@ func (p *reader) mapping(n *yaml.Node, what string, keys, also []anyKey) error {
 			all = append(all, k.title())
 		}
 		sort.Strings(all)
-		return p.fail(name, "%s doesn't take %q (it takes %s)", what, name.Value, strings.Join(all, ", "))
+		e := p.fail(name, "%s doesn't take %q (it takes %s)", what, name.Value, strings.Join(all, ", ")).(*Problem)
+		e.Expected = strings.Join(all, ", ")
+		return e
 	})
 }
 

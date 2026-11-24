@@ -31,6 +31,6 @@ appId: a.b
 - tapOn: { id: flaky 1 }
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: no flow is called z

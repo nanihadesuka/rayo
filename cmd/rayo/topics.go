@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/report"
 )
 
 // topic is a part of the help that isn't a command: small, and whole on its own.
@@ -65,11 +66,7 @@ Keep the --output folder as an artifact: it has the failures.
   rayo check; flows that expect MAESTRO_FILENAME need it set, such as in a suite's env.
 - A failure is app or device only with proof of it; something slow is test.
 `},
-	{"exit-codes", "exit codes", `  0    all went well
-  1    a flow failed, or there was an error
-  2    rayo without a command
-  130  interrupted, with Ctrl-C
-`},
+	{"exit-codes", "exit codes", exitCodes()},
 }
 
 // helpTopic is a topic's text, with its title; empty if there is none of that name.
@@ -108,4 +105,13 @@ func helpAll() (string, error) {
 		part(t.about, t.text)
 	}
 	return b.String(), nil
+}
+
+// exitCodes is the topic of the codes, from report.Exits, the one place they are said.
+func exitCodes() string {
+	var b strings.Builder
+	for _, e := range report.Exits {
+		fmt.Fprintf(&b, "  %-4d %-14s %s\n", e.Code, e.Name, strings.ReplaceAll(e.What, "`", ""))
+	}
+	return b.String()
 }

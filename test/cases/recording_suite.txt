@@ -60,7 +60,7 @@ the log
 a screen
 -- file out.json --
 {
-  "version": 1,
+  "schemaVersion": 2,
   "run": "s.suite.yaml",
   "device": "emulator-5554",
   "began": "<now>",
@@ -92,12 +92,17 @@ a screen
       "failures": [
         {
           "try": 1,
-          "why": "flaked",
+          "error": {
+            "file": "a.yaml",
+            "line": 3,
+            "step": "tapOn flaky 1",
+            "cause": "flaked",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "test",
           "because": "",
-          "step": "tapOn flaky 1",
-          "file": "a.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],
