@@ -15,6 +15,47 @@ type topic struct {
 
 // topics are the tasks, then what is good to know. rayo help all has them after the tables.
 var topics = []topic{
+	// agents is the page to start from, so it is first, here and in rayo help all. Every rayo <command>
+	// and --option it names must exist: TestAgentsNamesExist checks. Once they land, add:
+	// rayo explain <run folder|flow> under "Read the cause"; --find <text> next to --screen under
+	// "Author forward"; --changed-only (or --since) under "Batch edits".
+	{"agents", "start here: the fast, cheap way to use rayo", `For anyone driving rayo, a person or a program. The cheapest step that answers the question first.
+
+Know before you run
+  rayo check <flows>, no device and instant: the plan, and every mistake. Fix all it says, then run.
+
+Run the smallest unit
+  One flow, not the suite: rayo test --only <name> --retries 0 --fail-fast <suite>.
+
+Read the cause, not the logs
+  A failure leads with its verdict: the step, and a cause of test, app or device. --detail brief
+  is that alone. Open the recordings, logcat or calls in --output only if the verdict isn't enough.
+
+A failure is information, not a reason to rerun
+  device: fix the environment; the same flow on a broken device only costs time.
+  app: a crash or a hang of the app, a finding to report.
+  test: the flow or the mocks are wrong; fix them. Retry only what a retry can change.
+
+Batch edits, then verify once
+  Make all the changes, rayo check, run the narrowest unit, then rayo test --rerun-failed.
+  Don't rerun flows that passed to be sure.
+
+Author forward
+  rayo live <flow>, then rayo do --screen <command>: one command, see the result, go on from it.
+  rayo do .quit ends the session and frees the device.
+
+Stop after a pass
+
+Prefer structured output
+  When a program reads: --format json or ndjson, --detail brief, --show failed, --keep failed.
+
+What it costs, roughly
+  rayo check        instant, no device
+  one flow          seconds to minutes
+  a whole suite     many minutes
+  a capture         slow; it makes new ids, so diffs are noisy
+  rayo live         holds the device until it ends
+`},
 	{"write-a-flow", "write a flow", `A flow is a header, ---, and a list of commands. Each command waits for what it needs.
 
   rayo hierarchy --emulator                          what is on screen, and how to refer to it
@@ -86,6 +127,7 @@ func helpAll() (string, error) {
 		fmt.Fprintf(&b, "## %s\n\n%s\n", title, strings.TrimRight(text, "\n"))
 		b.WriteString("\n")
 	}
+	part(topics[0].about, topics[0].text)
 	part("commands and options", help())
 	for _, name := range []string{"flow", "suite"} {
 		text, err := helpOn(name)
@@ -101,7 +143,7 @@ func helpAll() (string, error) {
 		}
 		part(name, text)
 	}
-	for _, t := range topics {
+	for _, t := range topics[1:] {
 		part(t.about, t.text)
 	}
 	return b.String(), nil
