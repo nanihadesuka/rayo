@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"maps"
 	"os"
@@ -124,6 +125,38 @@ func TestPage(t *testing.T) {
 		t.Fatal(err)
 	}
 	generated(t, "../docs/data.js", "// Written by go test ./test -update\nwindow.RAYO = "+b.String())
+}
+
+// The man page and llms.txt are rayo help all, as each wants it.
+func TestHelpAll(t *testing.T) {
+	out, err := exec.Command(rayo, "help", "all").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	all := unix(out)
+	parts := strings.Split(strings.TrimPrefix(all, "## "), "\n## ")
+
+	var man strings.Builder
+	man.WriteString(".\\\" Written by go test ./test -update, from rayo help all\n.TH RAYO 1 \"\" rayo \"rayo help all\"\n")
+	for _, part := range parts {
+		title, text, _ := strings.Cut(part, "\n")
+		fmt.Fprintf(&man, ".SH %s\n.nf\n", strings.ToUpper(title))
+		for _, line := range strings.Split(strings.Trim(text, "\n"), "\n") {
+			line = strings.ReplaceAll(line, "\\", "\\e")
+			if strings.HasPrefix(line, ".") || strings.HasPrefix(line, "'") {
+				line = "\\&" + line
+			}
+			man.WriteString(line + "\n")
+		}
+		man.WriteString(".fi\n")
+	}
+	generated(t, "../man/rayo.1", man.String())
+
+	base := "https://github.com/nanihadesuka/rayo/blob/main/"
+	generated(t, "../llms.txt", "# rayo\n\n> End-to-end tests for Android: one executable, flows in YAML, a mock backend built in.\n"+
+		"> Written by go test ./test -update: below is rayo help all, the same as rayo help <topic> part by part.\n\n"+
+		"## Docs\n\n- ["+"Guide]("+base+"GUIDE.md)\n- [Full example]("+base+"EXAMPLE.md)\n- [Reference]("+base+"REFERENCE.md)\n"+
+		"- [Mocking]("+base+"MOCKING.md)\n\n## rayo help all\n\n```\n"+all+"```\n")
 }
 
 // The full example is right, and all its files are told of.

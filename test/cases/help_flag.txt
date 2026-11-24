@@ -1,0 +1,49 @@
+-- args --
+test --help
+==== out ====
+-- exit --
+0
+-- stdout --
+  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
+
+Options of test:
+  --device <serial>          when several are connected
+  --emulator                 never a real device, even if it is the only one
+  --output <folder>          where failures and screenshots go (default .rayo)
+  -e, --env <KEY=VALUE>      a variable for the flows
+  --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
+  --mock-port <port>         where the app finds the mock on the device (default 8080)
+  --animations               leave the device's animations on
+  --profile                  where the time of each step went
+  --only <a,b>               only the flows with these names
+  --include-tags <a,b>       only flows with one of these tags
+  --exclude-tags <a,b>       not flows with one of these tags
+  --rerun-failed             only those that haven't passed since they last failed
+  --retries <n>              try again what fails, whatever the suite says (default 1)
+  --fail-fast                stop at the first failure
+  --keep-going               don't stop when the device or the app fails over and over
+  --shuffle[=seed]           in a random order, or in that of an earlier run
+  -c, --continuous           run again whenever a file changes
+  -v, --verbose              every step (always, for a single flow)
+  --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
+  --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
+  --failures-only            leave the flows that passed out of the results
+  --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
+  --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it. Given a suite instead, the folder is the flow's mock
+  --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
+  --capture-append           go on with the capture already in the folder, as if in one go
+  --redact-value <name=value> what a private field of a body becomes, such as phone=+4915100000000 (default one of the same form: a date stays a date); again for more
+  --capture-from <url>       the backend, if calls don't begin with /host/
+  --graphql <match>          tell GraphQL calls apart by operation+variables (default), by operation, or off, as any call
+  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
+  --rest <match>             match other calls by their body too (body, default), or by method and address alone (off)
+  --ignore-params <a,b>      names in the query not to match, such as session or depart_at
+  --ignore-body <a,b>        names, or paths such as trip.departAt, in JSON bodies and GraphQL variables, and names in forms, not to match
+  --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly
+  --capture-headers <a,b>    headers of the request to match too, such as Accept-Language
+  --ignore-host              match calls whose path begins with a host, whatever the host
+  --ignore-path-ids          match UUIDs and ULIDs in paths by their form, as they are new on each run
+  --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)
+  --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
+  --ignore-unmocked <a,b>    calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any)
+  --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)

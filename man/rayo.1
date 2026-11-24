@@ -1,0 +1,937 @@
+.\" Written by go test ./test -update, from rayo help all
+.TH RAYO 1 "" rayo "rayo help all"
+.SH COMMANDS AND OPTIONS
+.nf
+rayo - runs flows on Android, fast
+
+  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
+  rayo check <flow, folder or suite>...            check flows without a device
+  rayo live [options] <flow>                       write a flow as it runs, command by command
+  rayo do [options] <commands>                     send commands to the live session; rayo do .help
+  rayo hierarchy [options]                         what is on screen, and how to refer to it
+  rayo devices                                     connected devices
+  rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
+  rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
+  rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
+  rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
+  rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
+  rayo schema flow, suite or results               its JSON Schema, for editors and programs
+  rayo version
+
+Topics, rayo help <topic>
+  write-a-flow               write a flow
+  debug-a-flow               debug a failing flow
+  record-mocks               record mocks from the real backend
+  run-in-ci                  run in a CI
+  limits                     limitations and gotchas
+  exit-codes                 exit codes
+
+Options of test, live and hierarchy
+  --device <serial>          when several are connected
+  --emulator                 never a real device, even if it is the only one
+
+Options of test, live and do
+  --output <folder>          where failures and screenshots go (default .rayo)
+
+Options of test and live
+  -e, --env <KEY=VALUE>      a variable for the flows
+  --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
+  --mock-port <port>         where the app finds the mock on the device (default 8080)
+  --animations               leave the device's animations on
+  --profile                  where the time of each step went
+
+Options of test: which flows
+  --only <a,b>               only the flows with these names
+  --include-tags <a,b>       only flows with one of these tags
+  --exclude-tags <a,b>       not flows with one of these tags
+  --rerun-failed             only those that haven't passed since they last failed
+
+Options of test: how they run
+  --retries <n>              try again what fails, whatever the suite says (default 1)
+  --fail-fast                stop at the first failure
+  --keep-going               don't stop when the device or the app fails over and over
+  --shuffle[=seed]           in a random order, or in that of an earlier run
+  -c, --continuous           run again whenever a file changes
+
+Options of test: what comes out
+  -v, --verbose              every step (always, for a single flow)
+  --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
+  --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
+  --failures-only            leave the flows that passed out of the results
+
+Options of test and live: mocks from the real backend
+  --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
+  --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it. Given a suite instead, the folder is the flow's mock
+  --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
+  --capture-append           go on with the capture already in the folder, as if in one go
+  --redact-value <name=value> what a private field of a body becomes, such as phone=+4915100000000 (default one of the same form: a date stays a date); again for more
+
+Options of test, live and mocks: how a capture or an import becomes mocks
+  --capture-from <url>       the backend, if calls don't begin with /host/
+  --graphql <match>          tell GraphQL calls apart by operation+variables (default), by operation, or off, as any call
+  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
+  --rest <match>             match other calls by their body too (body, default), or by method and address alone (off)
+  --ignore-params <a,b>      names in the query not to match, such as session or depart_at
+  --ignore-body <a,b>        names, or paths such as trip.departAt, in JSON bodies and GraphQL variables, and names in forms, not to match
+  --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly
+  --capture-headers <a,b>    headers of the request to match too, such as Accept-Language
+  --ignore-host              match calls whose path begins with a host, whatever the host
+  --ignore-path-ids          match UUIDs and ULIDs in paths by their form, as they are new on each run
+  --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)
+
+Options of test and live: how calls reach the mock
+  --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
+  --ignore-unmocked <a,b>    calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any)
+  --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)
+
+Options of live
+  --app <package>            of a flow that isn't there yet
+  --mock <a,b>               its mocks, relative to it
+  --no-run                   don't begin by running the steps it has
+  --serve                    only take commands from rayo do, until .quit
+
+Options of mocks
+  --only <a,b>               the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)
+  --prune                    also take out the mocks that weren't called
+
+Options of do
+  --screen                   also what is on screen afterwards
+  --json                     for a program
+.fi
+.SH FLOW
+.nf
+A flow begins with a header, then ---, then a list of commands. The header:
+
+  appId            package                    The app's
+  name             text                       Shown in the output (default: the file's, or the folder's for flow.yaml)
+  tags             a list                     To choose flows
+  env              values                     Variables for it
+  mock             a path or a list           Who answers as the backend; ${...} too, where an empty path loads nothing
+  network          interceptor or proxy       How the app's calls reach the mock; ${...} too, such as ${NETWORK} from -e, where empty is the default (default: interceptor, or --network)
+  record           true, false or a file      A video of the flow (default: the suite's)
+  onFlowStart      commands                   Run first
+  onFlowComplete   commands                   Run last, also after a failure
+
+Commands: assertNotVisible, assertTrue, assertVisible, back, camera, clearState, copyTextFrom, doubleTapOn, eraseText, evalScript, extendedWaitUntil, hideKeyboard, http, inputRandomEmail, inputRandomNumber, inputRandomPersonName, inputRandomText, inputText, killApp, launchApp, longPressOn, mock, mockState, network, openLink, pasteText, pressKey, repeat, retry, runFlow, runScript, scroll, scrollUntilVisible, setAirplaneMode, setLocation, setPermissions, shell, startRecording, stopApp, stopRecording, swipe, takeScreenshot, tapOn, travel, type, waitForAnimationToEnd, waitForRequest
+.fi
+.SH SUITE
+.nf
+A suite, *.suite.yaml, lists flows that run together. A folder means its suite, if it holds one, else its flows:
+
+  name             text                       Shown in the results (default: the file)
+  flows            a list                     Files, run in this order; or mappings with file, retries, mock, network, unmocked and capture (required)
+  retries          a number from 0            How many times a flow that fails is tried again (default: 1)
+  app              a mapping                  Installed before the flows
+  device           a mapping                  How it is while the flows run
+  env              values                     Variables for every flow, as -e, which wins; they may use ${...}, such as ${rayo.file}
+  timeoutScale     0.1 to 10                  Multiplies the default waits; --timeout-scale wins (default: 1)
+  network          interceptor or proxy       How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: each flow's, else interceptor)
+  unmocked         a mapping                  Calls without a mock that don't fail the flow (default: none: each fails the flow)
+  capture          a mapping                  How a capture calls the backend and becomes mocks, as the options of the same names, which win
+  output           folder                     As --output, which wins (default: .rayo where rayo runs)
+  results          a file or a list           As --results, which wins over all of them: .txt, .json or .xml (JUnit)
+  record           true or false              A video of each flow that doesn't say (default: false)
+  recordFolder     folder                     Where the videos go; needs record: true (default: each flow's, in output)
+
+flows, when not only a file:
+
+  file             file                       The flow (required)
+  retries          a number from 0            How many times it is tried again if it fails (default: the suite's)
+  mock             a path or a list           Who answers as the backend, as a flow's mock, relative to the suite; the flow's own mock wins
+  network          interceptor or proxy       How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: the suite's)
+  unmocked         a mapping                  Calls without a mock that don't fail the flow (default: the suite's; its calls are added to them)
+  capture          a mapping                  How a capture calls the backend and becomes mocks, as the options of the same names, which win (default: the suite's; what it says wins over it)
+
+unmocked:
+
+  ignore           a list                     Calls that no mock answers but that don't fail the flow: each graphql:Operation, host/path, host or /path, as --ignore-unmocked, or a mapping with host, path and graphql (required)
+  status           100 to 599                 What those calls are answered with (default: 404)
+  body             text                       Of the answer (default: not mocked:  and the call)
+
+an ignored call, when not text:
+
+  host             host                       Of the call, or of its subdomains (default: any)
+  path             a path                     Of the call, without the host; * is any text but /, ** any (default: any)
+  graphql          a name or a list           GraphQL operations (default: any call)
+
+capture:
+
+  hosts            a name or a list           As --hosts
+  from             url                        As --capture-from
+  graphql          operation+variables, operation, off As --graphql
+  graphqlPath      regex                      As --graphql-path
+  rest             body, off                  As --rest
+  ignoreParams     a name or a list           As --ignore-params
+  ignoreBody       a name or a list           As --ignore-body
+  timestamps       format, exact              As --timestamps
+  captureHeaders   a name or a list           As --capture-headers
+  ignoreHost       true or false              As --ignore-host
+  ignorePathIds    true or false              As --ignore-path-ids
+  stateless        a path or a list           As --stateless
+  redactValue      values                     As --redact-value: what a private field of a body becomes, such as phone: "+4915100000000"
+
+app:
+
+  id               package                    The app's (required)
+  apk              file                       What to install, if the device has another. rayo doesn't build it (required)
+
+device:
+
+  size             pixels, such as 1080x2400  Of the screen
+  dpi              72 to 1000                 Its density. With size, it says how many dp there are: 1080 pixels at 420 dpi are 411 dp
+  fontScale        0.5 to 3                   Of the text; 1 is normal
+  darkMode         true or false              The dark theme
+.fi
+.SH ASSERTNOTVISIBLE
+.nf
+assertNotVisible: The element isn't on screen, or goes away in time
+
+selector:
+  id                     text         The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole
+  text                   text         The text, description or hint. A regular expression of the whole (short form)
+  index                  number       The n-th match, from 0, top to bottom and left to right; negative counts from the end
+  enabled                true/false   Whether it is enabled
+  checked                true/false   Whether it is checked
+  focused                true/false   Whether it has the focus
+  selected               true/false   Whether it is selected
+  below                  selector     Entirely below another
+  above                  selector     Entirely above another
+  leftOf                 selector     Entirely to the left of another
+  rightOf                selector     Entirely to the right of another
+  containsChild          selector     The direct parent of another
+  childOf                selector     Anywhere inside another
+  containsDescendants    selectors    Around all of these
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH ASSERTTRUE
+.nf
+assertTrue: An expression is true
+
+keys:
+  condition              JavaScript   An expression (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH ASSERTVISIBLE
+.nf
+assertVisible: The element is on screen, or appears in time
+
+selector:
+  id                     text         The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole
+  text                   text         The text, description or hint. A regular expression of the whole (short form)
+  index                  number       The n-th match, from 0, top to bottom and left to right; negative counts from the end
+  enabled                true/false   Whether it is enabled
+  checked                true/false   Whether it is checked
+  focused                true/false   Whether it has the focus
+  selected               true/false   Whether it is selected
+  below                  selector     Entirely below another
+  above                  selector     Entirely above another
+  leftOf                 selector     Entirely to the left of another
+  rightOf                selector     Entirely to the right of another
+  containsChild          selector     The direct parent of another
+  childOf                selector     Anywhere inside another
+  containsDescendants    selectors    Around all of these
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH BACK
+.nf
+back: Presses Back
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH CAMERA
+.nf
+camera: What an emulator's camera sees; does nothing on other devices
+
+keys:
+  image                  text         What it sees, a path relative to this flow; or none (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH CLEARSTATE
+.nf
+clearState: Erases the app's data
+
+keys:
+  appId                  text         The app; by default the header's (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH COPYTEXTFROM
+.nf
+copyTextFrom: Keeps an element's text in rayo.copiedText
+
+selector:
+  id                     text         The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole
+  text                   text         The text, description or hint. A regular expression of the whole (short form)
+  index                  number       The n-th match, from 0, top to bottom and left to right; negative counts from the end
+  enabled                true/false   Whether it is enabled
+  checked                true/false   Whether it is checked
+  focused                true/false   Whether it has the focus
+  selected               true/false   Whether it is selected
+  below                  selector     Entirely below another
+  above                  selector     Entirely above another
+  leftOf                 selector     Entirely to the left of another
+  rightOf                selector     Entirely to the right of another
+  containsChild          selector     The direct parent of another
+  childOf                selector     Anywhere inside another
+  containsDescendants    selectors    Around all of these
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH DOUBLETAPON
+.nf
+doubleTapOn: Like tapOn, twice
+
+keys:
+  point                  point        Alone, of the screen; with a selector, of the element in %
+  delay                  time         Between taps (100)
+
+selector:
+  id                     text         The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole
+  text                   text         The text, description or hint. A regular expression of the whole (short form)
+  index                  number       The n-th match, from 0, top to bottom and left to right; negative counts from the end
+  enabled                true/false   Whether it is enabled
+  checked                true/false   Whether it is checked
+  focused                true/false   Whether it has the focus
+  selected               true/false   Whether it is selected
+  below                  selector     Entirely below another
+  above                  selector     Entirely above another
+  leftOf                 selector     Entirely to the left of another
+  rightOf                selector     Entirely to the right of another
+  containsChild          selector     The direct parent of another
+  childOf                selector     Anywhere inside another
+  containsDescendants    selectors    Around all of these
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH ERASETEXT
+.nf
+eraseText: Deletes from the end of the focused field
+
+keys:
+  charactersToErase      number       How many (50) (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH EVALSCRIPT
+.nf
+evalScript: Runs a line of JavaScript
+
+keys:
+  script                 JavaScript   A line of it (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH EXTENDEDWAITUNTIL
+.nf
+extendedWaitUntil: Waits for an element to appear or go away
+
+keys:
+  visible                selector     On screen
+  notVisible             selector     Not on screen
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH HIDEKEYBOARD
+.nf
+hideKeyboard: Closes the keyboard
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH HTTP
+.nf
+http: Calls a server from the computer
+
+keys:
+  method                 text         Such as POST (GET)
+  url                    text         What to call, from the computer (short form)
+  json                   values       The body
+  expect                 number       The status (any below 300)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH INPUTRANDOMEMAIL
+.nf
+inputRandomEmail: Adds a random email
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH INPUTRANDOMNUMBER
+.nf
+inputRandomNumber: Adds a random number
+
+keys:
+  length                 number       How long (8)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH INPUTRANDOMPERSONNAME
+.nf
+inputRandomPersonName: Adds a random name
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH INPUTRANDOMTEXT
+.nf
+inputRandomText: Adds random letters
+
+keys:
+  length                 number       How long (8)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH INPUTTEXT
+.nf
+inputText: Adds text to the focused field
+
+keys:
+  text                   text         The text to add (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH KILLAPP
+.nf
+killApp: Closes the app
+
+keys:
+  appId                  text         The app; by default the header's (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH LAUNCHAPP
+.nf
+launchApp: Opens the app and waits until Android has it in front
+
+keys:
+  appId                  text         The app; by default the header's (short form)
+  clearState             true/false   Erase its data first (false)
+  stopApp                true/false   Close it first (true); false brings it back as it was
+  permissions            permissions  Name: allow, deny or unset. With clearState, all are allowed if not said
+  arguments              values       Intent extras; booleans, integers and decimals keep their type
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH LONGPRESSON
+.nf
+longPressOn: Like tapOn, held for a second
+
+keys:
+  point                  point        Alone, of the screen; with a selector, of the element in %
+
+selector:
+  id                     text         The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole
+  text                   text         The text, description or hint. A regular expression of the whole (short form)
+  index                  number       The n-th match, from 0, top to bottom and left to right; negative counts from the end
+  enabled                true/false   Whether it is enabled
+  checked                true/false   Whether it is checked
+  focused                true/false   Whether it has the focus
+  selected               true/false   Whether it is selected
+  below                  selector     Entirely below another
+  above                  selector     Entirely above another
+  leftOf                 selector     Entirely to the left of another
+  rightOf                selector     Entirely to the right of another
+  containsChild          selector     The direct parent of another
+  childOf                selector     Anywhere inside another
+  containsDescendants    selectors    Around all of these
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH MOCK
+.nf
+mock: Adds mocks: a path, or one written here
+
+keys:
+  file                   text         A path relative to this flow (short form)
+  id                     text         A name for it
+  name                   text         A name for it
+  priority               number       The lowest wins (0)
+  scenarioName           text         The scenario it belongs to
+  requiredScenarioState  text         Only in this state
+  newScenarioState       text         Moves to this state
+  request                values       Which calls
+  response               values       What to answer
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH MOCKSTATE
+.nf
+mockState: Moves scenarios to a state, such as { ride: docked }
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH NETWORK
+.nf
+network: How the connection to the mock behaves
+
+keys:
+  state                  offline/online online or offline (short form)
+  delay                  time         Every answer takes longer
+  fail                   400 to 599   Every answer is this status, 400 to 599
+  path                   pattern      Only these calls, a regular expression of the whole path
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH OPENLINK
+.nf
+openLink: Opens a link in whichever app handles it
+
+keys:
+  link                   text         What to open (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH PASTETEXT
+.nf
+pasteText: Adds rayo.copiedText to the focused field
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH PRESSKEY
+.nf
+pressKey: Presses a key
+
+keys:
+  key                    key          A name, such as Enter, or an Android key code (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH REPEAT
+.nf
+repeat: Runs commands several times
+
+keys:
+  times                  number       At most
+  while                  conditions   As long as these hold
+  commands               commands     What to run
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH RETRY
+.nf
+retry: Runs again what fails
+
+keys:
+  retries                number       How many more times (1)
+  commands               commands     What to run
+  file                   text         A path relative to this flow
+  env                    values       Variables for it
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH RUNFLOW
+.nf
+runFlow: Runs another flow, or commands right here
+
+keys:
+  file                   text         A path relative to this flow (short form)
+  env                    values       Variables for it
+  when                   conditions   Only if these hold
+  commands               commands     What to run
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH RUNSCRIPT
+.nf
+runScript: Runs a JavaScript file
+
+keys:
+  file                   text         A path relative to this flow (short form)
+  env                    values       Variables for it
+  when                   conditions   Only if these hold
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH SCROLL
+.nf
+scroll: Scrolls down once
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH SCROLLUNTILVISIBLE
+.nf
+scrollUntilVisible: Scrolls until the element is on screen
+
+keys:
+  element                selector     What to look for
+  direction              UP/DOWN/LEFT/RIGHT Where the finger or the search goes (DOWN when searching)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH SETAIRPLANEMODE
+.nf
+setAirplaneMode: Turns airplane mode on or off
+
+keys:
+  value                  enabled/disabled/true/false enabled or disabled (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH SETLOCATION
+.nf
+setLocation: Stays at a place
+
+keys:
+  latitude               number       In degrees
+  longitude              number       In degrees
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH SETPERMISSIONS
+.nf
+setPermissions: Allows or denies permissions
+
+keys:
+  appId                  text         The app; by default the header's
+  permissions            permissions  Name: allow, deny or unset. With clearState, all are allowed if not said
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH SHELL
+.nf
+shell: Runs a command on the device
+
+keys:
+  command                text         Run as the shell user (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH STARTRECORDING
+.nf
+startRecording: Records the screen, until stopRecording or the end of the flow
+
+keys:
+  path                   text         The file, in the debug output; by default the flow's name (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH STOPAPP
+.nf
+stopApp: Closes the app
+
+keys:
+  appId                  text         The app; by default the header's (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH STOPRECORDING
+.nf
+stopRecording: Saves the recording
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH SWIPE
+.nf
+swipe: Moves a finger across the screen
+
+keys:
+  direction              UP/DOWN/LEFT/RIGHT Where the finger or the search goes (DOWN when searching)
+  start                  point        Where the finger goes down, instead of direction
+  end                    point        Where it goes up
+  duration               time         Of the swipe (250)
+  from                   selector     Start on this element; with direction
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH TAKESCREENSHOT
+.nf
+takeScreenshot: Saves the screen
+
+keys:
+  path                   text         The file, in the debug output (short form)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH TAPON
+.nf
+tapOn: Waits until the element is on screen, enabled and still, then taps it
+
+keys:
+  point                  point        Alone, of the screen; with a selector, of the element in %
+  repeat                 number       Taps (1)
+  delay                  time         Between taps (100)
+
+selector:
+  id                     text         The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole
+  text                   text         The text, description or hint. A regular expression of the whole (short form)
+  index                  number       The n-th match, from 0, top to bottom and left to right; negative counts from the end
+  enabled                true/false   Whether it is enabled
+  checked                true/false   Whether it is checked
+  focused                true/false   Whether it has the focus
+  selected               true/false   Whether it is selected
+  below                  selector     Entirely below another
+  above                  selector     Entirely above another
+  leftOf                 selector     Entirely to the left of another
+  rightOf                selector     Entirely to the right of another
+  containsChild          selector     The direct parent of another
+  childOf                selector     Anywhere inside another
+  containsDescendants    selectors    Around all of these
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH TRAVEL
+.nf
+travel: Moves along points at a real speed
+
+keys:
+  points                 locations    A list of 'latitude,longitude'
+  speed                  number       Metres per second (7)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH TYPE
+.nf
+type: Replaces the text of a field at once, without the keyboard
+
+keys:
+  value                  text         The new text
+
+selector:
+  id                     text         The resource id, whole or after :id/; in Compose, a testTag with testTagsAsResourceId. A regular expression of the whole
+  text                   text         The text, description or hint. A regular expression of the whole
+  index                  number       The n-th match, from 0, top to bottom and left to right; negative counts from the end
+  enabled                true/false   Whether it is enabled
+  checked                true/false   Whether it is checked
+  focused                true/false   Whether it has the focus
+  selected               true/false   Whether it is selected
+  below                  selector     Entirely below another
+  above                  selector     Entirely above another
+  leftOf                 selector     Entirely to the left of another
+  rightOf                selector     Entirely to the right of another
+  containsChild          selector     The direct parent of another
+  childOf                selector     Anywhere inside another
+  containsDescendants    selectors    Around all of these
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH WAITFORANIMATIONTOEND
+.nf
+waitForAnimationToEnd: Waits until nothing has changed for a while
+
+keys:
+  quiet                  time         How long nothing may change (1s)
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH WAITFORREQUEST
+.nf
+waitForRequest: Waits until the app makes a call
+
+keys:
+  method                 text         Such as POST (GET)
+  path                   pattern      Only these calls, a regular expression of the whole path (short form)
+  body                   text         A text in the body
+
+options:
+  label                  text         What to show instead of the command
+  optional               true/false   A failure doesn't fail the flow
+  timeout                time         How long it may take
+.fi
+.SH WRITE A FLOW
+.nf
+A flow is a header, ---, and a list of commands. Each command waits for what it needs.
+
+  rayo hierarchy --emulator                          what is on screen, and how to refer to it
+  rayo live --emulator --app com.example.app f.yaml  type commands, keep those that work; .save writes them
+  rayo check f.yaml                                  mistakes, without a device
+  rayo test --emulator f.yaml                        run it
+
+Prefer an id to a text: texts change with the language. rayo help flow has the header and the
+commands, rayo help <command> what one takes.
+.fi
+.SH DEBUG A FAILING FLOW
+.nf
+A failure says why, the step, where in the file, and what was on screen. Its folder in --output
+(default .rayo) has failure.jpg, screen.txt, logcat.txt and requests.txt.
+
+  rayo test --emulator -v all.suite.yaml              every step of every flow
+  rayo test --emulator --timings f.yaml              how long each step took
+  rayo test --emulator --rerun-failed all.suite.yaml  only what failed last time
+  rayo live --emulator f.yaml                        run its steps, then try commands where it stopped
+
+The cause is app if the app crashed or hung, device if the device was lost, and else test.
+.fi
+.SH RECORD MOCKS FROM THE REAL BACKEND
+.nf
+With mock: in the header, rayo answers as the backend. To make the mocks, capture what the real
+one answers, once, then keep them up to date:
+
+  rayo test --capture mock --capture-from https://api.example.com f.yaml  write the calls as mocks
+  rayo test --capture-update mock f.yaml                                  say what the backend changed
+  rayo mocks apply mock                                                   take the changes, or --only some
+  rayo mocks import capture.har mock                                      or begin from a HAR file
+
+With no code in the app, --network proxy and rayo ca export do it through the device's proxy.
+A suite's capture: says how to capture, so the commands need no options.
+.fi
+.SH RUN IN A CI
+.nf
+Any CI with an emulator. The exit code isn't 0 if a flow fails, and .xml results are JUnit.
+
+  rayo check all.suite.yaml                                fail early, without a device
+  rayo test --emulator --results junit.xml all.suite.yaml  run, and write the results
+  rayo test --emulator --retries 2 all.suite.yaml          try a failing flow again
+
+Keep the --output folder as an artifact: it has the failures.
+.fi
+.SH LIMITATIONS AND GOTCHAS
+.nf
+- Android only, one device per run; it needs adb, and nothing installed on the device.
+- Mocks reach only the calls of the app's own client, through its interceptor, or those through
+  the device's proxy with --network proxy. A third-party SDK with its own client isn't mocked.
+- With the proxy, the app must trust rayo's CA in its debug build; a release build ignores it.
+  A Custom Tab or the browser trusts only the system's CAs: its hosts are passed untouched.
+- A call that isn't mocked fails the flow, unless it is unmocked: in the suite or --ignore-unmocked.
+- What WireMock can do and rayo can't, such as webhooks or proxying, is an error when the mocks
+  load, not a mock that does less.
+- Flows from Maestro mostly run as they are. A command rayo doesn't know is an error, said by
+  rayo check; flows that expect MAESTRO_FILENAME need it set, such as in a suite's env.
+- A failure is app or device only with proof of it; something slow is test.
+.fi
+.SH EXIT CODES
+.nf
+  0    all went well
+  1    a flow failed, or there was an error
+  2    rayo without a command
+  130  interrupted, with Ctrl-C
+.fi

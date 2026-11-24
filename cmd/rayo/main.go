@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
@@ -54,6 +55,11 @@ func main() {
 }
 
 func run(ctx context.Context, command string, args []string) error {
+	if asksHelp(command, args) {
+		text, err := helpOn(command)
+		fmt.Print(text)
+		return err
+	}
 	switch command {
 	case cmdTest:
 		return test(ctx, args)
@@ -404,11 +410,27 @@ func runDo(args []string) error {
 	return err
 }
 
+// asksHelp says whether a command of rayo's has --help or -h, which are rayo help <command>.
+func asksHelp(command string, args []string) bool {
+	if !slices.Contains(commandNames, command) {
+		return false
+	}
+	for _, a := range args {
+		// In do, -h may be a command of a list; --help never is.
+		if a == "--help" || a == "-h" && command != cmdDo {
+			return true
+		}
+	}
+	return false
+}
+
 // helpOn explains a command, of flows or rayo's own, or a kind of file.
 func helpOn(name string) (string, error) {
 	switch name {
 	case "json":
 		return helpJSON()
+	case "all":
+		return helpAll()
 	case "flow":
 		return "A flow begins with a header, then ---, then a list of commands. The header:\n\n" + flow.HeaderHelp() +
 			"\nCommands: " + strings.Join(flow.Commands(), ", ") + "\n", nil
@@ -417,6 +439,9 @@ func helpOn(name string) (string, error) {
 			"\nunmocked:\n\n" + schema.Help(suite.UnmockedFields) + "\nan ignored call, when not text:\n\n" + schema.Help(suite.IgnoredFields) +
 			"\ncapture:\n\n" + schema.Help(suite.CaptureFields) +
 			"\napp:\n\n" + schema.Help(suite.AppFields) + "\ndevice:\n\n" + schema.Help(suite.DeviceFields), nil
+	}
+	if text := helpTopic(name); text != "" {
+		return text, nil
 	}
 	if text := helpOf(name); text != "" {
 		return text, nil

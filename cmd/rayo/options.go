@@ -80,6 +80,9 @@ const (
 	cmdMocks     = "mocks"
 )
 
+// commandNames are rayo's own, as rayo help <command> takes them.
+var commandNames = []string{cmdTest, cmdCheck, cmdLive, cmdDo, cmdHierarchy, cmdDevices, cmdCA, cmdMocks, "schema"}
+
 func flag(name, about string, at func(o *options) *bool) option {
 	return option{name: name, about: about, set: func(o *options, _ string) error { *at(o) = true; return nil }}
 }
@@ -287,7 +290,8 @@ const usage = `rayo - runs flows on Android, fast
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
-  rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
+  rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
+  rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
   rayo schema flow, suite or results               its JSON Schema, for editors and programs
   rayo version
 `
@@ -296,6 +300,10 @@ const usage = `rayo - runs flows on Android, fast
 func help() string {
 	var b strings.Builder
 	b.WriteString(usage)
+	b.WriteString("\nTopics, rayo help <topic>\n")
+	for _, t := range topics {
+		fmt.Fprintf(&b, "  %-26s %s\n", t.name, t.about)
+	}
 	for _, s := range sections {
 		names := strings.Join(s.commands, ", ")
 		if i := strings.LastIndex(names, ", "); i >= 0 {
@@ -313,8 +321,17 @@ func help() string {
 	return b.String()
 }
 
-// helpOf is the options of a command; empty if it has none.
+// helpOf is how to use a command of rayo's, and its options; empty if it isn't one.
 func helpOf(command string) string {
+	if !slices.Contains(commandNames, command) {
+		return ""
+	}
+	var lines strings.Builder
+	for _, line := range strings.Split(usage, "\n") {
+		if strings.HasPrefix(line, "  rayo "+command+" ") {
+			lines.WriteString(line + "\n")
+		}
+	}
 	var b strings.Builder
 	for _, s := range sections {
 		if slices.Contains(s.commands, command) {
@@ -324,9 +341,9 @@ func helpOf(command string) string {
 		}
 	}
 	if b.Len() == 0 {
-		return ""
+		return lines.String()
 	}
-	return "Options of " + command + ":\n" + b.String()
+	return lines.String() + "\nOptions of " + command + ":\n" + b.String()
 }
 
 func (p option) help() string {
