@@ -280,8 +280,30 @@ var Fields = []schema.Field[Suite]{
 	unmockedField(func(s *Suite) **mock.Unmocked { return &s.Unmocked }).Optional("none: each fails the flow"),
 	captureField(func(s *Suite) **Capture { return &s.Capture }),
 	schema.TextField("output", "folder", "As `--output`, which wins", func(s *Suite) *string { return &s.Output }).Optional("`.rayo` where rayo runs"),
-	{Name: "results", Takes: "a file or a list", About: "As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit)",
-		Schema: func() schema.S { f := schema.Pattern(`\.(txt|json|xml)$`); return schema.AnyOf(f, schema.List(f)) }(), Read: readResults},
+	{Name: "results", Takes: "a file or a list", About: "As `--results`, which wins over all of them: `.txt`, `.json`, `.xml` (JUnit) or `.md`, see [Results](#results)",
+		Schema: func() schema.S { f := schema.Pattern(`\.(txt|json|xml|md)$`); return schema.AnyOf(f, schema.List(f)) }(), Read: readResults},
+	{Name: "results-template", Takes: "file", About: "As `--results-template`, which wins: the results with its extension are written as it says, see [A template of your own](#a-template-of-your-own)",
+		Schema: schema.Type("string"), Read: func(s *Suite, n *yaml.Node) error {
+			if n.Kind != yaml.ScalarNode {
+				return errors.New("takes a file")
+			}
+			if err := report.CheckTemplate(s.Relative(n.Value)); err != nil {
+				return &schema.Error{Line: n.Line, What: err.Error()}
+			}
+			s.ResultsTemplate = n.Value
+			return nil
+		}},
+	{Name: "show", Takes: "a name or a list", About: "As `--show`, which wins: the flows the results list, of `" + strings.Join(report.Shows, "`, `") + "`, see [Results](#results)",
+		Schema: schema.AnyOf(schema.Enum(anys(report.Shows)...), schema.List(schema.Enum(anys(report.Shows)...))), Default: "`all`", Read: func(s *Suite, n *yaml.Node) (err error) {
+			if s.Show, err = readNames(n); err != nil {
+				return err
+			}
+			if err := report.CheckShow(s.Show); err != nil {
+				return &schema.Error{Line: n.Line, What: err.Error()}
+			}
+			return nil
+		}},
+	schema.NumberField("slowest", "a number from 1", "As `--slowest`, which wins: how many flows the slow list has", 1, 0, func(s *Suite, v int) { s.Slowest = v }).Optional(fmt.Sprint(report.DefaultSlowest)),
 	{Name: "format", Takes: "`human`, `json` or `ndjson`", About: "What is printed, as `--format`, which wins, see [For a program](#for-a-program)", Default: "`human`",
 		Schema: schema.Enum(report.Human, report.JSON, report.NDJSON), Read: func(s *Suite, n *yaml.Node) error {
 			if n.Kind != yaml.ScalarNode || !slices.Contains(report.Formats, n.Value) {

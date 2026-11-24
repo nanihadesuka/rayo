@@ -1,5 +1,5 @@
 -- args --
-test e2e/all.suite.yaml --failures-only --fail-fast
+test e2e/all.suite.yaml --show failed --fail-fast
 -- e2e/all.suite.yaml --
 name: Everything
 output: results

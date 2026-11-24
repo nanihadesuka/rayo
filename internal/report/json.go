@@ -18,22 +18,14 @@ import (
 // doesn't change within a version, see SchemaVersion.
 
 type jsonRun struct {
-	SchemaVersion int        `json:"schemaVersion" about:"Changes if the meaning of a key does"`
-	Run           string     `json:"run" about:"The suite's name, or what was run"`
-	Device        string     `json:"device" about:"Its serial"`
-	Began         string     `json:"began" about:"In UTC"`
-	Seconds       float64    `json:"seconds" about:"All of it"`
-	Order         string     `json:"order" about:"'--shuffle=<seed>', if shuffled"`
-	Stopped       string     `json:"stopped" about:"Why, if it stopped before the end, see [Causes](#causes)"`
-	OK            bool       `json:"ok" about:"Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code"`
-	Total         int        `json:"total" about:"Flows"`
-	Passed        int        `json:"passed" about:"At the first try"`
-	Flaky         int        `json:"flaky" about:"Failed, then passed on a retry"`
-	Failed        int        `json:"failed" about:""`
-	Interrupted   int        `json:"interrupted" about:""`
-	NotRun        int        `json:"notRun" about:""`
-	Retried       int        `json:"retried" about:"Flows tried more than once, whether they passed or not"`
-	Flows         []jsonFlow `json:"flows" about:"See below"`
+	SchemaVersion int         `json:"schemaVersion" about:"Changes if the meaning of a key does"`
+	Run           string      `json:"run" about:"The suite's name, or what was run"`
+	Device        string      `json:"device" about:"Its serial"`
+	Order         string      `json:"order" about:"'--shuffle=<seed>', if shuffled"`
+	Stopped       string      `json:"stopped" about:"Why, if it stopped before the end, see [Causes](#causes)"`
+	OK            bool        `json:"ok" about:"Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code"`
+	Summary       jsonSummary `json:"summary" about:"The run at a glance, see below"`
+	Flows         []jsonFlow  `json:"flows" about:"Those that show says, see below"`
 }
 
 type jsonFlow struct {
@@ -41,7 +33,12 @@ type jsonFlow struct {
 	File         string     `json:"file" about:"The flow's"`
 	Status       Status     `json:"status" about:"One of the [outcomes](#outcomes)" enum:"PASS,FLAKY,FAIL,INTERRUPTED,NOT_RUN"`
 	Cause        flow.Cause `json:"cause" about:"Of a flow that failed, or empty, see [Causes](#causes)" enum:"test,app,device,"`
+	Began        string     `json:"began" about:"Its first try, in UTC; empty if it didn't run"`
 	Seconds      float64    `json:"seconds" about:"All its tries"`
+	Attempts     string     `json:"attempts" about:"Such as 'passed on retry 2' or 'failed 3 times'; empty for one try"`
+	Step         string     `json:"step" about:"Of its last try that failed, the step that failed"`
+	At           string     `json:"at" about:"Where that step is written, file:line"`
+	Why          string     `json:"why" about:"What went wrong in that try"`
 	Tries        int        `json:"tries" about:"Those it took"`
 	TimesFailed  int        `json:"timesFailed" about:"Of those"`
 	Retries      int        `json:"retries" about:"Those allowed"`
@@ -110,7 +107,7 @@ func FailureOf(err error, e *flow.Failure) Failure {
 
 func (o *Outcome) json() jsonFlow {
 	f := jsonFlow{Name: o.Flow.Name, File: filepath.ToSlash(o.Flow.Path), Status: o.Status, Cause: o.cause(), Seconds: seconds(o.took()),
-		Tries: len(o.Tries), TimesFailed: o.TimesFailed(), Retries: o.Retries, NotRunReason: o.Why, Warnings: List(o.Warnings), Recordings: []string{}, Failures: []Failure{}}
+		Began: stamp(o.Began), Attempts: o.Attempts(), Tries: len(o.Tries), TimesFailed: o.TimesFailed(), Retries: o.Retries, NotRunReason: o.Why, Warnings: List(o.Warnings), Recordings: []string{}, Failures: []Failure{}}
 	for i, t := range o.Tries {
 		f.Recordings = append(f.Recordings, t.Recordings...)
 		if t.Err == nil || o.Status == Interrupted {
@@ -120,22 +117,20 @@ func (o *Outcome) json() jsonFlow {
 		x.Try = i + 1
 		f.Failures = append(f.Failures, x)
 	}
+	f.Step, f.At, f.Why, _ = o.failing()
 	return f
 }
 
-func (s *Summary) json(failuresOnly bool) ([]byte, error) {
-	return Encode(s.run(failuresOnly), true)
+func (s *Summary) json() ([]byte, error) {
+	return Encode(s.run(), true)
 }
 
 // run is the results, as written.
-func (s *Summary) run(failuresOnly bool) jsonRun {
-	r := jsonRun{SchemaVersion: SchemaVersion, Run: s.Title, Device: s.Device, Began: s.Began.UTC().Format("2006-01-02T15:04:05Z"),
-		Seconds: seconds(s.Took), Order: s.Order, Stopped: s.Stopped, OK: s.Err() == nil, Total: len(s.Outcomes), Passed: s.count(Passed), Flaky: s.count(Flaky),
-		Failed: s.count(Failed), Interrupted: s.count(Interrupted), NotRun: s.count(NotRun), Retried: s.retried(), Flows: []jsonFlow{}}
-	for _, o := range s.Outcomes {
-		if !failuresOnly || o.Status != Passed {
-			r.Flows = append(r.Flows, o.json())
-		}
+func (s *Summary) run() jsonRun {
+	r := jsonRun{SchemaVersion: SchemaVersion, Run: s.Title, Device: s.Device, Order: s.Order, Stopped: s.Stopped, OK: s.Err() == nil,
+		Summary: s.summary(), Flows: []jsonFlow{}}
+	for _, o := range s.Shown() {
+		r.Flows = append(r.Flows, o.json())
 	}
 	return r
 }
@@ -159,6 +154,7 @@ func Schema() []byte { return schema.Written(jsonRun{}).File("Results of rayo", 
 func Tables() map[string]string {
 	return map[string]string{
 		"results":         schema.ColumnTable(jsonRun{}),
+		"results summary": schema.ColumnTable(jsonSummary{}),
 		"results flow":    schema.ColumnTable(jsonFlow{}),
 		"results failure": schema.ColumnTable(Failure{}),
 		"error":           schema.ColumnTable(Problem{}),

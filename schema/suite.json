@@ -550,22 +550,55 @@
     "results": {
       "anyOf": [
         {
-          "pattern": "\\.(txt|json|xml)$",
+          "pattern": "\\.(txt|json|xml|md)$",
           "type": "string"
         },
         {
           "items": {
-            "pattern": "\\.(txt|json|xml)$",
+            "pattern": "\\.(txt|json|xml|md)$",
             "type": "string"
           },
           "type": "array"
         }
       ],
-      "description": "As --results, which wins over all of them: .txt, .json or .xml (JUnit)"
+      "description": "As --results, which wins over all of them: .txt, .json, .xml (JUnit) or .md"
+    },
+    "results-template": {
+      "description": "As --results-template, which wins: the results with its extension are written as it says",
+      "type": "string"
     },
     "retries": {
       "description": "How many times a flow that fails is tried again (default: 1)",
       "minimum": 0,
+      "type": "integer"
+    },
+    "show": {
+      "anyOf": [
+        {
+          "enum": [
+            "failed",
+            "flaky",
+            "slow",
+            "all"
+          ]
+        },
+        {
+          "items": {
+            "enum": [
+              "failed",
+              "flaky",
+              "slow",
+              "all"
+            ]
+          },
+          "type": "array"
+        }
+      ],
+      "description": "As --show, which wins: the flows the results list, of failed, flaky, slow, all (default: all)"
+    },
+    "slowest": {
+      "description": "As --slowest, which wins: how many flows the slow list has (default: 5)",
+      "minimum": 1,
       "type": "integer"
     },
     "timeoutScale": {

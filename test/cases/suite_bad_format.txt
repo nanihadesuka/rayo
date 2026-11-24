@@ -11,4 +11,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: s.suite.yaml:2: results: takes a .txt, .json or .xml (JUnit) file, not "out.yaml"
+error: s.suite.yaml:2: results: takes a .txt, .json, .xml (JUnit) or .md file, not "out.yaml"

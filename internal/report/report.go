@@ -31,8 +31,9 @@ type Outcome struct {
 	Flow        *flow.Flow
 	Status      Status
 	Tries       []flow.Result
-	Retries     int    // allowed
-	Why         string // it didn't run
+	Retries     int       // allowed
+	Why         string    // it didn't run
+	Began       time.Time // its first try; zero if it didn't run
 }
 
 // Judge takes a try into account.
@@ -234,7 +235,10 @@ type Summary struct {
 	Began                time.Time
 	Took                 time.Duration
 	Outcomes             []Outcome
-	FlakyFails           bool // flaky-fails-build: a flow that passed only on a retry fails the run
+	FlakyFails           bool     // flaky-fails-build: a flow that passed only on a retry fails the run
+	Show                 []string // which flows the results list, see Shows; all if empty
+	Slowest              int      // how many the slow list has
+	Template             string   // results-template: a file, for results with its extension
 }
 
 func (s *Summary) count(is Status) int {
@@ -277,7 +281,7 @@ func (s *Summary) retried() int {
 }
 
 // Text is the results. Brief is for the screen, where the details have been shown already.
-func (s *Summary) Text(failuresOnly, brief bool) string {
+func (s *Summary) Text(brief bool) string {
 	var b strings.Builder
 	if !brief {
 		fmt.Fprintf(&b, "run: %s\ndevice: %s\nbegan: %s\n", s.Title, s.Device, s.Began.UTC().Format("2006-01-02T15:04:05Z"))
@@ -287,10 +291,7 @@ func (s *Summary) Text(failuresOnly, brief bool) string {
 		b.WriteString("\n")
 	}
 	if !brief || len(s.Outcomes) > 1 && s.count(Passed) < len(s.Outcomes) { // or it would only repeat
-		for _, o := range s.Outcomes {
-			if failuresOnly && o.Status == Passed {
-				continue
-			}
+		for _, o := range s.Shown() {
 			b.WriteString(o.Line() + "\n")
 			if !brief {
 				fmt.Fprintf(&b, "  file: %s\n", filepath.ToSlash(o.Flow.Path))
@@ -334,9 +335,10 @@ func (s *Summary) Text(failuresOnly, brief bool) string {
 
 // Formats of the results.
 const (
-	Text  = "txt"
-	JSON  = "json"
-	JUnit = "junit"
+	Text     = "txt"
+	JSON     = "json"
+	JUnit    = "junit"
+	Markdown = "md"
 )
 
 // FormatOf is that of a results file, by how its name ends.
@@ -348,24 +350,30 @@ func FormatOf(path string) (string, error) {
 		return JSON, nil
 	case ".xml":
 		return JUnit, nil
+	case ".md":
+		return Markdown, nil
 	}
-	return "", fmt.Errorf("takes a .txt, .json or .xml (JUnit) file, not %q", filepath.ToSlash(path))
+	return "", fmt.Errorf("takes a .txt, .json, .xml (JUnit) or .md file, not %q", filepath.ToSlash(path))
 }
 
 // Write saves the results, in the format of the file.
-func (s *Summary) Write(path string, failuresOnly bool) error {
+func (s *Summary) Write(path string) error {
 	format, err := FormatOf(path)
 	if err != nil {
 		return err
 	}
 	var data []byte
-	switch format {
-	case JUnit: // whole, as what reads it counts
+	switch {
+	case s.Template != "" && strings.EqualFold(filepath.Ext(path), filepath.Ext(s.Template)):
+		data, err = s.fromTemplate()
+	case format == JUnit: // whole, as what reads it counts
 		data, err = s.junit()
-	case JSON:
-		data, err = s.json(failuresOnly)
-	case Text:
-		data = []byte(s.Text(failuresOnly, false))
+	case format == JSON:
+		data, err = s.json()
+	case format == Text:
+		data = []byte(s.Text(false))
+	case format == Markdown:
+		data = []byte(s.markdown())
 	}
 	if err != nil {
 		return err

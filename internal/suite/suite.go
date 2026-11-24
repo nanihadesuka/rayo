@@ -65,7 +65,10 @@ type Suite struct {
 	Device          *adb.Setup
 	Record          bool
 	RecordFolder    string
-	Keep            string // empty if not said
+	Show            []string // nil if not said
+	Slowest         int      // 0 if not said
+	ResultsTemplate string   // empty if not said
+	Keep            string   // empty if not said
 	FlakyFailsBuild bool
 	Artifacts       []string          // nil if not said
 	NameTemplate    string            // empty if not said

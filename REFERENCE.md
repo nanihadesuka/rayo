@@ -89,9 +89,11 @@ Options of test: how they run
 
 Options of test: what comes out
   -v, --verbose              every step (always, for a single flow)
-  --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
-  --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
-  --failures-only            leave the flows that passed out of the results
+  --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated
+  --results-template <file>  write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end}
+  --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
+  --slowest <n>              how many flows the slow list has (default 5)
+  --timings                  while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
   --keep <when>              the files of an attempt that failed (failed, default), of all, or none
   --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
   --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
@@ -1128,7 +1130,10 @@ flows:
 | `unmocked` | a mapping | Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking) (default: none: each fails the flow) |
 | `capture` | a mapping | How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow) |
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
-| `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
+| `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json`, `.xml` (JUnit) or `.md`, see [Results](#results) |
+| `results-template` | file | As `--results-template`, which wins: the results with its extension are written as it says, see [A template of your own](#a-template-of-your-own) |
+| `show` | a name or a list | As `--show`, which wins: the flows the results list, of `failed`, `flaky`, `slow`, `all`, see [Results](#results) (default: `all`) |
+| `slowest` | a number from 1 | As `--slowest`, which wins: how many flows the slow list has (default: 5) |
 | `format` | `human`, `json` or `ndjson` | What is printed, as `--format`, which wins, see [For a program](#for-a-program) (default: `human`) |
 | `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
 | `recordFolder` | folder | Where the videos go; needs `record: true` (default: `output`) |
@@ -1484,8 +1489,66 @@ rayo test --results out.txt --results junit.xml all.suite.yaml
 | `.txt` | As above for every flow, with `run`, `device` and `began` at the top and each flow's `file` |
 | `.json` | For a program |
 | `.xml` | JUnit, for a CI, see [Report](#report) |
+| `.md` | Short, for a chat or a mail: the verdict and counts, then what failed, what was flaky and what was slow |
 
-`--failures-only` leaves out the flows that passed, but counts them; not from JUnit. Which files stay is [`keep`](#what-is-kept)'s.
+A path is as written: from where rayo runs, or in a suite from the suite. rayo sends nothing anywhere;
+it writes the report, and you send it.
+
+`--show`, or `show:` in a suite, says which flows the results list, the screen's list at the end too:
+`failed` (also interrupted and not run), `flaky`, `slow`, `all` (default), or several, such as
+`--show failed,flaky`. They are all counted anyway. `slow` is the slowest, as many as `--slowest <n>` says (default 5),
+which is also the length of the slow list of `.md` and of `summary.slowest` in `.json`. JUnit always has every flow,
+as what reads it counts them. Which files stay is [`keep`](#what-is-kept)'s.
+
+Each flow has its attempts (`passed on retry 2`, `failed 3 times`), its time, when it began, and the
+step that failed and why. `--timings` and `--profile` are only for the screen, while it runs.
+
+```markdown
+# Rides
+
+**FAIL** · 3 flows: 1 passed, 1 flaky, 1 failed · 78.1 s · 2026-11-22T21:11:18Z · emulator-5554
+
+## Failed
+
+- **pay** 27.2 s, failed 2 times: `tapOn Pay` at tests/pay/flow.yaml:12: not on screen: Pay (test)
+
+## Flaky
+
+- **scan** 31.0 s, passed on retry 1: `tapOn scan` at tests/scan/flow.yaml:9: not on screen: scan (test)
+
+## Slowest
+
+- scan 31.0 s
+- pay 27.2 s
+- book 19.9 s
+```
+
+#### A template of your own
+
+`--results-template <file>`, or `results-template:` in a suite, writes the results whose name ends as its own does
+(`report.md` writes every `--results *.md`) as it says, instead of the format built in:
+
+```
+{verdict} {suite}: {passed} passed, {flaky} flaky, {failed} failed, {skipped} not run in {duration}, from {started}
+{flows}- {status} {name} {duration} {attempts} {step} {error}
+{end}
+```
+
+| Run | |
+|---|---|
+| `{suite}` | The suite's name, or what was run |
+| `{verdict}` | `PASS`, `FAIL`, `FLAKY` or `PASS, with flaky flows` |
+| `{total}`, `{passed}`, `{flaky}`, `{failed}`, `{interrupted}`, `{skipped}` | How many; `{skipped}` didn't run |
+| `{duration}`, `{started}` | Such as `78.1 s`; in UTC |
+| `{device}` | Its serial |
+| `{flows}`...`{end}` | Written once for each flow that `show` says |
+
+| A flow, between `{flows}` and `{end}` | |
+|---|---|
+| `{name}`, `{file}`, `{status}` | Its [outcome](#outcomes) |
+| `{attempts}`, `{tries}` | Such as `passed on retry 2`, empty for one try; how many |
+| `{duration}`, `{started}` | All its tries; when the first began |
+| `{step}`, `{at}`, `{error}`, `{cause}` | Of its last try that failed: the step, where it is written, what went wrong and the [cause](#causes) |
 
 In a `.txt`, a line that begins with an outcome is a flow: `grep -E '^(FAIL|NOT_RUN)' results.txt`. What
 follows is about it: `  key: value`, or `  key:` and lines with four spaces. `TOTAL` is the last line.
@@ -1494,22 +1557,30 @@ In a `.json`, every key is always there: what there is none of is `""`, `0` or `
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "run": "Rides",
   "device": "emulator-5554",
-  "began": "2026-11-22T21:11:18Z",
-  "seconds": 27.402,
   "order": "",
   "stopped": "",
   "ok": false,
-  "total": 3, "passed": 1, "failed": 1, "interrupted": 0, "notRun": 1, "retried": 0,
+  "summary": {
+    "began": "2026-11-22T21:11:18Z", "seconds": 27.402,
+    "total": 3, "passed": 1, "flaky": 0, "failed": 1, "interrupted": 0, "notRun": 1, "retried": 0,
+    "failedFlows": ["scan", "long"], "flakyFlows": [],
+    "slowest": [{ "name": "book", "seconds": 18.21 }, { "name": "scan", "seconds": 9.114 }]
+  },
   "flows": [
     {
       "name": "scan",
       "file": "tests/scan/flow.yaml",
       "status": "FAIL",
       "cause": "test",
+      "began": "2026-11-22T21:11:36Z",
       "seconds": 9.114,
+      "attempts": "",
+      "step": "tapOn finished_close",
+      "at": "shared/flows/dock.yaml:8",
+      "why": "not on screen: finished_close",
       "tries": 1,
       "timesFailed": 1,
       "retries": 0,
@@ -1546,11 +1617,20 @@ The run:
 | `schemaVersion` | number | Changes if the meaning of a key does |
 | `run` | text | The suite's name, or what was run |
 | `device` | text | Its serial |
-| `began` | text | In UTC |
-| `seconds` | number | All of it |
 | `order` | text | `--shuffle=<seed>`, if shuffled |
 | `stopped` | text | Why, if it stopped before the end, see [Causes](#causes) |
 | `ok` | true or false | Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code |
+| `summary` | mapping | The run at a glance, see below |
+| `flows` | list | Those that show says, see below |
+<!-- end -->
+
+`summary`:
+
+<!-- generated: results summary -->
+| Key | | |
+|---|---|---|
+| `began` | text | In UTC |
+| `seconds` | number | All of it |
 | `total` | number | Flows |
 | `passed` | number | At the first try |
 | `flaky` | number | Failed, then passed on a retry |
@@ -1558,7 +1638,9 @@ The run:
 | `interrupted` | number |  |
 | `notRun` | number |  |
 | `retried` | number | Flows tried more than once, whether they passed or not |
-| `flows` | list | See below |
+| `failedFlows` | list | The names of those that failed, were interrupted or didn't run |
+| `flakyFlows` | list | The names of those that were flaky |
+| `slowest` | list | The flows that took longest, as many as slowest says |
 <!-- end -->
 
 Each of `flows`:
@@ -1570,7 +1652,12 @@ Each of `flows`:
 | `file` | text | The flow's |
 | `status` | text | One of the [outcomes](#outcomes) |
 | `cause` | text | Of a flow that failed, or empty, see [Causes](#causes) |
+| `began` | text | Its first try, in UTC; empty if it didn't run |
 | `seconds` | number | All its tries |
+| `attempts` | text | Such as 'passed on retry 2' or 'failed 3 times'; empty for one try |
+| `step` | text | Of its last try that failed, the step that failed |
+| `at` | text | Where that step is written, file:line |
+| `why` | text | What went wrong in that try |
 | `tries` | number | Those it took |
 | `timesFailed` | number | Of those |
 | `retries` | number | Those allowed |

@@ -197,15 +197,15 @@ func Finished(o *Outcome, i, of int) Event {
 }
 
 // Outcome is the last event: the results.
-func (s *Summary) Outcome(failuresOnly bool, exit int) Event {
+func (s *Summary) Outcome(exit int) Event {
 	e := event("outcome", nil, 0, len(s.Outcomes))
-	r := s.run(failuresOnly)
+	r := s.run()
 	e.Results, e.Exit = &r, exit
 	return e
 }
 
 // JSON is the results, as --format json prints them.
-func (s *Summary) JSON(failuresOnly bool) ([]byte, error) { return s.json(failuresOnly) }
+func (s *Summary) JSON() ([]byte, error) { return s.json() }
 
 // ErrorEvent is an error of the run, as the last event.
 func ErrorEvent(err error, exit int) Event {

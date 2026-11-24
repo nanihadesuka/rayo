@@ -28,7 +28,7 @@ commands, rayo help <command> what one takes.
 	{"debug-a-flow", "debug a failing flow", `A failure says why, the step, where in the file, and what was on screen. Its folder in --output
 (default .rayo) has failure.jpg, screen.txt, logcat.txt and requests.txt.
 
-  rayo test --emulator -v all.suite.yaml              every step of every flow
+  rayo test --results report.md all.suite.yaml       a short report, for a chat or a mail
   rayo test --emulator --timings f.yaml              how long each step took
   rayo test --emulator --rerun-failed all.suite.yaml  only what failed last time
   rayo live --emulator f.yaml                        run its steps, then try commands where it stopped

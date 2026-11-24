@@ -118,25 +118,46 @@ a screen
   "schemaVersion": 3,
   "run": "a.yaml b.yaml",
   "device": "emulator-5554",
-  "began": "<now>",
-  "seconds": #,
   "order": "",
   "stopped": "",
   "ok": false,
-  "total": 2,
-  "passed": 1,
-  "flaky": 0,
-  "failed": 1,
-  "interrupted": 0,
-  "notRun": 0,
-  "retried": 1,
+  "summary": {
+    "began": "<now>",
+    "seconds": #,
+    "total": 2,
+    "passed": 1,
+    "flaky": 0,
+    "failed": 1,
+    "interrupted": 0,
+    "notRun": 0,
+    "retried": 1,
+    "failedFlows": [
+      "a"
+    ],
+    "flakyFlows": [],
+    "slowest": [
+      {
+        "name": "a",
+        "seconds": #
+      },
+      {
+        "name": "b",
+        "seconds": #
+      }
+    ]
+  },
   "flows": [
     {
       "name": "a",
       "file": "a.yaml",
       "status": "FAIL",
       "cause": "app",
+      "began": "<now>",
       "seconds": #,
+      "attempts": "failed 3 times",
+      "step": "tapOn app crashes",
+      "at": "a.yaml:3",
+      "why": "not on screen: home",
       "tries": 3,
       "timesFailed": 3,
       "retries": 2,
@@ -217,7 +238,12 @@ a screen
       "file": "b.yaml",
       "status": "PASS",
       "cause": "",
+      "began": "<now>",
       "seconds": #,
+      "attempts": "",
+      "step": "",
+      "at": "",
+      "why": "",
       "tries": 1,
       "timesFailed": 0,
       "retries": 2,

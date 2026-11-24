@@ -174,25 +174,52 @@ a screen
   "schemaVersion": 3,
   "run": "Everything",
   "device": "emulator-5554",
-  "began": "<now>",
-  "seconds": #,
   "order": "",
   "stopped": "",
   "ok": false,
-  "total": 3,
-  "passed": 1,
-  "flaky": 1,
-  "failed": 1,
-  "interrupted": 0,
-  "notRun": 0,
-  "retried": 2,
+  "summary": {
+    "began": "<now>",
+    "seconds": #,
+    "total": 3,
+    "passed": 1,
+    "flaky": 1,
+    "failed": 1,
+    "interrupted": 0,
+    "notRun": 0,
+    "retried": 2,
+    "failedFlows": [
+      "b"
+    ],
+    "flakyFlows": [
+      "c"
+    ],
+    "slowest": [
+      {
+        "name": "b",
+        "seconds": #
+      },
+      {
+        "name": "a",
+        "seconds": #
+      },
+      {
+        "name": "c",
+        "seconds": #
+      }
+    ]
+  },
   "flows": [
     {
       "name": "b",
       "file": "e2e/b/flow.yaml",
       "status": "FAIL",
       "cause": "app",
+      "began": "<now>",
       "seconds": #,
+      "attempts": "failed 2 times",
+      "step": "tapOn app crashes",
+      "at": "e2e/shared/sub.yaml:3",
+      "why": "not on screen: home",
       "tries": 2,
       "timesFailed": 2,
       "retries": 1,
@@ -287,7 +314,12 @@ a screen
       "file": "e2e/a/flow.yaml",
       "status": "PASS",
       "cause": "",
+      "began": "<now>",
       "seconds": #,
+      "attempts": "",
+      "step": "",
+      "at": "",
+      "why": "",
       "tries": 1,
       "timesFailed": 0,
       "retries": 1,
@@ -301,7 +333,12 @@ a screen
       "file": "e2e/c/flow.yaml",
       "status": "FLAKY",
       "cause": "",
+      "began": "<now>",
       "seconds": #,
+      "attempts": "passed on retry 1",
+      "step": "tapOn flaky 1",
+      "at": "e2e/c/flow.yaml:3",
+      "why": "flaked",
       "tries": 2,
       "timesFailed": 1,
       "retries": 1,

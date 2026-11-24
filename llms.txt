@@ -69,9 +69,11 @@ Options of test: how they run
 
 Options of test: what comes out
   -v, --verbose              every step (always, for a single flow)
-  --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
-  --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
-  --failures-only            leave the flows that passed out of the results
+  --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated
+  --results-template <file>  write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end}
+  --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
+  --slowest <n>              how many flows the slow list has (default 5)
+  --timings                  while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
   --keep <when>              the files of an attempt that failed (failed, default), of all, or none
   --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
   --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
@@ -148,7 +150,10 @@ A suite, *.suite.yaml, lists flows that run together. A folder means its suite, 
   unmocked         a mapping                  Calls without a mock that don't fail the flow (default: none: each fails the flow)
   capture          a mapping                  How a capture calls the backend and becomes mocks, as the options of the same names, which win
   output           folder                     As --output, which wins (default: .rayo where rayo runs)
-  results          a file or a list           As --results, which wins over all of them: .txt, .json or .xml (JUnit)
+  results          a file or a list           As --results, which wins over all of them: .txt, .json, .xml (JUnit) or .md
+  results-template file                       As --results-template, which wins: the results with its extension are written as it says
+  show             a name or a list           As --show, which wins: the flows the results list, of failed, flaky, slow, all (default: all)
+  slowest          a number from 1            As --slowest, which wins: how many flows the slow list has (default: 5)
   format           human, json or ndjson      What is printed, as --format, which wins (default: human)
   record           true or false              A video of each flow that doesn't say (default: false)
   recordFolder     folder                     Where the videos go; needs record: true (default: output)
@@ -908,7 +913,7 @@ commands, rayo help <command> what one takes.
 A failure says why, the step, where in the file, and what was on screen. Its folder in --output
 (default .rayo) has failure.jpg, screen.txt, logcat.txt and requests.txt.
 
-  rayo test --emulator -v all.suite.yaml              every step of every flow
+  rayo test --results report.md all.suite.yaml       a short report, for a chat or a mail
   rayo test --emulator --timings f.yaml              how long each step took
   rayo test --emulator --rerun-failed all.suite.yaml  only what failed last time
   rayo live --emulator f.yaml                        run its steps, then try commands where it stopped

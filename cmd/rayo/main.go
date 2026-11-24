@@ -220,6 +220,15 @@ func test(ctx context.Context, args []string) (err error) {
 		if o.runner.Artifacts == nil {
 			o.runner.Artifacts = group.Artifacts
 		}
+		if o.show == nil {
+			o.show = group.Show
+		}
+		if o.slowest == 0 {
+			o.slowest = group.Slowest
+		}
+		if o.resultsTemplate == "" && group.ResultsTemplate != "" {
+			o.resultsTemplate = group.Relative(group.ResultsTemplate)
+		}
 		if o.results == nil {
 			for _, file := range group.Results {
 				o.results = append(o.results, group.Relative(file))

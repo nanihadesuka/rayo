@@ -2,27 +2,27 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
-    "began": {
-      "description": "In UTC",
-      "type": "string"
-    },
     "device": {
       "description": "Its serial",
       "type": "string"
     },
-    "failed": {
-      "description": "",
-      "type": "integer"
-    },
-    "flaky": {
-      "description": "Failed, then passed on a retry",
-      "type": "integer"
-    },
     "flows": {
-      "description": "See below",
+      "description": "Those that show says, see below",
       "items": {
         "additionalProperties": false,
         "properties": {
+          "at": {
+            "description": "Where that step is written, file:line",
+            "type": "string"
+          },
+          "attempts": {
+            "description": "Such as 'passed on retry 2' or 'failed 3 times'; empty for one try",
+            "type": "string"
+          },
+          "began": {
+            "description": "Its first try, in UTC; empty if it didn't run",
+            "type": "string"
+          },
           "cause": {
             "description": "Of a flow that failed, or empty",
             "enum": [
@@ -242,6 +242,10 @@
               "NOT_RUN"
             ]
           },
+          "step": {
+            "description": "Of its last try that failed, the step that failed",
+            "type": "string"
+          },
           "timesFailed": {
             "description": "Of those",
             "type": "integer"
@@ -256,6 +260,10 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "why": {
+            "description": "What went wrong in that try",
+            "type": "string"
           }
         },
         "required": [
@@ -263,7 +271,12 @@
           "file",
           "status",
           "cause",
+          "began",
           "seconds",
+          "attempts",
+          "step",
+          "at",
+          "why",
           "tries",
           "timesFailed",
           "retries",
@@ -276,14 +289,6 @@
       },
       "type": "array"
     },
-    "interrupted": {
-      "description": "",
-      "type": "integer"
-    },
-    "notRun": {
-      "description": "",
-      "type": "integer"
-    },
     "ok": {
       "description": "Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code",
       "type": "boolean"
@@ -291,14 +296,6 @@
     "order": {
       "description": "--shuffle=<seed>, if shuffled",
       "type": "string"
-    },
-    "passed": {
-      "description": "At the first try",
-      "type": "integer"
-    },
-    "retried": {
-      "description": "Flows tried more than once, whether they passed or not",
-      "type": "integer"
     },
     "run": {
       "description": "The suite's name, or what was run",
@@ -308,35 +305,112 @@
       "description": "Changes if the meaning of a key does",
       "type": "integer"
     },
-    "seconds": {
-      "description": "All of it",
-      "type": "number"
-    },
     "stopped": {
       "description": "Why, if it stopped before the end",
       "type": "string"
     },
-    "total": {
-      "description": "Flows",
-      "type": "integer"
+    "summary": {
+      "additionalProperties": false,
+      "description": "The run at a glance, see below",
+      "properties": {
+        "began": {
+          "description": "In UTC",
+          "type": "string"
+        },
+        "failed": {
+          "description": "",
+          "type": "integer"
+        },
+        "failedFlows": {
+          "description": "The names of those that failed, were interrupted or didn't run",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "flaky": {
+          "description": "Failed, then passed on a retry",
+          "type": "integer"
+        },
+        "flakyFlows": {
+          "description": "The names of those that were flaky",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "interrupted": {
+          "description": "",
+          "type": "integer"
+        },
+        "notRun": {
+          "description": "",
+          "type": "integer"
+        },
+        "passed": {
+          "description": "At the first try",
+          "type": "integer"
+        },
+        "retried": {
+          "description": "Flows tried more than once, whether they passed or not",
+          "type": "integer"
+        },
+        "seconds": {
+          "description": "All of it",
+          "type": "number"
+        },
+        "slowest": {
+          "description": "The flows that took longest, as many as slowest says",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "description": "",
+                "type": "string"
+              },
+              "seconds": {
+                "description": "",
+                "type": "number"
+              }
+            },
+            "required": [
+              "name",
+              "seconds"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "total": {
+          "description": "Flows",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "began",
+        "seconds",
+        "total",
+        "passed",
+        "flaky",
+        "failed",
+        "interrupted",
+        "notRun",
+        "retried",
+        "failedFlows",
+        "flakyFlows",
+        "slowest"
+      ],
+      "type": "object"
     }
   },
   "required": [
     "schemaVersion",
     "run",
     "device",
-    "began",
-    "seconds",
     "order",
     "stopped",
     "ok",
-    "total",
-    "passed",
-    "flaky",
-    "failed",
-    "interrupted",
-    "notRun",
-    "retried",
+    "summary",
     "flows"
   ],
   "title": "Results of rayo",

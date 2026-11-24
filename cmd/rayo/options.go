@@ -40,7 +40,9 @@ type options struct {
 	flakyFails             bool // a flow that passed only on a retry fails the run
 	verbose                bool
 	results                []string // files
-	failuresOnly           bool
+	show                   []string // nil if not said
+	slowest                int      // 0 if not said
+	resultsTemplate        string
 	keep                   string // empty if not said
 	suite                  *suite.Suite
 	updateOwn              bool // --capture-update of the flow's own mock
@@ -190,15 +192,37 @@ var sections = []section{
 	}},
 	{[]string{cmdTest}, "what comes out", []option{
 		flag("verbose", "every step (always, for a single flow)", func(o *options) *bool { return &o.verbose }).withShort("v"),
-		{name: "results", value: "file", about: "write the results: .txt, .json or .xml (JUnit); may be repeated", set: func(o *options, v string) error {
+		{name: "results", value: "file", about: "write the results: .txt, .json, .xml (JUnit) or .md; may be repeated", set: func(o *options, v string) error {
 			o.results = append(o.results, v)
 			if _, err := report.FormatOf(v); err != nil {
 				return fmt.Errorf("--results %w", err)
 			}
 			return nil
 		}},
-		flag("timings", "each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs", func(o *options) *bool { return &o.runner.Timings }),
-		flag("failures-only", "leave the flows that passed out of the results", func(o *options) *bool { return &o.failuresOnly }),
+		{name: "results-template", value: "file", about: "write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end}", set: func(o *options, v string) error {
+			if err := report.CheckTemplate(v); err != nil {
+				return fmt.Errorf("--results-template %w", err)
+			}
+			o.resultsTemplate = v
+			return nil
+		}},
+		{name: "show", value: "a,b", about: "the flows the results list: failed, flaky, slow or all (default all)", set: func(o *options, v string) error {
+			list := strings.Split(v, ",")
+			if err := report.CheckShow(list); err != nil {
+				return fmt.Errorf("--show %w", err)
+			}
+			o.show = list
+			return nil
+		}},
+		{name: "slowest", value: "n", about: "how many flows the slow list has (default 5)", set: func(o *options, v string) error {
+			n, err := strconv.Atoi(v)
+			if err != nil || n < 1 {
+				return fmt.Errorf("--slowest takes a number from 1, not %q", v)
+			}
+			o.slowest = n
+			return nil
+		}},
+		flag("timings", "while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs", func(o *options) *bool { return &o.runner.Timings }),
 		choice("keep", "when", "the files of an attempt that failed (failed, default), of all, or none", func(o *options) *string { return &o.keep }, suite.KeepFailed, suite.KeepAll, suite.KeepNone),
 		{name: "artifacts", value: "a,b", about: "the kinds of file written: video, screenshot, logcat, screen, requests (default all)", set: func(o *options, v string) error {
 			kinds := strings.Split(v, ",")

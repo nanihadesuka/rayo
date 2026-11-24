@@ -1,0 +1,11 @@
+-- args --
+test a.yaml --show some
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --show takes failed, flaky, slow, all, not "some"

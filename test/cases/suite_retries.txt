@@ -107,25 +107,53 @@ a screen
   "schemaVersion": 3,
   "run": "s.suite.yaml",
   "device": "emulator-5554",
-  "began": "<now>",
-  "seconds": #,
   "order": "",
   "stopped": "",
   "ok": false,
-  "total": 3,
-  "passed": 0,
-  "flaky": 2,
-  "failed": 1,
-  "interrupted": 0,
-  "notRun": 0,
-  "retried": 2,
+  "summary": {
+    "began": "<now>",
+    "seconds": #,
+    "total": 3,
+    "passed": 0,
+    "flaky": 2,
+    "failed": 1,
+    "interrupted": 0,
+    "notRun": 0,
+    "retried": 2,
+    "failedFlows": [
+      "c"
+    ],
+    "flakyFlows": [
+      "a",
+      "b"
+    ],
+    "slowest": [
+      {
+        "name": "a",
+        "seconds": #
+      },
+      {
+        "name": "b",
+        "seconds": #
+      },
+      {
+        "name": "c",
+        "seconds": #
+      }
+    ]
+  },
   "flows": [
     {
       "name": "a",
       "file": "a.yaml",
       "status": "FLAKY",
       "cause": "",
+      "began": "<now>",
       "seconds": #,
+      "attempts": "passed on retry 1",
+      "step": "tapOn flaky 1",
+      "at": "a.yaml:3",
+      "why": "flaked",
       "tries": 2,
       "timesFailed": 1,
       "retries": 1,
@@ -162,7 +190,12 @@ a screen
       "file": "b.yaml",
       "status": "FLAKY",
       "cause": "",
+      "began": "<now>",
       "seconds": #,
+      "attempts": "passed on retry 2",
+      "step": "tapOn flaky 2",
+      "at": "b.yaml:3",
+      "why": "flaked",
       "tries": 3,
       "timesFailed": 2,
       "retries": 2,
@@ -221,7 +254,12 @@ a screen
       "file": "c.yaml",
       "status": "FAIL",
       "cause": "test",
+      "began": "<now>",
       "seconds": #,
+      "attempts": "",
+      "step": "tapOn missing",
+      "at": "c.yaml:3",
+      "why": "not on screen: missing",
       "tries": 1,
       "timesFailed": 1,
       "retries": 0,

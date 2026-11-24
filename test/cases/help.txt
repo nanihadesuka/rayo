@@ -58,9 +58,11 @@ Options of test: how they run
 
 Options of test: what comes out
   -v, --verbose              every step (always, for a single flow)
-  --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
-  --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
-  --failures-only            leave the flows that passed out of the results
+  --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated
+  --results-template <file>  write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end}
+  --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
+  --slowest <n>              how many flows the slow list has (default 5)
+  --timings                  while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
   --keep <when>              the files of an attempt that failed (failed, default), of all, or none
   --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
   --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})

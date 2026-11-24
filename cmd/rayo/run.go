@@ -152,7 +152,8 @@ func (o *options) retriesOf(f *flow.Flow) int {
 // runAll runs flows and says how each went, also those that didn't run.
 func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) error {
 	o := s.o
-	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), FlakyFails: o.flakyFails}
+	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), FlakyFails: o.flakyFails,
+		Show: o.show, Slowest: o.slowest, Template: o.resultsTemplate}
 	say := human()
 	if o.shuffle {
 		sum.Order = fmt.Sprintf("--shuffle=%d", o.seed)
@@ -169,9 +170,9 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	s.reporter.(*console).verbose = verbose
 	s.reporter.(*console).timings = o.runner.Timings
 	for i, f := range flows {
-		out := report.Outcome{Flow: f, Retries: o.retriesOf(f)}
+		out := report.Outcome{Flow: f, Retries: o.retriesOf(f), Began: time.Now()}
 		if stop != "" {
-			out.Status, out.Why = report.NotRun, stop
+			out.Status, out.Why, out.Began = report.NotRun, stop, time.Time{}
 		} else {
 			name := flow.FolderName(f.Name)
 			if folders[strings.ToLower(name)]++; folders[strings.ToLower(name)] > 1 { // two flows with one name
@@ -221,11 +222,11 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	}
 	sum.Took = time.Since(sum.Began)
 	fmt.Fprintln(say)
-	fmt.Fprint(say, sum.Text(o.failuresOnly, true))
+	fmt.Fprint(say, sum.Text(true))
 	s.reporter.(*console).slowestFlows(sum.Outcomes)
 	err := sum.SaveLast(report.LastFile(o.output))
 	for _, file := range o.results {
-		err = errors.Join(err, sum.Write(file, o.failuresOnly))
+		err = errors.Join(err, sum.Write(file))
 	}
 	failed := sum.Err()
 	if failed != nil && lost {
@@ -241,13 +242,13 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	}
 	switch printing {
 	case report.JSON:
-		data, e := sum.JSON(o.failuresOnly)
+		data, e := sum.JSON()
 		if e == nil {
 			_, e = os.Stdout.Write(data)
 		}
 		err = errors.Join(err, e)
 	case report.NDJSON:
-		err = errors.Join(err, emit(sum.Outcome(o.failuresOnly, exitOf(failed))))
+		err = errors.Join(err, emit(sum.Outcome(exitOf(failed))))
 	}
 	return errors.Join(err, failed)
 }
