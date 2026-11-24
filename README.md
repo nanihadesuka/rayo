@@ -38,21 +38,6 @@ $ rayo test --emulator all.suite.yaml
 TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s
 ```
 
-## New in 2.0
-
-- **`rayo explain`** tells you why the last run failed, in a few lines, without running anything again.
-- **Flaky is its own result.** A test that failed and then passed on a retry is `FLAKY`, not `PASS`, so you
-  see it. Add `--flaky-fails-build` to make it fail CI.
-- **Run only what you changed.** `--changed-only` runs the tests whose files changed since the last commit:
-  the test, a flow it runs, or one of its mocks. `--since origin/main` compares with a branch instead.
-- **`--find <text>`** on `rayo hierarchy` shows only the elements that look like that text, not the whole screen.
-- **Made for scripts, CI and AI agents.** `--format json` on every command, and [exit codes](REFERENCE.md#exit-codes)
-  that say what went wrong: `1` a test failed, `2` something written is wrong, `3` no usable device,
-  `4` only flaky tests. `rayo help agents` is the quickest way to learn to drive rayo.
-- **Clearer failures.** Each one says whose fault it is: the **test**, the **app** (it crashed) or the **device**.
-- **Suites are named.** A suite is a `*.suite.yaml` file and runs only when you give it; a folder runs the tests in it.
-- `rayo check` shows which tests would run, in which order, before you use a device.
-
 ## Why
 
 - **Fast.** Made for Android only: it waits on the device itself and reacts to the screen, without fixed pauses.
@@ -102,12 +87,17 @@ Or build it, with Go: `bash build.sh`.
 | `rayo help agents` | How a script or an AI agent should use rayo |
 | `rayo help` | Everything else |
 
-## Mocking needs an interceptor
+## Connecting the app to the mocks
 
-For mocking and capturing, the app has to send its calls to rayo, at `http://127.0.0.1:8080` on the
-device. That takes a small [interceptor](MOCKING.md#in-your-app) in the app, which can be **only in the
-debug build**, or, with no code, the device's [proxy](MOCKING.md#proxy) (`--network proxy`) and a CA the
-debug build trusts. Everything else works with any app as it is.
+To mock or capture the backend, the app's calls have to reach rayo. There are [two ways](MOCKING.md#two-ways-to-connect-the-app):
+
+| | How | Needs |
+|---|---|---|
+| **Interceptor** (default) | The app itself sends its calls to rayo | A few lines of code, only in the debug build |
+| **Proxy** (`--network proxy`) | The phone's network settings send every call through rayo | No code; the debug build trusts rayo's certificate |
+
+Start with the interceptor if you can change the app. Use the proxy if you can't, or if an SDK in the app
+makes calls of its own. Everything else in rayo works with any app as it is.
 
 ## Many tests
 
@@ -127,4 +117,4 @@ device: { size: 1080x2400, dpi: 420, darkMode: true }
 
 ## More
 
-[Guide](GUIDE.md) · [Full example](EXAMPLE.md) · [Reference](REFERENCE.md) · [Mocking](MOCKING.md) · [Working on rayo](CONTRIBUTING.md)
+[Guide](GUIDE.md) · [What's new](https://github.com/nanihadesuka/rayo/releases/latest) · [Full example](EXAMPLE.md) · [Reference](REFERENCE.md) · [Mocking](MOCKING.md) · [Working on rayo](CONTRIBUTING.md)

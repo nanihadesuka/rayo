@@ -68,7 +68,7 @@ From a script or another program, use `rayo live --serve` and `rayo do`. See
 
 rayo answers as your backend, so tests don't depend on a server. The app sends its calls to
 `http://127.0.0.1:8080` on the device, with a small [interceptor](MOCKING.md#in-your-app) that can be only in the
-debug build.
+debug build. Can't change the app's code? Use `--network proxy` instead, see [Two ways to connect the app](MOCKING.md#two-ways-to-connect-the-app).
 
 ```yaml
 appId: com.example.app

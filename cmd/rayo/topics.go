@@ -89,8 +89,24 @@ one answers, once, then keep them up to date:
   rayo mocks apply mock                                                   take the changes, or --only some
   rayo mocks import capture.har mock                                      or begin from a HAR file
 
-With no code in the app, --network proxy and rayo ca export do it through the device's proxy.
+With no code in the app, --network proxy and rayo ca export do it through the device's proxy;
+rayo help connect-mocks says which to use.
 A suite's capture: says how to capture, so the commands need no options.
+`},
+	{"connect-mocks", "connect the app to the mocks: interceptor or proxy", `The app's calls have to reach rayo to be mocked or captured. Two ways:
+
+  interceptor (default)  the app sends its calls to rayo: a few lines of code, only in its debug build;
+                         sees the calls of the app's own HTTP client
+  proxy                  rayo sets the device's proxy while the flow runs: no code, the debug build
+                         trusts rayo's certificate; sees every call, also of SDKs
+
+  rayo test f.yaml                                       the interceptor, or the flow's network:
+  rayo ca export app/src/debug/res/raw/rayo_ca.pem       once, for the proxy
+  rayo test --network proxy f.yaml                       the proxy
+
+Can change the app, one HTTP client: interceptor. Can't change it, or an SDK calls on its own: proxy.
+A host whose certificate the app pins isn't mocked through the proxy; it is listed after the flow.
+Both use the same mock folders. Code and details: MOCKING.md, "Two ways to connect the app".
 `},
 	{"run-in-ci", "run in a CI", `Any CI with an emulator. The exit code isn't 0 if a flow fails, and .xml results are JUnit.
 

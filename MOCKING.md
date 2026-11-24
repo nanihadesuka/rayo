@@ -19,6 +19,26 @@ A flow names its mocks, in order, in its header:
 mock: [../shared/mock, mock/overrides.json]
 ```
 
+## Two ways to connect the app
+
+rayo can only answer calls that reach it. There are two ways to send them there:
+
+- **Interceptor** (the default). The app itself sends its calls to rayo instead of the server. You add
+  [a few lines](#in-your-app) to the app, only in its debug build. It sees the calls made through the
+  app's own HTTP client.
+- **Proxy** (`--network proxy`). rayo sets the phone's network proxy while the test runs, so every call goes
+  through rayo, also those of SDKs in the app. [No code](#proxy): the debug build only has to trust rayo's
+  certificate, from `rayo ca export`.
+
+Which one:
+
+- You can change the app, and all its calls go through one client: **interceptor**. Simplest, nothing on the phone changes.
+- You can't change the app's code, or an SDK (payments, maps, chat…) makes calls of its own: **proxy**.
+- The app pins certificates: **interceptor**, or turn pinning off in the debug build.
+
+Both read and write the same mock folders, so you can capture one way and replay the other.
+The [table](#proxy) below compares them in detail.
+
 ## In your app
 
 rayo can't reach inside an app: the app has to send its calls to `http://127.0.0.1:8080` on the device.
@@ -80,9 +100,9 @@ rayo test --network proxy flow.yaml                   # mock
 | | `interceptor` (default) | `proxy` |
 |---|---|---|
 | What it sees | Calls made through the app's own client | Every HTTP(S) call on the device: the app, SDKs; WebViews of `--hosts` |
-| In the app | The interceptor, and cleartext to `127.0.0.1` | No code: the debug build trusts rayo's CA |
-| On the device | `adb reverse` | `adb reverse`, and `http_proxy` while the flow runs |
-| Fails when | An SDK uses its own client | A library pins certificates: that host is tunnelled, and said so |
+| In the app | The interceptor, and plain HTTP allowed to `127.0.0.1` | No code: the debug build trusts rayo's certificate (CA) |
+| On the device | `adb reverse`, so `127.0.0.1:8080` on the phone reaches rayo | The same, and the phone's proxy set while the flow runs, then put back |
+| Misses | Calls of an SDK with its own client | Hosts the app pins certificates for: passed through unmocked, and listed |
 
 Both write and read the same folders, with the host in the path, so a capture made one way replays the
 other way. An app that still rewrites its URLs works behind the proxy too.

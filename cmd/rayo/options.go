@@ -316,7 +316,7 @@ var sections = []section{
 		}},
 	}},
 	{[]string{cmdTest, cmdLive}, "how calls reach the mock", []option{
-		{name: "network", value: "way", about: "interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does", set: func(o *options, v string) error {
+		{name: "network", value: "way", about: "interceptor, the app sends them, with code in its debug build (default, or the flow's); proxy, the device's proxy does, no code; see rayo help connect-mocks", set: func(o *options, v string) error {
 			if v != flow.Interceptor && v != flow.Proxy {
 				return fmt.Errorf("--network takes interceptor or proxy, not %q", v)
 			}

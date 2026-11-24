@@ -53,7 +53,7 @@ Options of test:
   --ignore-host              match calls whose path begins with a host, whatever the host
   --ignore-path-ids          match UUIDs and ULIDs in paths by their form, as they are new on each run
   --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)
-  --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
+  --network <way>            interceptor, the app sends them, with code in its debug build (default, or the flow's); proxy, the device's proxy does, no code; see rayo help connect-mocks
   --ignore-unmocked <a,b>    calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any)
   --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs
