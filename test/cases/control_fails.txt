@@ -20,7 +20,7 @@ emulator-5554, ready in # ms
     ▸ retry retries: 1
       ✗ Open it  # ms
       ✗ Open it  # ms
-  saved in .rayo/case
+  saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
   ✓ tapOn cleanup  # ms
 [1/1] FAIL case  # s
   why: not on screen: missing
@@ -29,7 +29,7 @@ emulator-5554, ready in # ms
   at: sub.yaml:3
   from: sub.yaml:3 retry retries: 1
   from: flow.yaml:5 runFlow sub.yaml
-  saved: .rayo/case
+  saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
 -- stderr --
@@ -47,11 +47,11 @@ adb exec:logcat -d -t 2000
 tap {"delay":100,"repeat":1,"sel":{"text":"cleanup"},"timeout":15000}
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/case/failure.png --
+-- file .rayo/case_failure.png --
 PNG...
--- file .rayo/case/logcat.txt --
+-- file .rayo/case_logcat.txt --
 the log
--- file .rayo/case/screen.txt --
+-- file .rayo/case_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {

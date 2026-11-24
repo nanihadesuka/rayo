@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -177,11 +176,14 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 			}
 			s.reporter.(*console).begin(i+1, len(flows), f.Name)
 			for try := 0; ; try++ {
-				folder := filepath.Join(o.output, name)
-				if try > 0 {
-					folder += fmt.Sprintf("_retry%d", try)
+				result := s.runner.Run(ctx, f, flow.Attempt{Out: o.output, Flow: name, Try: try})
+				if result.Err == nil && o.keep == suite.KeepFailed { // what is kept is to see why it failed
+					if err := flow.Remove(o.output, result.Files); err != nil {
+						fmt.Printf("  couldn't remove the files of the attempt: %v\n", err)
+					}
+					result.Recordings = nil
 				}
-				out.Judge(ctx, s.runner.Run(ctx, f, folder))
+				out.Judge(ctx, result)
 				if ctx.Err() == nil {
 					stop = row.after(&out, o.keepGoing)
 					if stop == "" && s.agent.Dead() != nil {

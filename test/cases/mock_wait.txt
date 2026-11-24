@@ -26,7 +26,7 @@ emulator-5554, ready in # ms
   last calls:
     <time> POST /pay -> 200
     <time> POST /pay -> 200
-  saved in .rayo/case
+  saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
 [1/1] FAIL case  # s
   why: the app didn't call it
   cause: test
@@ -36,7 +36,7 @@ emulator-5554, ready in # ms
     tapOn POST /pay {"n":2}
     waitForRequest method: post, path: /pa., body: "n":2
     waitForRequest /pay
-  saved: .rayo/case
+  saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
 -- stderr --
@@ -57,16 +57,16 @@ adb exec:logcat -d -t 2000
 adb reverse:killforward:tcp:8080
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/case/failure.png --
+-- file .rayo/case_failure.png --
 PNG...
--- file .rayo/case/logcat.txt --
+-- file .rayo/case_logcat.txt --
 the log
--- file .rayo/case/requests.txt --
+-- file .rayo/case_requests.txt --
 <time> POST /pay -> 200
     {"n":1}
 <time> POST /pay -> 200
     {"n":2}
--- file .rayo/case/screen.txt --
+-- file .rayo/case_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {

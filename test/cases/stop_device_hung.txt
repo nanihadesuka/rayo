@@ -19,7 +19,7 @@ appId: a.b
   at: a.yaml:3
   screen:
     a screen
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 [2/2] PASS b  # s
 
 FAIL a  # s
@@ -43,11 +43,11 @@ adb exec:date '+%m-%d %H:%M:%S'
 adb exec:date '+%m-%d %H:%M:%S'
 tap {"delay":100,"repeat":1,"sel":{"id":"x"},"timeout":15000}
 bye {"timeout":5000}
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 11-22 <time>  1  1 E ActivityManager: ANR in com.android.systemui
--- file .rayo/a/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {

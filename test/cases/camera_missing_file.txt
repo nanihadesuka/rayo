@@ -12,13 +12,13 @@ emulator-5554, ready in # ms
 
 [1/1] a
   ✗ camera ${'nope.png'}  # ms
-  saved in .rayo/a
+  saved .rayo/a_failure.png, .rayo/a_screen.txt, .rayo/a_logcat.txt
 [1/1] FAIL a  # s
   why: no such file: nope.png
   cause: test
   step: camera ${'nope.png'}
   at: a.yaml:3
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
 -- stderr --
@@ -33,11 +33,11 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 the log
--- file .rayo/a/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {

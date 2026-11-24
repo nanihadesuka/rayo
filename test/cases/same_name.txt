@@ -19,7 +19,7 @@ appId: a.b
   at: a/x.yaml:3
   screen:
     a screen
-  saved: .rayo/x
+  saved: .rayo/x_failure.png
 [2/2] FAIL x  # s
   why: not on screen: missing
   cause: test
@@ -27,7 +27,7 @@ appId: a.b
   at: b/x.yaml:3
   screen:
     a screen
-  saved: .rayo/x_2
+  saved: .rayo/x_2_failure.png
 
 FAIL x  # s
 FAIL x  # s
@@ -56,15 +56,15 @@ bye {"timeout":5000}
   "<dir>/a/x.yaml": "FAIL",
   "<dir>/b/x.yaml": "FAIL"
 }
--- file .rayo/x/failure.png --
+-- file .rayo/x_2_failure.png --
 PNG...
--- file .rayo/x/logcat.txt --
+-- file .rayo/x_2_logcat.txt --
 the log
--- file .rayo/x/screen.txt --
+-- file .rayo/x_2_screen.txt --
 a screen
--- file .rayo/x_2/failure.png --
+-- file .rayo/x_failure.png --
 PNG...
--- file .rayo/x_2/logcat.txt --
+-- file .rayo/x_logcat.txt --
 the log
--- file .rayo/x_2/screen.txt --
+-- file .rayo/x_screen.txt --
 a screen

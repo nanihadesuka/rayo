@@ -68,7 +68,7 @@ How it would look, if `pay` failed once and the app had a bug in `offline`:
 ```
 [1/4] PASS browse  9.8 s
 [2/4] PASS pay  31.4 s  (failed once, then passed)
-  try 1: tests/pay/flow.yaml:13: tapOn refresh: not on screen: refresh  (test)  results/pay
+  try 1: tests/pay/flow.yaml:13: tapOn refresh: not on screen: refresh  (test)  results/pay_failure.jpg
 [3/4] PASS declined  11.2 s
 [4/4] FAIL offline  41.9 s  (failed 2 times)
   try: 1
@@ -83,7 +83,7 @@ How it would look, if `pay` failed once and the app had a bug in `offline`:
     extendedWaitUntil products
     network offline
     tapOn refresh
-  saved: results/offline
+  saved: results/offline_failure.jpg
   recording: results/videos/offline.mp4
   ...
 
@@ -97,10 +97,10 @@ results/
 ├─ results.txt                 the same, with the details of every try
 ├─ junit.xml                   for a CI
 ├─ failed.json                 what --rerun-failed runs
-├─ videos/                     browse.mp4, pay.mp4, pay_retry1.mp4...
-└─ offline/                    of each failure:
-    ├─ failure.jpg             the screen
-    ├─ screen.txt              the elements on it
-    ├─ logcat.txt              the device log
-    └─ requests.txt            the calls to the backend
+├─ videos/                     pay.mp4, offline.mp4, offline_retry1.mp4: of the tries that failed
+├─ offline_failure.jpg         of each failed try: the screen
+├─ offline_screen.txt          the elements on it
+├─ offline_logcat.txt          the device log
+├─ offline_requests.txt        the calls to the backend
+└─ offline_retry1_failure.jpg  ... and so on for the second try
 ```

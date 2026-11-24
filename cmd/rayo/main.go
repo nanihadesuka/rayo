@@ -2,6 +2,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -166,6 +167,11 @@ func test(ctx context.Context, args []string) (err error) {
 			}
 		}
 		o.runner.Recording = &flow.Recording{On: group.Record, Path: group.Relative(group.RecordFolder)}
+		o.keep = cmp.Or(o.keep, group.Keep)
+		o.runner.NameTemplate = cmp.Or(o.runner.NameTemplate, group.NameTemplate)
+		if o.runner.Artifacts == nil {
+			o.runner.Artifacts = group.Artifacts
+		}
 		if o.results == nil {
 			for _, file := range group.Results {
 				o.results = append(o.results, group.Relative(file))
@@ -178,6 +184,9 @@ func test(ctx context.Context, args []string) (err error) {
 		}
 	}
 	o.into("")
+	if o.keep = cmp.Or(o.keep, suite.KeepFailed); o.keep == suite.KeepNone {
+		o.runner.Artifacts = []string{}
+	}
 	flows, err := o.choose(all)
 	if err != nil {
 		return err

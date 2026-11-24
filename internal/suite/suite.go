@@ -64,6 +64,9 @@ type Suite struct {
 	Device       *adb.Setup
 	Record       bool
 	RecordFolder string
+	Keep         string            // empty if not said
+	Artifacts    []string          // nil if not said
+	NameTemplate string            // empty if not said
 	TimeoutScale float64           // 0 if not said
 	Env          map[string]string // for every flow; -e wins
 	Network      string            // for every flow that doesn't say; --network wins

@@ -41,11 +41,11 @@ emulator-5554, ready in # ms
 
 [2/2] c
   ✗ tapOn flaky 1  # ms
-  saved in e2e/results/c
+  saved e2e/results/c_failure.png, e2e/results/c_screen.txt, e2e/results/c_logcat.txt
   failed, retry 1 of 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked
   ✓ tapOn flaky 1  # ms
 [2/2] PASS c  # s  (failed once, then passed)
-  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (test)  e2e/results/c
+  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (test)  e2e/results/c_failure.png
 
 TOTAL 2: 2 passed, 0 failed, 1 retried  # s
 -- device --
@@ -61,11 +61,11 @@ adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 tap {"delay":100,"repeat":1,"sel":{"id":"flaky 1"},"timeout":15000}
 bye {"timeout":5000}
--- file e2e/results/c/failure.png --
+-- file e2e/results/c_failure.png --
 PNG...
--- file e2e/results/c/logcat.txt --
+-- file e2e/results/c_logcat.txt --
 the log
--- file e2e/results/c/screen.txt --
+-- file e2e/results/c_screen.txt --
 a screen
 -- file e2e/results/results.txt --
 run: Everything
@@ -76,6 +76,6 @@ PASS a  # s
   file: e2e/a/flow.yaml
 PASS c  # s  (failed once, then passed)
   file: e2e/c/flow.yaml
-  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (test)  e2e/results/c
+  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (test)  e2e/results/c_failure.png
 
 TOTAL 2: 2 passed, 0 failed, 1 retried  # s

@@ -114,10 +114,11 @@ It says why, where, what came before, and what was on screen:
   at: tests/pay.yaml:12
   screen:
     id: cart
-  saved: .rayo/pay
+  saved: .rayo/pay_failure.jpg
 ```
 
-The folder has a screenshot, the elements, the device log and the calls to the backend.
+Next to it, `pay_screen.txt`, `pay_logcat.txt` and `pay_requests.txt`: the elements, the device log
+and the calls to the backend. Those of the tries that passed aren't kept, see [What is kept](REFERENCE.md#what-is-kept).
 `rayo test --rerun-failed` runs only what failed.
 
 # How do I...

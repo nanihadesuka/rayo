@@ -56,8 +56,8 @@ func Parse(path string, data []byte) (*Flow, error) { return parse(path, data, 0
 type Session struct{ r *Runner }
 
 // Live runs a flow for as long as talk lasts, and then puts back what it changed.
-func (r *Runner) Live(ctx context.Context, f *Flow, folder string, talk func(s *Session) error) error {
-	r.prepare(ctx, f, folder)
+func (r *Runner) Live(ctx context.Context, f *Flow, a Attempt, talk func(s *Session) error) error {
+	r.prepare(ctx, f, a)
 	err := r.withEnv(f, func() error {
 		err := r.begin(f)
 		if err == nil {

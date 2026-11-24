@@ -22,14 +22,14 @@ appId: a.b
   cause: device, the connection to the device was lost
   step: tapOn crash
   at: a.yaml:3
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 [2/3] FAIL b  # s
   why: lost the device: EOF
     noise before
   cause: device, the connection to the device was lost
   step: tapOn crash
   at: b.yaml:3
-  saved: .rayo/b
+  saved: .rayo/b_failure.png
 [3/3] NOT_RUN c  (device: 2 failures in a row, the last: the connection to the device was lost)
 
 FAIL a  # s
@@ -57,13 +57,13 @@ tap {"delay":100,"repeat":1,"sel":{"id":"crash"},"timeout":15000}
 adb exec:screencap -p
 adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 the log
--- file .rayo/b/failure.png --
+-- file .rayo/b_failure.png --
 PNG...
--- file .rayo/b/logcat.txt --
+-- file .rayo/b_logcat.txt --
 the log
 -- file .rayo/failed.json --
 {

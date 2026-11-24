@@ -29,6 +29,32 @@
       ],
       "type": "object"
     },
+    "artifacts": {
+      "anyOf": [
+        {
+          "enum": [
+            "video",
+            "screenshot",
+            "logcat",
+            "screen",
+            "requests"
+          ]
+        },
+        {
+          "items": {
+            "enum": [
+              "video",
+              "screenshot",
+              "logcat",
+              "screen",
+              "requests"
+            ]
+          },
+          "type": "array"
+        }
+      ],
+      "description": "As --artifacts, which wins: the kinds of file written, of video, screenshot, logcat, screen, requests (default: all)"
+    },
     "capture": {
       "additionalProperties": false,
       "description": "How a capture calls the backend and becomes mocks, as the options of the same names, which win",
@@ -462,6 +488,14 @@
       "minItems": 1,
       "type": "array"
     },
+    "keep": {
+      "description": "As --keep, which wins: the files of the attempts that failed, of all, or none (default: failed)",
+      "enum": [
+        "failed",
+        "all",
+        "none"
+      ]
+    },
     "name": {
       "description": "Shown in the results (default: the file)",
       "type": [
@@ -469,6 +503,10 @@
         "number",
         "boolean"
       ]
+    },
+    "name-template": {
+      "description": "As --name-template, which wins: how the files are named in output (default: {flow}_{attempt}_{kind}.{ext})",
+      "type": "string"
     },
     "network": {
       "description": "How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: each flow's, else interceptor)",
@@ -490,7 +528,7 @@
       "type": "boolean"
     },
     "recordFolder": {
-      "description": "Where the videos go; needs record: true (default: each flow's, in output)",
+      "description": "Where the videos go; needs record: true (default: output)",
       "type": [
         "string",
         "number",

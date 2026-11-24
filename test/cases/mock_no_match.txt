@@ -42,7 +42,7 @@ emulator-5554, ready in # ms
     <time> GET /q -> not mocked; nearest GET /q: query a: absent, expected "2"
     <time> GET /nothing -> not mocked
     <time> GET /nothing -> not mocked
-  saved in .rayo/case
+  saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
 [1/1] FAIL case  # s
   why: the app called what isn't mocked:
         POST /a
@@ -55,7 +55,7 @@ emulator-5554, ready in # ms
     tapOn GET /q
     tapOn GET /nothing
     tapOn GET /nothing
-  saved: .rayo/case
+  saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
 -- stderr --
@@ -101,11 +101,11 @@ adb exec:logcat -d -t 2000
 adb reverse:killforward:tcp:8080
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/case/failure.png --
+-- file .rayo/case_failure.png --
 PNG...
--- file .rayo/case/logcat.txt --
+-- file .rayo/case_logcat.txt --
 the log
--- file .rayo/case/requests.txt --
+-- file .rayo/case_requests.txt --
 <time> POST /a -> not mocked; nearest POST /a: body: nothing at $.x
     {"x":[]}
 <time> POST /a -> not mocked; nearest POST /a: body: nothing at $.x
@@ -122,7 +122,7 @@ the log
 <time> GET /q -> not mocked; nearest GET /q: query a: absent, expected "2"
 <time> GET /nothing -> not mocked
 <time> GET /nothing -> not mocked
--- file .rayo/case/screen.txt --
+-- file .rayo/case_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {

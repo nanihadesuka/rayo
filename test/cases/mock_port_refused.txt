@@ -14,11 +14,11 @@ mock: mock.json
 emulator-5554, ready in # ms
 
 [1/1] case
-  saved in .rayo/case
+  saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
   why: adb reverse: denied
   cause: test
-  saved: .rayo/case
+  saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
 -- stderr --
@@ -34,11 +34,11 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/case/failure.png --
+-- file .rayo/case_failure.png --
 PNG...
--- file .rayo/case/logcat.txt --
+-- file .rayo/case_logcat.txt --
 the log
--- file .rayo/case/screen.txt --
+-- file .rayo/case_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {

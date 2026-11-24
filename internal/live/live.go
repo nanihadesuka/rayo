@@ -121,7 +121,7 @@ func Run(ctx context.Context, p Params, start Start) error {
 		return err
 	}
 	defer end()
-	err = runner.Live(ctx, f, filepath.Join(p.Output, "live"), func(session *flow.Session) error {
+	err = runner.Live(ctx, f, flow.Attempt{Out: p.Output, Flow: "live"}, func(session *flow.Session) error {
 		l.session = session
 		return l.talk(ctx, p, f)
 	})

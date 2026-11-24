@@ -58,6 +58,9 @@ Options of test: what comes out
   --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
   --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
   --failures-only            leave the flows that passed out of the results
+  --keep <when>              the files of an attempt that failed (failed, default), of all, or none
+  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
+  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
 
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
@@ -131,7 +134,10 @@ A suite, *.suite.yaml, lists flows that run together. A folder means its suite, 
   output           folder                     As --output, which wins (default: .rayo where rayo runs)
   results          a file or a list           As --results, which wins over all of them: .txt, .json or .xml (JUnit)
   record           true or false              A video of each flow that doesn't say (default: false)
-  recordFolder     folder                     Where the videos go; needs record: true (default: each flow's, in output)
+  recordFolder     folder                     Where the videos go; needs record: true (default: output)
+  keep             failed, all, none          As --keep, which wins: the files of the attempts that failed, of all, or none (default: failed)
+  artifacts        a name or a list           As --artifacts, which wins: the kinds of file written, of video, screenshot, logcat, screen, requests (default: all)
+  name-template    a template                 As --name-template, which wins: how the files are named in output (default: {flow}_{attempt}_{kind}.{ext})
 
 flows, when not only a file:
 

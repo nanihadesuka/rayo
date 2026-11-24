@@ -49,7 +49,7 @@ appId: a.b
     <time> GET /a -> 200
   screen:
     a screen
-  saved: e2e/results/b
+  saved: e2e/results/b_failure.png
 [2/3] NOT_RUN a  (--fail-fast, after b)
 [3/3] NOT_RUN c  (--fail-fast, after b)
 
@@ -76,17 +76,17 @@ adb exec:date '+%m-%d %H:%M:%S'
 adb reverse:killforward:tcp:8080
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file e2e/results/b/failure.png --
+-- file e2e/results/b_failure.png --
 PNG...
--- file e2e/results/b/logcat.txt --
+-- file e2e/results/b_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file e2e/results/b/requests.txt --
+-- file e2e/results/b_requests.txt --
 <time> GET /a -> 200
--- file e2e/results/b/screen.txt --
+-- file e2e/results/b_screen.txt --
 a screen
 -- file e2e/results/failed.json --
 {
@@ -116,7 +116,7 @@ FAIL b  # s
     <time> GET /a -> 200
   screen:
     a screen
-  saved: e2e/results/b
+  saved: e2e/results/b_failure.png
 NOT_RUN a  (--fail-fast, after b)
   file: e2e/a/flow.yaml
 NOT_RUN c  (--fail-fast, after b)

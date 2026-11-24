@@ -80,12 +80,18 @@ func (r *Runner) screenshot() ([]byte, error) {
 }
 
 func (r *Runner) saveScreenshot(path string) error {
+	if !r.wants(Screenshot) {
+		return nil
+	}
 	png, err := r.screenshot()
 	if err == nil {
 		err = os.MkdirAll(filepath.Dir(path), 0o755)
 	}
 	if err == nil {
 		err = os.WriteFile(path, png, 0o644)
+	}
+	if err == nil {
+		r.wrote(path)
 	}
 	return err
 }

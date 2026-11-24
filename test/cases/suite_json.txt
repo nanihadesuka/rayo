@@ -50,7 +50,7 @@ appId: a.b
     <time> GET /a -> 200
   screen:
     a screen
-  saved: e2e/results/b
+  saved: e2e/results/b_failure.png
   try: 2
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
@@ -67,10 +67,10 @@ appId: a.b
     <time> GET /a -> 200
   screen:
     a screen
-  saved: e2e/results/b_retry1
+  saved: e2e/results/b_retry1_failure.png
 [2/3] PASS a  # s
 [3/3] PASS c  # s  (failed once, then passed)
-  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c
+  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c_failure.png
 
 FAIL b  # s  (failed 2 times)
 PASS a  # s
@@ -113,15 +113,15 @@ adb exec:date '+%m-%d %H:%M:%S'
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 tap {"delay":100,"repeat":1,"sel":{"id":"flaky 1"},"timeout":15000}
 bye {"timeout":5000}
--- file e2e/results/b/failure.png --
+-- file e2e/results/b_failure.png --
 PNG...
--- file e2e/results/b/logcat.txt --
+-- file e2e/results/b_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file e2e/results/b/requests.json --
+-- file e2e/results/b_requests.json --
 [
   {
     "at": "<now>",
@@ -132,17 +132,15 @@ PNG...
     "body": ""
   }
 ]
--- file e2e/results/b/screen.txt --
-a screen
--- file e2e/results/b_retry1/failure.png --
+-- file e2e/results/b_retry1_failure.png --
 PNG...
--- file e2e/results/b_retry1/logcat.txt --
+-- file e2e/results/b_retry1_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file e2e/results/b_retry1/requests.json --
+-- file e2e/results/b_retry1_requests.json --
 [
   {
     "at": "<now>",
@@ -153,17 +151,19 @@ PNG...
     "body": ""
   }
 ]
--- file e2e/results/b_retry1/screen.txt --
+-- file e2e/results/b_retry1_screen.txt --
 a screen
--- file e2e/results/c/failure.png --
+-- file e2e/results/b_screen.txt --
+a screen
+-- file e2e/results/c_failure.png --
 PNG...
--- file e2e/results/c/logcat.txt --
+-- file e2e/results/c_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file e2e/results/c/screen.txt --
+-- file e2e/results/c_screen.txt --
 a screen
 -- file e2e/results/failed.json --
 {
@@ -232,7 +232,7 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": "e2e/results/b"
+          "saved": "e2e/results/b_failure.png"
         },
         {
           "try": 2,
@@ -267,7 +267,7 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": "e2e/results/b_retry1"
+          "saved": "e2e/results/b_retry1_failure.png"
         }
       ]
     },
@@ -313,7 +313,7 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": "e2e/results/c"
+          "saved": "e2e/results/c_failure.png"
         }
       ]
     }

@@ -16,7 +16,7 @@ appId: a.b
 1
 -- stdout --
 [1/2] PASS a  # s  (failed once, then passed)
-  try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a
+  try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a_failure.png
 [2/2] FAIL b  # s
   why: not on screen: missing
   cause: test
@@ -24,7 +24,7 @@ appId: a.b
   at: b.yaml:3
   screen:
     a screen
-  saved: .rayo/b
+  saved: .rayo/b_failure.png
 
 PASS a  # s  (failed once, then passed)
 FAIL b  # s
@@ -49,17 +49,17 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 the log
--- file .rayo/a/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
--- file .rayo/b/failure.png --
+-- file .rayo/b_failure.png --
 PNG...
--- file .rayo/b/logcat.txt --
+-- file .rayo/b_logcat.txt --
 the log
--- file .rayo/b/screen.txt --
+-- file .rayo/b_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {

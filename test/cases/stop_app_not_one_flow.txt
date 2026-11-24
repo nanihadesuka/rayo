@@ -23,7 +23,7 @@ appId: a.b
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
   try: 2
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
@@ -34,7 +34,7 @@ appId: a.b
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/a_retry1
+  saved: .rayo/a_retry1_failure.png
   try: 3
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
@@ -45,7 +45,7 @@ appId: a.b
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/a_retry2
+  saved: .rayo/a_retry2_failure.png
 [2/2] PASS b  # s
 
 FAIL a  # s  (failed 3 times)
@@ -79,35 +79,35 @@ adb exec:date '+%m-%d %H:%M:%S'
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 tap {"delay":100,"repeat":1,"sel":{"id":"x"},"timeout":15000}
 bye {"timeout":5000}
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file .rayo/a/screen.txt --
+-- file .rayo/a_retry1_failure.png --
+PNG...
+-- file .rayo/a_retry1_logcat.txt --
+11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
+11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
+11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
+11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
+11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
+-- file .rayo/a_retry1_screen.txt --
 a screen
--- file .rayo/a_retry1/failure.png --
+-- file .rayo/a_retry2_failure.png --
 PNG...
--- file .rayo/a_retry1/logcat.txt --
+-- file .rayo/a_retry2_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file .rayo/a_retry1/screen.txt --
+-- file .rayo/a_retry2_screen.txt --
 a screen
--- file .rayo/a_retry2/failure.png --
-PNG...
--- file .rayo/a_retry2/logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
-11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
-11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
-11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file .rayo/a_retry2/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {
@@ -158,7 +158,7 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": ".rayo/a"
+          "saved": ".rayo/a_failure.png"
         },
         {
           "try": 2,
@@ -175,7 +175,7 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": ".rayo/a_retry1"
+          "saved": ".rayo/a_retry1_failure.png"
         },
         {
           "try": 3,
@@ -192,7 +192,7 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": ".rayo/a_retry2"
+          "saved": ".rayo/a_retry2_failure.png"
         }
       ]
     },

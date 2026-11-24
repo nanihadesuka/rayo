@@ -25,8 +25,8 @@ appId: a.b
   at: a.yaml:4
   screen:
     a screen
-  saved: .rayo/a
-  recording: .rayo/a/a.mp4
+  saved: .rayo/a_failure.png
+  recording: .rayo/a.mp4
 [2/3] PASS b  # s
 [3/3] FAIL c  # s
   why: nothing is being recorded
@@ -35,7 +35,7 @@ appId: a.b
   at: c.yaml:3
   screen:
     a screen
-  saved: .rayo/c
+  saved: .rayo/c_failure.png
 
 FAIL a  # s
 PASS b  # s
@@ -66,21 +66,19 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/a/a.mp4 --
+-- file .rayo/a.mp4 --
 a video ....................................................................................................
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 the log
--- file .rayo/a/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
--- file .rayo/b/named.mp4 --
-a video ....................................................................................................
--- file .rayo/c/failure.png --
+-- file .rayo/c_failure.png --
 PNG...
--- file .rayo/c/logcat.txt --
+-- file .rayo/c_logcat.txt --
 the log
--- file .rayo/c/screen.txt --
+-- file .rayo/c_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {
@@ -100,11 +98,10 @@ FAIL a  # s
   at: a.yaml:4
   screen:
     a screen
-  saved: .rayo/a
-  recording: .rayo/a/a.mp4
+  saved: .rayo/a_failure.png
+  recording: .rayo/a.mp4
 PASS b  # s
   file: b.yaml
-  recording: .rayo/b/named.mp4
 FAIL c  # s
   file: c.yaml
   why: nothing is being recorded
@@ -113,6 +110,6 @@ FAIL c  # s
   at: c.yaml:3
   screen:
     a screen
-  saved: .rayo/c
+  saved: .rayo/c_failure.png
 
 TOTAL 3: 1 passed, 2 failed  # s
