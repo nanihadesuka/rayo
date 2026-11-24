@@ -1,0 +1,16 @@
+-- args --
+hierarchy --find zzzz --format json
+==== out ====
+-- exit --
+0
+-- stdout --
+{
+  "schemaVersion": 3,
+  "screen": []
+}
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+tree {"timeout":10000}
+bye {"timeout":5000}

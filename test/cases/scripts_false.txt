@@ -40,5 +40,33 @@ the log
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/flow.yaml": "FAIL"
+  "<dir>/flow.yaml": {
+    "status": "FAIL",
+    "name": "case",
+    "file": "flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "case failed at assertTrue ${1 > 2}: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "flow.yaml",
+        "line": 3,
+        "step": "assertTrue ${1 > 2}",
+        "cause": "it is false",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/case_failure.png"
+    }
+  }
 }

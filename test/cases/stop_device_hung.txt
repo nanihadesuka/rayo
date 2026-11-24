@@ -50,5 +50,33 @@ PNG...
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/a.yaml": "FAIL"
+  "<dir>/a.yaml": {
+    "status": "FAIL",
+    "name": "a",
+    "file": "a.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "a failed at tapOn android hangs: device error",
+      "kind": "device error",
+      "error": {
+        "file": "a.yaml",
+        "line": 3,
+        "step": "tapOn android hangs",
+        "cause": "not on screen: home",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "device",
+      "because": "Android's interface hung",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/a_failure.png"
+    }
+  }
 }

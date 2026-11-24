@@ -11,5 +11,14 @@ appId: a.b
 {
   "schemaVersion": 3,
   "ok": true,
-  "flows": 1
+  "count": 1,
+  "flows": [
+    {
+      "name": "a",
+      "file": "flows/a.yaml",
+      "tags": [],
+      "mocks": [],
+      "retries": 1
+    }
+  ]
 }

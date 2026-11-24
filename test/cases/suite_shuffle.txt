@@ -112,8 +112,82 @@ PNG...
 a screen
 -- file e2e/results/failed.json --
 {
-  "<dir>/e2e/b/flow.yaml": "FAIL",
-  "<dir>/e2e/c/flow.yaml": "FAIL"
+  "<dir>/e2e/b/flow.yaml": {
+    "status": "FAIL",
+    "name": "b",
+    "file": "e2e/b/flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "b failed at tapOn app crashes: app crashed",
+      "kind": "app crashed",
+      "error": {
+        "file": "e2e/shared/sub.yaml",
+        "line": 3,
+        "step": "tapOn app crashes",
+        "cause": "not on screen: home",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "app",
+      "because": "the app crashed: java.lang.IllegalStateException: oops",
+      "from": [
+        {
+          "step": "runFlow ../shared/sub.yaml",
+          "file": "e2e/b/flow.yaml",
+          "line": 6
+        }
+      ],
+      "before": [
+        "tapOn GET /a",
+        "camera none"
+      ],
+      "nearest": [],
+      "calls": [
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/a",
+          "outcome": "200",
+          "mocked": true,
+          "body": ""
+        }
+      ],
+      "screen": [],
+      "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
+      "saved": "e2e/results/b_failure.png"
+    }
+  },
+  "<dir>/e2e/c/flow.yaml": {
+    "status": "FAIL",
+    "name": "c",
+    "file": "e2e/c/flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "c failed at tapOn flaky 1: app crashed",
+      "kind": "app crashed",
+      "error": {
+        "file": "e2e/c/flow.yaml",
+        "line": 3,
+        "step": "tapOn flaky 1",
+        "cause": "flaked",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "app",
+      "because": "the app crashed: java.lang.IllegalStateException: oops",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
+      "saved": "e2e/results/c_failure.png"
+    }
+  }
 }
 -- file e2e/results/results.txt --
 run: Everything

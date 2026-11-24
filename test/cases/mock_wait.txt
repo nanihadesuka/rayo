@@ -71,5 +71,54 @@ the log
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/flow.yaml": "FAIL"
+  "<dir>/flow.yaml": {
+    "status": "FAIL",
+    "name": "case",
+    "file": "flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "case failed at waitForRequest path: /pay: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "flow.yaml",
+        "line": 9,
+        "step": "waitForRequest path: /pay",
+        "cause": "the app didn't call it",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [
+        "tapOn POST /pay {\"n\":2}",
+        "waitForRequest method: post, path: /pa., body: \"n\":2",
+        "waitForRequest /pay"
+      ],
+      "nearest": [],
+      "calls": [
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/pay",
+          "outcome": "200",
+          "mocked": true,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/pay",
+          "outcome": "200",
+          "mocked": true,
+          "body": ""
+        }
+      ],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/case_failure.png"
+    }
+  }
 }

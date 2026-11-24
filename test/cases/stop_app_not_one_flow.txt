@@ -102,7 +102,35 @@ a screen
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/a.yaml": "FAIL"
+  "<dir>/a.yaml": {
+    "status": "FAIL",
+    "name": "a",
+    "file": "a.yaml",
+    "why": "",
+    "failure": {
+      "try": 3,
+      "verdict": "a failed at tapOn app crashes: app crashed",
+      "kind": "app crashed",
+      "error": {
+        "file": "a.yaml",
+        "line": 3,
+        "step": "tapOn app crashes",
+        "cause": "not on screen: home",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "app",
+      "because": "the app crashed: java.lang.IllegalStateException: oops",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
+      "saved": ".rayo/a_retry2_failure.png"
+    }
+  }
 }
 -- file out.json --
 {

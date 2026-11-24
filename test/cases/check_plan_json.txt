@@ -1,0 +1,49 @@
+-- args --
+check s.suite.yaml --format json
+-- s.suite.yaml --
+retries: 2
+flows:
+  - a.yaml
+  - b.yaml
+-- a.yaml --
+appId: a.b
+tags: [smoke, pay]
+mock: m.json
+---
+- back
+-- m.json --
+{"request":{"urlPath":"/a"},"response":{"body":"ok"}}
+-- b.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+0
+-- stdout --
+{
+  "schemaVersion": 3,
+  "ok": true,
+  "count": 2,
+  "flows": [
+    {
+      "name": "a",
+      "file": "a.yaml",
+      "tags": [
+        "smoke",
+        "pay"
+      ],
+      "mocks": [
+        "m.json"
+      ],
+      "retries": 2
+    },
+    {
+      "name": "b",
+      "file": "b.yaml",
+      "tags": [],
+      "mocks": [],
+      "retries": 2
+    }
+  ]
+}

@@ -76,5 +76,37 @@ PNG...
 PNG...
 -- file .rayo/failed.json --
 {
-  "<dir>/flow.yaml": "FAIL"
+  "<dir>/flow.yaml": {
+    "status": "FAIL",
+    "name": "case",
+    "file": "flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "case failed at shell boom: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "flow.yaml",
+        "line": 10,
+        "step": "shell boom",
+        "cause": "exit code 1\nit broke",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [
+        "takeScreenshot shots/one",
+        "takeScreenshot two.png",
+        "shell am broadcast -a x"
+      ],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/case_failure.png"
+    }
+  }
 }

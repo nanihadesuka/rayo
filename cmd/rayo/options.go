@@ -56,6 +56,12 @@ type options struct {
 	// Of do.
 	screen bool
 
+	// Of hierarchy and do.
+	find string
+
+	// Of test and check.
+	since string // a git ref; empty for all the flows
+
 	// Of mocks.
 	take  []string
 	prune bool
@@ -86,10 +92,11 @@ const (
 	cmdDevices   = "devices"
 	cmdCA        = "ca"
 	cmdMocks     = "mocks"
+	cmdExplain   = "explain"
 )
 
 // commandNames are rayo's own, as rayo help <command> takes them.
-var commandNames = []string{cmdTest, cmdCheck, cmdLive, cmdDo, cmdHierarchy, cmdDevices, cmdCA, cmdMocks, "schema"}
+var commandNames = []string{cmdTest, cmdCheck, cmdExplain, cmdLive, cmdDo, cmdHierarchy, cmdDevices, cmdCA, cmdMocks, "schema"}
 
 func flag(name, about string, at func(o *options) *bool) option {
 	return option{name: name, about: about, set: func(o *options, _ string) error { *at(o) = true; return nil }}
@@ -129,7 +136,19 @@ var sections = []section{
 		text("device", "serial", "when several are connected", func(o *options) *string { return &o.device }),
 		flag("emulator", "never a real device, even if it is the only one", func(o *options) *bool { return &o.emulator }),
 	}},
-	{[]string{cmdTest, cmdLive, cmdDo}, "", []option{
+	{[]string{cmdTest, cmdCheck}, "which flows", []option{
+		{name: "changed-only", about: "only the flows of which a file changed: their own, one they run, or a mock; as --since HEAD", set: func(o *options, _ string) error {
+			if o.since == "" {
+				o.since = "HEAD"
+			}
+			return nil
+		}},
+		text("since", "git ref", "only the flows of which a file changed since then, also not committed", func(o *options) *string { return &o.since }),
+	}},
+	{[]string{cmdHierarchy, cmdDo}, "", []option{
+		text("find", "text", "of the screen, only the elements most like it, instead of all", func(o *options) *string { return &o.find }),
+	}},
+	{[]string{cmdTest, cmdLive, cmdDo, cmdExplain}, "", []option{
 		text("output", "folder", "where failures and screenshots go (default .rayo)", func(o *options) *string { return &o.output }),
 	}},
 	{[]string{cmdTest, cmdLive}, "", []option{
@@ -331,7 +350,7 @@ var sections = []section{
 	{[]string{cmdDo}, "", []option{
 		flag("screen", "also what is on screen afterwards", func(o *options) *bool { return &o.screen }),
 	}},
-	{[]string{cmdTest, cmdCheck, cmdDevices, cmdHierarchy, cmdDo, cmdMocks}, "", []option{
+	{[]string{cmdTest, cmdCheck, cmdExplain, cmdDevices, cmdHierarchy, cmdDo, cmdMocks}, "", []option{
 		choice("format", "how", "human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs",
 			func(o *options) *string { return &o.format }, report.Formats...),
 	}},
@@ -340,7 +359,8 @@ var sections = []section{
 const usage = `rayo - runs flows on Android, fast
 
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
-  rayo check <flow, folder or suite>...            check flows without a device
+  rayo check <flow, folder or suite>...            check flows without a device, and say which would run
+  rayo explain [<run folder or flow>]              why the flows of the last run failed, in a few lines
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it

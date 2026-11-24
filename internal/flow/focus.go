@@ -88,7 +88,7 @@ func Nearest(screen, want string, n int) []string {
 		for _, part := range strings.Split(bounds.ReplaceAllString(line, ""), " | ") {
 			_, value, ok := strings.Cut(part, ": ")
 			if !ok {
-				continue
+				value = part // as it is, if it says no key
 			}
 			value = strings.ToLower(value)
 			if _, id, ok := strings.Cut(value, ":id/"); ok { // com.app:id/pay is pay

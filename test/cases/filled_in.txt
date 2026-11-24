@@ -198,14 +198,238 @@ the log
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/a.yaml": "FAIL",
-  "<dir>/b.yaml": "FAIL",
-  "<dir>/c.yaml": "FAIL",
-  "<dir>/d.yaml": "FAIL",
-  "<dir>/e.yaml": "FAIL",
-  "<dir>/f.yaml": "FAIL",
-  "<dir>/g.yaml": "FAIL",
-  "<dir>/h.yaml": "FAIL"
+  "<dir>/a.yaml": {
+    "status": "FAIL",
+    "name": "a",
+    "file": "a.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "a failed at tapOn x: timeout",
+      "kind": "timeout",
+      "error": {
+        "file": "a.yaml",
+        "line": 3,
+        "step": "tapOn x",
+        "cause": "timeout: not a time: \"soon\" (use 500 or 10s)",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/a_failure.png"
+    }
+  },
+  "<dir>/b.yaml": {
+    "status": "FAIL",
+    "name": "b",
+    "file": "b.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "b failed at repeat times: ${'many'}: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "b.yaml",
+        "line": 3,
+        "step": "repeat times: ${'many'}",
+        "cause": "times: not a whole number: \"many\"",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/b_failure.png"
+    }
+  },
+  "<dir>/c.yaml": {
+    "status": "FAIL",
+    "name": "c",
+    "file": "c.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "c failed at swipe ${'nowhere'}: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "c.yaml",
+        "line": 3,
+        "step": "swipe ${'nowhere'}",
+        "cause": "direction: not one of UP, DOWN, LEFT, RIGHT: \"nowhere\"",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/c_failure.png"
+    }
+  },
+  "<dir>/d.yaml": {
+    "status": "FAIL",
+    "name": "d",
+    "file": "d.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "d failed at travel [2]: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "d.yaml",
+        "line": 3,
+        "step": "travel [2]",
+        "cause": "points: not a location: \"x\"",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/d_failure.png"
+    }
+  },
+  "<dir>/e.yaml": {
+    "status": "FAIL",
+    "name": "e",
+    "file": "e.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "e failed at waitForAnimationToEnd: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "e.yaml",
+        "line": 3,
+        "step": "waitForAnimationToEnd",
+        "cause": "optional: not one of true, false: \"maybe\"",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/e_failure.png"
+    }
+  },
+  "<dir>/f.yaml": {
+    "status": "FAIL",
+    "name": "f",
+    "file": "f.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "f failed at runFlow ${'Windows'}: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "f.yaml",
+        "line": 3,
+        "step": "runFlow ${'Windows'}",
+        "cause": "platform: not one of Android, iOS, Web: \"Windows\"",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/f_failure.png"
+    }
+  },
+  "<dir>/g.yaml": {
+    "status": "FAIL",
+    "name": "g",
+    "file": "g.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "g failed at launchApp ${'alow'}: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "g.yaml",
+        "line": 3,
+        "step": "launchApp ${'alow'}",
+        "cause": "permissions: camera: not one of allow, deny, unset: \"alow\"",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/g_failure.png"
+    }
+  },
+  "<dir>/h.yaml": {
+    "status": "FAIL",
+    "name": "h",
+    "file": "h.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "h failed at runFlow x, index: ${'one'}: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "h.yaml",
+        "line": 3,
+        "step": "runFlow x, index: ${'one'}",
+        "cause": "index: not a whole number: \"one\"",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/h_failure.png"
+    }
+  }
 }
 -- file .rayo/g_failure.png --
 PNG...

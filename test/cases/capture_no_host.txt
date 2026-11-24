@@ -58,5 +58,44 @@ the log
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/a.yaml": "FAIL"
+  "<dir>/a.yaml": {
+    "status": "FAIL",
+    "name": "a",
+    "file": "a.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "a failed at tapOn missing: not on screen",
+      "kind": "not on screen",
+      "error": {
+        "file": "a.yaml",
+        "line": 4,
+        "step": "tapOn missing",
+        "cause": "not on screen: missing",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [
+        "tapOn GET /localhost/a"
+      ],
+      "nearest": [],
+      "calls": [
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/localhost/a",
+          "outcome": "failed: the path doesn't begin with a host",
+          "mocked": true,
+          "body": ""
+        }
+      ],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/a_failure.png"
+    }
+  }
 }

@@ -1,0 +1,32 @@
+-- args --
+explain pay
+-- .rayo/failed.json --
+{
+  "/x/pay.yaml": {
+    "status": "FAIL", "name": "pay", "file": "pay.yaml", "why": "",
+    "failure": {
+      "try": 2, "verdict": "pay failed at tapOn Pay: not on screen", "kind": "not on screen",
+      "error": { "file": "shared/pay.yaml", "line": 4, "step": "tapOn Pay", "cause": "not on screen: Pay", "expected": "", "nearest": "", "fix": "" },
+      "cause": "test", "because": "",
+      "from": [{ "step": "runFlow shared/pay.yaml", "file": "pay.yaml", "line": 7 }],
+      "before": ["tapOn Cart"],
+      "nearest": ["id: com.shop:id/pay | text: Pay now  [0,0][100,50]"],
+      "calls": [{ "at": "2026-11-22T21:11:40.250Z", "method": "GET", "uri": "/cart", "outcome": "not mocked", "mocked": false, "body": "" }],
+      "screen": [], "crash": "", "saved": ".rayo/pay_retry1_failure.jpg"
+    }
+  },
+  "/x/scan.yaml": { "status": "NOT_RUN", "name": "scan", "file": "scan.yaml", "why": "--fail-fast, after pay", "failure": null }
+}
+==== out ====
+-- exit --
+0
+-- stdout --
+pay failed at tapOn Pay: not on screen
+  why: not on screen: Pay
+  at: shared/pay.yaml:4
+  from: pay.yaml:7 runFlow shared/pay.yaml
+  nearest:
+    id: com.shop:id/pay | text: Pay now  [0,0][100,50]
+  calls:
+    <time> GET /cart -> not mocked
+  saved: .rayo/pay_retry1_failure.jpg

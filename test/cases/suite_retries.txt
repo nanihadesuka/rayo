@@ -99,7 +99,35 @@ the log
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/c.yaml": "FAIL"
+  "<dir>/c.yaml": {
+    "status": "FAIL",
+    "name": "c",
+    "file": "c.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "c failed at tapOn missing: not on screen",
+      "kind": "not on screen",
+      "error": {
+        "file": "c.yaml",
+        "line": 3,
+        "step": "tapOn missing",
+        "cause": "not on screen: missing",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/c_failure.png"
+    }
+  }
 }
 -- file out.json --
 {

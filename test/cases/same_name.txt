@@ -51,8 +51,64 @@ adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/failed.json --
 {
-  "<dir>/a/x.yaml": "FAIL",
-  "<dir>/b/x.yaml": "FAIL"
+  "<dir>/a/x.yaml": {
+    "status": "FAIL",
+    "name": "x",
+    "file": "a/x.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "x failed at tapOn missing: not on screen",
+      "kind": "not on screen",
+      "error": {
+        "file": "a/x.yaml",
+        "line": 3,
+        "step": "tapOn missing",
+        "cause": "not on screen: missing",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/x_failure.png"
+    }
+  },
+  "<dir>/b/x.yaml": {
+    "status": "FAIL",
+    "name": "x",
+    "file": "b/x.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "x failed at tapOn missing: not on screen",
+      "kind": "not on screen",
+      "error": {
+        "file": "b/x.yaml",
+        "line": 3,
+        "step": "tapOn missing",
+        "cause": "not on screen: missing",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/x_2_failure.png"
+    }
+  }
 }
 -- file .rayo/x_2_failure.png --
 PNG...

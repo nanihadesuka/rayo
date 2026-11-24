@@ -55,7 +55,7 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 			return nil, fmt.Errorf("no flow is called %s", name)
 		}
 	}
-	var last map[string]report.Status
+	var last map[string]report.Unpassed
 	if o.rerunFailed {
 		var err error
 		if last, err = report.Last(report.LastFile(o.output)); err != nil {

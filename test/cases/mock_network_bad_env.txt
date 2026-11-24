@@ -43,5 +43,33 @@ the log
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/flow.yaml": "FAIL"
+  "<dir>/flow.yaml": {
+    "status": "FAIL",
+    "name": "case",
+    "file": "flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "case failed at the end: step failed",
+      "kind": "step failed",
+      "error": {
+        "file": "flow.yaml",
+        "line": 5,
+        "step": "",
+        "cause": "network: takes interceptor or proxy, not \"wifi\"",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/case_failure.png"
+    }
+  }
 }

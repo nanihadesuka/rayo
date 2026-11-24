@@ -79,5 +79,33 @@ a screen
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/b.yaml": "FAIL"
+  "<dir>/b.yaml": {
+    "status": "FAIL",
+    "name": "b",
+    "file": "b.yaml",
+    "why": "",
+    "failure": {
+      "try": 2,
+      "verdict": "b failed at tapOn missing: not on screen",
+      "kind": "not on screen",
+      "error": {
+        "file": "b.yaml",
+        "line": 3,
+        "step": "tapOn missing",
+        "cause": "not on screen: missing",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/b_retry1_failure.png"
+    }
+  }
 }

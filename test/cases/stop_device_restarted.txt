@@ -73,7 +73,69 @@ the log
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/a.yaml": "FAIL",
-  "<dir>/b.yaml": "FAIL",
-  "<dir>/c.yaml": "NOT_RUN"
+  "<dir>/a.yaml": {
+    "status": "FAIL",
+    "name": "a",
+    "file": "a.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "a failed at tapOn missing: device error",
+      "kind": "device error",
+      "error": {
+        "file": "a.yaml",
+        "line": 3,
+        "step": "tapOn missing",
+        "cause": "not on screen: missing",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "device",
+      "because": "Android restarted during the flow",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/a_failure.png"
+    }
+  },
+  "<dir>/b.yaml": {
+    "status": "FAIL",
+    "name": "b",
+    "file": "b.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "b failed at tapOn missing: device error",
+      "kind": "device error",
+      "error": {
+        "file": "b.yaml",
+        "line": 3,
+        "step": "tapOn missing",
+        "cause": "not on screen: missing",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "device",
+      "because": "Android restarted during the flow",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/b_failure.png"
+    }
+  },
+  "<dir>/c.yaml": {
+    "status": "NOT_RUN",
+    "name": "c",
+    "file": "c.yaml",
+    "why": "device: 2 failures in a row, the last: Android restarted during the flow",
+    "failure": null
+  }
 }

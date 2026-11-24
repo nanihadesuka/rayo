@@ -38,7 +38,8 @@ As `rayo help` prints them. An option of another command is an error, never igno
 rayo - runs flows on Android, fast
 
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
-  rayo check <flow, folder or suite>...            check flows without a device
+  rayo check <flow, folder or suite>...            check flows without a device, and say which would run
+  rayo explain [<run folder or flow>]              why the flows of the last run failed, in a few lines
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
@@ -63,7 +64,14 @@ Options of test, live and hierarchy
   --device <serial>          when several are connected
   --emulator                 never a real device, even if it is the only one
 
-Options of test, live and do
+Options of test and check: which flows
+  --changed-only             only the flows of which a file changed: their own, one they run, or a mock; as --since HEAD
+  --since <git ref>          only the flows of which a file changed since then, also not committed
+
+Options of hierarchy and do
+  --find <text>              of the screen, only the elements most like it, instead of all
+
+Options of test, live, do and explain
   --output <folder>          where failures and screenshots go (default .rayo)
 
 Options of test and live
@@ -137,7 +145,7 @@ Options of mocks
 Options of do
   --screen                   also what is on screen afterwards
 
-Options of test, check, devices, hierarchy, do and mocks
+Options of test, check, explain, devices, hierarchy, do and mocks
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs
 ```
 
@@ -1716,6 +1724,28 @@ Each of `failures`:
 jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].error.cause)"' results.json
 (Get-Content results.json -Raw | ConvertFrom-Json).flows | Where-Object status -eq FAIL
 ```
+
+### Explain
+
+`rayo explain` prints, for each flow of the last run that hasn't passed since, only what tells why:
+the verdict, `why`, `at`, `from`, the `nearest` elements, the `calls` and `saved`, as a failure does. It
+reads `<output>/failed.json`, which keeps the last failure of each. Give it a run's folder (default `.rayo`), or a
+flow's file or name:
+
+```
+rayo explain
+rayo explain pay
+rayo explain ci/.rayo --format json
+```
+
+`--find <text>`, on `rayo hierarchy` and `rayo do --screen`, prints only the elements of the screen most
+like the text, the closest first, instead of all of them.
+
+`--changed-only`, on `rayo test` and `rayo check`, keeps only the flows of which a file changed since the last
+commit, also those not committed yet: the flow's own, one it runs with `runFlow`, or a file of its mocks.
+`--since <git ref>` does so since that ref, such as `--since origin/main`.
+
+`rayo check` says which flows would run, in that order, with their tags and mocks; with `--format json`, also the retries of each.
 
 ### For a program
 

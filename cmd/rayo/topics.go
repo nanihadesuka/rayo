@@ -25,9 +25,13 @@ var topics = []topic{
 Prefer an id to a text: texts change with the language. rayo help flow has the header and the
 commands, rayo help <command> what one takes.
 `},
-	{"debug-a-flow", "debug a failing flow", `A failure says why, the step, where in the file, and what was on screen. Its folder in --output
-(default .rayo) has failure.jpg, screen.txt, logcat.txt and requests.txt.
+	{"debug-a-flow", "debug a failing flow", `A failure begins with a verdict, <flow> failed at <step>: <cause>, then why, where in the file, the
+elements most like what wasn't on screen, and the calls. --output (default .rayo) has failure.jpg,
+screen.txt, logcat.txt and requests.txt, cut to the failure window.
 
+  rayo explain                                       only that, for each flow of the last run that failed
+  rayo hierarchy --find Pay                          only the elements most like Pay
+  rayo test --changed-only all.suite.yaml            only the flows whose files changed since the last commit
   rayo test --results report.md all.suite.yaml       a short report, for a chat or a mail
   rayo test --emulator --timings f.yaml              how long each step took
   rayo test --emulator --rerun-failed all.suite.yaml  only what failed last time

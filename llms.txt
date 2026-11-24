@@ -18,7 +18,8 @@
 rayo - runs flows on Android, fast
 
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
-  rayo check <flow, folder or suite>...            check flows without a device
+  rayo check <flow, folder or suite>...            check flows without a device, and say which would run
+  rayo explain [<run folder or flow>]              why the flows of the last run failed, in a few lines
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
@@ -43,7 +44,14 @@ Options of test, live and hierarchy
   --device <serial>          when several are connected
   --emulator                 never a real device, even if it is the only one
 
-Options of test, live and do
+Options of test and check: which flows
+  --changed-only             only the flows of which a file changed: their own, one they run, or a mock; as --since HEAD
+  --since <git ref>          only the flows of which a file changed since then, also not committed
+
+Options of hierarchy and do
+  --find <text>              of the screen, only the elements most like it, instead of all
+
+Options of test, live, do and explain
   --output <folder>          where failures and screenshots go (default .rayo)
 
 Options of test and live
@@ -117,7 +125,7 @@ Options of mocks
 Options of do
   --screen                   also what is on screen afterwards
 
-Options of test, check, devices, hierarchy, do and mocks
+Options of test, check, explain, devices, hierarchy, do and mocks
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs
 
 ## flow
@@ -913,9 +921,13 @@ commands, rayo help <command> what one takes.
 
 ## debug a failing flow
 
-A failure says why, the step, where in the file, and what was on screen. Its folder in --output
-(default .rayo) has failure.jpg, screen.txt, logcat.txt and requests.txt.
+A failure begins with a verdict, <flow> failed at <step>: <cause>, then why, where in the file, the
+elements most like what wasn't on screen, and the calls. --output (default .rayo) has failure.jpg,
+screen.txt, logcat.txt and requests.txt, cut to the failure window.
 
+  rayo explain                                       only that, for each flow of the last run that failed
+  rayo hierarchy --find Pay                          only the elements most like Pay
+  rayo test --changed-only all.suite.yaml            only the flows whose files changed since the last commit
   rayo test --results report.md all.suite.yaml       a short report, for a chat or a mail
   rayo test --emulator --timings f.yaml              how long each step took
   rayo test --emulator --rerun-failed all.suite.yaml  only what failed last time

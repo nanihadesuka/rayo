@@ -18,3 +18,5 @@ mock: ["${DIR}/x"]
 0
 -- stdout --
 2 flows are fine
+  a  flows/a.yaml
+  b  flows/b.yaml  mocks: ${DIR}/x

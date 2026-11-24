@@ -49,5 +49,33 @@ PNG...
 the log
 -- file .rayo/failed.json --
 {
-  "<dir>/flow.yaml": "FAIL"
+  "<dir>/flow.yaml": {
+    "status": "FAIL",
+    "name": "case",
+    "file": "flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "case failed at tapOn crash: device error",
+      "kind": "device error",
+      "error": {
+        "file": "flow.yaml",
+        "line": 3,
+        "step": "tapOn crash",
+        "cause": "lost the device: EOF\nnoise before",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "device",
+      "because": "the connection to the device was lost",
+      "from": [],
+      "before": [],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/case_failure.png"
+    }
+  }
 }

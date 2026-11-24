@@ -1,0 +1,7 @@
+-- args --
+explain
+==== out ====
+-- exit --
+2
+-- stderr --
+error: nothing failed: there is no .rayo/failed.json

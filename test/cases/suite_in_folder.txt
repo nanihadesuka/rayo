@@ -34,3 +34,6 @@ appId: a.b
 0
 -- stdout --
 3 flows are fine
+  b  e2e/b/flow.yaml  mocks: mock.json
+  a  e2e/a/flow.yaml
+  c  e2e/c/flow.yaml

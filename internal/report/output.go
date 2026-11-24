@@ -112,11 +112,21 @@ func ErrorsOf(err error, exit int) Errors {
 	return Errors{SchemaVersion: SchemaVersion, Exit: exit, Errors: ProblemsOf(err)}
 }
 
-// Check is what rayo check prints.
+// Check is what rayo check prints: the plan.
 type Check struct {
-	SchemaVersion int  `json:"schemaVersion" about:"Changes if the meaning of a key does"`
-	OK            bool `json:"ok" about:"true: else it prints the errors"`
-	Flows         int  `json:"flows" about:"How many are fine"`
+	SchemaVersion int       `json:"schemaVersion" about:"Changes if the meaning of a key does"`
+	OK            bool      `json:"ok" about:"true: else it prints the errors"`
+	Count         int       `json:"count" about:"How many flows are fine, and would run"`
+	Flows         []Planned `json:"flows" about:"Those that would run, in that order"`
+}
+
+// Planned is a flow that would run.
+type Planned struct {
+	Name    string   `json:"name" about:"The flow's"`
+	File    string   `json:"file" about:"The flow's"`
+	Tags    []string `json:"tags" about:""`
+	Mocks   []string `json:"mocks" about:"As written in it, or in its suite"`
+	Retries int      `json:"retries" about:"How many times it is tried again if it fails"`
 }
 
 // Devices is what rayo devices prints.
@@ -225,6 +235,7 @@ func Schemas() map[string]func() []byte {
 		"devices":   file(Devices{}, "What rayo devices prints, --format json"),
 		"hierarchy": file(Hierarchy{}, "What rayo hierarchy prints, --format json"),
 		"mocks":     file(Notes{}, "What rayo mocks prints, --format json"),
+		"explain":   file(Explained{}, "What rayo explain prints, --format json"),
 		"event":     file(Event{}, "A line of rayo test --format ndjson"),
 		"errors":    file(Errors{}, "What rayo prints, --format json, if it can't do what was asked"),
 	}

@@ -132,5 +132,118 @@ the log
 a screen
 -- file .rayo/failed.json --
 {
-  "<dir>/flow.yaml": "FAIL"
+  "<dir>/flow.yaml": {
+    "status": "FAIL",
+    "name": "case",
+    "file": "flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "case failed at the end: unmocked call",
+      "kind": "unmocked call",
+      "error": {
+        "file": "",
+        "line": 0,
+        "step": "",
+        "cause": "the app called what isn't mocked:\n    POST /a\n    GET /a\n    GET /q?a=1\n    GET /q\n    GET /nothing",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [
+        "tapOn GET /q",
+        "tapOn GET /nothing",
+        "tapOn GET /nothing"
+      ],
+      "nearest": [],
+      "calls": [
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/a",
+          "outcome": "not mocked; nearest POST /a: body: nothing at $.x",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/a",
+          "outcome": "not mocked; nearest POST /a: body: nothing at $.x",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/a",
+          "outcome": "not mocked; nearest POST /a: body: nothing at $.x",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/a",
+          "outcome": "not mocked; nearest POST /a: body: not JSON",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/a",
+          "outcome": "not mocked; nearest POST /a: body: not JSON",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/a",
+          "outcome": "not mocked",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/q?a=1",
+          "outcome": "not mocked; nearest GET /q: query a: \"1\", expected \"2\"",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/q",
+          "outcome": "not mocked; nearest GET /q: query a: absent, expected \"2\"",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/nothing",
+          "outcome": "not mocked",
+          "mocked": false,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/nothing",
+          "outcome": "not mocked",
+          "mocked": false,
+          "body": ""
+        }
+      ],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/case_failure.png"
+    }
+  }
 }

@@ -98,6 +98,8 @@ func run(ctx context.Context, command string, args []string) error {
 		return test(ctx, args)
 	case cmdCheck:
 		return check(args)
+	case cmdExplain:
+		return explain(args)
 	case cmdLive:
 		return runLive(ctx, args)
 	case cmdDo:
@@ -147,14 +149,28 @@ func check(args []string) error {
 	if err != nil {
 		return err
 	}
-	flows, _, err := suite.Load(o.args)
-	switch {
-	case err != nil:
+	flows, group, err := suite.Load(o.args)
+	if err == nil {
+		flows, err = o.changed(flows)
+	}
+	if err != nil {
 		return err
-	case printing != report.Human:
-		return emit(report.Check{SchemaVersion: report.SchemaVersion, OK: true, Flows: len(flows)})
+	}
+	list := plan(flows, group)
+	if printing != report.Human {
+		return emit(report.Check{SchemaVersion: report.SchemaVersion, OK: true, Count: len(flows), Flows: list})
 	}
 	fmt.Printf("%d flows are fine\n", len(flows))
+	for _, p := range list {
+		line := "  " + p.Name + "  " + p.File
+		if len(p.Tags) > 0 {
+			line += "  tags: " + strings.Join(p.Tags, ", ")
+		}
+		if len(p.Mocks) > 0 {
+			line += "  mocks: " + strings.Join(p.Mocks, ", ")
+		}
+		fmt.Println(line)
+	}
 	return nil
 }
 
@@ -179,7 +195,11 @@ func hierarchy(ctx context.Context, args []string) error {
 	switch {
 	case err != nil:
 		return ofDevice(err)
-	case printing != report.Human:
+	}
+	if o.find != "" {
+		r.Out = findOn(r.Out, o.find)
+	}
+	if printing != report.Human {
 		return emit(report.Hierarchy{SchemaVersion: report.SchemaVersion, Screen: report.Lines(r.Out)})
 	}
 	fmt.Print(r.Out)
@@ -196,6 +216,13 @@ func test(ctx context.Context, args []string) (err error) {
 		return err
 	}
 	o.suite = group
+	if all, err = o.changed(all); err != nil {
+		return err
+	}
+	if len(all) == 0 {
+		fmt.Fprintln(human(), "no flow changed since", o.since)
+		return nil
+	}
 	title := strings.Join(o.args, " ")
 	if group != nil {
 		if group.Name != "" {
@@ -464,9 +491,15 @@ func runDo(args []string) error {
 	if len(o.args) == 0 {
 		return errors.New("do what? such as rayo do '- tapOn: Save', or rayo do .help")
 	}
+	if o.find != "" && !o.screen {
+		return errors.New("--find needs --screen")
+	}
 	a, err := live.Ask(o.output, live.Request{Text: strings.Join(o.args, "\n"), Screen: o.screen})
 	if err != nil {
 		return err
+	}
+	if o.find != "" {
+		a.Screen = report.Lines(findOn(strings.Join(a.Screen, "\n"), o.find))
 	}
 	if printing == report.Human {
 		fmt.Print(a.Text())
@@ -526,7 +559,7 @@ func printSchema(args []string) error {
 		_, err := os.Stdout.Write(makers[args[0]]())
 		return err
 	}
-	return errors.New("rayo schema takes flow, suite, results, check, devices, hierarchy, do, mocks, event or errors")
+	return errors.New("rayo schema takes flow, suite, results, check, explain, devices, hierarchy, do, mocks, event or errors")
 }
 
 // helpJSON is all of it, for programs and the documentation's page.

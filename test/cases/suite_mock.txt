@@ -83,7 +83,55 @@ adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
 -- file .rayo/failed.json --
 {
-  "<dir>/tests/own.yaml": "FAIL"
+  "<dir>/tests/own.yaml": {
+    "status": "FAIL",
+    "name": "own",
+    "file": "tests/own.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "own failed at the end: unmocked call",
+      "kind": "unmocked call",
+      "error": {
+        "file": "",
+        "line": 0,
+        "step": "",
+        "cause": "the app called what isn't mocked:\n    GET /a",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "cause": "test",
+      "because": "",
+      "from": [],
+      "before": [
+        "tapOn GET /b",
+        "tapOn GET /a"
+      ],
+      "nearest": [],
+      "calls": [
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/b",
+          "outcome": "200",
+          "mocked": true,
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "GET",
+          "uri": "/a",
+          "outcome": "not mocked",
+          "mocked": false,
+          "body": ""
+        }
+      ],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/own_failure.png"
+    }
+  }
 }
 -- file .rayo/own_failure.png --
 PNG...

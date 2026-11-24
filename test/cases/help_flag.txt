@@ -9,6 +9,8 @@ test --help
 Options of test:
   --device <serial>          when several are connected
   --emulator                 never a real device, even if it is the only one
+  --changed-only             only the flows of which a file changed: their own, one they run, or a mock; as --since HEAD
+  --since <git ref>          only the flows of which a file changed since then, also not committed
   --output <folder>          where failures and screenshots go (default .rayo)
   -e, --env <KEY=VALUE>      a variable for the flows
   --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
