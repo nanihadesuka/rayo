@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 flows: [a.yaml]
 timeoutScale: 20
 -- a.yaml --
@@ -11,4 +11,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:2: timeoutScale: takes 0.1 to 10, not 20
+error: s.suite.yaml:2: timeoutScale: takes 0.1 to 10, not 20

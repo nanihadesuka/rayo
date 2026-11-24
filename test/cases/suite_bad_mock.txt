@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 flows:
   - file: flow.yaml
     mock: missing.json
@@ -12,4 +12,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:2: mock: no file missing.json
+error: s.suite.yaml:2: mock: no file missing.json

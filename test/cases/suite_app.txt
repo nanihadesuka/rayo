@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 app: { id: a.b, apk: app.apk }
 flows: [a.yaml]
 -- app.apk --

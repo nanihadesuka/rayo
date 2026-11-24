@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 flows:
   - file: tests/a.yaml
     mock: mocks/a.json

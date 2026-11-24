@@ -1,7 +1,7 @@
 -- with retries --
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 retries: 1
 results: out.json
 flows:
@@ -105,7 +105,7 @@ a screen
 -- file out.json --
 {
   "version": 1,
-  "run": "s.rayo.yaml",
+  "run": "s.suite.yaml",
   "device": "emulator-5554",
   "began": "<now>",
   "seconds": #,

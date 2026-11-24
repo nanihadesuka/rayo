@@ -6,7 +6,7 @@ help
 -- stdout --
 rayo - runs flows on Android, fast
 
-  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.rayo.yaml
+  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo do [options] <commands>                     send commands to the live session; rayo do .help

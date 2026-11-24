@@ -599,6 +599,6 @@
   "required": [
     "flows"
   ],
-  "title": "A rayo suite, *.rayo.yaml",
+  "title": "A rayo suite, *.suite.yaml",
   "type": "object"
 }

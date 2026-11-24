@@ -128,7 +128,7 @@ func TestPage(t *testing.T) {
 
 // The full example is right, and all its files are told of.
 func TestFullExample(t *testing.T) {
-	for _, what := range []string{"../examples/shop/all.rayo.yaml", "../examples"} {
+	for _, what := range []string{"../examples/shop/all.suite.yaml", "../examples"} {
 		if out, err := exec.Command(rayo, "check", what).CombinedOutput(); err != nil {
 			t.Errorf("%s", out)
 		}

@@ -1,7 +1,7 @@
 -- with retries --
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 flows: [a.yaml, { file: b.yaml, retries: 0 }]
 -- a.yaml --
 appId: a.b

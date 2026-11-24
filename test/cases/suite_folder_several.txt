@@ -1,0 +1,15 @@
+-- args --
+check e2e
+-- e2e/a.suite.yaml --
+flows: [a.yaml]
+-- e2e/b.suite.yaml --
+flows: [a.yaml]
+-- e2e/a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: e2e holds 2 suites, give one: e2e/a.suite.yaml, e2e/b.suite.yaml

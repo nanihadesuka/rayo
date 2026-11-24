@@ -1,6 +1,6 @@
 -- args --
-test --timings s.rayo.yaml
--- s.rayo.yaml --
+test --timings s.suite.yaml
+-- s.suite.yaml --
 flows: [a.yaml]
 timeoutScale: 2
 -- a.yaml --

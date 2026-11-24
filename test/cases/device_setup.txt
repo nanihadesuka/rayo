@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 device: { size: 1080x2400, dpi: 420, fontScale: 1.3, darkMode: true }
 flows: [a.yaml]
 -- a.yaml --

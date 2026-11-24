@@ -1,6 +1,6 @@
 -- args --
-check s.rayo.yaml
--- s.rayo.yaml --
+check s.suite.yaml
+-- s.suite.yaml --
 flows: [{ file: a.yaml, retries: -1 }]
 -- a.yaml --
 appId: a.b
@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:1: flows: retries: takes a number from 0, not -1
+error: s.suite.yaml:1: flows: retries: takes a number from 0, not -1

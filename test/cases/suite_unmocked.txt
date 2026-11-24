@@ -1,6 +1,6 @@
 -- args --
-test --ignore-unmocked /flag s.rayo.yaml
--- s.rayo.yaml --
+test --ignore-unmocked /flag s.suite.yaml
+-- s.suite.yaml --
 unmocked:
   ignore:
     - /favorites/**

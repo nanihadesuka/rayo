@@ -1,0 +1,13 @@
+-- args --
+test staging.rayo.yaml
+-- staging.rayo.yaml --
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: staging.rayo.yaml: suites are now *.suite.yaml, rename it: staging.rayo.yaml -> staging.suite.yaml

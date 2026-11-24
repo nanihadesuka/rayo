@@ -194,7 +194,7 @@ var sections = []section{
 	{[]string{cmdTest, cmdLive}, "mocks from the real backend", []option{
 		text("capture", "folder", "call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed", func(o *options) *string { return &o.runner.Capture }),
 		{name: "capture-update", value: "folder", about: "capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it. Given a suite instead, the folder is the flow's mock", set: func(o *options, v string) error {
-			if strings.HasSuffix(v, ".rayo.yaml") { // the flow's mock, once it is known
+			if strings.HasSuffix(v, ".suite.yaml") || strings.HasSuffix(v, ".rayo.yaml") { // the flow's mock, once it is known
 				o.args, o.updateOwn = append(o.args, v), true
 				return nil
 			}
@@ -278,7 +278,7 @@ var sections = []section{
 
 const usage = `rayo - runs flows on Android, fast
 
-  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.rayo.yaml
+  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo do [options] <commands>                     send commands to the live session; rayo do .help

@@ -83,7 +83,7 @@ See [Mocking](MOCKING.md). To begin from what the real backend answers, use
 
 ## Run many tests
 
-A **suite**, `all.rayo.yaml`, lists what runs together:
+A **suite**, `all.suite.yaml`, lists what runs together:
 
 ```yaml
 name: Everything
@@ -97,7 +97,7 @@ recordFolder: results/videos
 ```
 
 ```
-rayo test --emulator all.rayo.yaml
+rayo test --emulator all.suite.yaml
 ```
 
 See [Suites](REFERENCE.md#suites), [Retries](REFERENCE.md#retries) and [Results](REFERENCE.md#results).
@@ -251,9 +251,9 @@ device: { size: 720x1600, dpi: 280, fontScale: 1.3, darkMode: true }
 ## Run only some tests
 
 ```
-rayo test --only login,pay all.rayo.yaml
+rayo test --only login,pay all.suite.yaml
 rayo test --include-tags smoke tests
-rayo test --rerun-failed all.rayo.yaml
+rayo test --rerun-failed all.suite.yaml
 ```
 
 ## Run in a CI
@@ -261,8 +261,8 @@ rayo test --rerun-failed all.rayo.yaml
 Any CI with an emulator. The exit code isn't 0 if a test fails, and `.xml` results are JUnit:
 
 ```
-rayo check all.rayo.yaml
-rayo test --emulator --results junit.xml all.rayo.yaml
+rayo check all.suite.yaml
+rayo test --emulator --results junit.xml all.suite.yaml
 ```
 
 ## Complete and check in my editor

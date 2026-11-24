@@ -287,7 +287,7 @@ var Fields = []schema.Field[Suite]{
 }
 
 // Schema is a suite's JSON Schema.
-func Schema() []byte { return schema.Of(Fields).File("A rayo suite, *.rayo.yaml", nil) }
+func Schema() []byte { return schema.Of(Fields).File("A rayo suite, *.suite.yaml", nil) }
 
 func readFlows(s *Suite, n *yaml.Node) error {
 	if n.Kind != yaml.SequenceNode || len(n.Content) == 0 {

@@ -1,6 +1,6 @@
 -- args --
-test --network interceptor s.rayo.yaml
--- s.rayo.yaml --
+test --network interceptor s.suite.yaml
+-- s.suite.yaml --
 network: proxy
 flows:
   - file: flow.yaml

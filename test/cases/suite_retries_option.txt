@@ -1,6 +1,6 @@
 -- args --
-test --retries 0 --results out.txt s.rayo.yaml
--- s.rayo.yaml --
+test --retries 0 --results out.txt s.suite.yaml
+-- s.suite.yaml --
 retries: 1
 results: out.json
 flows:
@@ -102,7 +102,7 @@ a screen
   "<dir>/c.yaml": "FAIL"
 }
 -- file out.txt --
-run: s.rayo.yaml
+run: s.suite.yaml
 device: emulator-5554
 began: <now>
 

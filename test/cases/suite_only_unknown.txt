@@ -1,6 +1,6 @@
 -- args --
-test e2e/all.rayo.yaml --only z
--- e2e/all.rayo.yaml --
+test e2e/all.suite.yaml --only z
+-- e2e/all.suite.yaml --
 name: Everything
 output: results
 results: results/results.txt

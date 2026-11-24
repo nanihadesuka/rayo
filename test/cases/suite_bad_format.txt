@@ -1,6 +1,6 @@
 -- args --
-check s.rayo.yaml
--- s.rayo.yaml --
+check s.suite.yaml
+-- s.suite.yaml --
 flows: [a.yaml]
 results: [out.txt, out.yaml]
 -- a.yaml --
@@ -11,4 +11,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:2: results: takes a .txt, .json or .xml (JUnit) file, not "out.yaml"
+error: s.suite.yaml:2: results: takes a .txt, .json or .xml (JUnit) file, not "out.yaml"

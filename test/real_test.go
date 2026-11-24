@@ -45,7 +45,7 @@ func TestRealDevicePutBack(t *testing.T) {
 	want := shell(state)
 	dir := t.TempDir()
 	put := func(name, text string) { write(t, filepath.Join(dir, name), text) }
-	put("s.rayo.yaml", "device: { size: 720x1600, dpi: 280, fontScale: 1.15, darkMode: true }\nrecord: true\nflows: [a.yaml]\n")
+	put("s.suite.yaml", "device: { size: 720x1600, dpi: 280, fontScale: 1.15, darkMode: true }\nrecord: true\nflows: [a.yaml]\n")
 	steps := "appId: com.android.settings\n---\n- setLocation: { latitude: 41.4, longitude: 2.2 }\n- launchApp\n- extendedWaitUntil: { visible: { id: not_there }, timeout: "
 	for name, c := range map[string]struct {
 		wait string
@@ -53,7 +53,7 @@ func TestRealDevicePutBack(t *testing.T) {
 	}{"fails": {"2s", false}, "killed": {"60s", true}} {
 		t.Run(name, func(t *testing.T) {
 			put("a.yaml", steps+c.wait+" }\n")
-			cmd := exec.Command(rayo, "test", "--device", *real, "--emulator", "--retries", "0", "s.rayo.yaml")
+			cmd := exec.Command(rayo, "test", "--device", *real, "--emulator", "--retries", "0", "s.suite.yaml")
 			cmd.Dir = dir
 			if err := cmd.Start(); err != nil {
 				t.Fatal(err)

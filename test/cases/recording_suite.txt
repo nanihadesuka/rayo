@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml --retries 1
--- s.rayo.yaml --
+test s.suite.yaml --retries 1
+-- s.suite.yaml --
 record: true
 recordFolder: videos
 results: out.json
@@ -63,7 +63,7 @@ a video ........................................................................
 -- file out.json --
 {
   "version": 1,
-  "run": "s.rayo.yaml",
+  "run": "s.suite.yaml",
   "device": "emulator-5554",
   "began": "<now>",
   "seconds": #,

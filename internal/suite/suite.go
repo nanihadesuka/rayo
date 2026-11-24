@@ -18,7 +18,40 @@ import (
 )
 
 // suiteEnd is how the name of a suite ends.
-const suiteEnd = ".rayo.yaml"
+const suiteEnd = ".suite.yaml"
+
+// oldEnd is how it ended before; such a file is no longer read, but said how to rename.
+const oldEnd = ".rayo.yaml"
+
+// IsSuite says if a path is the name of a suite.
+func IsSuite(path string) bool { return strings.HasSuffix(path, suiteEnd) }
+
+// renamed is the mistake of a suite with the old name: the exact rename.
+func renamed(path string) error {
+	name := filepath.Base(path)
+	return fmt.Errorf("%s: suites are now *%s, rename it: %s -> %s", filepath.ToSlash(path), suiteEnd, name, strings.TrimSuffix(name, oldEnd)+suiteEnd)
+}
+
+// inFolder is what a folder means: its suite, if it holds one, else its flows. A file with the
+// old name of a suite fails, saying the rename.
+func inFolder(folder string) (suites, flows []string, err error) {
+	err = filepath.WalkDir(folder, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		ext := filepath.Ext(path)
+		switch {
+		case strings.HasSuffix(path, oldEnd):
+			return renamed(path)
+		case IsSuite(path):
+			suites = append(suites, path)
+		case (ext == ".yaml" || ext == ".yml") && d.Name() != "config.yaml":
+			flows = append(flows, path)
+		}
+		return nil
+	})
+	return suites, flows, err
+}
 
 // Suite is a file that says which flows run together. Its paths are relative to it.
 type Suite struct {
@@ -188,7 +221,27 @@ func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		if strings.HasSuffix(p, suiteEnd) && !info.IsDir() {
+		if strings.HasSuffix(p, oldEnd) && !info.IsDir() {
+			return nil, nil, renamed(p)
+		}
+		if info.IsDir() {
+			suites, inside, err := inFolder(p)
+			if err != nil {
+				return nil, nil, err
+			}
+			switch {
+			case len(suites) > 1:
+				for i := range suites {
+					suites[i] = filepath.ToSlash(suites[i])
+				}
+				return nil, nil, fmt.Errorf("%s holds %d suites, give one: %s", filepath.ToSlash(p), len(suites), strings.Join(suites, ", "))
+			case len(suites) == 0:
+				files = append(files, inside...)
+				continue
+			}
+			p = suites[0]
+		}
+		if IsSuite(p) {
 			if s != nil {
 				return nil, nil, errors.New("one suite at a time")
 			}
@@ -200,20 +253,7 @@ func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 			}
 			continue
 		}
-		if !info.IsDir() {
-			files = append(files, p)
-			continue
-		}
-		err = filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
-			ext := filepath.Ext(path)
-			if err == nil && !d.IsDir() && (ext == ".yaml" || ext == ".yml") && d.Name() != "config.yaml" && !strings.HasSuffix(path, suiteEnd) {
-				files = append(files, path)
-			}
-			return err
-		})
-		if err != nil {
-			return nil, nil, err
-		}
+		files = append(files, p)
 	}
 	var flows []*flow.Flow
 	var bad []string

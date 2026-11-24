@@ -391,7 +391,7 @@ func TestCaptureUpdateOfSuite(t *testing.T) {
 	defer s.Close()
 	dir := t.TempDir()
 	write(t, filepath.Join(dir, "f.yaml"), "appId: a.b\n---\n- tapOn: { id: \"GET /profile?_ts=1\" }\n")
-	write(t, filepath.Join(dir, "s.rayo.yaml"), "capture:\n  from: "+s.URL+"\n  ignoreParams: [nope]\nflows:\n"+
+	write(t, filepath.Join(dir, "s.suite.yaml"), "capture:\n  from: "+s.URL+"\n  ignoreParams: [nope]\nflows:\n"+
 		"  - file: f.yaml\n    mock: [common, mock]\n    capture:\n      ignoreParams: [_ts]\n")
 	write(t, filepath.Join(dir, "common", "mappings", "x.json"), `{"mappings":[]}`)
 	rayo := func(args ...string) string {
@@ -405,7 +405,7 @@ func TestCaptureUpdateOfSuite(t *testing.T) {
 	}
 	rayo("test", "--capture", "mock", "--capture-from", s.URL, "--ignore-params", "_ts", "f.yaml")
 	name = "new"
-	out := rayo("test", "--capture-update", "s.rayo.yaml")
+	out := rayo("test", "--capture-update", "s.suite.yaml")
 	if !strings.Contains(out, "0 same, 1 changed") {
 		t.Errorf("no change in\n%s", out)
 	}
@@ -414,7 +414,7 @@ func TestCaptureUpdateOfSuite(t *testing.T) {
 		t.Errorf("not the flow's settings:\n%s", settings)
 	}
 	rayo("mocks", "apply", "mock")
-	rayo("test", "s.rayo.yaml") // replays, with ?_ts ignored
+	rayo("test", "s.suite.yaml") // replays, with ?_ts ignored
 }
 
 // The case of issue 8: the same POST with other bodies is answered by its body, whatever the order and

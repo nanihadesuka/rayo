@@ -37,7 +37,7 @@ As `rayo help` prints them. An option of another command is an error, never igno
 ```
 rayo - runs flows on Android, fast
 
-  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.rayo.yaml
+  rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
@@ -812,7 +812,7 @@ or a suite's `env`, so that one suite runs both mocked and against the real back
 around each: a path that comes out empty loads nothing, and an empty `network` is the default.
 
 ```yaml
-mock: ${MOCKS ? MOCKS + '/' + rayo.file : ''}   # rayo test -e MOCKS=mocks -e NETWORK=proxy all.rayo.yaml
+mock: ${MOCKS ? MOCKS + '/' + rayo.file : ''}   # rayo test -e MOCKS=mocks -e NETWORK=proxy all.suite.yaml
 network: ${NETWORK || ''}
 ```
 
@@ -1081,7 +1081,7 @@ not touched.
 
 ### Suites
 
-A file whose name ends in `.rayo.yaml` lists the flows that run together. It is the place to say
+A file whose name ends in `.suite.yaml` lists the flows that run together. It is the place to say
 what each is for. Paths are relative to it.
 
 ```yaml
@@ -1171,7 +1171,7 @@ unmocked:
 ```
 
 ```sh
-rayo test --ignore-unmocked 'graphql:Geocode,api.example.com/pings/**' suite.rayo.yaml
+rayo test --ignore-unmocked 'graphql:Geocode,api.example.com/pings/**' staging.suite.yaml
 ```
 
 Every other call without a mock still fails the flow. Those let through are said at the end of the
@@ -1222,7 +1222,7 @@ Then re-recording a flow's mock needs no script: `--capture-update` with the sui
 folder, updates the flow's own mock, the last of its `mock`:
 
 ```sh
-rayo test --capture-update suite.rayo.yaml --only checkout
+rayo test --capture-update staging.suite.yaml --only checkout
 rayo mocks apply mocks/checkout
 ```
 
@@ -1261,7 +1261,12 @@ Shared steps and permissions belong in each flow, so that it can be read and run
 unless the same flow also runs without them, see [Mocks of a suite](#mocks-of-a-suite). The
 device is chosen as always: use `--emulator` if the flows must never run on a real one.
 
-`rayo check` takes suites too. When a folder is given, its suites aren't run.
+`rayo check` takes suites too. A folder given to `rayo test` or `rayo check` means its suite, if
+anywhere in it there is one: the suite's flows run, the others in the folder don't. A folder
+without a suite means all its flows, and one with several suites fails, naming them, so give one.
+
+A file ending in `.rayo.yaml`, the name suites had before, is no longer read: it fails, saying the
+rename, such as `staging.rayo.yaml -> staging.suite.yaml`.
 
 ### Device setup
 
@@ -1433,7 +1438,7 @@ The list at the end is only there if something didn't pass. Under a failure:
 `--results <file>` writes it, as the file's name says. It may be repeated, for several formats at once:
 
 ```
-rayo test --results out.txt --results junit.xml all.rayo.yaml
+rayo test --results out.txt --results junit.xml all.suite.yaml
 ```
 
 | File | |
@@ -1670,7 +1675,7 @@ rayo gives `rayo.file`, the flow's file name without its extension, and `rayo.pl
 them a name that flows from another tool expect, set it once for all of them:
 
 ```yaml
-# all.rayo.yaml
+# all.suite.yaml
 flows: [login.yaml, book.yaml]
 env:
   MAESTRO_FILENAME: ${rayo.file}

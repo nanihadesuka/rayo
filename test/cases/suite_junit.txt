@@ -1,6 +1,6 @@
 -- args --
-test e2e/all.rayo.yaml --retries 1 --results out.xml
--- e2e/all.rayo.yaml --
+test e2e/all.suite.yaml --retries 1 --results out.xml
+-- e2e/all.suite.yaml --
 name: Everything
 output: results
 results: results/results.txt

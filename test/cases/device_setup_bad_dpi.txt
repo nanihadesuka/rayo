@@ -1,6 +1,6 @@
 -- args --
-check s.rayo.yaml
--- s.rayo.yaml --
+check s.suite.yaml
+-- s.suite.yaml --
 device: { dpi: 5 }
 flows: [a.yaml]
 -- a.yaml --
@@ -11,4 +11,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:1: device: dpi: takes 72 to 1000, not 5
+error: s.suite.yaml:1: device: dpi: takes 72 to 1000, not 5

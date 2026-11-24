@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 device: { size: 999x999 }
 flows: [a.yaml]
 -- a.yaml --

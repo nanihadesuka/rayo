@@ -1,11 +1,11 @@
 -- args --
-check a.yaml b.rayo.yaml
+check a.yaml b.suite.yaml
 -- a.yaml --
 appId: a.b
 record: [x]
 ---
 - back
--- b.rayo.yaml --
+-- b.suite.yaml --
 flows: [c.yaml]
 recordFolder: x
 -- c.yaml --
@@ -16,4 +16,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: b.rayo.yaml: recordFolder needs record: true
+error: b.suite.yaml: recordFolder needs record: true

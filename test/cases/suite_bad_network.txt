@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 network: wifi
 flows: [flow.yaml]
 -- flow.yaml --
@@ -11,4 +11,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:1: network: takes interceptor or proxy
+error: s.suite.yaml:1: network: takes interceptor or proxy

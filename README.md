@@ -28,7 +28,7 @@ mock: mock
 ```
 
 ```
-$ rayo test --emulator all.rayo.yaml
+$ rayo test --emulator all.suite.yaml
 [1/3] PASS book  18.2 s
 [2/3] PASS scan  41.0 s  (failed once, then passed)
   try 1: scan.yaml:12: tapOn scan: not on screen: scan  (test)  .results/scan
@@ -89,7 +89,8 @@ debug build trusts. Everything else works with any app as it is.
 
 ## Many tests
 
-A suite, `*.rayo.yaml`, says what runs together and how. All but `flows` is optional.
+A suite, `*.suite.yaml`, says what runs together and how. All but `flows` is optional. A folder
+with a suite in it runs that suite.
 
 ```yaml
 flows:

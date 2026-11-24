@@ -1,6 +1,6 @@
 -- args --
-check s.rayo.yaml
--- s.rayo.yaml --
+check s.suite.yaml
+-- s.suite.yaml --
 flow: [x]
 -- a.yaml --
 appId: a.b
@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:1: unknown key "flow" (it takes name, flows, retries, app, device, env, timeoutScale, network, unmocked, capture, output, results, record, recordFolder)
+error: s.suite.yaml:1: unknown key "flow" (it takes name, flows, retries, app, device, env, timeoutScale, network, unmocked, capture, output, results, record, recordFolder)

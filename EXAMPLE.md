@@ -7,7 +7,7 @@ A shop: log in, buy something, the bank refuses the card, and no connection. The
 
 ```
 shop/
-├─ all.rayo.yaml               what runs together, and how
+├─ all.suite.yaml               what runs together, and how
 ├─ steps/login.yaml            steps that several tests use
 ├─ tests/
 │   ├─ browse/flow.yaml
@@ -21,7 +21,7 @@ shop/
 
 ## The suite
 
-<!-- file: examples/shop/all.rayo.yaml -->
+<!-- file: examples/shop/all.suite.yaml -->
 
 ## Steps that are shared
 
@@ -56,9 +56,9 @@ And this one cuts the connection:
 ## Run it
 
 ```
-rayo check all.rayo.yaml                 # mistakes, without a device
-rayo test --emulator all.rayo.yaml       # all of it
-rayo test --only pay all.rayo.yaml       # one
+rayo check all.suite.yaml                 # mistakes, without a device
+rayo test --emulator all.suite.yaml       # all of it
+rayo test --only pay all.suite.yaml       # one
 ```
 
 ## What comes out

@@ -1,6 +1,6 @@
 -- args --
-test --retries 0 -e WHO=cli all.rayo.yaml
--- all.rayo.yaml --
+test --retries 0 -e WHO=cli all.suite.yaml
+-- all.suite.yaml --
 flows: [login.yaml]
 env:
   MAESTRO_FILENAME: ${rayo.file}

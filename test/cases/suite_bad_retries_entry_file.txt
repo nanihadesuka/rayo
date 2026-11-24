@@ -1,6 +1,6 @@
 -- args --
-check s.rayo.yaml
--- s.rayo.yaml --
+check s.suite.yaml
+-- s.suite.yaml --
 flows: [{ retries: 1 }]
 -- a.yaml --
 appId: a.b
@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 1
 -- stderr --
-error: s.rayo.yaml:1: flows: needs file
+error: s.suite.yaml:1: flows: needs file

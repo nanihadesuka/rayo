@@ -1,6 +1,6 @@
 -- args --
-test s.rayo.yaml
--- s.rayo.yaml --
+test s.suite.yaml
+-- s.suite.yaml --
 flows: [a.yaml]
 results:
   - o/r.txt
@@ -28,7 +28,7 @@ noAnimations {"timeout":10000}
 key {"code":4,"timeout":15000}
 bye {"timeout":5000}
 -- file o/r.txt --
-run: s.rayo.yaml
+run: s.suite.yaml
 device: emulator-5554
 began: <now>
 
