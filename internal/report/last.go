@@ -46,7 +46,7 @@ func (s *Summary) SaveLast(file string) error {
 	}
 	before := len(last)
 	for _, o := range s.Outcomes {
-		if o.Status == Passed {
+		if o.Passed() {
 			delete(last, Identity(o.Flow))
 		} else {
 			last[Identity(o.Flow)] = o.Status

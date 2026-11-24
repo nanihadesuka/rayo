@@ -228,6 +228,10 @@
       "description": "Variables for every flow, as -e, which wins; they may use ${...}, such as ${rayo.file}",
       "type": "object"
     },
+    "flaky-fails-build": {
+      "description": "As --flaky-fails-build: a run where every flow passed, some only on a retry, exits 4 (default: false: it exits 0)",
+      "type": "boolean"
+    },
     "flows": {
       "description": "Files, run in this order; or mappings with file, retries, mock, network, unmocked and capture (required)",
       "items": {

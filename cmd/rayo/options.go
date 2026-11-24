@@ -37,6 +37,7 @@ type options struct {
 	seed                   uint64
 	retries                int // negative if not said
 	failFast, keepGoing    bool
+	flakyFails             bool // a flow that passed only on a retry fails the run
 	verbose                bool
 	results                []string // files
 	failuresOnly           bool
@@ -172,6 +173,7 @@ var sections = []section{
 			return nil
 		}},
 		flag("fail-fast", "stop at the first failure", func(o *options) *bool { return &o.failFast }),
+		flag("flaky-fails-build", "exit 4 if every flow passed but some only on a retry (default: exit 0)", func(o *options) *bool { return &o.flakyFails }),
 		flag("keep-going", "don't stop when the device or the app fails over and over", func(o *options) *bool { return &o.keepGoing }),
 		{name: "shuffle", value: "seed", optional: true, about: "in a random order, or in that of an earlier run", set: func(o *options, v string) error {
 			o.shuffle, o.seed = true, uint64(time.Now().UnixMilli())

@@ -13,7 +13,7 @@ import (
 // What rayo prints for a program, with --format json or ndjson. Every key is always there.
 
 // SchemaVersion is of all of it, and of the results: it changes if the meaning of a key does.
-const SchemaVersion = 2
+const SchemaVersion = 3
 
 // Formats of what is printed, besides JSON.
 const (
@@ -47,7 +47,7 @@ var Exits = []Exit{
 	{ExitFailed, "failed", "A flow failed, was interrupted or didn't run; or a step sent with `rayo do` failed"},
 	{ExitConfig, "configuration", "Something written is wrong: an option, a flow, a suite or a mock; nothing ran"},
 	{ExitDevice, "device", "No device to run on, or it was lost or unusable, so the flows couldn't run or didn't all run"},
-	{ExitFlaky, "flaky", "Reserved: every flow passed, some only after failing; for now such a run exits `0`"},
+	{ExitFlaky, "flaky", "Every flow passed, some only on a retry, and `flaky-fails-build` is `true`; else such a run exits `0`"},
 	{ExitInterrupted, "interrupted", "Ctrl-C"},
 }
 
@@ -146,7 +146,7 @@ type Event struct {
 	Index         int       `json:"index" about:"Of the flow, from 1"`
 	Of            int       `json:"of" about:"Flows to run"`
 	Try           int       `json:"try" about:"Of stepFailed and attempt, from 1"`
-	Status        Status    `json:"status" about:"Of attempt, PASS or FAIL; of flowFinished, the flow's [outcome](#outcomes)" enum:"PASS,FAIL,INTERRUPTED,NOT_RUN,"`
+	Status        Status    `json:"status" about:"Of attempt, PASS or FAIL; of flowFinished, the flow's [outcome](#outcomes)" enum:"PASS,FLAKY,FAIL,INTERRUPTED,NOT_RUN,"`
 	Error         *Problem  `json:"error" about:"Of stepFailed and of an attempt that failed, see [Errors](#errors)"`
 	Result        *jsonFlow `json:"result" about:"Of flowFinished, the flow as in the [results](#results)"`
 	Results       *jsonRun  `json:"results" about:"Of outcome, the [results](#results), as --format json"`
@@ -170,6 +170,7 @@ func Tried(o *Outcome, i, of int) []Event {
 	try := event("attempt", o.Flow, i, of)
 	try.Try, try.Status = len(o.Tries), o.Status
 	if o.Err == nil {
+		try.Status = Passed
 		return []Event{try}
 	}
 	if try.Status != Interrupted {

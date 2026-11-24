@@ -152,7 +152,7 @@ func (o *options) retriesOf(f *flow.Flow) int {
 // runAll runs flows and says how each went, also those that didn't run.
 func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) error {
 	o := s.o
-	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now()}
+	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), FlakyFails: o.flakyFails}
 	say := human()
 	if o.shuffle {
 		sum.Order = fmt.Sprintf("--shuffle=%d", o.seed)
@@ -230,6 +230,10 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	failed := sum.Err()
 	if failed != nil && lost {
 		failed = ofDevice(failed)
+	}
+	var flaky *report.FlakyError
+	if errors.As(failed, &flaky) {
+		failed = exiting(report.ExitFlaky, failed)
 	}
 	failed = exiting(report.ExitFailed, failed)
 	if printing != report.Human && failed != nil {

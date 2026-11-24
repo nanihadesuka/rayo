@@ -183,7 +183,7 @@ a screen
 }
 -- file out.json --
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "run": "a.yaml b.yaml c.yaml d.yaml",
   "device": "emulator-5554",
   "began": "<now>",
@@ -193,6 +193,7 @@ a screen
   "ok": false,
   "total": 4,
   "passed": 0,
+  "flaky": 0,
   "failed": 3,
   "interrupted": 0,
   "notRun": 1,

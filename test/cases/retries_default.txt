@@ -13,7 +13,7 @@ appId: a.b
 -- exit --
 1
 -- stdout --
-[1/2] PASS a  # s  (failed once, then passed)
+[1/2] FLAKY a  # s  (failed once, then passed)
   try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a_failure.png
 [2/2] FAIL b  # s  (failed 2 times)
   try: 1
@@ -33,10 +33,10 @@ appId: a.b
     a screen
   saved: .rayo/b_retry1_failure.png
 
-PASS a  # s  (failed once, then passed)
+FLAKY a  # s  (failed once, then passed)
 FAIL b  # s  (failed 2 times)
 
-TOTAL 2: 1 passed, 1 failed, 2 retried  # s
+TOTAL 2: 0 passed, 1 flaky, 1 failed, 2 retried  # s
 -- stderr --
 error: failed: b
 -- device --

@@ -14,6 +14,10 @@
       "description": "",
       "type": "integer"
     },
+    "flaky": {
+      "description": "Failed, then passed on a retry",
+      "type": "integer"
+    },
     "flows": {
       "description": "See below",
       "items": {
@@ -232,6 +236,7 @@
             "description": "One of the outcomes",
             "enum": [
               "PASS",
+              "FLAKY",
               "FAIL",
               "INTERRUPTED",
               "NOT_RUN"
@@ -280,7 +285,7 @@
       "type": "integer"
     },
     "ok": {
-      "description": "Nothing failed, was interrupted or didn't run: as the exit code",
+      "description": "Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code",
       "type": "boolean"
     },
     "order": {
@@ -288,7 +293,7 @@
       "type": "string"
     },
     "passed": {
-      "description": "Also those that failed first",
+      "description": "At the first try",
       "type": "integer"
     },
     "retried": {
@@ -327,6 +332,7 @@
     "ok",
     "total",
     "passed",
+    "flaky",
     "failed",
     "interrupted",
     "notRun",

@@ -51,6 +51,7 @@ Options of test: which flows
 Options of test: how they run
   --retries <n>              try again what fails, whatever the suite says (default 1)
   --fail-fast                stop at the first failure
+  --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes

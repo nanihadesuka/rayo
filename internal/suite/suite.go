@@ -55,24 +55,25 @@ func inFolder(folder string) (suites, flows []string, err error) {
 
 // Suite is a file that says which flows run together. Its paths are relative to it.
 type Suite struct {
-	Name         string
-	App          *app
-	Flows        []entry
-	Retries      *int
-	Output       string
-	Results      []string
-	Format       string // of what is printed; --format wins
-	Device       *adb.Setup
-	Record       bool
-	RecordFolder string
-	Keep         string            // empty if not said
-	Artifacts    []string          // nil if not said
-	NameTemplate string            // empty if not said
-	TimeoutScale float64           // 0 if not said
-	Env          map[string]string // for every flow; -e wins
-	Network      string            // for every flow that doesn't say; --network wins
-	Unmocked     *mock.Unmocked    // calls without a mock that don't fail any flow; nil for none
-	Capture      *Capture          // for every flow; nil if not said
+	Name            string
+	App             *app
+	Flows           []entry
+	Retries         *int
+	Output          string
+	Results         []string
+	Format          string // of what is printed; --format wins
+	Device          *adb.Setup
+	Record          bool
+	RecordFolder    string
+	Keep            string // empty if not said
+	FlakyFailsBuild bool
+	Artifacts       []string          // nil if not said
+	NameTemplate    string            // empty if not said
+	TimeoutScale    float64           // 0 if not said
+	Env             map[string]string // for every flow; -e wins
+	Network         string            // for every flow that doesn't say; --network wins
+	Unmocked        *mock.Unmocked    // calls without a mock that don't fail any flow; nil for none
+	Capture         *Capture          // for every flow; nil if not said
 
 	Path string
 }

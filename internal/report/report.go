@@ -19,6 +19,7 @@ type Status string
 // How a flow can go.
 const (
 	Passed      Status = "PASS"
+	Flaky       Status = "FLAKY" // failed, then passed on a retry
 	Failed      Status = "FAIL"
 	Interrupted Status = "INTERRUPTED"
 	NotRun      Status = "NOT_RUN"
@@ -39,7 +40,13 @@ func (o *Outcome) Judge(ctx context.Context, try flow.Result) {
 	o.Result = try
 	o.Tries = append(o.Tries, try)
 	o.Status = judge(ctx, try)
+	if o.Status == Passed && o.TimesFailed() > 0 {
+		o.Status = Flaky
+	}
 }
+
+// Passed says whether it passed at last, at once or on a retry.
+func (o *Outcome) Passed() bool { return o.Status == Passed || o.Status == Flaky }
 
 func judge(ctx context.Context, o flow.Result) Status {
 	switch {
@@ -80,7 +87,7 @@ func (o *Outcome) Line() string {
 	line := fmt.Sprintf("%s %s  %.1f s", o.Status, o.Flow.Name, o.took().Seconds())
 	if n := o.TimesFailed(); len(o.Tries) > 1 {
 		times := map[bool]string{true: "once", false: fmt.Sprintf("%d times", n)}[n == 1]
-		line += "  (failed " + times + map[bool]string{true: ", then passed"}[o.Status == Passed] + ")"
+		line += "  (failed " + times + map[bool]string{true: ", then passed"}[o.Passed()] + ")"
 	}
 	return line
 }
@@ -145,7 +152,7 @@ func (o *Outcome) Details(full bool) string {
 		}
 		add("saved", f.Saved)
 	}
-	if o.Status != Passed {
+	if !o.Passed() {
 		b.WriteString(o.videos())
 	}
 	b.WriteString(o.WarningLines())
@@ -162,6 +169,25 @@ func (o *Outcome) addCause(add func(key, value string), t flow.Result) {
 	}
 }
 
+type flakyFailure struct{ message, cause, text string }
+
+// flakyFailures are the tries that failed of a flow that passed at last: the error, the cause and the details.
+func (o *Outcome) flakyFailures() []flakyFailure {
+	var list []flakyFailure
+	for i, t := range o.Tries {
+		if t.Err == nil {
+			continue
+		}
+		one := Outcome{Flow: o.Flow, Status: Failed, Tries: []flow.Result{t}}
+		f := flakyFailure{message: fmt.Sprintf("try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " ")), text: one.Details(true)}
+		if t.Failure != nil {
+			f.cause = string(t.Failure.Cause)
+		}
+		list = append(list, f)
+	}
+	return list
+}
+
 // WarningLines are its warnings, to print.
 func (o *Outcome) WarningLines() string {
 	text := ""
@@ -175,7 +201,7 @@ func (o *Outcome) WarningLines() string {
 func (o *Outcome) Notes() string {
 	var b strings.Builder
 	for i, t := range o.Tries {
-		if t.Err == nil || o.Status != Passed {
+		if t.Err == nil || !o.Passed() {
 			continue
 		}
 		fmt.Fprintf(&b, "  try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " "))
@@ -208,6 +234,7 @@ type Summary struct {
 	Began                time.Time
 	Took                 time.Duration
 	Outcomes             []Outcome
+	FlakyFails           bool // flaky-fails-build: a flow that passed only on a retry fails the run
 }
 
 func (s *Summary) count(is Status) int {
@@ -261,16 +288,14 @@ func (s *Summary) Text(failuresOnly, brief bool) string {
 	}
 	if !brief || len(s.Outcomes) > 1 && s.count(Passed) < len(s.Outcomes) { // or it would only repeat
 		for _, o := range s.Outcomes {
-			if failuresOnly && o.Status == Passed && o.TimesFailed() == 0 {
+			if failuresOnly && o.Status == Passed {
 				continue
 			}
 			b.WriteString(o.Line() + "\n")
 			if !brief {
 				fmt.Fprintf(&b, "  file: %s\n", filepath.ToSlash(o.Flow.Path))
-				if o.Status == Passed { // or it is among the details
+				if o.Passed() { // or it is among the details
 					b.WriteString(o.videos())
-				}
-				if o.Status == Passed {
 					b.WriteString(o.Notes() + o.WarningLines())
 				} else {
 					b.WriteString(o.Details(true))
@@ -283,7 +308,7 @@ func (s *Summary) Text(failuresOnly, brief bool) string {
 	for _, c := range []struct {
 		status Status
 		name   string
-	}{{Passed, "passed"}, {Failed, "failed"}, {Interrupted, "interrupted"}, {NotRun, "not run"}} {
+	}{{Passed, "passed"}, {Flaky, "flaky"}, {Failed, "failed"}, {Interrupted, "interrupted"}, {NotRun, "not run"}} {
 		if n := s.count(c.status); n > 0 || c.status == Passed || c.status == Failed {
 			parts = append(parts, fmt.Sprintf("%d %s", n, c.name))
 		}
@@ -370,5 +395,20 @@ func (s *Summary) Err() error {
 	if len(bad) > 0 {
 		return fmt.Errorf("failed: %s", strings.Join(bad, ", "))
 	}
+	if s.FlakyFails {
+		for _, o := range s.Outcomes {
+			if o.Status == Flaky {
+				bad = append(bad, o.Flow.Name)
+			}
+		}
+		if len(bad) > 0 {
+			return &FlakyError{bad}
+		}
+	}
 	return nil
 }
+
+// FlakyError is of a run where every flow passed, some only on a retry, with flaky-fails-build.
+type FlakyError struct{ Flows []string }
+
+func (e *FlakyError) Error() string { return "flaky: " + strings.Join(e.Flows, ", ") }

@@ -74,7 +74,7 @@ func (c *console) end(i, of int, o *report.Outcome) {
 		c.pending = 0
 	}
 	fmt.Fprintln(c.out, line)
-	if o.Status == report.Passed {
+	if o.Passed() {
 		fmt.Fprint(c.out, o.Notes()+o.WarningLines())
 		return
 	}

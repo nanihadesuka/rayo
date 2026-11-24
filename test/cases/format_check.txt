@@ -9,7 +9,7 @@ appId: a.b
 0
 -- stdout --
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "ok": true,
   "flows": 1
 }

@@ -15,7 +15,14 @@ type junitCase struct {
 	Failure *string       `xml:"failure,omitempty"`
 	Error   *string       `xml:"error,omitempty"`
 	Skipped *junitSkipped `xml:"skipped,omitempty"`
-	Out     *string       `xml:"system-out,omitempty"`
+	Flaky   []junitFlaky  `xml:"flakyFailure"`
+}
+
+// junitFlaky is a try that failed of a flow that passed at last, as Maven Surefire writes it.
+type junitFlaky struct {
+	Message string `xml:"message,attr"`
+	Type    string `xml:"type,attr"`
+	Text    string `xml:"stackTrace"`
 }
 
 type junitSkipped struct {
@@ -59,10 +66,9 @@ func (sum *Summary) junit() ([]byte, error) {
 			c.Error = &text
 		case NotRun:
 			c.Skipped = &junitSkipped{o.Why}
-		case Passed:
-			if o.TimesFailed() > 0 {
-				text = plain(o.Line() + "\n" + o.Details(true))
-				c.Out = &text
+		case Flaky:
+			for _, f := range o.flakyFailures() {
+				c.Flaky = append(c.Flaky, junitFlaky{plain(f.message), f.cause, plain(f.text)})
 			}
 		}
 		s.Cases = append(s.Cases, c)

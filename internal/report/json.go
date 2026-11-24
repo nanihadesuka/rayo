@@ -25,9 +25,10 @@ type jsonRun struct {
 	Seconds       float64    `json:"seconds" about:"All of it"`
 	Order         string     `json:"order" about:"'--shuffle=<seed>', if shuffled"`
 	Stopped       string     `json:"stopped" about:"Why, if it stopped before the end, see [Causes](#causes)"`
-	OK            bool       `json:"ok" about:"Nothing failed, was interrupted or didn't run: as the exit code"`
+	OK            bool       `json:"ok" about:"Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code"`
 	Total         int        `json:"total" about:"Flows"`
-	Passed        int        `json:"passed" about:"Also those that failed first"`
+	Passed        int        `json:"passed" about:"At the first try"`
+	Flaky         int        `json:"flaky" about:"Failed, then passed on a retry"`
 	Failed        int        `json:"failed" about:""`
 	Interrupted   int        `json:"interrupted" about:""`
 	NotRun        int        `json:"notRun" about:""`
@@ -38,7 +39,7 @@ type jsonRun struct {
 type jsonFlow struct {
 	Name         string     `json:"name" about:"The flow's"`
 	File         string     `json:"file" about:"The flow's"`
-	Status       Status     `json:"status" about:"One of the [outcomes](#outcomes)" enum:"PASS,FAIL,INTERRUPTED,NOT_RUN"`
+	Status       Status     `json:"status" about:"One of the [outcomes](#outcomes)" enum:"PASS,FLAKY,FAIL,INTERRUPTED,NOT_RUN"`
 	Cause        flow.Cause `json:"cause" about:"Of a flow that failed, or empty, see [Causes](#causes)" enum:"test,app,device,"`
 	Seconds      float64    `json:"seconds" about:"All its tries"`
 	Tries        int        `json:"tries" about:"Those it took"`
@@ -129,10 +130,10 @@ func (s *Summary) json(failuresOnly bool) ([]byte, error) {
 // run is the results, as written.
 func (s *Summary) run(failuresOnly bool) jsonRun {
 	r := jsonRun{SchemaVersion: SchemaVersion, Run: s.Title, Device: s.Device, Began: s.Began.UTC().Format("2006-01-02T15:04:05Z"),
-		Seconds: seconds(s.Took), Order: s.Order, Stopped: s.Stopped, OK: s.Err() == nil, Total: len(s.Outcomes), Passed: s.count(Passed),
+		Seconds: seconds(s.Took), Order: s.Order, Stopped: s.Stopped, OK: s.Err() == nil, Total: len(s.Outcomes), Passed: s.count(Passed), Flaky: s.count(Flaky),
 		Failed: s.count(Failed), Interrupted: s.count(Interrupted), NotRun: s.count(NotRun), Retried: s.retried(), Flows: []jsonFlow{}}
 	for _, o := range s.Outcomes {
-		if !failuresOnly || o.Status != Passed || o.TimesFailed() > 0 {
+		if !failuresOnly || o.Status != Passed {
 			r.Flows = append(r.Flows, o.json())
 		}
 	}

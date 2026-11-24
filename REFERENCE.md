@@ -82,6 +82,7 @@ Options of test: which flows
 Options of test: how they run
   --retries <n>              try again what fails, whatever the suite says (default 1)
   --fail-fast                stop at the first failure
+  --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes
@@ -1131,6 +1132,7 @@ flows:
 | `format` | `human`, `json` or `ndjson` | What is printed, as `--format`, which wins, see [For a program](#for-a-program) (default: `human`) |
 | `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
 | `recordFolder` | folder | Where the videos go; needs `record: true` (default: `output`) |
+| `flaky-fails-build` | `true` or `false` | As `--flaky-fails-build`: a run where every flow passed, some only on a retry, exits `4`, see [Flaky flows](#flaky-flows) (default: `false`: it exits `0`) |
 | `keep` | `failed`, `all`, `none` | As `--keep`, which wins: the files of the attempts that failed, of all, or none, see [What is kept](#what-is-kept) (default: `failed`) |
 | `artifacts` | a name or a list | As `--artifacts`, which wins: the kinds of file written, of `video`, `screenshot`, `logcat`, `screen`, `requests`, see [What is kept](#what-is-kept) (default: all) |
 | `name-template` | a template | As `--name-template`, which wins: how the files are named in `output`, see [What is kept](#what-is-kept) (default: `{flow}_{attempt}_{kind}.{ext}`) |
@@ -1340,25 +1342,41 @@ flows:
 `--retries <n>` wins over both. **Without any of them it is 1**, also for flows without a suite;
 `--retries 0` turns it off. With `-c` and no suite it is 0. It is retried at once, before the next flow. `NOT_RUN` and `INTERRUPTED` aren't, nor when capturing.
 
-If it passes at last it is a `PASS`, as any other, with a note of where each try failed, its
+If it passes at last it is `FLAKY`, not `PASS`, with a note of where each try failed, its
 [cause](#causes) and the folder with the rest. Each has its own video too.
 
 ```
-[2/3] PASS scan  31.0 s  (failed once, then passed)
+[2/3] FLAKY scan  31.0 s  (failed once, then passed)
   try 1: tests/scan/flow.yaml:12: tapOn scan: not on screen: scan  (test)  .results/scan
 [3/3] FAIL pay  27.2 s  (failed 3 times)
   try: 1
   ...
 
-TOTAL 3: 2 passed, 1 failed, 2 retried  78.1 s
+TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  78.1 s
 ```
 
 | | |
 |---|---|
 | `retried` | Flows tried more than once, whether they passed or not |
-| JSON | `retried` of the run; of a flow, `tries`, `timesFailed`, `retries` allowed, and a failure for each failed try |
-| JUnit | One that passed at last passes, with its failed tries in `system-out` |
-| `--failures-only` | Keeps those that failed at first |
+| JSON | `flaky` of the run; of a flow, `status` `FLAKY`, `tries`, `timesFailed`, `retries` allowed, and a failure for each failed try |
+| JUnit | See [Flaky flows](#flaky-flows) |
+
+#### Flaky flows
+
+A run whose flows all passed, some of them `FLAKY`, exits `0`; with `--flaky-fails-build`, or
+`flaky-fails-build: true` in the suite, it exits `4`, see [Exit codes](#exit-codes).
+
+In JUnit, as Maven Surefire writes it, which Jenkins, GitLab and most CI read: the `testcase` passes, and
+has a `flakyFailure` for each try that failed, its `message` the error, its `type` the [cause](#causes) and its
+`stackTrace` all there is to know, as in a `.txt`. It isn't counted in `failures`.
+
+```xml
+<testcase name="scan" file="tests/scan/flow.yaml" time="31.000">
+  <flakyFailure message="try 1: tests/scan/flow.yaml:12: tapOn scan: not on screen: scan" type="test">
+    <stackTrace>  why: not on screen: scan ...</stackTrace>
+  </flakyFailure>
+</testcase>
+```
 
 To run only some steps again, use [retry](#retry).
 
@@ -1401,7 +1419,8 @@ Every flow asked for has one; none is left out of the count.
 
 | | | Exit code |
 |---|---|---|
-| `PASS` | Also if it failed first, and passed when [retried](#retries) | 0 |
+| `PASS` | At the first try | 0 |
+| `FLAKY` | It failed, and passed when [retried](#retries) | 0, or 4 with [`flaky-fails-build`](#flaky-flows) |
 | `FAIL` | | 1 |
 | `INTERRUPTED` | Ctrl-C while it ran | 130 |
 | `NOT_RUN` | With the reason: interrupted, `--fail-fast`, or the run [stopped](#causes) | 1 |
@@ -1531,9 +1550,10 @@ The run:
 | `seconds` | number | All of it |
 | `order` | text | `--shuffle=<seed>`, if shuffled |
 | `stopped` | text | Why, if it stopped before the end, see [Causes](#causes) |
-| `ok` | true or false | Nothing failed, was interrupted or didn't run: as the exit code |
+| `ok` | true or false | Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code |
 | `total` | number | Flows |
-| `passed` | number | Also those that failed first |
+| `passed` | number | At the first try |
+| `flaky` | number | Failed, then passed on a retry |
 | `failed` | number |  |
 | `interrupted` | number |  |
 | `notRun` | number |  |
@@ -1621,7 +1641,7 @@ The same whatever `--format` says:
 | `1` | failed | A flow failed, was interrupted or didn't run; or a step sent with `rayo do` failed |
 | `2` | configuration | Something written is wrong: an option, a flow, a suite or a mock; nothing ran |
 | `3` | device | No device to run on, or it was lost or unusable, so the flows couldn't run or didn't all run |
-| `4` | flaky | Reserved: every flow passed, some only after failing; for now such a run exits `0` |
+| `4` | flaky | Every flow passed, some only on a retry, and `flaky-fails-build` is `true`; else such a run exits `0` |
 | `130` | interrupted | Ctrl-C |
 <!-- end -->
 

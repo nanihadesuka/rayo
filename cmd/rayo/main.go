@@ -215,6 +215,7 @@ func test(ctx context.Context, args []string) (err error) {
 		}
 		o.runner.Recording = &flow.Recording{On: group.Record, Path: group.Relative(group.RecordFolder)}
 		o.keep = cmp.Or(o.keep, group.Keep)
+		o.flakyFails = o.flakyFails || group.FlakyFailsBuild
 		o.runner.NameTemplate = cmp.Or(o.runner.NameTemplate, group.NameTemplate)
 		if o.runner.Artifacts == nil {
 			o.runner.Artifacts = group.Artifacts

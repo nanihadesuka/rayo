@@ -18,7 +18,7 @@ bogus: 1
 2
 -- stdout --
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "ok": false,
   "exit": 2,
   "errors": [

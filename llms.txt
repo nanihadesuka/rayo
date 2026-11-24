@@ -62,6 +62,7 @@ Options of test: which flows
 Options of test: how they run
   --retries <n>              try again what fails, whatever the suite says (default 1)
   --fail-fast                stop at the first failure
+  --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes
@@ -151,6 +152,7 @@ A suite, *.suite.yaml, lists flows that run together. A folder means its suite, 
   format           human, json or ndjson      What is printed, as --format, which wins (default: human)
   record           true or false              A video of each flow that doesn't say (default: false)
   recordFolder     folder                     Where the videos go; needs record: true (default: output)
+  flaky-fails-build true or false              As --flaky-fails-build: a run where every flow passed, some only on a retry, exits 4 (default: false: it exits 0)
   keep             failed, all, none          As --keep, which wins: the files of the attempts that failed, of all, or none (default: failed)
   artifacts        a name or a list           As --artifacts, which wins: the kinds of file written, of video, screenshot, logcat, screen, requests (default: all)
   name-template    a template                 As --name-template, which wins: how the files are named in output (default: {flow}_{attempt}_{kind}.{ext})
@@ -956,7 +958,7 @@ Keep the --output folder as an artifact: it has the failures.
   1    failed         A flow failed, was interrupted or didn't run; or a step sent with rayo do failed
   2    configuration  Something written is wrong: an option, a flow, a suite or a mock; nothing ran
   3    device         No device to run on, or it was lost or unusable, so the flows couldn't run or didn't all run
-  4    flaky          Reserved: every flow passed, some only after failing; for now such a run exits 0
+  4    flaky          Every flow passed, some only on a retry, and flaky-fails-build is true; else such a run exits 0
   130  interrupted    Ctrl-C
 
 ```

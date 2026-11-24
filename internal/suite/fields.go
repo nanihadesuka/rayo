@@ -292,6 +292,7 @@ var Fields = []schema.Field[Suite]{
 		}},
 	schema.FlagField("record", "A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow)", func(s *Suite) *bool { return &s.Record }).Optional("`false`"),
 	schema.TextField("recordFolder", "folder", "Where the videos go; needs `record: true`", func(s *Suite) *string { return &s.RecordFolder }).Optional("`output`"),
+	schema.FlagField("flaky-fails-build", "As `--flaky-fails-build`: a run where every flow passed, some only on a retry, exits `4`, see [Flaky flows](#flaky-flows)", func(s *Suite) *bool { return &s.FlakyFailsBuild }).Optional("`false`: it exits `0`"),
 	choiceField("keep", "As `--keep`, which wins: the files of the attempts that failed, of all, or none, see [What is kept](#what-is-kept)", func(s *Suite) *string { return &s.Keep }, KeepFailed, KeepAll, KeepNone).Optional("`failed`"),
 	{Name: "artifacts", Takes: "a name or a list", About: "As `--artifacts`, which wins: the kinds of file written, of `" + strings.Join(flow.Artifacts, "`, `") + "`, see [What is kept](#what-is-kept)",
 		Schema: schema.AnyOf(schema.Enum(anys(flow.Artifacts)...), schema.List(schema.Enum(anys(flow.Artifacts)...))), Default: "all", Read: func(s *Suite, n *yaml.Node) (err error) {

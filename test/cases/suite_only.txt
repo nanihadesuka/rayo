@@ -44,10 +44,13 @@ emulator-5554, ready in # ms
   saved e2e/results/c_failure.png, e2e/results/c_screen.txt, e2e/results/c_logcat.txt
   failed, retry 1 of 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked
   ✓ tapOn flaky 1  # ms
-[2/2] PASS c  # s  (failed once, then passed)
+[2/2] FLAKY c  # s  (failed once, then passed)
   try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (test)  e2e/results/c_failure.png
 
-TOTAL 2: 2 passed, 0 failed, 1 retried  # s
+PASS a  # s
+FLAKY c  # s  (failed once, then passed)
+
+TOTAL 2: 1 passed, 1 flaky, 0 failed, 1 retried  # s
 -- device --
 adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
 adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
@@ -74,8 +77,8 @@ began: <now>
 
 PASS a  # s
   file: e2e/a/flow.yaml
-PASS c  # s  (failed once, then passed)
+FLAKY c  # s  (failed once, then passed)
   file: e2e/c/flow.yaml
   try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (test)  e2e/results/c_failure.png
 
-TOTAL 2: 2 passed, 0 failed, 1 retried  # s
+TOTAL 2: 1 passed, 1 flaky, 0 failed, 1 retried  # s

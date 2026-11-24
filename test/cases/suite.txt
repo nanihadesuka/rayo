@@ -69,14 +69,14 @@ appId: a.b
     a screen
   saved: e2e/results/b_retry1_failure.png
 [2/3] PASS a  # s
-[3/3] PASS c  # s  (failed once, then passed)
+[3/3] FLAKY c  # s  (failed once, then passed)
   try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c_failure.png
 
 FAIL b  # s  (failed 2 times)
 PASS a  # s
-PASS c  # s  (failed once, then passed)
+FLAKY c  # s  (failed once, then passed)
 
-TOTAL 3: 2 passed, 1 failed, of those failed 1 app, 2 retried  # s
+TOTAL 3: 1 passed, 1 flaky, 1 failed, of those failed 1 app, 2 retried  # s
 -- stderr --
 error: failed: b
 -- device --
@@ -194,8 +194,8 @@ FAIL b  # s  (failed 2 times)
   saved: e2e/results/b_retry1_failure.png
 PASS a  # s
   file: e2e/a/flow.yaml
-PASS c  # s  (failed once, then passed)
+FLAKY c  # s  (failed once, then passed)
   file: e2e/c/flow.yaml
   try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c_failure.png
 
-TOTAL 3: 2 passed, 1 failed, of those failed 1 app, 2 retried  # s
+TOTAL 3: 1 passed, 1 flaky, 1 failed, of those failed 1 app, 2 retried  # s

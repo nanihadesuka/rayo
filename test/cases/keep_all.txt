@@ -16,11 +16,14 @@ appId: a.b
 -- exit --
 0
 -- stdout --
-[1/2] PASS a  # s  (failed once, then passed)
+[1/2] FLAKY a  # s  (failed once, then passed)
   try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a_failure.png
 [2/2] PASS b  # s
 
-TOTAL 2: 2 passed, 0 failed, 1 retried  # s
+FLAKY a  # s  (failed once, then passed)
+PASS b  # s
+
+TOTAL 2: 1 passed, 1 flaky, 0 failed, 1 retried  # s
 -- device --
 adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
 adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
