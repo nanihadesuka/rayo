@@ -7,6 +7,6 @@ tags: [x]
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: no flows have those tags

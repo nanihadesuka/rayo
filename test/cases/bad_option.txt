@@ -2,6 +2,6 @@
 test --nope flow.yaml
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: unknown option --nope

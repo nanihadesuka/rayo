@@ -2,6 +2,6 @@
 test
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: which flow? give a file, a folder or a suite

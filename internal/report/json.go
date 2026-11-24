@@ -15,25 +15,24 @@ import (
 )
 
 // The results as JSON. Every key is always there, so that whoever reads it needn't check; its meaning
-// doesn't change within a version.
-const resultsVersion = 1
+// doesn't change within a version, see SchemaVersion.
 
 type jsonRun struct {
-	Version     int        `json:"version" about:"Changes if the meaning of a key does"`
-	Run         string     `json:"run" about:"The suite's name, or what was run"`
-	Device      string     `json:"device" about:"Its serial"`
-	Began       string     `json:"began" about:"In UTC"`
-	Seconds     float64    `json:"seconds" about:"All of it"`
-	Order       string     `json:"order" about:"'--shuffle=<seed>', if shuffled"`
-	Stopped     string     `json:"stopped" about:"Why, if it stopped before the end, see [Causes](#causes)"`
-	OK          bool       `json:"ok" about:"Nothing failed, was interrupted or didn't run: as the exit code"`
-	Total       int        `json:"total" about:"Flows"`
-	Passed      int        `json:"passed" about:"Also those that failed first"`
-	Failed      int        `json:"failed" about:""`
-	Interrupted int        `json:"interrupted" about:""`
-	NotRun      int        `json:"notRun" about:""`
-	Retried     int        `json:"retried" about:"Flows tried more than once, whether they passed or not"`
-	Flows       []jsonFlow `json:"flows" about:"See below"`
+	SchemaVersion int        `json:"schemaVersion" about:"Changes if the meaning of a key does"`
+	Run           string     `json:"run" about:"The suite's name, or what was run"`
+	Device        string     `json:"device" about:"Its serial"`
+	Began         string     `json:"began" about:"In UTC"`
+	Seconds       float64    `json:"seconds" about:"All of it"`
+	Order         string     `json:"order" about:"'--shuffle=<seed>', if shuffled"`
+	Stopped       string     `json:"stopped" about:"Why, if it stopped before the end, see [Causes](#causes)"`
+	OK            bool       `json:"ok" about:"Nothing failed, was interrupted or didn't run: as the exit code"`
+	Total         int        `json:"total" about:"Flows"`
+	Passed        int        `json:"passed" about:"Also those that failed first"`
+	Failed        int        `json:"failed" about:""`
+	Interrupted   int        `json:"interrupted" about:""`
+	NotRun        int        `json:"notRun" about:""`
+	Retried       int        `json:"retried" about:"Flows tried more than once, whether they passed or not"`
+	Flows         []jsonFlow `json:"flows" about:"See below"`
 }
 
 type jsonFlow struct {
@@ -54,12 +53,9 @@ type jsonFlow struct {
 // Failure is one, for a program.
 type Failure struct {
 	Try     int         `json:"try" about:"From 1"`
-	Why     string      `json:"why" about:"The error"`
+	Error   Problem     `json:"error" about:"What went wrong, at which step, see [Errors](#errors)"`
 	Cause   flow.Cause  `json:"cause" about:"'test', 'app' or 'device', see [Causes](#causes)" enum:"test,app,device"`
 	Because string      `json:"because" about:"What shows that it isn't the test"`
-	Step    string      `json:"step" about:"The step that failed"`
-	File    string      `json:"file" about:"Where it is written"`
-	Line    int         `json:"line" about:""`
 	From    []jsonStep  `json:"from" about:"The step that ran that flow, and so on outwards"`
 	Before  []string    `json:"before" about:"The last 3 steps that passed"`
 	Calls   []mock.Call `json:"calls" about:"The last 5 to the mock"`
@@ -96,11 +92,9 @@ func Lines(text string) []string {
 
 // FailureOf describes a failure.
 func FailureOf(err error, e *flow.Failure) Failure {
-	x := Failure{Try: 1, Why: err.Error(), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}}
+	x := Failure{Try: 1, Error: ProblemOf(err), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}}
 	var step *flow.StepError
 	if errors.As(err, &step) {
-		at := stepOf(step.Step)
-		x.Why, x.Step, x.File, x.Line = step.Err.Error(), at.Step, at.File, at.Line
 		for _, s := range step.From {
 			x.From = append(x.From, stepOf(s))
 		}
@@ -129,7 +123,12 @@ func (o *Outcome) json() jsonFlow {
 }
 
 func (s *Summary) json(failuresOnly bool) ([]byte, error) {
-	r := jsonRun{Version: resultsVersion, Run: s.Title, Device: s.Device, Began: s.Began.UTC().Format("2006-01-02T15:04:05Z"),
+	return Encode(s.run(failuresOnly), true)
+}
+
+// run is the results, as written.
+func (s *Summary) run(failuresOnly bool) jsonRun {
+	r := jsonRun{SchemaVersion: SchemaVersion, Run: s.Title, Device: s.Device, Began: s.Began.UTC().Format("2006-01-02T15:04:05Z"),
 		Seconds: seconds(s.Took), Order: s.Order, Stopped: s.Stopped, OK: s.Err() == nil, Total: len(s.Outcomes), Passed: s.count(Passed),
 		Failed: s.count(Failed), Interrupted: s.count(Interrupted), NotRun: s.count(NotRun), Retried: s.retried(), Flows: []jsonFlow{}}
 	for _, o := range s.Outcomes {
@@ -137,11 +136,18 @@ func (s *Summary) json(failuresOnly bool) ([]byte, error) {
 			r.Flows = append(r.Flows, o.json())
 		}
 	}
+	return r
+}
+
+// Encode is JSON for a program: indented, or else on one line.
+func Encode(v any, indent bool) ([]byte, error) {
 	var b bytes.Buffer
 	e := json.NewEncoder(&b)
 	e.SetEscapeHTML(false)
-	e.SetIndent("", "  ")
-	err := e.Encode(r)
+	if indent {
+		e.SetIndent("", "  ")
+	}
+	err := e.Encode(v)
 	return b.Bytes(), err
 }
 
@@ -154,5 +160,9 @@ func Tables() map[string]string {
 		"results":         schema.ColumnTable(jsonRun{}),
 		"results flow":    schema.ColumnTable(jsonFlow{}),
 		"results failure": schema.ColumnTable(Failure{}),
+		"error":           schema.ColumnTable(Problem{}),
+		"errors":          schema.ColumnTable(Errors{}),
+		"event":           schema.ColumnTable(Event{}),
+		"exit codes":      exitTable(),
 	}
 }

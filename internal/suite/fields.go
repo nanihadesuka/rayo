@@ -282,6 +282,14 @@ var Fields = []schema.Field[Suite]{
 	schema.TextField("output", "folder", "As `--output`, which wins", func(s *Suite) *string { return &s.Output }).Optional("`.rayo` where rayo runs"),
 	{Name: "results", Takes: "a file or a list", About: "As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit)",
 		Schema: func() schema.S { f := schema.Pattern(`\.(txt|json|xml)$`); return schema.AnyOf(f, schema.List(f)) }(), Read: readResults},
+	{Name: "format", Takes: "`human`, `json` or `ndjson`", About: "What is printed, as `--format`, which wins, see [For a program](#for-a-program)", Default: "`human`",
+		Schema: schema.Enum(report.Human, report.JSON, report.NDJSON), Read: func(s *Suite, n *yaml.Node) error {
+			if n.Kind != yaml.ScalarNode || !slices.Contains(report.Formats, n.Value) {
+				return errors.New("takes human, json or ndjson")
+			}
+			s.Format = n.Value
+			return nil
+		}},
 	schema.FlagField("record", "A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow)", func(s *Suite) *bool { return &s.Record }).Optional("`false`"),
 	schema.TextField("recordFolder", "folder", "Where the videos go; needs `record: true`", func(s *Suite) *string { return &s.RecordFolder }).Optional("each flow's, in `output`"),
 }

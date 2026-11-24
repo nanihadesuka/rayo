@@ -10,6 +10,6 @@ appId: a.b
 - tapOn: { id: GET /a }
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: s.rayo.yaml:2: mock: no file missing.json

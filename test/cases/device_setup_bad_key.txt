@@ -9,6 +9,6 @@ appId: a.b
 - tapOn: { id: missing }
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: s.rayo.yaml:1: device: unknown key "width" (it takes size, dpi, fontScale, darkMode)

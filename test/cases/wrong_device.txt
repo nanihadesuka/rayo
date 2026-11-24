@@ -2,6 +2,6 @@
 hierarchy --device three
 ==== out ====
 -- exit --
-1
+3
 -- stderr --
 error: device three is not connected

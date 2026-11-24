@@ -235,7 +235,7 @@ appId: a.b
 - camera: nope.png
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: flows/a01.yaml:3: unknown command "tapOm", did you mean tapOn?
        flows/a02.yaml:3: tapOn needs a value

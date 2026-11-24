@@ -1,0 +1,52 @@
+-- args --
+test s.rayo.yaml
+-- s.rayo.yaml --
+format: json
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+0
+-- stdout --
+{
+  "schemaVersion": 2,
+  "run": "s.rayo.yaml",
+  "device": "emulator-5554",
+  "began": "<now>",
+  "seconds": #,
+  "order": "",
+  "stopped": "",
+  "ok": true,
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "interrupted": 0,
+  "notRun": 0,
+  "retried": 0,
+  "flows": [
+    {
+      "name": "a",
+      "file": "a.yaml",
+      "status": "PASS",
+      "cause": "",
+      "seconds": #,
+      "tries": 1,
+      "timesFailed": 0,
+      "retries": 0,
+      "notRunReason": "",
+      "warnings": [],
+      "recordings": [],
+      "failures": []
+    }
+  ]
+}
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+key {"code":4,"timeout":15000}
+bye {"timeout":5000}

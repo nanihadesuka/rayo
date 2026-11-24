@@ -148,7 +148,7 @@ appId: a.b
 {"mappings":[{"request":{"urlPath":"/a"},"response":{}},{"request":{},"response":{}}]}
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: flows/a01.yaml:2: no file flows/nope
        flows/a02.yaml:2: expected the path of a mock

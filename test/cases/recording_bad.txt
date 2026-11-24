@@ -14,6 +14,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: b.rayo.yaml: recordFolder needs record: true

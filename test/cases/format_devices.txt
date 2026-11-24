@@ -1,0 +1,10 @@
+-- args --
+devices --format ndjson
+-- devices --
+emulator-5554	device
+R5CX	device
+==== out ====
+-- exit --
+0
+-- stdout --
+{"schemaVersion":2,"devices":["emulator-5554","R5CX"]}

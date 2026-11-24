@@ -83,7 +83,7 @@ var masks = []struct {
 	{regexp.MustCompile(`\[adb\+host -?\d+`), "[adb+host #"},
 	{regexp.MustCompile(`time="[\d.]+"`), `time="#"`},
 	{regexp.MustCompile(`rayo-\d+\.mp4`), "rayo-<pid>.mp4"},
-	{regexp.MustCompile(`"seconds": [\d.]+`), `"seconds": #`},
+	{regexp.MustCompile(`"seconds": ?[\d.]+`), `"seconds": #`},
 	{regexp.MustCompile(`20\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\dZ`), "<now>"},
 	{regexp.MustCompile(`\d\d:\d\d:\d\d\.\d\d\d`), "<time>"},
 	{regexp.MustCompile(`20\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ`), "<now>"},

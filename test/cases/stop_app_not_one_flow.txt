@@ -115,7 +115,7 @@ a screen
 }
 -- file out.json --
 {
-  "version": 1,
+  "schemaVersion": 2,
   "run": "a.yaml b.yaml",
   "device": "emulator-5554",
   "began": "<now>",
@@ -145,12 +145,17 @@ a screen
       "failures": [
         {
           "try": 1,
-          "why": "not on screen: home",
+          "error": {
+            "file": "a.yaml",
+            "line": 3,
+            "step": "tapOn app crashes",
+            "cause": "not on screen: home",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
-          "step": "tapOn app crashes",
-          "file": "a.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],
@@ -162,12 +167,17 @@ a screen
         },
         {
           "try": 2,
-          "why": "not on screen: home",
+          "error": {
+            "file": "a.yaml",
+            "line": 3,
+            "step": "tapOn app crashes",
+            "cause": "not on screen: home",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
-          "step": "tapOn app crashes",
-          "file": "a.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],
@@ -179,12 +189,17 @@ a screen
         },
         {
           "try": 3,
-          "why": "not on screen: home",
+          "error": {
+            "file": "a.yaml",
+            "line": 3,
+            "step": "tapOn app crashes",
+            "cause": "not on screen: home",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "app",
           "because": "the app crashed: java.lang.IllegalStateException: oops",
-          "step": "tapOn app crashes",
-          "file": "a.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],

@@ -9,6 +9,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: s.rayo.yaml:2: timeoutScale: takes 0.1 to 10, not 20

@@ -62,7 +62,7 @@ a screen
 a video ....................................................................................................
 -- file out.json --
 {
-  "version": 1,
+  "schemaVersion": 2,
   "run": "s.rayo.yaml",
   "device": "emulator-5554",
   "began": "<now>",
@@ -95,12 +95,17 @@ a video ........................................................................
       "failures": [
         {
           "try": 1,
-          "why": "flaked",
+          "error": {
+            "file": "a.yaml",
+            "line": 3,
+            "step": "tapOn flaky 1",
+            "cause": "flaked",
+            "expected": "",
+            "nearest": "",
+            "fix": ""
+          },
           "cause": "test",
           "because": "",
-          "step": "tapOn flaky 1",
-          "file": "a.yaml",
-          "line": 3,
           "from": [],
           "before": [],
           "calls": [],

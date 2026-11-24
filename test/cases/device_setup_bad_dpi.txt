@@ -9,6 +9,6 @@ appId: a.b
 - tapOn: { id: missing }
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: s.rayo.yaml:1: device: dpi: takes 72 to 1000, not 5

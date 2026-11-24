@@ -99,8 +99,9 @@ type Field[T any] struct {
 
 // Error is a mistake and its line.
 type Error struct {
-	Line int
-	What string
+	Line     int
+	What     string
+	Expected string // the keys it takes, of an unknown one
 }
 
 func (e *Error) Error() string { return e.What }
@@ -122,17 +123,17 @@ func Placed(err error) error {
 // Read checks a mapping and fills in a T.
 func Read[T any](fields []Field[T], t *T, n *yaml.Node) error {
 	if n.Kind != yaml.MappingNode {
-		return &Error{n.Line, "takes " + names(fields)}
+		return &Error{n.Line, "takes " + names(fields), names(fields)}
 	}
 	var seen []string
 	for i := 0; i+1 < len(n.Content); i += 2 {
 		key, v := n.Content[i], n.Content[i+1]
 		at := slices.IndexFunc(fields, func(f Field[T]) bool { return f.Name == key.Value })
 		if at < 0 {
-			return &Error{key.Line, fmt.Sprintf("unknown key %q (it takes %s)", key.Value, names(fields))}
+			return &Error{key.Line, fmt.Sprintf("unknown key %q (it takes %s)", key.Value, names(fields)), names(fields)}
 		}
 		if slices.Contains(seen, key.Value) {
-			return &Error{key.Line, key.Value + " is there twice"}
+			return &Error{key.Line, key.Value + " is there twice", ""}
 		}
 		seen = append(seen, key.Value)
 		if err := fields[at].Read(t, v); err != nil {
@@ -140,14 +141,14 @@ func Read[T any](fields []Field[T], t *T, n *yaml.Node) error {
 			case *placed:
 				return err
 			case *Error:
-				return &Error{err.Line, key.Value + ": " + err.What}
+				return &Error{err.Line, key.Value + ": " + err.What, err.Expected}
 			}
-			return &Error{v.Line, key.Value + ": " + err.Error()}
+			return &Error{v.Line, key.Value + ": " + err.Error(), ""}
 		}
 	}
 	for _, f := range fields {
 		if f.Required && !slices.Contains(seen, f.Name) {
-			return &Error{n.Line, "needs " + f.Name}
+			return &Error{n.Line, "needs " + f.Name, ""}
 		}
 	}
 	return nil
@@ -285,6 +286,8 @@ func writtenType(t reflect.Type) S {
 		return Type("number")
 	case reflect.Slice:
 		return List(writtenType(t.Elem()))
+	case reflect.Pointer: // null when there is none
+		return AnyOf(writtenType(t.Elem()), Type("null"))
 	case reflect.Struct:
 		properties := map[string]S{}
 		var required []string
@@ -322,6 +325,10 @@ func Columns(v any) []Column {
 			takes = "true or false"
 		case reflect.String:
 			takes = "text"
+		case reflect.Struct:
+			takes = "mapping"
+		case reflect.Pointer:
+			takes = "mapping or null"
 		}
 		list = append(list, Column{f.Tag.Get("json"), takes, f.Tag.Get("about")})
 	}

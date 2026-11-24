@@ -7,6 +7,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+3
 -- stderr --
 error: several devices, choose one with --device: one, two

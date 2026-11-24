@@ -66,7 +66,7 @@ func (p *reader) readHeader(f *Flow, n *yaml.Node) error {
 	err := schema.Read(headerFields, &header{f, p}, n)
 	var here *schema.Error
 	if errors.As(err, &here) {
-		return problem(p.path, here.Line, "%s", here.What)
+		return &Problem{Path: p.path, Line: here.Line, What: here.What, Expected: here.Expected}
 	}
 	return err
 }

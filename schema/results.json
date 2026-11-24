@@ -98,9 +98,49 @@
                   "description": "The app crashed or hung during the flow: what the device log says",
                   "type": "string"
                 },
-                "file": {
-                  "description": "Where it is written",
-                  "type": "string"
+                "error": {
+                  "additionalProperties": false,
+                  "description": "What went wrong, at which step",
+                  "properties": {
+                    "cause": {
+                      "description": "What is wrong",
+                      "type": "string"
+                    },
+                    "expected": {
+                      "description": "What it takes, if that can be said",
+                      "type": "string"
+                    },
+                    "file": {
+                      "description": "Where it is written; empty if it isn't of a file",
+                      "type": "string"
+                    },
+                    "fix": {
+                      "description": "What to write instead, if that can be said",
+                      "type": "string"
+                    },
+                    "line": {
+                      "description": "0 if not known",
+                      "type": "integer"
+                    },
+                    "nearest": {
+                      "description": "Of that, the closest to what is written",
+                      "type": "string"
+                    },
+                    "step": {
+                      "description": "Of a flow that failed, the step",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line",
+                    "step",
+                    "cause",
+                    "expected",
+                    "nearest",
+                    "fix"
+                  ],
+                  "type": "object"
                 },
                 "from": {
                   "description": "The step that ran that flow, and so on outwards",
@@ -129,10 +169,6 @@
                   },
                   "type": "array"
                 },
-                "line": {
-                  "description": "",
-                  "type": "integer"
-                },
                 "saved": {
                   "description": "The folder with the rest",
                   "type": "string"
@@ -144,27 +180,16 @@
                   },
                   "type": "array"
                 },
-                "step": {
-                  "description": "The step that failed",
-                  "type": "string"
-                },
                 "try": {
                   "description": "From 1",
                   "type": "integer"
-                },
-                "why": {
-                  "description": "The error",
-                  "type": "string"
                 }
               },
               "required": [
                 "try",
-                "why",
+                "error",
                 "cause",
                 "because",
-                "step",
-                "file",
-                "line",
                 "from",
                 "before",
                 "calls",
@@ -274,6 +299,10 @@
       "description": "The suite's name, or what was run",
       "type": "string"
     },
+    "schemaVersion": {
+      "description": "Changes if the meaning of a key does",
+      "type": "integer"
+    },
     "seconds": {
       "description": "All of it",
       "type": "number"
@@ -285,14 +314,10 @@
     "total": {
       "description": "Flows",
       "type": "integer"
-    },
-    "version": {
-      "description": "Changes if the meaning of a key does",
-      "type": "integer"
     }
   },
   "required": [
-    "version",
+    "schemaVersion",
     "run",
     "device",
     "began",

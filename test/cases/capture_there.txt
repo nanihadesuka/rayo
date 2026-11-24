@@ -8,6 +8,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: got is there already; --capture-append goes on with it

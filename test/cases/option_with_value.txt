@@ -6,6 +6,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: --fail-fast takes no value

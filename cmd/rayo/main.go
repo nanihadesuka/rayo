@@ -26,31 +26,63 @@ import (
 
 const version = "1.0.14"
 
-// Exit codes.
-const (
-	exitFailed      = 1
-	exitUsage       = 2
-	exitInterrupted = 130
-)
-
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Print(help())
-		os.Exit(exitUsage)
+		os.Exit(report.ExitConfig)
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	context.AfterFunc(ctx, stop) // a second Ctrl-C doesn't wait
 	err := run(ctx, os.Args[1], os.Args[2:])
+	code := exitOf(err)
 	switch {
 	case ctx.Err() != nil:
 		fmt.Fprintln(os.Stderr, "interrupted")
-		os.Exit(exitInterrupted)
-	case err == errShown:
-		os.Exit(exitFailed)
-	case err != nil:
+		os.Exit(report.ExitInterrupted)
+	case err == nil || errors.Is(err, errShown):
+	case printing == report.JSON:
+		_ = emit(report.ErrorsOf(err, code))
+	case printing == report.NDJSON:
+		_ = emit(report.ErrorEvent(err, code))
+	default:
 		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(exitFailed)
 	}
+	os.Exit(code)
+}
+
+// exitError says which exit code an error is for, see report.Exits.
+type exitError struct {
+	code int
+	err  error
+}
+
+func (e *exitError) Error() string { return e.err.Error() }
+func (e *exitError) Unwrap() error { return e.err }
+
+// exiting gives an error its exit code, unless it has one; none stays none.
+func exiting(code int, err error) error {
+	var known *exitError
+	if err == nil || errors.As(err, &known) {
+		return err
+	}
+	return &exitError{code, err}
+}
+
+// ofDevice is an error of the device, or of reaching it.
+func ofDevice(err error) error { return exiting(report.ExitDevice, err) }
+
+// exitOf is the exit code for an error: one that doesn't say is of something written.
+func exitOf(err error) int {
+	var known *exitError
+	switch {
+	case err == nil:
+		return report.ExitPassed
+	case errors.As(err, &known):
+		return known.code
+	case errors.Is(err, errShown):
+		return report.ExitFailed
+	}
+	return report.ExitConfig
 }
 
 func run(ctx context.Context, command string, args []string) error {
@@ -74,10 +106,14 @@ func run(ctx context.Context, command string, args []string) error {
 			return err
 		}
 		list, err := adb.Devices()
-		if err == nil {
-			fmt.Println(strings.Join(list, "\n"))
+		switch {
+		case err != nil:
+			return ofDevice(err)
+		case printing != report.Human:
+			return emit(report.Devices{SchemaVersion: report.SchemaVersion, Devices: report.List(list)})
 		}
-		return err
+		fmt.Println(strings.Join(list, "\n"))
+		return nil
 	case cmdCA:
 		return exportCA(args)
 	case cmdMocks:
@@ -105,10 +141,14 @@ func check(args []string) error {
 		return err
 	}
 	flows, _, err := suite.Load(o.args)
-	if err == nil {
-		fmt.Printf("%d flows are fine\n", len(flows))
+	switch {
+	case err != nil:
+		return err
+	case printing != report.Human:
+		return emit(report.Check{SchemaVersion: report.SchemaVersion, OK: true, Flows: len(flows)})
 	}
-	return err
+	fmt.Printf("%d flows are fine\n", len(flows))
+	return nil
 }
 
 func hierarchy(ctx context.Context, args []string) error {
@@ -121,18 +161,22 @@ func hierarchy(ctx context.Context, args []string) error {
 	}
 	d, err := adb.Pick(o.device, o.emulator)
 	if err != nil {
-		return err
+		return ofDevice(err)
 	}
 	a, err := agent.Start(d)
 	if err != nil {
-		return err
+		return ofDevice(err)
 	}
 	defer a.Close()
 	r, err := a.Do(ctx, "tree", nil, 10*time.Second)
-	if err == nil {
-		fmt.Print(r.Out)
+	switch {
+	case err != nil:
+		return ofDevice(err)
+	case printing != report.Human:
+		return emit(report.Hierarchy{SchemaVersion: report.SchemaVersion, Screen: report.Lines(r.Out)})
 	}
-	return err
+	fmt.Print(r.Out)
+	return nil
 }
 
 func test(ctx context.Context, args []string) (err error) {
@@ -149,6 +193,9 @@ func test(ctx context.Context, args []string) (err error) {
 	if group != nil {
 		if group.Name != "" {
 			title = group.Name
+		}
+		if o.format == "" && group.Format != "" {
+			printing = group.Format
 		}
 		o.into(group.Relative(group.Output))
 		if o.runner.Scale == 0 {
@@ -177,7 +224,7 @@ func test(ctx context.Context, args []string) (err error) {
 		return err
 	}
 	if len(flows) == 0 { // only with --rerun-failed
-		fmt.Println("nothing failed last time")
+		fmt.Fprintln(human(), "nothing failed last time")
 		return nil
 	}
 	if err := o.suiteCapture(flows); err != nil {
@@ -188,17 +235,17 @@ func test(ctx context.Context, args []string) (err error) {
 	}
 	d, err := adb.Pick(o.device, o.emulator)
 	if err != nil {
-		return err
+		return ofDevice(err)
 	}
 	if group != nil {
-		if err := group.Install(d, o.steps(flows)); err != nil {
-			return err
+		if err := group.Install(d, o.steps(flows) && printing == report.Human); err != nil {
+			return ofDevice(err)
 		}
 	}
 	if group != nil && group.Device != nil {
 		undo, e := d.Apply(group.Device)
 		if e != nil {
-			return e
+			return ofDevice(e)
 		}
 		defer func() { // after the agent, which begins and ends with the screen like this
 			if e := undo(); e != nil {
@@ -207,13 +254,13 @@ func test(ctx context.Context, args []string) (err error) {
 		}()
 	}
 	start := time.Now()
-	s := &session{o: o, device: d, reporter: newConsole()}
+	s := &session{o: o, device: d, reporter: newConsole(human())}
 	if err := s.start(); err != nil {
-		return err
+		return ofDevice(err)
 	}
 	defer func() { s.agent.Close() }() // the one there is by then
 	if o.steps(flows) {
-		fmt.Printf("%s, ready in %d ms\n", d.Serial, time.Since(start).Milliseconds())
+		fmt.Fprintf(human(), "%s, ready in %d ms\n", d.Serial, time.Since(start).Milliseconds())
 	}
 
 	watch := watcher{}
@@ -225,13 +272,13 @@ func test(ctx context.Context, args []string) (err error) {
 		if !o.continuous || ctx.Err() != nil {
 			return err
 		}
-		if err != nil {
-			fmt.Println(err)
+		if err != nil && !errors.Is(err, errShown) {
+			fmt.Fprintln(human(), err)
 		}
 		if s.agent.Dead() != nil {
-			return s.agent.Dead()
+			return ofDevice(s.agent.Dead())
 		}
-		fmt.Println("\nwaiting for changes...")
+		fmt.Fprintln(human(), "\nwaiting for changes...")
 		for {
 			if err := watch.await(ctx, flows); err != nil {
 				return err
@@ -245,7 +292,7 @@ func test(ctx context.Context, args []string) (err error) {
 				flows = again
 				break
 			}
-			fmt.Println("error:", err)
+			fmt.Fprintln(human(), "error:", err)
 		}
 	}
 }
@@ -354,11 +401,11 @@ func runLive(ctx context.Context, args []string) error {
 	return live.Run(ctx, p, func(reporter flow.Reporter) (*flow.Runner, func(), error) {
 		d, err := adb.Pick(o.device, o.emulator)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, ofDevice(err)
 		}
 		s := &session{o: o, device: d, reporter: reporter}
 		if err := s.start(); err != nil {
-			return nil, nil, err
+			return nil, nil, ofDevice(err)
 		}
 		return s.runner, func() { s.agent.Close() }, nil
 	})
@@ -390,13 +437,10 @@ func runDo(args []string) error {
 	if err != nil {
 		return err
 	}
-	if o.json {
-		e := json.NewEncoder(os.Stdout)
-		e.SetEscapeHTML(false)
-		e.SetIndent("", "  ")
-		err = e.Encode(a)
-	} else {
+	if printing == report.Human {
 		fmt.Print(a.Text())
+	} else {
+		err = emit(a)
 	}
 	if err == nil && !a.OK {
 		err = errShown
@@ -425,12 +469,14 @@ func helpOn(name string) (string, error) {
 }
 
 func printSchema(args []string) error {
-	makers := map[string]func() []byte{"flow": flow.Schema, "suite": suite.Schema, "results": report.Schema}
+	makers := report.Schemas()
+	makers["flow"], makers["suite"] = flow.Schema, suite.Schema
+	makers["do"] = func() []byte { return schema.Written(live.Reply{}).File("What rayo do prints, --format json", nil) }
 	if len(args) == 1 && makers[args[0]] != nil {
 		_, err := os.Stdout.Write(makers[args[0]]())
 		return err
 	}
-	return errors.New("rayo schema takes flow, suite or results")
+	return errors.New("rayo schema takes flow, suite, results, check, devices, hierarchy, do, mocks, event or errors")
 }
 
 // helpJSON is all of it, for programs and the documentation's page.
@@ -456,6 +502,7 @@ func helpJSON() (string, error) {
 		"options": all, "flow": flow.Describe(), "header": flow.HeaderDocs(), "suite": schema.Docs(suite.Fields),
 		"suiteFlow": schema.Docs(suite.FlowFields), "app": schema.Docs(suite.AppFields), "device": schema.Docs(suite.DeviceFields),
 		"unmocked": schema.Docs(suite.UnmockedFields), "ignored": schema.Docs(suite.IgnoredFields), "capture": schema.Docs(suite.CaptureFields),
+		"exitCodes": report.Exits,
 	})
 	return b.String(), err
 }
@@ -486,10 +533,14 @@ func applyMocks(args []string) error {
 		return errors.New("rayo mocks apply [--only a,b] [--prune] <folder>, after rayo test --capture-update <folder>;\n" +
 			"or rayo mocks import [options] <file.har> <folder>")
 	}
-	if err == nil {
-		fmt.Println(strings.Join(notes, "\n"))
+	switch {
+	case err != nil:
+		return err
+	case printing != report.Human:
+		return emit(report.Notes{SchemaVersion: report.SchemaVersion, Notes: report.List(notes)})
 	}
-	return err
+	fmt.Println(strings.Join(notes, "\n"))
+	return nil
 }
 
 // exportCA writes the certificate of this computer's CA, for an app to trust in its debug build.

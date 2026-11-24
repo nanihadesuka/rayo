@@ -2,6 +2,6 @@
 test --retries x a.yaml
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: --retries takes a number, not "x"

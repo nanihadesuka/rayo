@@ -9,7 +9,7 @@ appId: a.b
 - tapOn: { id: missing }
 ==== out ====
 -- exit --
-1
+3
 -- stderr --
 error: couldn't set up the device: Error: bad size
 -- device --

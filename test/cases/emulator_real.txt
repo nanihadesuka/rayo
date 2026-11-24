@@ -9,6 +9,6 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-1
+3
 -- stderr --
 error: PHONE1 is not an emulator

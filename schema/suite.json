@@ -462,6 +462,14 @@
       "minItems": 1,
       "type": "array"
     },
+    "format": {
+      "description": "What is printed, as --format, which wins (default: human)",
+      "enum": [
+        "human",
+        "json",
+        "ndjson"
+      ]
+    },
     "name": {
       "description": "Shown in the results (default: the file)",
       "type": [

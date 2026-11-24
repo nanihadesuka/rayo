@@ -7,6 +7,6 @@ record: [x]
 - back
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: a.yaml:2: record: takes true, false or a path

@@ -2,6 +2,6 @@
 test -e NOPE flow.yaml
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: --env takes KEY=VALUE

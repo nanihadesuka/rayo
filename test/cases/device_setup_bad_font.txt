@@ -9,6 +9,6 @@ appId: a.b
 - tapOn: { id: missing }
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: s.rayo.yaml:1: device: fontScale: takes 0.5 to 3, not 9

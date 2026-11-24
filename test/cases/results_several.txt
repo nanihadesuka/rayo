@@ -24,7 +24,7 @@ key {"code":4,"timeout":15000}
 bye {"timeout":5000}
 -- file o/r.json --
 {
-  "version": 1,
+  "schemaVersion": 2,
   "run": "a.yaml",
   "device": "emulator-5554",
   "began": "<now>",

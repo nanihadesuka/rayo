@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"slices"
 	"strings"
@@ -20,11 +21,12 @@ type console struct {
 	steps    []flow.StepReport // of the flow running now, with timings
 	terminal bool              // someone is looking, and not a file
 	pending  int               // length of a line to write over
+	out      io.Writer         // nowhere, if a program reads what is printed
 }
 
-func newConsole() *console {
+func newConsole(out io.Writer) *console {
 	info, err := os.Stdout.Stat()
-	return &console{terminal: err == nil && info.Mode()&os.ModeCharDevice != 0}
+	return &console{out: out, terminal: out == os.Stdout && err == nil && info.Mode()&os.ModeCharDevice != 0}
 }
 
 // Step prints one line.
@@ -35,7 +37,7 @@ func (c *console) Step(s flow.StepReport) {
 		c.steps = append(c.steps, s)
 	}
 	if c.verbose {
-		fmt.Print(s.Line())
+		fmt.Fprint(c.out, s.Line())
 	}
 }
 
@@ -44,7 +46,7 @@ func (c *console) Note(depth int, text string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.verbose {
-		fmt.Println(strings.Repeat("  ", depth) + text)
+		fmt.Fprintln(c.out, strings.Repeat("  ", depth)+text)
 	}
 }
 
@@ -55,10 +57,10 @@ func (c *console) begin(i, of int, name string) {
 	line := fmt.Sprintf("[%d/%d] %s", i, of, name)
 	switch {
 	case c.verbose:
-		fmt.Printf("\n%s\n", line)
+		fmt.Fprintf(c.out, "\n%s\n", line)
 	case c.terminal:
 		c.pending = len(line)
-		fmt.Print(line)
+		fmt.Fprint(c.out, line)
 	}
 }
 
@@ -68,15 +70,15 @@ func (c *console) end(i, of int, o *report.Outcome) {
 	defer c.slowestSteps()
 	line := fmt.Sprintf("[%d/%d] %s", i, of, o.Line())
 	if c.pending > 0 {
-		fmt.Print("\r" + strings.Repeat(" ", c.pending) + "\r")
+		fmt.Fprint(c.out, "\r"+strings.Repeat(" ", c.pending)+"\r")
 		c.pending = 0
 	}
-	fmt.Println(line)
+	fmt.Fprintln(c.out, line)
 	if o.Status == report.Passed {
-		fmt.Print(o.Notes() + o.WarningLines())
+		fmt.Fprint(c.out, o.Notes()+o.WarningLines())
 		return
 	}
-	fmt.Print(o.Details(!c.verbose)) // verbose has shown the calls, and the screen is long
+	fmt.Fprint(c.out, o.Details(!c.verbose)) // verbose has shown the calls, and the screen is long
 }
 
 // slowestSteps prints, with --timings, the steps of the flow that took longest.
@@ -90,9 +92,9 @@ func (c *console) slowestSteps() {
 	for _, s := range c.steps {
 		total += s.Took
 	}
-	fmt.Printf("  slowest steps, of %d in %.1f s:\n", len(c.steps), total.Seconds())
+	fmt.Fprintf(c.out, "  slowest steps, of %d in %.1f s:\n", len(c.steps), total.Seconds())
 	for _, s := range steps[:min(5, len(steps))] {
-		fmt.Printf("    %6d ms  %s\n", s.Took.Milliseconds(), s.Text)
+		fmt.Fprintf(c.out, "    %6d ms  %s\n", s.Took.Milliseconds(), s.Text)
 	}
 	c.steps = nil
 }
@@ -109,8 +111,8 @@ func (c *console) slowestFlows(outcomes []report.Outcome) {
 		}
 	}
 	slices.SortStableFunc(ran, func(a, b report.Outcome) int { return int(b.Took() - a.Took()) })
-	fmt.Println("\nslowest flows:")
+	fmt.Fprintln(c.out, "\nslowest flows:")
 	for _, o := range ran[:min(10, len(ran))] {
-		fmt.Printf("  %6.1f s  %s\n", o.Took().Seconds(), o.Flow.Name)
+		fmt.Fprintf(c.out, "  %6.1f s  %s\n", o.Took().Seconds(), o.Flow.Name)
 	}
 }

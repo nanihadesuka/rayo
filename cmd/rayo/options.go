@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -17,7 +19,8 @@ import (
 
 // options are those of all the commands: each takes only its own, see the table below.
 type options struct {
-	args []string // what isn't an option
+	args   []string // what isn't an option
+	format string   // of what is printed; empty if not said
 
 	// Of those that use a device.
 	device     string
@@ -46,7 +49,7 @@ type options struct {
 	noRun, serve bool
 
 	// Of do.
-	screen, json bool
+	screen bool
 
 	// Of mocks.
 	take  []string
@@ -272,7 +275,10 @@ var sections = []section{
 	}},
 	{[]string{cmdDo}, "", []option{
 		flag("screen", "also what is on screen afterwards", func(o *options) *bool { return &o.screen }),
-		flag("json", "for a program", func(o *options) *bool { return &o.json }),
+	}},
+	{[]string{cmdTest, cmdCheck, cmdDevices, cmdHierarchy, cmdDo, cmdMocks}, "", []option{
+		choice("format", "how", "human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs",
+			func(o *options) *string { return &o.format }, report.Formats...),
 	}},
 }
 
@@ -288,7 +294,7 @@ const usage = `rayo - runs flows on Android, fast
   rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; also flow, suite and json
-  rayo schema flow, suite or results               its JSON Schema, for editors and programs
+  rayo schema <name>                               a JSON Schema: flow, suite, results, or of --format json
   rayo version
 `
 
@@ -365,6 +371,16 @@ func find(command, written string) (option, error) {
 
 func parse(command string, args []string) (*options, error) {
 	o := &options{retries: -1, runner: flow.Options{Env: map[string]string{}, MockPort: 8080}}
+	for i, a := range args { // first, so that what is wrong with the rest is told as asked
+		if v, ok := strings.CutPrefix(a, "--format="); ok || a == "--format" && i+1 < len(args) {
+			if !ok {
+				v = args[i+1]
+			}
+			if slices.Contains(report.Formats, v) {
+				printing = v
+			}
+		}
+	}
 	for i := 0; i < len(args); i++ {
 		// A command for do may begin with a dash, as in a list.
 		if !strings.HasPrefix(args[i], "-") || command == cmdDo && !strings.HasPrefix(args[i], "--") {
@@ -393,6 +409,26 @@ func parse(command string, args []string) (*options, error) {
 		return nil, errors.New("--fail-fast and --keep-going don't go together")
 	}
 	return o, nil
+}
+
+// printing is the format of what is printed: of --format, or else of the suite.
+var printing = report.Human
+
+// human is where what is for people goes: nowhere, if a program reads it.
+func human() io.Writer {
+	if printing == report.Human {
+		return os.Stdout
+	}
+	return io.Discard
+}
+
+// emit prints something for a program, as --format says.
+func emit(v any) error {
+	data, err := report.Encode(v, printing == report.JSON)
+	if err == nil {
+		_, err = os.Stdout.Write(data)
+	}
+	return err
 }
 
 // none is an error if there is something else than options.

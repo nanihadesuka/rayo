@@ -2,6 +2,6 @@
 hierarchy x
 ==== out ====
 -- exit --
-1
+2
 -- stderr --
 error: hierarchy takes no "x"
