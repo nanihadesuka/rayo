@@ -16,7 +16,7 @@ emulator-5554, ready in # ms
   ✗ tapOn missing  # ms
   last calls:
     <time> GET /localhost/a -> failed: the path doesn't begin with a host
-  saved in .rayo/a
+  saved .rayo/a_failure.png, .rayo/a_screen.txt, .rayo/a_logcat.txt, .rayo/a_requests.txt
 nothing captured: no call of the app was answered
 not captured:
   GET /localhost/a: failed: the path doesn't begin with a host
@@ -27,7 +27,7 @@ not captured:
   at: a.yaml:4
   before:
     tapOn GET /localhost/a
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
 -- stderr --
@@ -47,13 +47,13 @@ adb exec:logcat -d -t 2000
 adb reverse:killforward:tcp:8080
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 the log
--- file .rayo/a/requests.txt --
+-- file .rayo/a_requests.txt --
 <time> GET /localhost/a -> failed: the path doesn't begin with a host
--- file .rayo/a/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {

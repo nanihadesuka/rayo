@@ -62,6 +62,7 @@ type Result struct {
 	Failure    *Failure // nil if there was none
 	Warnings   []string
 	Recordings []string // files
+	Files      []string // all it wrote, recordings too
 }
 
 // Failure is what helps to understand one.
@@ -73,7 +74,7 @@ type Failure struct {
 	Cause    Cause
 	Because  string // of a cause that isn't the test
 	Unusable bool   // nothing can run on the device
-	Saved    string // the folder with the rest
+	Saved    string // the first file of the rest; the others are named alike
 }
 
 // crash is the app's, if it crashed or hung since the flow began.

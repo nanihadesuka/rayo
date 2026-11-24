@@ -37,6 +37,7 @@ type options struct {
 	verbose                bool
 	results                []string // files
 	failuresOnly           bool
+	keep                   string // empty if not said
 	suite                  *suite.Suite
 	updateOwn              bool // --capture-update of the flow's own mock
 
@@ -190,6 +191,22 @@ var sections = []section{
 		}},
 		flag("timings", "each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs", func(o *options) *bool { return &o.runner.Timings }),
 		flag("failures-only", "leave the flows that passed out of the results", func(o *options) *bool { return &o.failuresOnly }),
+		choice("keep", "when", "the files of an attempt that failed (failed, default), of all, or none", func(o *options) *string { return &o.keep }, suite.KeepFailed, suite.KeepAll, suite.KeepNone),
+		{name: "artifacts", value: "a,b", about: "the kinds of file written: video, screenshot, logcat, screen, requests (default all)", set: func(o *options, v string) error {
+			kinds := strings.Split(v, ",")
+			if err := flow.CheckArtifacts(kinds); err != nil {
+				return fmt.Errorf("--artifacts %w", err)
+			}
+			o.runner.Artifacts = kinds
+			return nil
+		}},
+		{name: "name-template", value: "template", about: "how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})", set: func(o *options, v string) error {
+			if err := flow.CheckTemplate(v); err != nil {
+				return fmt.Errorf("--name-template %w", err)
+			}
+			o.runner.NameTemplate = v
+			return nil
+		}},
 	}},
 	{[]string{cmdTest, cmdLive}, "mocks from the real backend", []option{
 		text("capture", "folder", "call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed", func(o *options) *string { return &o.runner.Capture }),

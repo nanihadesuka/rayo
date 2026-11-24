@@ -31,7 +31,7 @@ appId: a.b
   at: a.yaml:3
   screen:
     a screen
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 [2/3] FAIL b  # s
   why: flaked
   cause: test
@@ -39,7 +39,7 @@ appId: a.b
   at: b.yaml:3
   screen:
     a screen
-  saved: .rayo/b
+  saved: .rayo/b_failure.png
 [3/3] FAIL c  # s
   why: not on screen: missing
   cause: test
@@ -47,7 +47,7 @@ appId: a.b
   at: c.yaml:3
   screen:
     a screen
-  saved: .rayo/c
+  saved: .rayo/c_failure.png
 
 FAIL a  # s
 FAIL b  # s
@@ -77,23 +77,23 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 the log
--- file .rayo/a/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
--- file .rayo/b/failure.png --
+-- file .rayo/b_failure.png --
 PNG...
--- file .rayo/b/logcat.txt --
+-- file .rayo/b_logcat.txt --
 the log
--- file .rayo/b/screen.txt --
+-- file .rayo/b_screen.txt --
 a screen
--- file .rayo/c/failure.png --
+-- file .rayo/c_failure.png --
 PNG...
--- file .rayo/c/logcat.txt --
+-- file .rayo/c_logcat.txt --
 the log
--- file .rayo/c/screen.txt --
+-- file .rayo/c_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {
@@ -114,7 +114,7 @@ FAIL a  # s
   at: a.yaml:3
   screen:
     a screen
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 FAIL b  # s
   file: b.yaml
   why: flaked
@@ -123,7 +123,7 @@ FAIL b  # s
   at: b.yaml:3
   screen:
     a screen
-  saved: .rayo/b
+  saved: .rayo/b_failure.png
 FAIL c  # s
   file: c.yaml
   why: not on screen: missing
@@ -132,6 +132,6 @@ FAIL c  # s
   at: c.yaml:3
   screen:
     a screen
-  saved: .rayo/c
+  saved: .rayo/c_failure.png
 
 TOTAL 3: 0 passed, 3 failed  # s

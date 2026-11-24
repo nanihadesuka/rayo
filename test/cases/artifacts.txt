@@ -1,0 +1,53 @@
+-- artifacts: only the kinds asked for --
+-- args --
+test s.rayo.yaml --artifacts video,logcat
+-- s.rayo.yaml --
+record: true
+name-template: "{attempt}-{flow}-{kind}.{ext}"
+flows: [c.yaml]
+-- c.yaml --
+appId: a.b
+---
+- tapOn: { id: missing }
+==== out ====
+-- exit --
+1
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] c
+  ✗ tapOn missing  # ms
+  saved .rayo/c-logcat.txt
+[1/1] FAIL c  # s
+  why: not on screen: missing
+  cause: test
+  step: tapOn missing
+  at: c.yaml:3
+  saved: .rayo/c-logcat.txt
+  recording: .rayo/c.mp4
+
+TOTAL 1: 0 passed, 1 failed  # s
+-- stderr --
+error: failed: c
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+adb exec:l=180; screenrecord --help 2>&1 | grep -q 'remove the time limit' && l=1800; r=$(wm size | sed -n '$s/.*: //p'); w=${r%x*}; h=${r#*x}; n=$w; [ $h -lt $n ] && n=$h; s=; [ $n -gt 480 ] && s="--size $((w*480/n/16*16))x$((h*480/n/16*16))"; echo $$; exec screenrecord $s --bit-rate 600000 --time-limit $l /data/local/tmp/rayo-<pid>.mp4 2>&1
+tap {"delay":100,"repeat":1,"sel":{"id":"missing"},"timeout":15000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:kill -INT 4321 2>/dev/null
+adb exec:cat /data/local/tmp/rayo-<pid>.mp4; rm -f /data/local/tmp/rayo-<pid>.mp4
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
+bye {"timeout":5000}
+-- file .rayo/c-logcat.txt --
+the log
+-- file .rayo/c.mp4 --
+a video ....................................................................................................
+-- file .rayo/failed.json --
+{
+  "<dir>/c.yaml": "FAIL"
+}

@@ -134,7 +134,7 @@
                   "type": "integer"
                 },
                 "saved": {
-                  "description": "The folder with the rest",
+                  "description": "The first file of the rest, which are named alike",
                   "type": "string"
                 },
                 "screen": {

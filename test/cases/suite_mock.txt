@@ -47,7 +47,7 @@ mock: ../mocks/b.json
     <time> GET /a -> not mocked
   screen:
     a screen
-  saved: .rayo/own
+  saved: .rayo/own_failure.png
 
 PASS a  # s
 PASS b  # s
@@ -86,12 +86,12 @@ bye {"timeout":5000}
 {
   "<dir>/tests/own.yaml": "FAIL"
 }
--- file .rayo/own/failure.png --
+-- file .rayo/own_failure.png --
 PNG...
--- file .rayo/own/logcat.txt --
+-- file .rayo/own_logcat.txt --
 the log
--- file .rayo/own/requests.txt --
+-- file .rayo/own_requests.txt --
 <time> GET /b -> 200
 <time> GET /a -> not mocked
--- file .rayo/own/screen.txt --
+-- file .rayo/own_screen.txt --
 a screen

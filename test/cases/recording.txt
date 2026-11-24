@@ -22,9 +22,9 @@ emulator-5554, ready in # ms
   ✓ stopRecording  # ms
   ✓ startRecording ${'three'}.mp4  # ms
   ✗ startRecording  # ms
-  saved in .rayo/case
+  saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
-  why: a recording to .rayo/case/three.mp4 is going on
+  why: a recording to .rayo/case_three.mp4 is going on
   cause: test
   step: startRecording
   at: flow.yaml:9
@@ -32,10 +32,10 @@ emulator-5554, ready in # ms
     startRecording videos/two
     stopRecording
     startRecording ${'three'}.mp4
-  saved: .rayo/case
-  recording: .rayo/case/case.mp4
-  recording: .rayo/case/videos/two.mp4
-  recording: .rayo/case/three.mp4
+  saved: .rayo/case_failure.png
+  recording: .rayo/case.mp4
+  recording: .rayo/case_videos/two.mp4
+  recording: .rayo/case_three.mp4
 
 TOTAL 1: 0 passed, 1 failed  # s
 -- stderr --
@@ -60,17 +60,17 @@ adb exec:kill -INT 4321 2>/dev/null
 adb exec:cat /data/local/tmp/rayo-<pid>.mp4; rm -f /data/local/tmp/rayo-<pid>.mp4
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/case/case.mp4 --
+-- file .rayo/case.mp4 --
 a video ....................................................................................................
--- file .rayo/case/failure.png --
+-- file .rayo/case_failure.png --
 PNG...
--- file .rayo/case/logcat.txt --
+-- file .rayo/case_logcat.txt --
 the log
--- file .rayo/case/screen.txt --
+-- file .rayo/case_screen.txt --
 a screen
--- file .rayo/case/three.mp4 --
+-- file .rayo/case_three.mp4 --
 a video ....................................................................................................
--- file .rayo/case/videos/two.mp4 --
+-- file .rayo/case_videos/two.mp4 --
 a video ....................................................................................................
 -- file .rayo/failed.json --
 {

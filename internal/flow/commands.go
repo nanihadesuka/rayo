@@ -232,8 +232,7 @@ func init() {
 			keys: []anyKey{keyOn}, plain: keyOn, run: setAirplane},
 		"takeScreenshot": {untested: true, about: "Saves the screen",
 			keys: []anyKey{keyPath}, plain: keyPath, run: func(c *call) error {
-				name := strings.TrimSuffix(arg(c, keyPath), ".png") + ".png"
-				return c.r.saveScreenshot(filepath.Join(c.r.folder, filepath.FromSlash(name)))
+				return c.r.saveScreenshot(c.r.named(strings.TrimSuffix(arg(c, keyPath), ".png"), "png"))
 			}},
 		"startRecording": {about: "Records the screen, until stopRecording or the end of the flow",
 			keys: []anyKey{keyVideo}, plain: keyVideo, alone: true, run: func(c *call) error {

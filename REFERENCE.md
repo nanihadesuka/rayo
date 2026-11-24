@@ -82,6 +82,9 @@ Options of test: what comes out
   --results <file>           write the results: .txt, .json or .xml (JUnit); may be repeated
   --timings                  each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
   --failures-only            leave the flows that passed out of the results
+  --keep <when>              the files of an attempt that failed (failed, default), of all, or none
+  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
+  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
 
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
@@ -689,7 +692,7 @@ Android 12.
 
 ### takeScreenshot
 
-🧪 Saves `<output>/<flow>/<name>.png`.
+🧪 Saves `<output>/<flow>_<name>.png`, named as [the other files](#what-is-kept).
 
 <!-- generated: keys takeScreenshot -->
 | Key | Takes | |
@@ -709,8 +712,8 @@ fails. Without a path it has the flow's name.
 <!-- end -->
 
 ```yaml
-- startRecording                      # <output>/<flow>/<flow>.mp4
-- startRecording: login               # <output>/<flow>/login.mp4
+- startRecording                      # <output>/<flow>.mp4
+- startRecording: login               # <output>/<flow>_login.mp4
 - startRecording: { path: login }     # the same
 - stopRecording
 ```
@@ -721,13 +724,14 @@ fails. Without a path it has the flow's name.
 
 | Where | | Saved as |
 |---|---|---|
-| Flow header | `record: true` | `<output>/<flow>/<flow>.mp4` |
-| | `record: name`, or an absolute path | `<output>/<flow>/name.mp4`, or that path |
+| Flow header | `record: true` | `<output>/<flow>.mp4` |
+| | `record: name`, or an absolute path | `<output>/<flow>_name.mp4`, or that path |
 | | `record: false` | Not recorded, whatever the suite says |
-| Suite | `record: true` | `<output>/<flow>/<flow>.mp4` |
+| Suite | `record: true` | `<output>/<flow>.mp4` |
 | | and `recordFolder: videos`, relative to the suite | `videos/<flow>.mp4` |
 
-Each try of a flow has its own, such as `<flow>_retry1.mp4`. One recording at a time: with one in
+Each try of a flow has its own, such as `<flow>_retry1.mp4`. Those of a try that passed are removed,
+unless [`keep`](#what-is-kept) says otherwise. One recording at a time: with one in
 the header, another needs `stopRecording` first. At most 30 minutes, or 3 before Android 11 or so;
 the rest isn't recorded. Without sound, and small on purpose: 480 pixels on the short side, 0.6 Mbps,
 which is under 5 MB a minute. The device encodes it as it records.
@@ -1114,7 +1118,10 @@ flows:
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
 | `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
-| `recordFolder` | folder | Where the videos go; needs `record: true` (default: each flow's, in `output`) |
+| `recordFolder` | folder | Where the videos go; needs `record: true` (default: `output`) |
+| `keep` | `failed`, `all`, `none` | As `--keep`, which wins: the files of the attempts that failed, of all, or none, see [What is kept](#what-is-kept) (default: `failed`) |
+| `artifacts` | a name or a list | As `--artifacts`, which wins: the kinds of file written, of `video`, `screenshot`, `logcat`, `screen`, `requests`, see [What is kept](#what-is-kept) (default: all) |
+| `name-template` | a template | As `--name-template`, which wins: how the files are named in `output`, see [What is kept](#what-is-kept) (default: `{flow}_{attempt}_{kind}.{ext}`) |
 <!-- end -->
 
 #### A flow of a suite
@@ -1442,7 +1449,7 @@ rayo test --results out.txt --results junit.xml all.rayo.yaml
 | `.json` | For a program |
 | `.xml` | JUnit, for a CI, see [Report](#report) |
 
-`--failures-only` leaves out the flows that passed, but counts them; not from JUnit.
+`--failures-only` leaves out the flows that passed, but counts them; not from JUnit. Which files stay is [`keep`](#what-is-kept)'s.
 
 In a `.txt`, a line that begins with an outcome is a flow: `grep -E '^(FAIL|NOT_RUN)' results.txt`. What
 follows is about it: `  key: value`, or `  key:` and lines with four spaces. `TOTAL` is the last line.
@@ -1553,7 +1560,7 @@ Each of `failures`:
 | `calls` | list | The last 5 to the mock |
 | `screen` | list | The elements on it |
 | `crash` | text | The app crashed or hung during the flow: what the device log says |
-| `saved` | text | The folder with the rest, see [Failures](#failures) |
+| `saved` | text | The first file of the rest, which are named alike, see [Failures](#failures) |
 <!-- end -->
 
 ```
@@ -1688,15 +1695,32 @@ or, without a suite, `rayo test -e 'MAESTRO_FILENAME=${rayo.file}' flows/`.
 
 ### Failures
 
-Saved in `<output>/<flow>/`, or `<flow>_2` for a second one with that name; the tries after the
-first in `<flow>_retry1` and so on. Those of an earlier run are removed when the flow runs again.
+Saved in `<output>`, next to `failed.json`, named after the flow and the try: `<flow>_failure.jpg`,
+and `<flow>_retry1_failure.jpg` for the second try; `<flow>_2_...` for a second flow with that name.
+Those of an earlier run are removed when the flow runs again. `saved` is the first of them.
 
-| File | |
-|---|---|
-| `failure.jpg` | The screen, small: 480 pixels on the short side |
-| `screen.txt` | The elements on it, as `rayo hierarchy` shows them |
-| `logcat.txt` | The end of the device log |
-| `requests.txt` | Every call the app made to the [mock](#mock), with its body; `requests.json`, a list like `calls`, if the results are also written to a `.json`. The last five are printed |
+| File | Kind | |
+|---|---|---|
+| `failure.jpg` | `screenshot` | The screen, small: 480 pixels on the short side |
+| `screen.txt` | `screen` | The elements on it, as `rayo hierarchy` shows them |
+| `logcat.txt` | `logcat` | The end of the device log |
+| `requests.txt` | `requests` | Every call the app made to the [mock](#mock), with its body; `requests.json`, a list like `calls`, if the results are also written to a `.json`. The last five are printed |
+
+### What is kept
+
+Three settings, each an option of `rayo test` and a key of a [suite](#suites) with the same name;
+the option wins.
+
+| | Takes | |
+|---|---|---|
+| `keep` | `failed` (default), `all`, `none` | `failed`: the files of a try that passed are removed, also its videos and screenshots. A try that failed keeps its own, even if a retry then passes. `none` writes none. `failed.json` and the [results](#results) are always written |
+| `artifacts` | `video`, `screenshot`, `logcat`, `screen`, `requests` (default all) | The kinds of file written; `screenshot` is also that of `takeScreenshot` |
+| `name-template` | `{flow}`, `{attempt}`, `{kind}` and `{ext}` (default `{flow}_{attempt}_{kind}.{ext}`) | How the files are named in `<output>`. `{attempt}` is empty for the first try, then `retry1`..., `{kind}` is `failure`, `screen`, `logcat`, `requests`, a screenshot's name, and empty for the flow's video; the `_` or `-` around what is empty goes. A `/` makes folders, and a part of the path left without a name takes the try's |
+
+```
+rayo test --keep all --artifacts video,screenshot all.rayo.yaml
+rayo test --name-template '{flow}_{attempt}/{kind}.{ext}' all.rayo.yaml   # a folder for each try: pay/failure.jpg, pay/pay.mp4, pay_retry1/...
+```
 
 | Exit code | |
 |---|---|

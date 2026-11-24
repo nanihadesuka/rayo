@@ -53,7 +53,7 @@ appId: a.b
   at: a.yaml:3
   screen:
     a screen
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 [3/9] FAIL b  # s
   why: times: not a whole number: "many"
   cause: test
@@ -61,7 +61,7 @@ appId: a.b
   at: b.yaml:3
   screen:
     a screen
-  saved: .rayo/b
+  saved: .rayo/b_failure.png
 [4/9] FAIL c  # s
   why: direction: not one of UP, DOWN, LEFT, RIGHT: "nowhere"
   cause: test
@@ -69,7 +69,7 @@ appId: a.b
   at: c.yaml:3
   screen:
     a screen
-  saved: .rayo/c
+  saved: .rayo/c_failure.png
 [5/9] FAIL d  # s
   why: points: not a location: "x"
   cause: test
@@ -77,7 +77,7 @@ appId: a.b
   at: d.yaml:3
   screen:
     a screen
-  saved: .rayo/d
+  saved: .rayo/d_failure.png
 [6/9] FAIL e  # s
   why: optional: not one of true, false: "maybe"
   cause: test
@@ -85,7 +85,7 @@ appId: a.b
   at: e.yaml:3
   screen:
     a screen
-  saved: .rayo/e
+  saved: .rayo/e_failure.png
 [7/9] FAIL f  # s
   why: platform: not one of Android, iOS, Web: "Windows"
   cause: test
@@ -93,7 +93,7 @@ appId: a.b
   at: f.yaml:3
   screen:
     a screen
-  saved: .rayo/f
+  saved: .rayo/f_failure.png
 [8/9] FAIL g  # s
   why: permissions: camera: not one of allow, deny, unset: "alow"
   cause: test
@@ -101,7 +101,7 @@ appId: a.b
   at: g.yaml:3
   screen:
     a screen
-  saved: .rayo/g
+  saved: .rayo/g_failure.png
 [9/9] FAIL h  # s
   why: index: not a whole number: "one"
   cause: test
@@ -109,7 +109,7 @@ appId: a.b
   at: h.yaml:3
   screen:
     a screen
-  saved: .rayo/h
+  saved: .rayo/h_failure.png
 
 PASS good  # s
 FAIL a  # s
@@ -168,41 +168,41 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 the log
--- file .rayo/a/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
--- file .rayo/b/failure.png --
+-- file .rayo/b_failure.png --
 PNG...
--- file .rayo/b/logcat.txt --
+-- file .rayo/b_logcat.txt --
 the log
--- file .rayo/b/screen.txt --
+-- file .rayo/b_screen.txt --
 a screen
--- file .rayo/c/failure.png --
+-- file .rayo/c_failure.png --
 PNG...
--- file .rayo/c/logcat.txt --
+-- file .rayo/c_logcat.txt --
 the log
--- file .rayo/c/screen.txt --
+-- file .rayo/c_screen.txt --
 a screen
--- file .rayo/d/failure.png --
+-- file .rayo/d_failure.png --
 PNG...
--- file .rayo/d/logcat.txt --
+-- file .rayo/d_logcat.txt --
 the log
--- file .rayo/d/screen.txt --
+-- file .rayo/d_screen.txt --
 a screen
--- file .rayo/e/failure.png --
+-- file .rayo/e_failure.png --
 PNG...
--- file .rayo/e/logcat.txt --
+-- file .rayo/e_logcat.txt --
 the log
--- file .rayo/e/screen.txt --
+-- file .rayo/e_screen.txt --
 a screen
--- file .rayo/f/failure.png --
+-- file .rayo/f_failure.png --
 PNG...
--- file .rayo/f/logcat.txt --
+-- file .rayo/f_logcat.txt --
 the log
--- file .rayo/f/screen.txt --
+-- file .rayo/f_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {
@@ -215,15 +215,15 @@ a screen
   "<dir>/g.yaml": "FAIL",
   "<dir>/h.yaml": "FAIL"
 }
--- file .rayo/g/failure.png --
+-- file .rayo/g_failure.png --
 PNG...
--- file .rayo/g/logcat.txt --
+-- file .rayo/g_logcat.txt --
 the log
--- file .rayo/g/screen.txt --
+-- file .rayo/g_screen.txt --
 a screen
--- file .rayo/h/failure.png --
+-- file .rayo/h_failure.png --
 PNG...
--- file .rayo/h/logcat.txt --
+-- file .rayo/h_logcat.txt --
 the log
--- file .rayo/h/screen.txt --
+-- file .rayo/h_screen.txt --
 a screen

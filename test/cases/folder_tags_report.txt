@@ -34,13 +34,13 @@ emulator-5554, ready in # ms
 
 [2/2] c
   ✗ this & that  # ms
-  saved in dbg/c
+  saved dbg/c_failure.png, dbg/c_screen.txt, dbg/c_logcat.txt
 [2/2] FAIL c  # s
   why: not on screen: missing
   cause: test
   step: this & that
   at: flows/c/flow.yaml:4
-  saved: dbg/c
+  saved: dbg/c_failure.png
 
 PASS First one  # s
 FAIL c  # s
@@ -59,11 +59,11 @@ tree {"timeout":5000}
 adb exec:logcat -d -t 2000
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file dbg/c/failure.png --
+-- file dbg/c_failure.png --
 PNG...
--- file dbg/c/logcat.txt --
+-- file dbg/c_logcat.txt --
 the log
--- file dbg/c/screen.txt --
+-- file dbg/c_screen.txt --
 a screen
 -- file dbg/failed.json --
 {
@@ -74,6 +74,6 @@ a screen
 <testsuite name="rayo" tests="2" failures="1" errors="0" skipped="0" time="#">
   <testcase name="First one" file="flows/a.yaml" time="#"></testcase>
   <testcase name="c" file="flows/c/flow.yaml" time="#">
-    <failure>  why: not on screen: missing&#xA;  cause: test&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  screen:&#xA;    a screen&#xA;  saved: dbg/c&#xA;</failure>
+    <failure>  why: not on screen: missing&#xA;  cause: test&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  screen:&#xA;    a screen&#xA;  saved: dbg/c_failure.png&#xA;</failure>
   </testcase>
 </testsuite>

@@ -41,6 +41,8 @@ type Options struct {
 	Hosts         []string       // with a proxy, those to open; empty for the default
 	Matching      mock.Settings  // how a capture becomes mocks; what isn't set is the saved capture's, or the default
 	Unmocked      *mock.Unmocked // calls without a mock that don't fail a flow, besides its own; nil for none
+	NameTemplate  string         // of the files of an attempt; empty for DefaultTemplate
+	Artifacts     []string       // the kinds of file written; nil for all
 }
 
 // Networks are the ways calls reach the mock.
@@ -69,7 +71,8 @@ type Runner struct {
 	// Of the flow running now.
 	flow       *Flow
 	began      time.Time
-	folder     string // for failures and screenshots
+	attempt    Attempt  // where its files go
+	files      []string // it wrote
 	script     *script
 	recent     []string // the last steps that passed
 	failure    *Failure
@@ -88,11 +91,11 @@ func NewRunner(d *adb.Device, a *agent.Agent, reporter Reporter, o Options) *Run
 		backend: newBackend(d, o), room: &room{device: d}}
 }
 
-// Run runs a flow and puts back what it changed, also when the context is cancelled. Failures and
-// screenshots go to the folder.
-func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
+// Run runs a flow and puts back what it changed, also when the context is cancelled. Failures,
+// screenshots and videos are named after the attempt.
+func (r *Runner) Run(ctx context.Context, f *Flow, a Attempt) Result {
 	start := time.Now()
-	r.prepare(ctx, f, folder)
+	r.prepare(ctx, f, a)
 	err := r.withEnv(f, func() error { return r.run(ctx, f) })
 	if e := r.saveCapture(); e != nil {
 		err = errors.Join(err, e)
@@ -106,7 +109,7 @@ func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
 		}
 		r.diagnose(err, r.log)
 	}
-	return Result{Flow: f, Err: err, Elapsed: time.Since(start), Failure: r.failure, Warnings: r.warnings, Recordings: r.recordings}
+	return Result{Flow: f, Err: err, Elapsed: time.Since(start), Failure: r.failure, Warnings: r.warnings, Recordings: r.recordings, Files: r.files}
 }
 
 // withEnv sets -e, and then the flow's header for what -e doesn't set.
@@ -129,12 +132,12 @@ func (r *Runner) withEnv(f *Flow, fn func() error) error {
 }
 
 // prepare forgets the flow before.
-func (r *Runner) prepare(ctx context.Context, f *Flow, folder string) {
-	r.flow, r.began, r.folder = f, time.Now(), folder
-	r.recent, r.failure, r.warnings, r.recordings = nil, nil, nil, nil
+func (r *Runner) prepare(ctx context.Context, f *Flow, a Attempt) {
+	r.flow, r.began, r.attempt = f, time.Now(), a
+	r.recent, r.failure, r.warnings, r.recordings, r.files = nil, nil, nil, nil, nil
 	r.log, r.located, r.airplane = "", false, ""
-	for _, name := range evidenceFiles { // of an earlier run
-		_ = os.Remove(filepath.Join(folder, name))
+	for _, e := range evidence { // of an earlier run
+		_ = os.Remove(r.named(e.name, e.ext))
 	}
 	r.backend.unmocked = f.Unmocked.Merge(r.Unmocked)
 	r.backend.proxy = r.Network == Proxy || r.Network == "" && f.Network == Proxy // again in begin, if ${...}
@@ -363,7 +366,6 @@ func filledIn(n *yaml.Node, check func(p *reader, n *yaml.Node) error) error {
 
 // evidence saves what can be known of a failure. What can't be saved is reported, as it isn't the failure.
 func (r *Runner) evidence(ctx context.Context) {
-	dir := r.folder
 	r.failure = &Failure{Before: r.recent}
 	if r.backend.mock != nil {
 		calls := r.backend.mock.Calls()
@@ -372,46 +374,56 @@ func (r *Runner) evidence(ctx context.Context) {
 			r.failure.Calls[i].Body = "" // long, or private; those of a mock are in the requests file
 		}
 	}
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		r.reporter.Note(1, fmt.Sprintf("couldn't save the failure: %v", err))
-		return
-	}
-	save := func(name string, data []byte, err error) {
+	var saved []string
+	save := func(kind, name, ext string, data []byte, err error) {
+		if !r.wants(kind) {
+			return
+		}
+		path := r.named(name, ext)
 		if err == nil {
-			err = os.WriteFile(filepath.Join(dir, name), data, 0o644)
+			err = os.MkdirAll(filepath.Dir(path), 0o755)
+		}
+		if err == nil {
+			err = os.WriteFile(path, data, 0o644)
 		}
 		if err != nil {
-			r.reporter.Note(1, fmt.Sprintf("couldn't save %s: %v", name, err))
+			r.reporter.Note(1, fmt.Sprintf("couldn't save %s: %v", filepath.ToSlash(path), err))
+			return
 		}
+		r.wrote(path)
+		saved = append(saved, filepath.ToSlash(path))
 	}
 	png, err := r.screenshot()
 	if small, e := shrink(png); err == nil && e == nil {
-		save("failure.jpg", small, nil)
+		save(Screenshot, "failure", "jpg", small, nil)
 	} else { // as it is, if it can't be read
-		save("failure.png", png, err)
+		save(Screenshot, "failure", "png", png, err)
 	}
 	if r.agent.Dead() == nil {
 		a, err := r.agent.Do(ctx, "tree", nil, 5*time.Second)
-		save("screen.txt", []byte(a.Out), err)
+		save(Screen, "screen", "txt", []byte(a.Out), err)
 		r.failure.Screen = a.Out
 	}
 	log, err := r.device.Exec("logcat -d -t 2000")
-	save("logcat.txt", log, err)
+	save(Logcat, "logcat", "txt", log, err)
 	r.log = string(log)
 	r.failure.Crash = r.crash(string(log))
-	r.failure.Saved = filepath.ToSlash(dir)
 	if r.backend.mock != nil {
-		name := "requests.txt"
+		ext := "txt"
 		if r.JSON {
-			name = "requests.json"
+			ext = "json"
 		}
 		data, err := r.backend.calls(r.reporter, r.JSON)
-		save(name, data, err)
+		save(Requests, "requests", ext, data, err)
 	}
-	r.reporter.Note(1, "saved in "+dir)
+	if len(saved) > 0 {
+		r.failure.Saved = saved[0]
+		r.reporter.Note(1, "saved "+strings.Join(saved, ", "))
+	}
 }
 
-var evidenceFiles = []string{"failure.jpg", "failure.png", "screen.txt", "logcat.txt", "requests.txt", "requests.json"}
+// evidence is what a failure may save, by the name and the extension of each.
+var evidence = []struct{ name, ext string }{{"failure", "jpg"}, {"failure", "png"}, {"screen", "txt"}, {"logcat", "txt"}, {"requests", "txt"}, {"requests", "json"}}
 
 // FolderName is a flow's, for what is saved of it.
 func FolderName(name string) string { return unsafe.ReplaceAllString(name, "_") }

@@ -50,7 +50,7 @@ appId: a.b
     <time> GET /a -> 200
   screen:
     a screen
-  saved: e2e/results/b
+  saved: e2e/results/b_failure.png
   try: 2
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
@@ -67,10 +67,10 @@ appId: a.b
     <time> GET /a -> 200
   screen:
     a screen
-  saved: e2e/results/b_retry1
+  saved: e2e/results/b_retry1_failure.png
 [2/3] PASS a  # s
 [3/3] PASS c  # s  (failed once, then passed)
-  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c
+  try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c_failure.png
 
 FAIL b  # s  (failed 2 times)
 PASS a  # s
@@ -113,39 +113,39 @@ adb exec:date '+%m-%d %H:%M:%S'
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 tap {"delay":100,"repeat":1,"sel":{"id":"flaky 1"},"timeout":15000}
 bye {"timeout":5000}
--- file e2e/results/b/failure.png --
+-- file e2e/results/b_failure.png --
 PNG...
--- file e2e/results/b/logcat.txt --
+-- file e2e/results/b_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file e2e/results/b/requests.txt --
+-- file e2e/results/b_requests.txt --
 <time> GET /a -> 200
--- file e2e/results/b/screen.txt --
-a screen
--- file e2e/results/b_retry1/failure.png --
+-- file e2e/results/b_retry1_failure.png --
 PNG...
--- file e2e/results/b_retry1/logcat.txt --
+-- file e2e/results/b_retry1_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file e2e/results/b_retry1/requests.txt --
+-- file e2e/results/b_retry1_requests.txt --
 <time> GET /a -> 200
--- file e2e/results/b_retry1/screen.txt --
+-- file e2e/results/b_retry1_screen.txt --
 a screen
--- file e2e/results/c/failure.png --
+-- file e2e/results/b_screen.txt --
+a screen
+-- file e2e/results/c_failure.png --
 PNG...
--- file e2e/results/c/logcat.txt --
+-- file e2e/results/c_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file e2e/results/c/screen.txt --
+-- file e2e/results/c_screen.txt --
 a screen
 -- file e2e/results/failed.json --
 {
@@ -155,10 +155,10 @@ a screen
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="rayo" tests="3" failures="1" errors="0" skipped="0" time="#">
   <testcase name="b" file="e2e/b/flow.yaml" time="#">
-    <failure>  try: 1&#xA;  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b&#xA;  try: 2&#xA;  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b_retry1&#xA;</failure>
+    <failure>  try: 1&#xA;  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b_failure.png&#xA;  try: 2&#xA;  why: not on screen: home&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/b_retry1_failure.png&#xA;</failure>
   </testcase>
   <testcase name="a" file="e2e/a/flow.yaml" time="#"></testcase>
   <testcase name="c" file="e2e/c/flow.yaml" time="#">
-    <system-out>PASS c  # s  (failed once, then passed)&#xA;  try: 1&#xA;  why: flaked&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn flaky 1&#xA;  at: e2e/c/flow.yaml:3&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/c&#xA;</system-out>
+    <system-out>PASS c  # s  (failed once, then passed)&#xA;  try: 1&#xA;  why: flaked&#xA;  cause: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn flaky 1&#xA;  at: e2e/c/flow.yaml:3&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  screen:&#xA;    a screen&#xA;  saved: e2e/results/c_failure.png&#xA;</system-out>
   </testcase>
 </testsuite>

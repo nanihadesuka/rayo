@@ -65,7 +65,7 @@ type Failure struct {
 	Calls   []mock.Call `json:"calls" about:"The last 5 to the mock"`
 	Screen  []string    `json:"screen" about:"The elements on it"`
 	Crash   string      `json:"crash" about:"The app crashed or hung during the flow: what the device log says"`
-	Saved   string      `json:"saved" about:"The folder with the rest, see [Failures](#failures)"`
+	Saved   string      `json:"saved" about:"The first file of the rest, which are named alike, see [Failures](#failures)"`
 }
 
 type jsonStep struct {

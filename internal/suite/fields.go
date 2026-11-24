@@ -283,8 +283,37 @@ var Fields = []schema.Field[Suite]{
 	{Name: "results", Takes: "a file or a list", About: "As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit)",
 		Schema: func() schema.S { f := schema.Pattern(`\.(txt|json|xml)$`); return schema.AnyOf(f, schema.List(f)) }(), Read: readResults},
 	schema.FlagField("record", "A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow)", func(s *Suite) *bool { return &s.Record }).Optional("`false`"),
-	schema.TextField("recordFolder", "folder", "Where the videos go; needs `record: true`", func(s *Suite) *string { return &s.RecordFolder }).Optional("each flow's, in `output`"),
+	schema.TextField("recordFolder", "folder", "Where the videos go; needs `record: true`", func(s *Suite) *string { return &s.RecordFolder }).Optional("`output`"),
+	choiceField("keep", "As `--keep`, which wins: the files of the attempts that failed, of all, or none, see [What is kept](#what-is-kept)", func(s *Suite) *string { return &s.Keep }, KeepFailed, KeepAll, KeepNone).Optional("`failed`"),
+	{Name: "artifacts", Takes: "a name or a list", About: "As `--artifacts`, which wins: the kinds of file written, of `" + strings.Join(flow.Artifacts, "`, `") + "`, see [What is kept](#what-is-kept)",
+		Schema: schema.AnyOf(schema.Enum(anys(flow.Artifacts)...), schema.List(schema.Enum(anys(flow.Artifacts)...))), Default: "all", Read: func(s *Suite, n *yaml.Node) (err error) {
+			if s.Artifacts, err = readNames(n); err != nil {
+				return err
+			}
+			if err := flow.CheckArtifacts(s.Artifacts); err != nil {
+				return &schema.Error{Line: n.Line, What: err.Error()}
+			}
+			return nil
+		}},
+	{Name: "name-template", Takes: "a template", About: "As `--name-template`, which wins: how the files are named in `output`, see [What is kept](#what-is-kept)",
+		Schema: schema.Type("string"), Default: "`" + flow.DefaultTemplate + "`", Read: func(s *Suite, n *yaml.Node) error {
+			if n.Kind != yaml.ScalarNode {
+				return errors.New("takes a template")
+			}
+			if err := flow.CheckTemplate(n.Value); err != nil {
+				return &schema.Error{Line: n.Line, What: err.Error()}
+			}
+			s.NameTemplate = n.Value
+			return nil
+		}},
 }
+
+// What keep takes.
+const (
+	KeepFailed = "failed"
+	KeepAll    = "all"
+	KeepNone   = "none"
+)
 
 // Schema is a suite's JSON Schema.
 func Schema() []byte { return schema.Of(Fields).File("A rayo suite, *.rayo.yaml", nil) }

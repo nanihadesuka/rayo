@@ -1,0 +1,12 @@
+-- a name template that would give two files one name --
+-- args --
+test a.yaml --name-template {flow}.{ext}
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+1
+-- stderr --
+error: --name-template needs {flow}, {attempt}, {kind} and {ext}, so that no two files have one name, not "{flow}.{ext}"

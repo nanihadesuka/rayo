@@ -43,16 +43,13 @@ type video struct {
 	to   string // and here
 }
 
-// recordingPath is where a video goes: the default has the name of the flow's folder, which no other flow has.
+// recordingPath is where a video goes: the default has the attempt's name, which no other has.
 func (r *Runner) recordingPath(path string) string {
-	name := filepath.Base(r.folder)
-	if path != "" {
-		name = strings.TrimSuffix(filepath.FromSlash(path), ".mp4")
-	}
+	name := strings.TrimSuffix(filepath.FromSlash(path), ".mp4")
 	if filepath.IsAbs(name) {
 		return name + ".mp4"
 	}
-	return filepath.Join(r.folder, name+".mp4")
+	return r.named(filepath.ToSlash(name), "mp4")
 }
 
 // smallSize is the shell that makes the short side of the video 480, as it is only to see what happened:
@@ -115,6 +112,9 @@ func (r *Runner) stopRecording() error {
 	if len(data) < 100 { // not a video, but what went wrong
 		return fmt.Errorf("the device recorded nothing: %s", strings.TrimSpace(string(said)+string(data)))
 	}
+	if !r.wants(Video) {
+		return nil
+	}
 	if err := os.MkdirAll(filepath.Dir(v.to), 0o755); err != nil {
 		return err
 	}
@@ -122,6 +122,7 @@ func (r *Runner) stopRecording() error {
 		return err
 	}
 	r.recordings = append(r.recordings, filepath.ToSlash(v.to))
+	r.wrote(v.to)
 	return nil
 }
 

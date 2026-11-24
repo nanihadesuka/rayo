@@ -30,7 +30,7 @@ appId: a.b
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 [2/4] FAIL b  # s
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
@@ -41,7 +41,7 @@ appId: a.b
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/b
+  saved: .rayo/b_failure.png
 [3/4] FAIL c  # s
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
@@ -52,7 +52,7 @@ appId: a.b
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/c
+  saved: .rayo/c_failure.png
 [4/4] NOT_RUN d  (app: 3 flows in a row, the app crashed: java.lang.IllegalStateException: oops)
 
 FAIL a  # s
@@ -88,35 +88,35 @@ adb exec:logcat -d -t 2000
 adb exec:date '+%m-%d %H:%M:%S'
 adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
 bye {"timeout":5000}
--- file .rayo/a/failure.png --
+-- file .rayo/a_failure.png --
 PNG...
--- file .rayo/a/logcat.txt --
+-- file .rayo/a_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file .rayo/a/screen.txt --
+-- file .rayo/a_screen.txt --
 a screen
--- file .rayo/b/failure.png --
+-- file .rayo/b_failure.png --
 PNG...
--- file .rayo/b/logcat.txt --
+-- file .rayo/b_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file .rayo/b/screen.txt --
+-- file .rayo/b_screen.txt --
 a screen
--- file .rayo/c/failure.png --
+-- file .rayo/c_failure.png --
 PNG...
--- file .rayo/c/logcat.txt --
+-- file .rayo/c_logcat.txt --
 11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
 11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
--- file .rayo/c/screen.txt --
+-- file .rayo/c_screen.txt --
 a screen
 -- file .rayo/failed.json --
 {
@@ -141,7 +141,7 @@ FAIL a  # s
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/a
+  saved: .rayo/a_failure.png
 FAIL b  # s
   file: b.yaml
   why: not on screen: home
@@ -153,7 +153,7 @@ FAIL b  # s
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/b
+  saved: .rayo/b_failure.png
 FAIL c  # s
   file: c.yaml
   why: not on screen: home
@@ -165,7 +165,7 @@ FAIL c  # s
     java.lang.IllegalStateException: oops
   screen:
     a screen
-  saved: .rayo/c
+  saved: .rayo/c_failure.png
 NOT_RUN d  (app: 3 flows in a row, the app crashed: java.lang.IllegalStateException: oops)
   file: d.yaml
 
