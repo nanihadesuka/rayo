@@ -109,7 +109,13 @@ func changedFiles(ref string) (map[string]bool, error) {
 			}
 			return nil, fmt.Errorf("--since needs git: %w", err)
 		}
-		return strings.Fields(strings.TrimSpace(string(out))), nil
+		var lines []string
+		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+			if line = strings.TrimSpace(line); line != "" {
+				lines = append(lines, line)
+			}
+		}
+		return lines, nil
 	}
 	root, err := git("rev-parse", "--show-toplevel")
 	if err != nil {
@@ -118,7 +124,7 @@ func changedFiles(ref string) (map[string]bool, error) {
 	if len(root) == 0 {
 		return nil, errors.New("--since needs a git repository")
 	}
-	top := strings.Join(root, " ")
+	top := filepath.FromSlash(root[0])
 	diff, err := git("-C", top, "diff", "--name-only", ref)
 	if err != nil {
 		return nil, err
@@ -134,8 +140,13 @@ func changedFiles(ref string) (map[string]bool, error) {
 	return files, nil
 }
 
-// pathKey is a path as files are told apart: on Windows, whatever the case.
+// pathKey is a path as files are told apart: through links and, on Windows, short names, whatever the case.
 func pathKey(path string) string {
+	if real, err := filepath.EvalSymlinks(path); err == nil {
+		path = real
+	} else if dir, err := filepath.EvalSymlinks(filepath.Dir(path)); err == nil {
+		path = filepath.Join(dir, filepath.Base(path))
+	}
 	path = filepath.ToSlash(path)
 	if runtime.GOOS == "windows" {
 		path = strings.ToLower(path)
