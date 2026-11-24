@@ -13,8 +13,14 @@ Android only. One portable executable. Flows in YAML.</p>
 <a href="https://github.com/nanihadesuka/rayo/releases/latest/download/rayo-macos-arm64.tar.gz"><img src="https://img.shields.io/badge/download-macOS%20Apple%20silicon-555555" alt="Download for macOS Apple silicon"></a><br>
 <sub>Others (arm64 Windows and Linux, Intel Macs) are in the <a href="https://github.com/nanihadesuka/rayo/releases/latest">release</a>.</sub></p>
 
-<p align="center"><a href="LICENSE">MIT License</a> © 2026 <a href="https://github.com/nanihadesuka">Sergio Nettleton</a><br>
-<a href="https://nanihadesuka.github.io/rayo/">Documentation</a> · <a href="https://github.com/nanihadesuka/rayo/releases/latest">Download</a></p>
+<p align="center"><a href="LICENSE">MIT License</a> © 2026 <a href="https://github.com/nanihadesuka">Sergio Nettleton</a></p>
+
+<br>
+
+<p align="center"><a href="https://nanihadesuka.github.io/rayo/"><img src="https://img.shields.io/badge/Documentation-nanihadesuka.github.io%2Frayo-F5B800?style=for-the-badge" alt="Documentation" height="40"></a><br>
+<sub>Get started, every command, mocking, suites and results, with search.</sub></p>
+
+<br>
 
 ```yaml
 appId: com.example.app
@@ -117,4 +123,6 @@ device: { size: 1080x2400, dpi: 420, darkMode: true }
 
 ## More
 
-[Guide](GUIDE.md) · [What's new](https://github.com/nanihadesuka/rayo/releases/latest) · [Full example](EXAMPLE.md) · [Reference](REFERENCE.md) · [Mocking](MOCKING.md) · [Working on rayo](CONTRIBUTING.md)
+**[📖 Documentation](https://nanihadesuka.github.io/rayo/)**, the easiest way to read all of it, with search.
+
+Or here: [Guide](GUIDE.md) · [What's new](https://github.com/nanihadesuka/rayo/releases/latest) · [Full example](EXAMPLE.md) · [Reference](REFERENCE.md) · [Mocking](MOCKING.md) · [Working on rayo](CONTRIBUTING.md)
