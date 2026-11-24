@@ -104,22 +104,41 @@ See [Suites](REFERENCE.md#suites), [Retries](REFERENCE.md#retries) and [Results]
 
 ## When a test fails
 
-It says why, where, what came before, and what was on screen:
+It says what went wrong first, then whose fault it is, where, what came before, and what on screen
+looked most like what it wanted:
 
 ```
 [2/3] FAIL pay  9.1 s  (failed 2 times)
+  pay failed at tapOn pay_button: not on screen
   why: not on screen: pay_button
   blame: test
   step: tapOn pay_button
   at: tests/pay.yaml:12
-  screen:
-    id: cart
-  saved: .rayo/pay_failure.jpg
+  before:
+    inputText 4242 4242 4242 4242
+  nearest:
+    id: com.example.app:id/pay | text: Pay  [40,2100][1040,2220]
+  saved: .rayo/pay
 ```
 
-Next to it, `pay_screen.txt`, `pay_logcat.txt` and `pay_requests.txt`: the elements, the device log
-and the calls to the backend. Those of the tries that passed aren't kept, see [What is kept](REFERENCE.md#what-is-kept).
-`rayo test --rerun-failed` runs only what failed.
+Here `nearest` shows the button's id is `pay`, not `pay_button`: fix the test.
+
+`blame` says whose fault it is: the `test`, the `app` (it crashed or hung) or the `device`. If the
+app or the device keeps failing, rayo stops early, so you don't wait for every test to fail the same way.
+
+In `saved`, the screen, `pay_screen.txt`, `pay_logcat.txt` and `pay_requests.txt`: what was on
+screen, the device log and the calls to the backend. Those of the tries that passed aren't kept, see [What is kept](REFERENCE.md#what-is-kept).
+
+Later, to see again why it failed, without running anything:
+
+```
+rayo explain
+```
+
+Then `rayo test --rerun-failed` runs only what failed.
+
+A test that fails and then passes on a retry is `FLAKY`. It doesn't fail the run unless you add
+`--flaky-fails-build`, but it is shown, so you can fix it. See [Flaky flows](REFERENCE.md#flaky-flows).
 
 # How do I...
 
@@ -255,16 +274,59 @@ device: { size: 720x1600, dpi: 280, fontScale: 1.3, darkMode: true }
 rayo test --only login,pay all.suite.yaml
 rayo test --include-tags smoke tests
 rayo test --rerun-failed all.suite.yaml
+rayo test --changed-only all.suite.yaml
+rayo test --since origin/main all.suite.yaml
+```
+
+`--changed-only` runs only the tests that changed since the last commit, also changes not committed
+yet. A test counts as changed if its own file, a flow it runs with `runFlow`, or one of its mocks
+changed. `--since` compares with any branch or commit instead: in a pull request, `--since origin/main`.
+
+To see which tests would run, without a device:
+
+```
+rayo check --changed-only all.suite.yaml
 ```
 
 ## Run in a CI
 
-Any CI with an emulator. The exit code isn't 0 if a test fails, and `.xml` results are JUnit:
+Any CI with an emulator. `.xml` results are JUnit, and `.md` a short summary for a pull request:
 
 ```
 rayo check all.suite.yaml
-rayo test --emulator --results junit.xml all.suite.yaml
+rayo test --emulator --results junit.xml --results summary.md all.suite.yaml
 ```
+
+The exit code says what happened, so the CI can tell a broken test from a broken emulator:
+
+| Code | |
+|---|---|
+| `0` | Everything passed |
+| `1` | A test failed |
+| `2` | Something written is wrong: a flow, a suite, a mock or an option. Nothing ran |
+| `3` | No device, or it stopped working |
+| `4` | Everything passed, some only on a retry, with `--flaky-fails-build` |
+
+## Use rayo from a script or an AI agent
+
+Add `--format json` to any command, and read its [schema](REFERENCE.md#for-a-program) with
+`rayo schema`. `rayo help agents` explains the cheapest way to work: check first, run one flow,
+read the cause.
+
+```
+rayo check --format json all.suite.yaml
+rayo test --format ndjson --detail brief --only pay all.suite.yaml
+rayo explain --format json
+```
+
+## Find one element on a busy screen
+
+```
+rayo hierarchy --find "Pay now"
+```
+
+Shows only the elements that look most like the text, the closest first, with how to refer to them.
+In a [live session](REFERENCE.md#live-sessions), `rayo do --screen --find "Pay now" '- tapOn: Pay now'` does the same after a step.
 
 ## Complete and check in my editor
 

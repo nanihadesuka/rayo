@@ -30,13 +30,28 @@ mock: mock
 ```
 $ rayo test --emulator all.suite.yaml
 [1/3] PASS book  18.2 s
-[2/3] PASS scan  41.0 s  (failed once, then passed)
+[2/3] FLAKY scan  41.0 s  (failed once, then passed)
   try 1: scan.yaml:12: tapOn scan: not on screen: scan  (test)  .results/scan
 [3/3] FAIL pay  9.1 s  (failed 2 times)
   ...
 
-TOTAL 3: 2 passed, 1 failed, 2 retried  68.3 s
+TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s
 ```
+
+## New in 2.0
+
+- **`rayo explain`** tells you why the last run failed, in a few lines, without running anything again.
+- **Flaky is its own result.** A test that failed and then passed on a retry is `FLAKY`, not `PASS`, so you
+  see it. Add `--flaky-fails-build` to make it fail CI.
+- **Run only what you changed.** `--changed-only` runs the tests whose files changed since the last commit:
+  the test, a flow it runs, or one of its mocks. `--since origin/main` compares with a branch instead.
+- **`--find <text>`** on `rayo hierarchy` shows only the elements that look like that text, not the whole screen.
+- **Made for scripts, CI and AI agents.** `--format json` on every command, and [exit codes](REFERENCE.md#exit-codes)
+  that say what went wrong: `1` a test failed, `2` something written is wrong, `3` no usable device,
+  `4` only flaky tests. `rayo help agents` is the quickest way to learn to drive rayo.
+- **Clearer failures.** Each one says whose fault it is: the **test**, the **app** (it crashed) or the **device**.
+- **Suites are named.** A suite is a `*.suite.yaml` file and runs only when you give it; a folder runs the tests in it.
+- `rayo check` shows which tests would run, in which order, before you use a device.
 
 ## Why
 
@@ -53,8 +68,11 @@ TOTAL 3: 2 passed, 1 failed, 2 retried  68.3 s
 - **Pretend location and trips.** [`setLocation`](REFERENCE.md#setlocation) puts the device anywhere;
   [`travel`](REFERENCE.md#travel) moves it along a route at a real speed. For any app, without changing it.
 - **[Live](REFERENCE.md#live-sessions).** Write a test while it runs, by hand or from another program.
-- **[Honest results](REFERENCE.md#results)** as text, JSON or JUnit: why, where, the screen, the calls and the crash.
-- **[Retries](REFERENCE.md#retries)**, and it [stops early](REFERENCE.md#blame) if the device or the app is what fails.
+- **[Honest results](REFERENCE.md#results)** as text, JSON, JUnit or Markdown: why, where, the screen, the calls,
+  the crash, and whose fault it is. [`rayo explain`](REFERENCE.md#explain) repeats it later.
+- **[Retries](REFERENCE.md#retries)**, with [flaky](REFERENCE.md#flaky-flows) tests shown as such, and it
+  [stops early](REFERENCE.md#blame) if the device or the app is what fails.
+- **[For programs](REFERENCE.md#for-a-program).** JSON output and clear exit codes, for CI, scripts and AI agents.
 - **And** QR for the camera, permissions, airplane mode, screen size and font, scripts, tags,
   random order, [schemas](schema) for your editor.
 
@@ -72,12 +90,16 @@ Or build it, with Go: `bash build.sh`.
 |---|---|
 | `rayo hierarchy` | What is on screen, and how to refer to it |
 | `rayo test flow.yaml` | Run a flow, a folder or a suite |
-| `rayo check flow.yaml` | Find mistakes, without a device |
+| `rayo hierarchy --find Pay` | Only the elements that look like "Pay" |
+| `rayo check flow.yaml` | Find mistakes, and see what would run, without a device |
+| `rayo test --changed-only all.suite.yaml` | Run only the tests you changed |
+| `rayo explain` | Why the last run failed |
 | `rayo live new.yaml --app com.example.app` | Write a test while it runs |
 | `rayo do '- tapOn: Save'` | The same, from another program |
 | `rayo test --capture mock flow.yaml` | Make mocks from the real backend |
 | `rayo test --capture-update mock flow.yaml` | What changed in the backend since; `rayo mocks apply mock` takes it |
 | `rayo mocks import flows.har mock` | Make mocks of mitmproxy's, a browser's or Charles' calls |
+| `rayo help agents` | How a script or an AI agent should use rayo |
 | `rayo help` | Everything else |
 
 ## Mocking needs an interceptor
@@ -89,8 +111,8 @@ debug build trusts. Everything else works with any app as it is.
 
 ## Many tests
 
-A suite, `*.suite.yaml`, says what runs together and how. All but `flows` is optional. A folder
-is the flows directly in it; a suite runs only when its file is given.
+A suite is a file named `*.suite.yaml`. It says which tests run together and how; only `flows` is
+required. Give its file to run it. Give a folder instead, and the tests directly in it run.
 
 ```yaml
 flows:

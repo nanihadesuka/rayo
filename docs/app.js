@@ -26,15 +26,19 @@ const pages = [
     R('Flow file', 'The file'), R('Header', 'The header'), R('Common options', 'Options of every command'), R('Values'), R('Selectors', 'Finding elements'),
     R('Conditions', 'Selector keys'), R('Relations'), R('when', 'Conditions: when and while'), R('Variables'), R('Expressions', 'Expressions: ${…}'), R('JavaScript API'), R('Tags')] },
   { id: 'mocking', title: 'Mocking', about: 'Answer as the backend, or capture what the real one says.', all: 'MOCKING.md',
-    sections: [R('Mock', 'In a flow'), R('Mock files', 'What a mapping can say'), R('Capture', 'Capture the real backend')] },
+    sections: [R('Mock', 'In a flow'), R('Mock files', 'What a mapping can say'), R('Capture', 'Capture the real backend'), R('GraphQL'), R('Updating mocks')] },
   { id: 'suites', title: 'Suites and devices', about: 'Many tests together: retries, videos, and how the device is.', sections: [
-    R('Suites', 'A suite'), R('A flow of a suite'), R('The app of a suite'), R('What goes where'), R('Retries'), R('Recording a whole flow', 'Videos'), R('Device setup'), R('Clean state')] },
-  { id: 'results', title: 'Results', about: 'How a run went: on the screen, as text, JSON or JUnit.', sections: [
-    R('Results', 'What comes out'), R('Outcomes'), R('Causes', 'Causes, and when it stops'), R('Failures', 'What is saved of a failure'), R('Report', 'JUnit')] },
+    R('Suites', 'A suite'), R('A flow of a suite'), R('Mocks of a suite'), R('Calls not worth mocking'), R("Capturing a suite's flow"), R('The app of a suite'), R('What goes where'),
+    R('Retries'), R('Flaky flows'), R('Recording a whole flow', 'Videos'), R('Device setup'), R('Clean state')] },
+  { id: 'results', title: 'Results', about: 'How a run went, why a test failed, and whose fault it was.', sections: [
+    R('Results', 'What comes out'), R('Outcomes'), R('Blame', 'Whose fault, and when it stops'), R('Explain', 'Why it failed, later'), R('Failures', 'What is saved of a failure'),
+    R('What is kept'), R('A template of your own', 'Results of your own'), R('Report', 'JUnit')] },
+  { id: 'programs', title: 'CI, scripts and agents', about: 'JSON output, exit codes and events, for anything that reads rayo.', sections: [
+    R('For a program'), R('Exit codes'), R('Errors'), R('Events')] },
   { id: 'live', title: 'Live sessions', about: 'Write a test while it runs, by hand or from another program.', sections: [
     R('Live sessions', 'A session'), R('Live commands', 'Commands'), R('From other programs')] },
   { id: 'cli', title: 'Command line', about: 'Every option, and what it needs around it.', sections: [
-    R('Options'), R('Continuous mode'), R('Profile'), R('Environment'), R('Schemas', 'Schemas for editors')] },
+    R('Options'), R('Continuous mode'), R('Profile'), R('Timings'), R('Environment'), R('Schemas', 'Schemas for editors')] },
   { id: 'help', title: 'Help', about: 'What it can’t do, how long it waits, and how it is made.', sections: [
     R('Limitations'), R('Default times'), { file: 'CONTRIBUTING.md', title: 'Working on rayo' }] },
 ]
@@ -284,7 +288,10 @@ function home() {
       feature(place('REFERENCE.md', 'setlocation'), 'Location and trips', 'Put the device anywhere, or move it along a route'),
       feature('#/suites', 'Suites', 'Many tests together, with retries and screen sizes'),
       feature('#/suites/recording-a-whole-flow', 'Videos', 'A small one of each test, or of some steps'),
-      feature('#/results', 'Honest results', 'Why, where, the screen, the calls and the crash'),
+      feature('#/results', 'Honest results', 'Why, where, whose fault, the screen and the calls. rayo explain says it again later'),
+      feature(place('REFERENCE.md', 'flaky-flows'), 'Flaky, not hidden', 'A test that only passed on a retry is shown as flaky'),
+      feature('#/programs', 'CI and AI agents', 'JSON output and exit codes that say what went wrong'),
+      feature(place('GUIDE.md', 'run-only-some-tests') || '#/recipes', 'Run only what changed', '--changed-only runs the tests whose files or mocks changed'),
       feature('#/live', 'Live', 'Write a test while it runs'),
     ].join('')}</div>`
 }
