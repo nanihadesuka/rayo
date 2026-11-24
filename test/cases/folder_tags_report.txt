@@ -11,7 +11,7 @@ appId: a.b
 tags: [fast, slow]
 ---
 - tapOn: b
--- flows/c/flow.yaml --
+-- flows/c.yaml --
 appId: a.b
 tags: [fast]
 ---
@@ -40,7 +40,7 @@ emulator-5554, ready in # ms
   why: not on screen: missing
   cause: test
   step: this & that
-  at: flows/c/flow.yaml:4
+  at: flows/c.yaml:4
   saved: dbg/c_failure.png
 
 PASS First one  # s
@@ -68,13 +68,13 @@ the log
 a screen
 -- file dbg/failed.json --
 {
-  "<dir>/flows/c/flow.yaml": "FAIL"
+  "<dir>/flows/c.yaml": "FAIL"
 }
 -- file out.xml --
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="rayo" tests="2" failures="1" errors="0" skipped="0" time="#">
   <testcase name="First one" file="flows/a.yaml" time="#"></testcase>
-  <testcase name="c" file="flows/c/flow.yaml" time="#">
-    <failure>  c failed at this &amp; that: not on screen&#xA;  why: not on screen: missing&#xA;  cause: test&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  saved: dbg/c_failure.png&#xA;</failure>
+  <testcase name="c" file="flows/c.yaml" time="#">
+    <failure>  c failed at this &amp; that: not on screen&#xA;  why: not on screen: missing&#xA;  cause: test&#xA;  step: this &amp; that&#xA;  at: flows/c.yaml:4&#xA;  saved: dbg/c_failure.png&#xA;</failure>
   </testcase>
 </testsuite>

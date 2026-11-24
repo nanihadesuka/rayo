@@ -2,35 +2,24 @@
 check e2e
 -- e2e/all.suite.yaml --
 name: Everything
-output: results
-results: results/results.txt
 flows:
-  - b/flow.yaml
-  - a/flow.yaml
-  - c/flow.yaml
--- e2e/a/flow.yaml --
+  - b.yaml
+-- e2e/a.yaml --
 appId: a.b
 ---
 - back
--- e2e/b/flow.yaml --
+-- e2e/b.yaml --
 appId: a.b
-mock: mock.json
 ---
-- tapOn: { id: GET /a }
-- camera: none
-- runFlow: ../shared/sub.yaml
--- e2e/b/mock.json --
-{"request":{"urlPath":"/a"},"response":{"body":"ok"}}
+- runFlow: shared/sub.yaml
 -- e2e/shared/sub.yaml --
 appId: a.b
 ---
 - tapOn: { id: app crashes }
--- e2e/c/flow.yaml --
-appId: a.b
----
-- tapOn: { id: flaky 1 }
 ==== out ====
 -- exit --
 0
 -- stdout --
-3 flows are fine
+2 flows are fine
+-- stderr --
+skipped e2e/all.suite.yaml (a suite; name it to run it)

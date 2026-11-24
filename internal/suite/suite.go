@@ -5,7 +5,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,25 +31,26 @@ func renamed(path string) error {
 	return fmt.Errorf("%s: suites are now *%s, rename it: %s -> %s", filepath.ToSlash(path), suiteEnd, name, strings.TrimSuffix(name, oldEnd)+suiteEnd)
 }
 
-// inFolder is what a folder means: its suite, if it holds one, else its flows. A file with the
-// old name of a suite fails, saying the rename.
-func inFolder(folder string) (suites, flows []string, err error) {
-	err = filepath.WalkDir(folder, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return err
-		}
-		ext := filepath.Ext(path)
+// inFolder is what a folder means: the flows directly in it. Its subfolders hold what flows share,
+// so they are left out, and a suite in it runs only when its file is given: it is skipped, saying so.
+func inFolder(folder string) (flows []string, err error) {
+	entries, err := os.ReadDir(folder)
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range entries {
+		path, ext := filepath.Join(folder, d.Name()), filepath.Ext(d.Name())
 		switch {
+		case d.IsDir():
 		case strings.HasSuffix(path, oldEnd):
-			return renamed(path)
+			fmt.Fprintf(os.Stderr, "skipped %s (a suite; rename it to %s)\n", filepath.ToSlash(path), strings.TrimSuffix(d.Name(), oldEnd)+suiteEnd)
 		case IsSuite(path):
-			suites = append(suites, path)
+			fmt.Fprintf(os.Stderr, "skipped %s (a suite; name it to run it)\n", filepath.ToSlash(path))
 		case (ext == ".yaml" || ext == ".yml") && d.Name() != "config.yaml":
 			flows = append(flows, path)
 		}
-		return nil
-	})
-	return suites, flows, err
+	}
+	return flows, nil
 }
 
 // Suite is a file that says which flows run together. Its paths are relative to it.
@@ -234,21 +234,12 @@ func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 			return nil, nil, renamed(p)
 		}
 		if info.IsDir() {
-			suites, inside, err := inFolder(p)
+			inside, err := inFolder(p)
 			if err != nil {
 				return nil, nil, err
 			}
-			switch {
-			case len(suites) > 1:
-				for i := range suites {
-					suites[i] = filepath.ToSlash(suites[i])
-				}
-				return nil, nil, fmt.Errorf("%s holds %d suites, give one: %s", filepath.ToSlash(p), len(suites), strings.Join(suites, ", "))
-			case len(suites) == 0:
-				files = append(files, inside...)
-				continue
-			}
-			p = suites[0]
+			files = append(files, inside...)
+			continue
 		}
 		if IsSuite(p) {
 			if s != nil {

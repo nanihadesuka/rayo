@@ -504,7 +504,7 @@ func helpOn(name string) (string, error) {
 		return "A flow begins with a header, then ---, then a list of commands. The header:\n\n" + flow.HeaderHelp() +
 			"\nCommands: " + strings.Join(flow.Commands(), ", ") + "\n", nil
 	case "suite":
-		return "A suite, *.suite.yaml, lists flows that run together. A folder means its suite, if it holds one, else its flows:\n\n" + schema.Help(suite.Fields) + "\nflows, when not only a file:\n\n" + schema.Help(suite.FlowFields) +
+		return "A suite, *.suite.yaml, lists flows that run together. A folder is the flows directly in it; a suite runs only when its file is given:\n\n" + schema.Help(suite.Fields) + "\nflows, when not only a file:\n\n" + schema.Help(suite.FlowFields) +
 			"\nunmocked:\n\n" + schema.Help(suite.UnmockedFields) + "\nan ignored call, when not text:\n\n" + schema.Help(suite.IgnoredFields) +
 			"\ncapture:\n\n" + schema.Help(suite.CaptureFields) +
 			"\napp:\n\n" + schema.Help(suite.AppFields) + "\ndevice:\n\n" + schema.Help(suite.DeviceFields), nil

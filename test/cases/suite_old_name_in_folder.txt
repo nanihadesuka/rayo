@@ -8,6 +8,8 @@ appId: a.b
 - back
 ==== out ====
 -- exit --
-2
+0
+-- stdout --
+1 flows are fine
 -- stderr --
-error: e2e/staging.rayo.yaml: suites are now *.suite.yaml, rename it: staging.rayo.yaml -> staging.suite.yaml
+skipped e2e/staging.rayo.yaml (a suite; rename it to staging.suite.yaml)

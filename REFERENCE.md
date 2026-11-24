@@ -1290,12 +1290,14 @@ Shared steps and permissions belong in each flow, so that it can be read and run
 unless the same flow also runs without them, see [Mocks of a suite](#mocks-of-a-suite). The
 device is chosen as always: use `--emulator` if the flows must never run on a real one.
 
-`rayo check` takes suites too. A folder given to `rayo test` or `rayo check` means its suite, if
-anywhere in it there is one: the suite's flows run, the others in the folder don't. A folder
-without a suite means all its flows, and one with several suites fails, naming them, so give one.
+`rayo check` takes suites too. A folder is the flows directly in it; a suite runs only when its
+file is given. Subfolders are left out, as they hold what flows share: sub-flows for `runFlow`,
+mocks and the like; give several folders to run the flows of each. A suite in a given folder is
+skipped, saying so on stderr: `skipped e2e/all.suite.yaml (a suite; name it to run it)`.
 
-A file ending in `.rayo.yaml`, the name suites had before, is no longer read: it fails, saying the
-rename, such as `staging.rayo.yaml -> staging.suite.yaml`.
+A file ending in `.rayo.yaml`, the name suites had before, is no longer read: given, it fails,
+saying the rename, such as `staging.rayo.yaml -> staging.suite.yaml`; in a folder, it is skipped,
+saying the same.
 
 ### Device setup
 
