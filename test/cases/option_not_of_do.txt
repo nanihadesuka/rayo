@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: --emulator is not an option of do
+error: --emulator is not an option of do, but of hierarchy, live, test; see rayo help do

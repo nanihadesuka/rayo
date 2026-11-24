@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: --serve is not an option of test
+error: --serve is not an option of test, but of live; see rayo help test

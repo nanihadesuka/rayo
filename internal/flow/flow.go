@@ -356,6 +356,37 @@ func short(n *yaml.Node) string {
 	return strings.Join(parts, ", ")
 }
 
+// Records says whether the flow, or one it runs, makes a video: with record in its header, or startRecording.
+func (f *Flow) Records() bool {
+	seen := map[string]bool{}
+	var of func(f *Flow) bool
+	var walk func(steps []*Step) bool
+	walk = func(steps []*Step) bool {
+		for _, s := range steps {
+			if s.Kind == "startRecording" || walk(s.Sub) {
+				return true
+			}
+			if file := keyFile.of(s.Value); file != "" {
+				path := relative(s.Path, file)
+				if !seen[path] {
+					seen[path] = true
+					if included, err := Load(path); err == nil && of(included) {
+						return true
+					}
+				}
+			}
+		}
+		return false
+	}
+	of = func(f *Flow) bool {
+		if f.Recording != nil && f.Recording.On {
+			return true
+		}
+		return walk(f.OnStart) || walk(f.Steps) || walk(f.OnComplete)
+	}
+	return of(f)
+}
+
 // Files are those that can change how the flow goes: itself, what it includes and its mocks.
 func (f *Flow) Files() []string {
 	var files []string

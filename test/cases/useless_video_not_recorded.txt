@@ -1,0 +1,11 @@
+-- args --
+test --artifacts video,screenshot a.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: artifacts has video, but no flow is recorded: set record: true in the suite, record: true in a flow, or use startRecording; see rayo help suite

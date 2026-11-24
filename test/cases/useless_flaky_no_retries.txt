@@ -1,0 +1,11 @@
+-- args --
+test --retries 0 --flaky-fails-build a.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --flaky-fails-build with --retries 0: without a retry no flow can be flaky

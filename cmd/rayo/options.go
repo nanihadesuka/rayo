@@ -14,6 +14,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/flow"
 	"github.com/nanihadesuka/rayo/internal/mock"
 	"github.com/nanihadesuka/rayo/internal/report"
+	"github.com/nanihadesuka/rayo/internal/schema"
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
@@ -440,22 +441,29 @@ func (p option) help() string {
 
 // find is the option with a name as written, if the command takes it.
 func find(command, written string) (option, error) {
-	known := false
+	var takenBy, own []string // the commands that take it; the options of this command
 	for _, s := range sections {
 		for _, p := range s.options {
+			if slices.Contains(s.commands, command) {
+				own = append(own, "--"+p.name)
+			}
 			if written != "--"+p.name && (p.short == "" || written != "-"+p.short) {
 				continue
 			}
 			if slices.Contains(s.commands, command) {
 				return p, nil
 			}
-			known = true
+			takenBy = append(takenBy, s.commands...)
 		}
 	}
-	if known {
-		return option{}, fmt.Errorf("%s is not an option of %s", written, command)
+	slices.Sort(takenBy)
+	if takenBy = slices.Compact(takenBy); len(takenBy) > 0 {
+		return option{}, fmt.Errorf("%s is not an option of %s, but of %s; see rayo help %s", written, command, strings.Join(takenBy, ", "), command)
 	}
-	return option{}, fmt.Errorf("unknown option %s", written)
+	if near := schema.Nearest(written, own); near != "" && strings.HasPrefix(written, "--") {
+		return option{}, fmt.Errorf("unknown option %s, did you mean %s? See rayo help %s", written, near, command)
+	}
+	return option{}, fmt.Errorf("unknown option %s; see rayo help %s", written, command)
 }
 
 func parse(command string, args []string) (*options, error) {

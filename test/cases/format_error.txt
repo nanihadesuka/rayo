@@ -13,7 +13,7 @@ test --format json --bogus a.yaml
       "file": "",
       "line": 0,
       "step": "",
-      "message": "unknown option --bogus",
+      "message": "unknown option --bogus; see rayo help test",
       "expected": "",
       "nearest": "",
       "fix": ""

@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: --retries is not an option of live
+error: --retries is not an option of live, but of test; see rayo help live

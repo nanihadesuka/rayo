@@ -1998,8 +1998,13 @@ the option wins.
 | `artifacts` | `video`, `screenshot`, `logcat`, `screen`, `requests` (default all) | The kinds of file written; `screenshot` is also that of `takeScreenshot` |
 | `name-template` | `{flow}`, `{attempt}`, `{kind}` and `{ext}` (default `{flow}_{attempt}_{kind}.{ext}`) | How the files are named in `<output>`. `{attempt}` is empty for the first try, then `retry1`..., `{kind}` is `failure`, `screen`, `logcat`, `requests`, a screenshot's name, and empty for the flow's video; the `_` or `-` around what is empty goes. A `/` makes folders, and a part of the path left without a name takes the try's |
 
+What would change nothing is an error, before the run, and `rayo check` says the same of a suite:
+`video` when no flow is recorded (`record: true` in the suite or the flow, or `startRecording`),
+`artifacts` or `name-template` with `keep: none`. So are `--flaky-fails-build` with `--retries 0`,
+and `--hosts` when no flow goes through the proxy.
+
 ```
-rayo test --keep all --artifacts video,screenshot all.rayo.yaml
+rayo test --keep all --artifacts video,screenshot all.rayo.yaml        # with record: true in the suite
 rayo test --name-template '{flow}_{attempt}/{kind}.{ext}' all.rayo.yaml   # a folder for each try: pay/failure.jpg, pay/pay.mp4, pay_retry1/...
 ```
 

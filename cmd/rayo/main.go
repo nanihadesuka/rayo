@@ -156,6 +156,16 @@ func check(args []string) error {
 	if err != nil {
 		return err
 	}
+	if group != nil { // what the suite asks for that would do nothing, as rayo test says it
+		o.keep, o.runner.Artifacts, o.runner.NameTemplate = group.Keep, group.Artifacts, group.NameTemplate
+		o.runner.Recording = &flow.Recording{On: group.Record}
+		if err := o.checkKept(); err != nil {
+			return err
+		}
+		if err := o.checkUseful(flows); err != nil {
+			return err
+		}
+	}
 	list := plan(flows, group)
 	if printing != report.Human {
 		return emit(report.Check{SchemaVersion: report.SchemaVersion, OK: true, Count: len(flows), Flows: list})
@@ -274,7 +284,11 @@ func test(ctx context.Context, args []string) (err error) {
 	o.into("")
 	o.detail = cmp.Or(o.detail, flow.Normal)
 	o.runner.Detail, o.runner.Window = o.detail, time.Duration(o.window)*time.Second
-	if o.keep = cmp.Or(o.keep, suite.KeepFailed); o.keep == suite.KeepNone {
+	o.keep = cmp.Or(o.keep, suite.KeepFailed)
+	if err := o.checkKept(); err != nil {
+		return err
+	}
+	if o.keep == suite.KeepNone {
 		o.runner.Artifacts = []string{}
 	}
 	flows, err := o.choose(all)
@@ -289,6 +303,9 @@ func test(ctx context.Context, args []string) (err error) {
 		return err
 	}
 	if err := o.checkCapture(flows); err != nil {
+		return err
+	}
+	if err := o.checkUseful(flows); err != nil {
 		return err
 	}
 	d, err := adb.Pick(o.device, o.emulator)

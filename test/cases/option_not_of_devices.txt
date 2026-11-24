@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: unknown option -v
+error: unknown option -v; see rayo help devices

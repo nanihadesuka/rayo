@@ -130,6 +130,10 @@ func Read[T any](fields []Field[T], t *T, n *yaml.Node) error {
 		key, v := n.Content[i], n.Content[i+1]
 		at := slices.IndexFunc(fields, func(f Field[T]) bool { return f.Name == key.Value })
 		if at < 0 {
+			all := strings.Split(names(fields), ", ")
+			if near := Nearest(key.Value, all); near != "" {
+				return &Error{key.Line, fmt.Sprintf("unknown key %q, did you mean %s? (it takes %s)", key.Value, near, names(fields)), names(fields)}
+			}
 			return &Error{key.Line, fmt.Sprintf("unknown key %q (it takes %s)", key.Value, names(fields)), names(fields)}
 		}
 		if slices.Contains(seen, key.Value) {

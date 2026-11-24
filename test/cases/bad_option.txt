@@ -4,4 +4,4 @@ test --nope flow.yaml
 -- exit --
 2
 -- stderr --
-error: unknown option --nope
+error: unknown option --nope; see rayo help test

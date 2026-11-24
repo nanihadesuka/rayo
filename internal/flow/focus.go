@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/nanihadesuka/rayo/internal/mock"
+	"github.com/nanihadesuka/rayo/internal/schema"
 )
 
 // What went wrong, in a word or two: the cause of a failure's verdict.
@@ -121,30 +122,8 @@ func likeness(a, b string) float64 {
 	if re, err := regexp.Compile("(?i)^(?:" + a + ")$"); err == nil && re.MatchString(b) { // a selector may be a regex
 		return 0.95
 	}
-	d := distance([]rune(a), []rune(b))
+	d := schema.Distance([]rune(a), []rune(b))
 	return 1 - float64(d)/float64(max(len([]rune(a)), len([]rune(b))))
-}
-
-// distance is Levenshtein's.
-func distance(a, b []rune) int {
-	row := make([]int, len(b)+1)
-	for j := range row {
-		row[j] = j
-	}
-	for i := 1; i <= len(a); i++ {
-		prev := row[0]
-		row[0] = i
-		for j := 1; j <= len(b); j++ {
-			cur := row[j]
-			cost := 1
-			if a[i-1] == b[j-1] {
-				cost = 0
-			}
-			row[j] = min(row[j]+1, row[j-1]+1, prev+cost)
-			prev = cur
-		}
-	}
-	return row[len(b)]
 }
 
 // errored says whether a call went wrong: not answered 2xx or 3xx, or without a mock.
