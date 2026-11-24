@@ -34,6 +34,7 @@ type Suite struct {
 	TimeoutScale float64           // 0 if not said
 	Env          map[string]string // for every flow; -e wins
 	Network      string            // for every flow that doesn't say; --network wins
+	Unmocked     *mock.Unmocked    // calls without a mock that don't fail any flow; nil for none
 
 	Path string
 }
@@ -46,11 +47,12 @@ const DefaultRetries = 1
 
 // entry is a flow of a suite: its file, or a mapping with what is only for it.
 type entry struct {
-	file    string
-	retries *int     // nil for the suite's
-	mock    []string // for the flow, if its header has none
-	network string   // for the flow, if its header doesn't say; else the suite's
-	line    int
+	file     string
+	retries  *int           // nil for the suite's
+	mock     []string       // for the flow, if its header has none
+	network  string         // for the flow, if its header doesn't say; else the suite's
+	unmocked *mock.Unmocked // added to the suite's, for the flow
+	line     int
 }
 
 // RetriesOf says how many times a flow may be tried again.
@@ -89,6 +91,7 @@ func (s *Suite) fill(flows []*flow.Flow) error {
 		if f.Network == "" {
 			f.Network = cmp.Or(e.network, s.Network)
 		}
+		f.Unmocked = s.Unmocked.Merge(e.unmocked)
 	}
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/nanihadesuka/rayo/internal/adb"
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/mock"
 	"github.com/nanihadesuka/rayo/internal/report"
 	"github.com/nanihadesuka/rayo/internal/schema"
 	"gopkg.in/yaml.v3"
@@ -37,6 +38,79 @@ var DeviceFields = []schema.Field[adb.Setup]{
 	}},
 }
 
+// IgnoredFields are those of a call of unmocked's ignore, when not written as --ignore-unmocked takes it.
+var IgnoredFields = []schema.Field[mock.Ignored]{
+	schema.TextField("host", "host", "Of the call, or of its subdomains", func(i *mock.Ignored) *string { return &i.Host }).Optional("any"),
+	schema.TextField("path", "a path", "Of the call, without the host; `*` is any text but `/`, `**` any", func(i *mock.Ignored) *string { return &i.Path }).Optional("any"),
+	{Name: "graphql", Takes: "a name or a list", About: "GraphQL operations", Default: "any call",
+		Schema: schema.AnyOf(schema.Type("string"), schema.List(schema.Type("string"))), Read: func(i *mock.Ignored, n *yaml.Node) (err error) {
+			i.GraphQL, err = readNames(n)
+			return err
+		}},
+}
+
+// UnmockedFields are those of unmocked.
+var UnmockedFields = []schema.Field[mock.Unmocked]{
+	{Name: "ignore", Takes: "a list", Required: true, About: "Calls that no mock answers but that don't fail the flow: each `graphql:Operation`, `host/path`, `host` or `/path`, as `--ignore-unmocked`, or a mapping with host, path and graphql, see [Calls not worth mocking](#calls-not-worth-mocking)",
+		Schema: schema.List(schema.AnyOf(schema.Type("string"), schema.Of(IgnoredFields))), Read: readIgnored},
+	schema.NumberField("status", "100 to 599", "What those calls are answered with", 100, 599, func(u *mock.Unmocked, v int) { u.Status = v }).Optional("404"),
+	schema.TextField("body", "text", "Of the answer", func(u *mock.Unmocked) *string { return &u.Body }).Optional("`not mocked: ` and the call"),
+}
+
+// unmockedField is the suite's unmocked, and that of one of its flows.
+func unmockedField[T any](to func(*T) **mock.Unmocked) schema.Field[T] {
+	return schema.Field[T]{Name: "unmocked", Takes: "a mapping", About: "Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking)",
+		Schema: schema.Of(UnmockedFields), Read: func(t *T, n *yaml.Node) error {
+			u := &mock.Unmocked{}
+			if err := schema.Read(UnmockedFields, u, n); err != nil {
+				return err
+			}
+			if err := u.Check(); err != nil {
+				return &schema.Error{Line: n.Line, What: err.Error()}
+			}
+			*to(t) = u
+			return nil
+		}}
+}
+
+func readIgnored(u *mock.Unmocked, n *yaml.Node) error {
+	if n.Kind != yaml.SequenceNode {
+		return &schema.Error{Line: n.Line, What: "takes a list of calls"}
+	}
+	for _, c := range n.Content {
+		if c.Kind == yaml.ScalarNode {
+			i, err := mock.ParseIgnored(c.Value)
+			if err != nil {
+				return &schema.Error{Line: c.Line, What: err.Error()}
+			}
+			u.Ignore = append(u.Ignore, i)
+			continue
+		}
+		var i mock.Ignored
+		if err := schema.Read(IgnoredFields, &i, c); err != nil {
+			return err
+		}
+		u.Ignore = append(u.Ignore, i)
+	}
+	return nil
+}
+
+// readNames reads a name or a list of them.
+func readNames(n *yaml.Node) ([]string, error) {
+	list := []*yaml.Node{n}
+	if n.Kind == yaml.SequenceNode {
+		list = n.Content
+	}
+	var names []string
+	for _, c := range list {
+		if c.Kind != yaml.ScalarNode || c.Value == "" {
+			return nil, &schema.Error{Line: c.Line, What: "takes a name, or a list of them"}
+		}
+		names = append(names, c.Value)
+	}
+	return names, nil
+}
+
 // FlowFields are those of a flow of the list that isn't only its file.
 var FlowFields = []schema.Field[entry]{
 	schema.TextField("file", "file", "The flow", func(e *entry) *string { return &e.file }).Needed(),
@@ -47,6 +121,7 @@ var FlowFields = []schema.Field[entry]{
 			return err
 		}},
 	networkField(func(e *entry) *string { return &e.network }).Optional("the suite's"),
+	unmockedField(func(e *entry) **mock.Unmocked { return &e.unmocked }).Optional("the suite's; its calls are added to them"),
 }
 
 // networkField is the suite's network, and that of one of its flows.
@@ -80,7 +155,7 @@ func readMocks(n *yaml.Node) ([]string, error) {
 // Fields are those of a suite.
 var Fields = []schema.Field[Suite]{
 	schema.TextField("name", "text", "Shown in the results", func(s *Suite) *string { return &s.Name }).Optional("the file"),
-	{Name: "flows", Takes: "a list", Required: true, About: "Files, run in this order; or mappings with file, retries, mock and network, see [below](#a-flow-of-a-suite)",
+	{Name: "flows", Takes: "a list", Required: true, About: "Files, run in this order; or mappings with file, retries, mock, network and unmocked, see [below](#a-flow-of-a-suite)",
 		Schema: schema.S{"type": "array", "minItems": 1, "items": schema.AnyOf(schema.Type("string"), schema.Of(FlowFields))}, Read: readFlows},
 	schema.NumberField("retries", "a number from 0", "How many times a flow that fails is tried again, see [Retries](#retries)", 0, 0, func(s *Suite, v int) { s.Retries = &v }).Optional(fmt.Sprint(DefaultRetries)),
 	{Name: "app", Takes: "a mapping", About: "Installed before the flows, see [below](#the-app-of-a-suite)", Schema: schema.Of(AppFields), Read: func(s *Suite, n *yaml.Node) error {
@@ -97,6 +172,7 @@ var Fields = []schema.Field[Suite]{
 	}},
 	schema.NumberField("timeoutScale", "0.1 to 10", "Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins", LowestScale, HighestScale, func(s *Suite, v float64) { s.TimeoutScale = v }).Optional("1"),
 	networkField(func(s *Suite) *string { return &s.Network }).Optional("each flow's, else `interceptor`"),
+	unmockedField(func(s *Suite) **mock.Unmocked { return &s.Unmocked }).Optional("none: each fails the flow"),
 	schema.TextField("output", "folder", "As `--output`, which wins", func(s *Suite) *string { return &s.Output }).Optional("`.rayo` where rayo runs"),
 	{Name: "results", Takes: "a file or a list", About: "As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit)",
 		Schema: func() schema.S { f := schema.Pattern(`\.(txt|json|xml)$`); return schema.AnyOf(f, schema.List(f)) }(), Read: readResults},

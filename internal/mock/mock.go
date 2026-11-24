@@ -24,15 +24,16 @@ import (
 type Mock struct {
 	server *http.Server
 
-	mu      sync.Mutex
-	rules   []*Rule
-	folders []string // with bodies, newest first
-	states  map[string]string
-	network Network
-	calls   []*Call
-	err     error
-	vm      *goja.Runtime
-	real    *real // nil unless capturing
+	mu       sync.Mutex
+	rules    []*Rule
+	folders  []string // with bodies, newest first
+	states   map[string]string
+	network  Network
+	calls    []*Call
+	err      error
+	vm       *goja.Runtime
+	real     *real     // nil unless capturing
+	unmocked *Unmocked // calls without a mock that are answered anyway; nil for none
 }
 
 // Network is how the connection to the backend behaves.
@@ -50,6 +51,7 @@ type Call struct {
 	URI, Body    string
 	Outcome      string
 	Unmocked     bool
+	Ignored      bool // not mocked, but answered as Unmocked says: it doesn't fail the flow
 	awaited      bool // already matched by an Await
 }
 

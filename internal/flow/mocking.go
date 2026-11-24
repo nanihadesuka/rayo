@@ -31,6 +31,8 @@ type backend struct {
 	hosts   []string // those the proxy opens; empty for the default
 	proxied *mock.Proxy
 	unset   func() error // puts the device's proxy back
+
+	unmocked *mock.Unmocked // of the flow that runs
 }
 
 func newBackend(d *adb.Device, o Options) *backend {
@@ -66,6 +68,8 @@ func (b *backend) start() (*mock.Mock, error) {
 	m := mock.New()
 	if b.capturing {
 		m.Forward(b.real, b.secrets, b.matching)
+	} else {
+		m.SetUnmocked(b.unmocked)
 	}
 	if b.proxy {
 		return b.startProxy(m)
@@ -123,6 +127,22 @@ func (r *Runner) noteProxy() {
 	}
 	for _, n := range r.backend.proxied.Notes() {
 		r.reporter.Note(1, n)
+	}
+}
+
+// noteIgnored says which calls had no mock but were let through, so that nothing is hidden.
+func (r *Runner) noteIgnored() {
+	if r.backend.mock == nil {
+		return
+	}
+	var list []string
+	for _, c := range r.backend.mock.Calls() {
+		if call := c.What(); c.Ignored && !slices.Contains(list, call) {
+			list = append(list, call)
+		}
+	}
+	if len(list) > 0 {
+		r.reporter.Note(1, fmt.Sprintf("ignored %d unmocked calls: %s", len(list), strings.Join(list, ", ")))
 	}
 }
 

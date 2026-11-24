@@ -241,6 +241,18 @@ var sections = []section{
 			o.runner.Network = v
 			return nil
 		}},
+		{name: "ignore-unmocked", value: "a,b", about: "calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any)", set: func(o *options, v string) error {
+			u := &mock.Unmocked{}
+			for _, part := range strings.Split(v, ",") {
+				i, err := mock.ParseIgnored(part)
+				if err != nil {
+					return fmt.Errorf("--ignore-unmocked: %w", err)
+				}
+				u.Ignore = append(u.Ignore, i)
+			}
+			o.runner.Unmocked = o.runner.Unmocked.Merge(u)
+			return nil
+		}},
 		list("hosts", "with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)", func(o *options) *[]string { return &o.runner.Hosts }),
 	}},
 	{[]string{cmdLive}, "", []option{

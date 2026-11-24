@@ -27,19 +27,20 @@ const (
 type Options struct {
 	Env           map[string]string // wins over the flow's
 	Profile       bool
-	Timings       bool          // a group's total, and a note while a step takes long
-	MockPort      int           // on the device
-	Recording     *Recording    // of flows that don't say; its path is a folder
-	JSON          bool          // the calls of a failure are saved so, and not as text
-	Capture       string        // folder for what the real backend answers; empty to use the mocks
-	Backend       string        // what a capture calls; empty when the path begins with the host
-	CaptureAppend bool          // the capture goes on from the one in its folder
-	CaptureUpdate string        // the mocks the capture is compared with; it is in their .update
-	CaptureCheck  bool          // a difference from them is a failure
-	Scale         float64       // of the default waits; 0 is 1. A step's own timeout isn't scaled
-	Network       string        // how calls reach the mock: interceptor or proxy; empty for the flow's
-	Hosts         []string      // with a proxy, those to open; empty for the default
-	Matching      mock.Settings // how a capture becomes mocks; what isn't set is the saved capture's, or the default
+	Timings       bool           // a group's total, and a note while a step takes long
+	MockPort      int            // on the device
+	Recording     *Recording     // of flows that don't say; its path is a folder
+	JSON          bool           // the calls of a failure are saved so, and not as text
+	Capture       string         // folder for what the real backend answers; empty to use the mocks
+	Backend       string         // what a capture calls; empty when the path begins with the host
+	CaptureAppend bool           // the capture goes on from the one in its folder
+	CaptureUpdate string         // the mocks the capture is compared with; it is in their .update
+	CaptureCheck  bool           // a difference from them is a failure
+	Scale         float64        // of the default waits; 0 is 1. A step's own timeout isn't scaled
+	Network       string         // how calls reach the mock: interceptor or proxy; empty for the flow's
+	Hosts         []string       // with a proxy, those to open; empty for the default
+	Matching      mock.Settings  // how a capture becomes mocks; what isn't set is the saved capture's, or the default
+	Unmocked      *mock.Unmocked // calls without a mock that don't fail a flow, besides its own; nil for none
 }
 
 // Networks are the ways calls reach the mock.
@@ -97,6 +98,7 @@ func (r *Runner) Run(ctx context.Context, f *Flow, folder string) Result {
 		err = errors.Join(err, e)
 	}
 	r.noteProxy()
+	r.noteIgnored()
 	r.reset()
 	if err != nil && ctx.Err() == nil {
 		if r.failure == nil {
@@ -134,6 +136,7 @@ func (r *Runner) prepare(ctx context.Context, f *Flow, folder string) {
 	for _, name := range evidenceFiles { // of an earlier run
 		_ = os.Remove(filepath.Join(folder, name))
 	}
+	r.backend.unmocked = f.Unmocked.Merge(r.Unmocked)
 	r.backend.proxy = r.Network == Proxy || r.Network == "" && f.Network == Proxy // again in begin, if ${...}
 	r.script = newScript(ctx, func(text string) { r.reporter.Note(2, text) })
 	// rayo.file is the flow's file name without its extension: -e or a suite's env may give it

@@ -69,7 +69,7 @@
       "type": "object"
     },
     "flows": {
-      "description": "Files, run in this order; or mappings with file, retries, mock and network (required)",
+      "description": "Files, run in this order; or mappings with file, retries, mock, network and unmocked (required)",
       "items": {
         "anyOf": [
           {
@@ -111,6 +111,77 @@
                 "description": "How many times it is tried again if it fails (default: the suite's)",
                 "minimum": 0,
                 "type": "integer"
+              },
+              "unmocked": {
+                "additionalProperties": false,
+                "description": "Calls without a mock that don't fail the flow (default: the suite's; its calls are added to them)",
+                "properties": {
+                  "body": {
+                    "description": "Of the answer (default: not mocked:  and the call)",
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean"
+                    ]
+                  },
+                  "ignore": {
+                    "description": "Calls that no mock answers but that don't fail the flow: each graphql:Operation, host/path, host or /path, as --ignore-unmocked, or a mapping with host, path and graphql (required)",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "graphql": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ],
+                              "description": "GraphQL operations (default: any call)"
+                            },
+                            "host": {
+                              "description": "Of the call, or of its subdomains (default: any)",
+                              "type": [
+                                "string",
+                                "number",
+                                "boolean"
+                              ]
+                            },
+                            "path": {
+                              "description": "Of the call, without the host; * is any text but /, ** any (default: any)",
+                              "type": [
+                                "string",
+                                "number",
+                                "boolean"
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  "status": {
+                    "description": "What those calls are answered with (default: 404)",
+                    "maximum": 599,
+                    "minimum": 100,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "ignore"
+                ],
+                "type": "object"
               }
             },
             "required": [
@@ -184,6 +255,77 @@
       "maximum": 10,
       "minimum": 0.1,
       "type": "number"
+    },
+    "unmocked": {
+      "additionalProperties": false,
+      "description": "Calls without a mock that don't fail the flow (default: none: each fails the flow)",
+      "properties": {
+        "body": {
+          "description": "Of the answer (default: not mocked:  and the call)",
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "ignore": {
+          "description": "Calls that no mock answers but that don't fail the flow: each graphql:Operation, host/path, host or /path, as --ignore-unmocked, or a mapping with host, path and graphql (required)",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "graphql": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ],
+                    "description": "GraphQL operations (default: any call)"
+                  },
+                  "host": {
+                    "description": "Of the call, or of its subdomains (default: any)",
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean"
+                    ]
+                  },
+                  "path": {
+                    "description": "Of the call, without the host; * is any text but /, ** any (default: any)",
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "status": {
+          "description": "What those calls are answered with (default: 404)",
+          "maximum": 599,
+          "minimum": 100,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ignore"
+      ],
+      "type": "object"
     }
   },
   "required": [

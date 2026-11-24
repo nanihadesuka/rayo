@@ -74,6 +74,7 @@ Options of test, live and mocks: how a capture or an import becomes mocks
 
 Options of test and live: how calls reach the mock
   --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
+  --ignore-unmocked <a,b>    calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any)
   --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)
 
 Options of live

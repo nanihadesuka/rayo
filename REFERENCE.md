@@ -105,6 +105,7 @@ Options of test, live and mocks: how a capture or an import becomes mocks
 
 Options of test and live: how calls reach the mock
   --network <way>            interceptor, the app sends them (default, or the flow's); proxy, the device's proxy does
+  --ignore-unmocked <a,b>    calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any)
   --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)
 
 Options of live
@@ -1101,13 +1102,14 @@ flows:
 | Key | Takes | |
 |---|---|---|
 | `name` | text | Shown in the results (default: the file) |
-| `flows` | a list | Files, run in this order; or mappings with file, retries, mock and network, see [below](#a-flow-of-a-suite) (required) |
+| `flows` | a list | Files, run in this order; or mappings with file, retries, mock, network and unmocked, see [below](#a-flow-of-a-suite) (required) |
 | `retries` | a number from 0 | How many times a flow that fails is tried again, see [Retries](#retries) (default: 1) |
 | `app` | a mapping | Installed before the flows, see [below](#the-app-of-a-suite) |
 | `device` | a mapping | How it is while the flows run, see [Device setup](#device-setup) |
 | `env` | values | Variables for every flow, as `-e`, which wins; they may use `${...}`, such as `${rayo.file}`, see [Variables](#variables) |
 | `timeoutScale` | 0.1 to 10 | Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins (default: 1) |
 | `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite) (default: each flow's, else `interceptor`) |
+| `unmocked` | a mapping | Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking) (default: none: each fails the flow) |
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json` or `.xml` (JUnit) |
 | `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
@@ -1123,6 +1125,7 @@ flows:
 | `retries` | a number from 0 | How many times it is tried again if it fails (default: the suite's) |
 | `mock` | a path or a list | Who answers as the backend, as a flow's `mock`, relative to the suite; the flow's own `mock` wins, see [Mocks of a suite](#mocks-of-a-suite) |
 | `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite) (default: the suite's) |
+| `unmocked` | a mapping | Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking) (default: the suite's; its calls are added to them) |
 <!-- end -->
 
 #### Mocks of a suite
@@ -1147,6 +1150,49 @@ flows:
 What wins, first to last: `--network`; the flow's own `mock` and `network`; its entry in the suite;
 the suite's `network`. A flow whose header has a `mock` runs on that one only, not on its entry's.
 The paths are checked when the suite is read, as a flow's are.
+
+#### Calls not worth mocking
+
+A call that no mock answers fails the flow. Some aren't worth recording: those the app makes on its
+own at startup, or one cancelled during the capture. `unmocked` lets them through, answered, in the
+suite for every flow or in a flow's entry, which adds its own; `--ignore-unmocked` adds more:
+
+```yaml
+unmocked:
+  ignore:
+    - host: guest-api.example.com
+      path: /api/v2/locations/favorites/dismiss
+    - graphql: [Geocode, ReverseGeocode]
+    - api.example.com/pings/**  # as --ignore-unmocked takes them
+  status: 200                   # what they are answered with (default 404)
+  body: "{}"
+```
+
+```sh
+rayo test --ignore-unmocked 'graphql:Geocode,api.example.com/pings/**' suite.rayo.yaml
+```
+
+Every other call without a mock still fails the flow. Those let through are said at the end of the
+flow, as `ignored 2 unmocked calls: ...`, so that nothing is hidden. They change nothing while
+capturing, as the real backend answers.
+
+<!-- generated: suite unmocked -->
+| Key | Takes | |
+|---|---|---|
+| `ignore` | a list | Calls that no mock answers but that don't fail the flow: each `graphql:Operation`, `host/path`, `host` or `/path`, as `--ignore-unmocked`, or a mapping with host, path and graphql, see [Calls not worth mocking](#calls-not-worth-mocking) (required) |
+| `status` | 100 to 599 | What those calls are answered with (default: 404) |
+| `body` | text | Of the answer (default: `not mocked: ` and the call) |
+<!-- end -->
+
+An ignored call, when a mapping:
+
+<!-- generated: suite ignored -->
+| Key | Takes | |
+|---|---|---|
+| `host` | host | Of the call, or of its subdomains (default: any) |
+| `path` | a path | Of the call, without the host; `*` is any text but `/`, `**` any (default: any) |
+| `graphql` | a name or a list | GraphQL operations (default: any call) |
+<!-- end -->
 
 #### The app of a suite
 

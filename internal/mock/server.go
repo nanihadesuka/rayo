@@ -2,6 +2,7 @@ package mock
 
 import (
 	"bytes"
+	"cmp"
 	"compress/flate"
 	"compress/gzip"
 	"compress/zlib"
@@ -201,6 +202,11 @@ func (m *Mock) answer(q *http.Request, body string) (a answer) {
 				asked = bare
 			}
 		}
+	}
+	if best == nil && m.unmocked.ignores(q, body) {
+		call.Outcome, call.Ignored = "not mocked, ignored", true
+		a.status, a.body = cmp.Or(m.unmocked.Status, 404), cmp.Or(m.unmocked.Body, "not mocked: "+q.Method+" "+call.URI)
+		return a
 	}
 	if best == nil {
 		call.Outcome, call.Unmocked = "not mocked", true

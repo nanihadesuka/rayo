@@ -67,6 +67,8 @@ func TestReferenceTables(t *testing.T) {
 	tables["suite flow"] = schema.Table(suite.FlowFields)
 	tables["suite app"] = schema.Table(suite.AppFields)
 	tables["device"] = schema.Table(suite.DeviceFields)
+	tables["suite unmocked"] = schema.Table(suite.UnmockedFields)
+	tables["suite ignored"] = schema.Table(suite.IgnoredFields)
 	used := map[string]bool{}
 	block := regexp.MustCompile("(?s)<!-- generated: (.+?) -->\n.*?<!-- end -->")
 	text := block.ReplaceAllStringFunc(unix(data), func(old string) string {

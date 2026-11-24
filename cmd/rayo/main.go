@@ -370,6 +370,7 @@ func helpOn(name string) (string, error) {
 			"\nCommands: " + strings.Join(flow.Commands(), ", ") + "\n", nil
 	case "suite":
 		return "A suite, *.rayo.yaml:\n\n" + schema.Help(suite.Fields) + "\nflows, when not only a file:\n\n" + schema.Help(suite.FlowFields) +
+			"\nunmocked:\n\n" + schema.Help(suite.UnmockedFields) + "\nan ignored call, when not text:\n\n" + schema.Help(suite.IgnoredFields) +
 			"\napp:\n\n" + schema.Help(suite.AppFields) + "\ndevice:\n\n" + schema.Help(suite.DeviceFields), nil
 	}
 	if text := helpOf(name); text != "" {
@@ -409,6 +410,7 @@ func helpJSON() (string, error) {
 	err := e.Encode(map[string]any{
 		"options": all, "flow": flow.Describe(), "header": flow.HeaderDocs(), "suite": schema.Docs(suite.Fields),
 		"suiteFlow": schema.Docs(suite.FlowFields), "app": schema.Docs(suite.AppFields), "device": schema.Docs(suite.DeviceFields),
+		"unmocked": schema.Docs(suite.UnmockedFields), "ignored": schema.Docs(suite.IgnoredFields),
 	})
 	return b.String(), err
 }

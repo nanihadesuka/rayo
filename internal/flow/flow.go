@@ -27,6 +27,7 @@ type Flow struct {
 	Mock        []*yaml.Node // paths
 	Network     string       // interceptor or proxy, or ${...} that gives one; empty if the flow doesn't say
 	NetworkLine int
+	Unmocked    *mock.Unmocked // calls without a mock that don't fail it, as its suite says; nil for none
 	Steps       []*Step
 	OnStart     []*Step
 	OnComplete  []*Step
