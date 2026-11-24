@@ -22,6 +22,7 @@ rayo - runs flows on Android, fast
   rayo version
 
 Topics, rayo help <topic>
+  agents                     start here: the fast, cheap way to use rayo
   write-a-flow               write a flow
   debug-a-flow               debug a failing flow
   record-mocks               record mocks from the real backend

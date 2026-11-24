@@ -13,6 +13,48 @@
 ## rayo help all
 
 ```
+## start here: the fast, cheap way to use rayo
+
+For anyone driving rayo, a person or a program. The cheapest step that answers the question first.
+
+Know before you run
+  rayo check <flows>, no device and instant: the plan, and every mistake. Fix all it says, then run.
+
+Run the smallest unit
+  One flow, not the suite: rayo test --only <name> --retries 0 --fail-fast <suite>.
+
+Read the cause, not the logs
+  A failure leads with its verdict, <flow> failed at <step>: <cause>, and a blame of test, app or
+  device. --detail brief is that alone; rayo explain says it again for the last run, without one.
+  Open the recordings, logcat or calls in --output only if the verdict isn't enough.
+
+A failure is information, not a reason to rerun (by its blame)
+  device: fix the environment; the same flow on a broken device only costs time.
+  app: a crash or a hang of the app, a finding to report.
+  test: the flow or the mocks are wrong; fix them. Retry only what a retry can change.
+
+Batch edits, then verify once
+  Make all the changes, rayo check --changed-only, run the narrowest unit, then
+  rayo test --rerun-failed.
+  Don't rerun flows that passed to be sure.
+
+Author forward
+  rayo live <flow>, then rayo do --screen --find <text> <command>: one command, see only the
+  elements that matter, go on from it.
+  rayo do .quit ends the session and frees the device.
+
+Stop after a pass
+
+Prefer structured output
+  When a program reads: --format json or ndjson, --detail brief, --show failed, --keep failed.
+
+What it costs, roughly
+  rayo check        instant, no device
+  one flow          seconds to minutes
+  a whole suite     many minutes
+  a capture         slow; it makes new ids, so diffs are noisy
+  rayo live         holds the device until it ends
+
 ## commands and options
 
 rayo - runs flows on Android, fast
@@ -33,6 +75,7 @@ rayo - runs flows on Android, fast
   rayo version
 
 Topics, rayo help <topic>
+  agents                     start here: the fast, cheap way to use rayo
   write-a-flow               write a flow
   debug-a-flow               debug a failing flow
   record-mocks               record mocks from the real backend
