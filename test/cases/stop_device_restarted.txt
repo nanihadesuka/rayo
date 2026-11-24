@@ -20,20 +20,18 @@ appId: a.b
 3
 -- stdout --
 [1/3] FAIL a  # s
+  a failed at tapOn missing: device error
   why: not on screen: missing
   cause: device, Android restarted during the flow
   step: tapOn missing
   at: a.yaml:3
-  screen:
-    a screen
   saved: .rayo/a_failure.png
 [2/3] FAIL b  # s
+  b failed at tapOn missing: device error
   why: not on screen: missing
   cause: device, Android restarted during the flow
   step: tapOn missing
   at: b.yaml:3
-  screen:
-    a screen
   saved: .rayo/b_failure.png
 [3/3] NOT_RUN c  (device: 2 failures in a row, the last: Android restarted during the flow)
 

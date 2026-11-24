@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/nanihadesuka/rayo/internal/adb"
 	"github.com/nanihadesuka/rayo/internal/agent"
@@ -168,19 +169,15 @@ func (b *backend) check() error {
 
 const fewCalls = 5
 
-// calls is every call, as text or JSON, and reports the last ones.
-func (b *backend) calls(reporter Reporter, asJSON bool) ([]byte, error) {
+// calls is every call since a time, as text or JSON.
+func (b *backend) calls(reporter Reporter, asJSON bool, since time.Time) ([]byte, error) {
 	calls := b.mock.Calls()
-	first := max(0, len(calls)-fewCalls)
-	for i, c := range calls {
+	for len(calls) > 0 && calls[0].At.Before(since) {
+		calls = calls[1:]
+	}
+	for i := range calls {
 		if b.capturing {
 			calls[i].Body = "" // a real one may hold secrets
-		}
-		if i == first {
-			reporter.Note(1, "last calls:")
-		}
-		if i >= first {
-			reporter.Note(2, c.String())
 		}
 	}
 	var text bytes.Buffer

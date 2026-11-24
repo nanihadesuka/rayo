@@ -36,6 +36,7 @@ emulator-5554, ready in # ms
   ✗ this & that  # ms
   saved dbg/c_failure.png, dbg/c_screen.txt, dbg/c_logcat.txt
 [2/2] FAIL c  # s
+  c failed at this & that: not on screen
   why: not on screen: missing
   cause: test
   step: this & that
@@ -74,6 +75,6 @@ a screen
 <testsuite name="rayo" tests="2" failures="1" errors="0" skipped="0" time="#">
   <testcase name="First one" file="flows/a.yaml" time="#"></testcase>
   <testcase name="c" file="flows/c/flow.yaml" time="#">
-    <failure>  why: not on screen: missing&#xA;  cause: test&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  screen:&#xA;    a screen&#xA;  saved: dbg/c_failure.png&#xA;</failure>
+    <failure>  c failed at this &amp; that: not on screen&#xA;  why: not on screen: missing&#xA;  cause: test&#xA;  step: this &amp; that&#xA;  at: flows/c/flow.yaml:4&#xA;  saved: dbg/c_failure.png&#xA;</failure>
   </testcase>
 </testsuite>

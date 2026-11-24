@@ -220,6 +220,10 @@ func test(ctx context.Context, args []string) (err error) {
 		if o.runner.Artifacts == nil {
 			o.runner.Artifacts = group.Artifacts
 		}
+		o.detail = cmp.Or(o.detail, group.Detail)
+		if o.window == 0 {
+			o.window = group.FailureWindow
+		}
 		if o.show == nil {
 			o.show = group.Show
 		}
@@ -241,6 +245,8 @@ func test(ctx context.Context, args []string) (err error) {
 		}
 	}
 	o.into("")
+	o.detail = cmp.Or(o.detail, flow.Normal)
+	o.runner.Detail, o.runner.Window = o.detail, time.Duration(o.window)*time.Second
 	if o.keep = cmp.Or(o.keep, suite.KeepFailed); o.keep == suite.KeepNone {
 		o.runner.Artifacts = []string{}
 	}

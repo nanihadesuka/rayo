@@ -27,14 +27,9 @@ emulator-5554, ready in # ms
   ✓ tapOn POST /a some body  # ms
   ✓ tapOn GET /b  # ms
   ✗ tapOn missing  # ms
-  last calls:
-    <time> GET /a?3 -> 200
-    <time> GET /a?4 -> 200
-    <time> GET /a?5 -> 200
-    <time> POST /a -> 200
-    <time> GET /b -> not mocked
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
 [1/1] FAIL case  # s
+  case failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
@@ -43,6 +38,12 @@ emulator-5554, ready in # ms
     tapOn GET /a?5
     tapOn POST /a some body
     tapOn GET /b
+  calls:
+    <time> GET /a?3 -> 200
+    <time> GET /a?4 -> 200
+    <time> GET /a?5 -> 200
+    <time> POST /a -> 200
+    <time> GET /b -> not mocked
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s

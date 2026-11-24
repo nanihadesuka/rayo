@@ -21,6 +21,7 @@ appId: a.b
 1
 -- stdout --
 [1/4] FAIL a  # s
+  a failed at tapOn app crashes: app crashed
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
@@ -28,10 +29,9 @@ appId: a.b
   crash: FATAL EXCEPTION: main
     Process: a.b, PID: 1
     java.lang.IllegalStateException: oops
-  screen:
-    a screen
   saved: .rayo/a_failure.png
 [2/4] FAIL b  # s
+  b failed at tapOn app crashes: app crashed
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
@@ -39,10 +39,9 @@ appId: a.b
   crash: FATAL EXCEPTION: main
     Process: a.b, PID: 1
     java.lang.IllegalStateException: oops
-  screen:
-    a screen
   saved: .rayo/b_failure.png
 [3/4] FAIL c  # s
+  c failed at tapOn app crashes: app crashed
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
@@ -50,8 +49,6 @@ appId: a.b
   crash: FATAL EXCEPTION: main
     Process: a.b, PID: 1
     java.lang.IllegalStateException: oops
-  screen:
-    a screen
   saved: .rayo/c_failure.png
 [4/4] PASS d  # s
 
@@ -91,8 +88,6 @@ bye {"timeout":5000}
 -- file .rayo/a_failure.png --
 PNG...
 -- file .rayo/a_logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
@@ -101,8 +96,6 @@ a screen
 -- file .rayo/b_failure.png --
 PNG...
 -- file .rayo/b_logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
@@ -111,8 +104,6 @@ a screen
 -- file .rayo/c_failure.png --
 PNG...
 -- file .rayo/c_logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops

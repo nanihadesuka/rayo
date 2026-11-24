@@ -65,6 +65,8 @@ type Suite struct {
 	Device          *adb.Setup
 	Record          bool
 	RecordFolder    string
+	Detail          string   // empty if not said
+	FailureWindow   int      // seconds; 0 if not said
 	Show            []string // nil if not said
 	Slowest         int      // 0 if not said
 	ResultsTemplate string   // empty if not said

@@ -25,28 +25,25 @@ appId: a.b
 1
 -- stdout --
 [1/3] FAIL a  # s
+  a failed at tapOn flaky 1: step failed
   why: flaked
   cause: test
   step: tapOn flaky 1
   at: a.yaml:3
-  screen:
-    a screen
   saved: .rayo/a_failure.png
 [2/3] FAIL b  # s
+  b failed at tapOn flaky 2: step failed
   why: flaked
   cause: test
   step: tapOn flaky 2
   at: b.yaml:3
-  screen:
-    a screen
   saved: .rayo/b_failure.png
 [3/3] FAIL c  # s
+  c failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: c.yaml:3
-  screen:
-    a screen
   saved: .rayo/c_failure.png
 
 FAIL a  # s
@@ -108,30 +105,27 @@ began: <now>
 
 FAIL a  # s
   file: a.yaml
+  a failed at tapOn flaky 1: step failed
   why: flaked
   cause: test
   step: tapOn flaky 1
   at: a.yaml:3
-  screen:
-    a screen
   saved: .rayo/a_failure.png
 FAIL b  # s
   file: b.yaml
+  b failed at tapOn flaky 2: step failed
   why: flaked
   cause: test
   step: tapOn flaky 2
   at: b.yaml:3
-  screen:
-    a screen
   saved: .rayo/b_failure.png
 FAIL c  # s
   file: c.yaml
+  c failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: c.yaml:3
-  screen:
-    a screen
   saved: .rayo/c_failure.png
 
 TOTAL 3: 0 passed, 3 failed  # s

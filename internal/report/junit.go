@@ -57,7 +57,7 @@ func (sum *Summary) junit() ([]byte, error) {
 		took := o.took()
 		total += took
 		c := junitCase{Name: o.Flow.Name, File: filepath.ToSlash(o.Flow.Path), Time: fmt.Sprintf("%.3f", took.Seconds())}
-		text := plain(o.Details(true))
+		text := plain(o.Details(sum.fileDetail()))
 		switch o.Status {
 		case Failed:
 			c.Failure = &text
@@ -67,7 +67,7 @@ func (sum *Summary) junit() ([]byte, error) {
 		case NotRun:
 			c.Skipped = &junitSkipped{o.Why}
 		case Flaky:
-			for _, f := range o.flakyFailures() {
+			for _, f := range o.flakyFailures(sum.fileDetail()) {
 				c.Flaky = append(c.Flaky, junitFlaky{plain(f.message), f.cause, plain(f.text)})
 			}
 		}

@@ -14,19 +14,20 @@ emulator-5554, ready in # ms
 [1/1] a
   ✓ tapOn GET /localhost/a  # ms
   ✗ tapOn missing  # ms
-  last calls:
-    <time> GET /localhost/a -> failed: the path doesn't begin with a host
   saved .rayo/a_failure.png, .rayo/a_screen.txt, .rayo/a_logcat.txt, .rayo/a_requests.txt
 nothing captured: no call of the app was answered
 not captured:
   GET /localhost/a: failed: the path doesn't begin with a host
 [1/1] FAIL a  # s
+  a failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: a.yaml:4
   before:
     tapOn GET /localhost/a
+  calls:
+    <time> GET /localhost/a -> failed: the path doesn't begin with a host
   saved: .rayo/a_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s

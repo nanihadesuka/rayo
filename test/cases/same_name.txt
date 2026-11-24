@@ -13,20 +13,18 @@ appId: a.b
 1
 -- stdout --
 [1/2] FAIL x  # s
+  x failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: a/x.yaml:3
-  screen:
-    a screen
   saved: .rayo/x_failure.png
 [2/2] FAIL x  # s
+  x failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: b/x.yaml:3
-  screen:
-    a screen
   saved: .rayo/x_2_failure.png
 
 FAIL x  # s

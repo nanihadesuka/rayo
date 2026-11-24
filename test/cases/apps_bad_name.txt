@@ -12,6 +12,7 @@ emulator-5554, ready in # ms
   ✗ launchApp  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at launchApp: step failed
   why: appId isn't a package name: "a; rm -rf"
   cause: test
   step: launchApp

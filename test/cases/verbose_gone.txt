@@ -1,0 +1,11 @@
+-- args --
+test a.yaml -v
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: unknown option -v

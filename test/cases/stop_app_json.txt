@@ -22,6 +22,7 @@ appId: a.b
 -- stdout --
 [1/4] FAIL a  # s  (failed 2 times)
   try: 1
+  a failed at tapOn app crashes: app crashed
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
@@ -29,10 +30,9 @@ appId: a.b
   crash: FATAL EXCEPTION: main
     Process: a.b, PID: 1
     java.lang.IllegalStateException: oops
-  screen:
-    a screen
   saved: .rayo/a_failure.png
   try: 2
+  a failed at tapOn app crashes: app crashed
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
@@ -40,11 +40,10 @@ appId: a.b
   crash: FATAL EXCEPTION: main
     Process: a.b, PID: 1
     java.lang.IllegalStateException: oops
-  screen:
-    a screen
   saved: .rayo/a_retry1_failure.png
 [2/4] FAIL b  # s  (failed 2 times)
   try: 1
+  b failed at tapOn app crashes: app crashed
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
@@ -52,10 +51,9 @@ appId: a.b
   crash: FATAL EXCEPTION: main
     Process: a.b, PID: 1
     java.lang.IllegalStateException: oops
-  screen:
-    a screen
   saved: .rayo/b_failure.png
   try: 2
+  b failed at tapOn app crashes: app crashed
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
@@ -63,10 +61,9 @@ appId: a.b
   crash: FATAL EXCEPTION: main
     Process: a.b, PID: 1
     java.lang.IllegalStateException: oops
-  screen:
-    a screen
   saved: .rayo/b_retry1_failure.png
 [3/4] FAIL c  # s
+  c failed at tapOn app crashes: app crashed
   why: not on screen: home
   cause: app, the app crashed: java.lang.IllegalStateException: oops
   step: tapOn app crashes
@@ -74,8 +71,6 @@ appId: a.b
   crash: FATAL EXCEPTION: main
     Process: a.b, PID: 1
     java.lang.IllegalStateException: oops
-  screen:
-    a screen
   saved: .rayo/c_failure.png
 [4/4] NOT_RUN d  (app: 3 flows in a row, the app crashed: java.lang.IllegalStateException: oops)
 
@@ -127,16 +122,12 @@ bye {"timeout":5000}
 -- file .rayo/a_failure.png --
 PNG...
 -- file .rayo/a_logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
 -- file .rayo/a_retry1_failure.png --
 PNG...
 -- file .rayo/a_retry1_logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
@@ -147,16 +138,12 @@ a screen
 -- file .rayo/b_failure.png --
 PNG...
 -- file .rayo/b_logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
 -- file .rayo/b_retry1_failure.png --
 PNG...
 -- file .rayo/b_retry1_logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
@@ -167,8 +154,6 @@ a screen
 -- file .rayo/c_failure.png --
 PNG...
 -- file .rayo/c_logcat.txt --
-11-21 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: before
-11-21 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: FATAL EXCEPTION: main
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
@@ -242,6 +227,8 @@ a screen
       "failures": [
         {
           "try": 1,
+          "verdict": "a failed at tapOn app crashes: app crashed",
+          "kind": "app crashed",
           "error": {
             "file": "a.yaml",
             "line": 3,
@@ -255,6 +242,7 @@ a screen
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"
@@ -264,6 +252,8 @@ a screen
         },
         {
           "try": 2,
+          "verdict": "a failed at tapOn app crashes: app crashed",
+          "kind": "app crashed",
           "error": {
             "file": "a.yaml",
             "line": 3,
@@ -277,6 +267,7 @@ a screen
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"
@@ -306,6 +297,8 @@ a screen
       "failures": [
         {
           "try": 1,
+          "verdict": "b failed at tapOn app crashes: app crashed",
+          "kind": "app crashed",
           "error": {
             "file": "b.yaml",
             "line": 3,
@@ -319,6 +312,7 @@ a screen
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"
@@ -328,6 +322,8 @@ a screen
         },
         {
           "try": 2,
+          "verdict": "b failed at tapOn app crashes: app crashed",
+          "kind": "app crashed",
           "error": {
             "file": "b.yaml",
             "line": 3,
@@ -341,6 +337,7 @@ a screen
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"
@@ -370,6 +367,8 @@ a screen
       "failures": [
         {
           "try": 1,
+          "verdict": "c failed at tapOn app crashes: app crashed",
+          "kind": "app crashed",
           "error": {
             "file": "c.yaml",
             "line": 3,
@@ -383,6 +382,7 @@ a screen
           "because": "the app crashed: java.lang.IllegalStateException: oops",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"

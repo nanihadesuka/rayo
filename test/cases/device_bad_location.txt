@@ -12,6 +12,7 @@ emulator-5554, ready in # ms
   ✗ setLocation latitude: 141, longitude: 2  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at setLocation latitude: 141, longitude: 2: step failed
   why: not a location: 141.0000000,2.0000000
   cause: test
   step: setLocation latitude: 141, longitude: 2

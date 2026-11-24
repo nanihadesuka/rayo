@@ -43,6 +43,8 @@ type Options struct {
 	Unmocked      *mock.Unmocked // calls without a mock that don't fail a flow, besides its own; nil for none
 	NameTemplate  string         // of the files of an attempt; empty for DefaultTemplate
 	Artifacts     []string       // the kinds of file written; nil for all
+	Window        time.Duration  // of a failure's files, before the failing step began; 0 for DefaultWindow
+	Detail        string         // Full keeps a failure's files whole
 }
 
 // Networks are the ways calls reach the mock.
@@ -78,11 +80,12 @@ type Runner struct {
 	failure    *Failure
 	log        string // of the device, when it failed
 	warnings   []string
-	located    bool     // a pretend location was set
-	video      *video   // being recorded
-	recordings []string // saved
-	airplane   string   // how airplane mode was before the flow changed it
-	skipped    bool     // the step running now said it was skipped
+	located    bool      // a pretend location was set
+	video      *video    // being recorded
+	recordings []string  // saved
+	airplane   string    // how airplane mode was before the flow changed it
+	skipped    bool      // the step running now said it was skipped
+	stepBegan  time.Time // of the last step that isn't a group's
 }
 
 // NewRunner makes a Runner; what happens goes to the reporter.
@@ -108,6 +111,10 @@ func (r *Runner) Run(ctx context.Context, f *Flow, a Attempt) Result {
 			r.failure = &Failure{}
 		}
 		r.diagnose(err, r.log)
+		r.failure.Kind = kindOf(err, r.failure)
+		if r.failure.Kind == NotOnScreen {
+			r.failure.Nearest = Nearest(r.failure.Screen, wanted(err), 5)
+		}
 	}
 	return Result{Flow: f, Err: err, Elapsed: time.Since(start), Failure: r.failure, Warnings: r.warnings, Recordings: r.recordings, Files: r.files}
 }
@@ -222,6 +229,7 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 	k := commands[s.Kind]
 	if !k.group {
 		r.backend.during(s)
+		r.stepBegan = start
 	}
 	r.skipped = false
 	slow := func() {}
@@ -367,9 +375,9 @@ func filledIn(n *yaml.Node, check func(p *reader, n *yaml.Node) error) error {
 // evidence saves what can be known of a failure. What can't be saved is reported, as it isn't the failure.
 func (r *Runner) evidence(ctx context.Context) {
 	r.failure = &Failure{Before: r.recent}
+	from := r.windowStart()
 	if r.backend.mock != nil {
-		calls := r.backend.mock.Calls()
-		r.failure.Calls = calls[max(0, len(calls)-fewCalls):]
+		r.failure.Calls = relevant(r.backend.mock.Calls(), from)
 		for i := range r.failure.Calls {
 			r.failure.Calls[i].Body = "" // long, or private; those of a mock are in the requests file
 		}
@@ -405,7 +413,11 @@ func (r *Runner) evidence(ctx context.Context) {
 		r.failure.Screen = a.Out
 	}
 	log, err := r.device.Exec("logcat -d -t 2000")
-	save(Logcat, "logcat", "txt", log, err)
+	cut := log
+	if r.Detail != Full && err == nil {
+		cut = []byte(window(string(log), r.flow.App, time.Since(from)))
+	}
+	save(Logcat, "logcat", "txt", cut, err)
 	r.log = string(log)
 	r.failure.Crash = r.crash(string(log))
 	if r.backend.mock != nil {
@@ -413,13 +425,30 @@ func (r *Runner) evidence(ctx context.Context) {
 		if r.JSON {
 			ext = "json"
 		}
-		data, err := r.backend.calls(r.reporter, r.JSON)
+		since := from
+		if r.Detail == Full {
+			since = time.Time{}
+		}
+		data, err := r.backend.calls(r.reporter, r.JSON, since)
 		save(Requests, "requests", ext, data, err)
 	}
 	if len(saved) > 0 {
 		r.failure.Saved = saved[0]
 		r.reporter.Note(1, "saved "+strings.Join(saved, ", "))
 	}
+}
+
+// windowStart is when the files of a failure begin: a while before the failing step began.
+func (r *Runner) windowStart() time.Time {
+	w := r.Window
+	if w <= 0 {
+		w = DefaultWindow
+	}
+	began := r.stepBegan
+	if began.IsZero() || began.Before(r.began) {
+		began = r.began
+	}
+	return began.Add(-w)
 }
 
 // evidence is what a failure may save, by the name and the extension of each.

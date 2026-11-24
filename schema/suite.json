@@ -189,6 +189,14 @@
       },
       "type": "object"
     },
+    "detail": {
+      "description": "As --detail, which wins: how much is printed (default: normal)",
+      "enum": [
+        "brief",
+        "normal",
+        "full"
+      ]
+    },
     "device": {
       "additionalProperties": false,
       "description": "How it is while the flows run",
@@ -227,6 +235,11 @@
       },
       "description": "Variables for every flow, as -e, which wins; they may use ${...}, such as ${rayo.file}",
       "type": "object"
+    },
+    "failure-window": {
+      "description": "As --failure-window, which wins: a failure's log and calls begin this long before the failing step (default: 10)",
+      "minimum": 1,
+      "type": "integer"
     },
     "flaky-fails-build": {
       "description": "As --flaky-fails-build: a run where every flow passed, some only on a retry, exits 4 (default: false: it exits 0)",

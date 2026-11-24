@@ -21,19 +21,17 @@ appId: a.b
   try 1: a.yaml:3: tapOn flaky 1: flaked  (test)
 [2/2] FAIL c  # s  (failed 2 times)
   try: 1
+  c failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: c.yaml:3
-  screen:
-    a screen
   try: 2
+  c failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: c.yaml:3
-  screen:
-    a screen
 
 FLAKY a  # s  (failed once, then passed)
 FAIL c  # s  (failed 2 times)

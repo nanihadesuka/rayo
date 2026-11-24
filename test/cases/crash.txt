@@ -13,6 +13,7 @@ test flow.yaml second.yaml
 1
 -- stdout --
 [1/2] FAIL case  # s
+  case failed at tapOn crash: device error
   why: lost the device: EOF
     noise before
   cause: device, the connection to the device was lost

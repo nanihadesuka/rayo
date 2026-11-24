@@ -122,6 +122,8 @@ a screen
       "failures": [
         {
           "try": 1,
+          "verdict": "a failed at tapOn flaky 1: step failed",
+          "kind": "step failed",
           "error": {
             "file": "a.yaml",
             "line": 3,
@@ -135,6 +137,7 @@ a screen
           "because": "",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"

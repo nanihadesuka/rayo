@@ -17,6 +17,7 @@ appId: a.b
 3
 -- stdout --
 [1/3] FAIL a  # s
+  a failed at tapOn crash: device error
   why: lost the device: EOF
     noise before
   cause: device, the connection to the device was lost
@@ -24,6 +25,7 @@ appId: a.b
   at: a.yaml:3
   saved: .rayo/a_failure.png
 [2/3] FAIL b  # s
+  b failed at tapOn crash: device error
   why: lost the device: EOF
     noise before
   cause: device, the connection to the device was lost

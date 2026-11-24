@@ -72,9 +72,11 @@ type Failure struct {
 	Screen   string      // the elements on it
 	Crash    string      // of the app, from the device log
 	Cause    Cause
-	Because  string // of a cause that isn't the test
-	Unusable bool   // nothing can run on the device
-	Saved    string // the first file of the rest; the others are named alike
+	Because  string   // of a cause that isn't the test
+	Unusable bool     // nothing can run on the device
+	Saved    string   // the first file of the rest; the others are named alike
+	Kind     string   // what went wrong, one of Kinds
+	Nearest  []string // of not on screen, the elements most like what was looked for
 }
 
 // crash is the app's, if it crashed or hung since the flow began.

@@ -93,9 +93,23 @@ func (o *Outcome) Line() string {
 	return line
 }
 
-// Details is everything that helps to know why it failed: "  key: value" lines, and more indented
-// ones for what doesn't fit in a line.
-func (o *Outcome) Details(full bool) string {
+// Verdict is a failed try in a line: "<flow> failed at <step>: <cause>", the cause one of flow.Kinds.
+func (o *Outcome) Verdict(t flow.Result) string {
+	at := "the end"
+	var step *flow.StepError
+	if errors.As(t.Err, &step) {
+		at = step.Step.Text()
+	}
+	kind := flow.StepFailed
+	if t.Failure != nil && t.Failure.Kind != "" {
+		kind = t.Failure.Kind
+	}
+	return fmt.Sprintf("%s failed at %s: %s", o.Flow.Name, at, kind)
+}
+
+// Details is what helps to know why it failed, as much as detail says: the verdict, then "  key: value"
+// lines, and more indented ones for what doesn't fit in a line.
+func (o *Outcome) Details(detail string) string {
 	var b strings.Builder
 	add := func(key, value string) {
 		if value = strings.TrimSpace(value); value != "" {
@@ -117,6 +131,14 @@ func (o *Outcome) Details(full bool) string {
 		if len(o.Tries) > 1 {
 			add("try", fmt.Sprint(i+1))
 		}
+		b.WriteString("  " + o.Verdict(t) + "\n")
+		f := t.Failure
+		if detail == flow.Brief {
+			if f != nil {
+				add("saved", f.Saved)
+			}
+			continue
+		}
 		var step *flow.StepError
 		if errors.As(t.Err, &step) {
 			add("why", step.Err.Error())
@@ -130,18 +152,18 @@ func (o *Outcome) Details(full bool) string {
 			add("why", t.Err.Error())
 			o.addCause(add, t)
 		}
-		f := t.Failure
 		if f == nil {
 			continue
 		}
 		add("crash", f.Crash)
 		list("before", f.Before)
-		if full {
-			var calls []string
-			for _, c := range f.Calls {
-				calls = append(calls, c.String())
-			}
-			list("calls", calls)
+		list("nearest", f.Nearest)
+		var calls []string
+		for _, c := range f.Calls {
+			calls = append(calls, c.String())
+		}
+		list("calls", calls)
+		if detail == flow.Full {
 			const most = 40
 			screen := strings.Split(strings.TrimRight(f.Screen, "\r\n"), "\n")
 			if f.Screen == "" {
@@ -173,14 +195,14 @@ func (o *Outcome) addCause(add func(key, value string), t flow.Result) {
 type flakyFailure struct{ message, cause, text string }
 
 // flakyFailures are the tries that failed of a flow that passed at last: the error, the cause and the details.
-func (o *Outcome) flakyFailures() []flakyFailure {
+func (o *Outcome) flakyFailures(detail string) []flakyFailure {
 	var list []flakyFailure
 	for i, t := range o.Tries {
 		if t.Err == nil {
 			continue
 		}
 		one := Outcome{Flow: o.Flow, Status: Failed, Tries: []flow.Result{t}}
-		f := flakyFailure{message: fmt.Sprintf("try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " ")), text: one.Details(true)}
+		f := flakyFailure{message: fmt.Sprintf("try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " ")), text: one.Details(detail)}
 		if t.Failure != nil {
 			f.cause = string(t.Failure.Cause)
 		}
@@ -239,6 +261,7 @@ type Summary struct {
 	Show                 []string // which flows the results list, see Shows; all if empty
 	Slowest              int      // how many the slow list has
 	Template             string   // results-template: a file, for results with its extension
+	Detail               string   // how much a failure says: full in the files too, else normal
 }
 
 func (s *Summary) count(is Status) int {
@@ -299,7 +322,7 @@ func (s *Summary) Text(brief bool) string {
 					b.WriteString(o.videos())
 					b.WriteString(o.Notes() + o.WarningLines())
 				} else {
-					b.WriteString(o.Details(true))
+					b.WriteString(o.Details(s.fileDetail()))
 				}
 			}
 		}
@@ -420,3 +443,11 @@ func (s *Summary) Err() error {
 type FlakyError struct{ Flows []string }
 
 func (e *FlakyError) Error() string { return "flaky: " + strings.Join(e.Flows, ", ") }
+
+// fileDetail is how much a failure says in the results: normal, or full if asked.
+func (s *Summary) fileDetail() string {
+	if s.Detail == flow.Full {
+		return flow.Full
+	}
+	return flow.Normal
+}

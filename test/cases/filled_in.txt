@@ -47,68 +47,60 @@ appId: a.b
 -- stdout --
 [1/9] PASS good  # s
 [2/9] FAIL a  # s
+  a failed at tapOn x: timeout
   why: timeout: not a time: "soon" (use 500 or 10s)
   cause: test
   step: tapOn x
   at: a.yaml:3
-  screen:
-    a screen
   saved: .rayo/a_failure.png
 [3/9] FAIL b  # s
+  b failed at repeat times: ${'many'}: step failed
   why: times: not a whole number: "many"
   cause: test
   step: repeat times: ${'many'}
   at: b.yaml:3
-  screen:
-    a screen
   saved: .rayo/b_failure.png
 [4/9] FAIL c  # s
+  c failed at swipe ${'nowhere'}: step failed
   why: direction: not one of UP, DOWN, LEFT, RIGHT: "nowhere"
   cause: test
   step: swipe ${'nowhere'}
   at: c.yaml:3
-  screen:
-    a screen
   saved: .rayo/c_failure.png
 [5/9] FAIL d  # s
+  d failed at travel [2]: step failed
   why: points: not a location: "x"
   cause: test
   step: travel [2]
   at: d.yaml:3
-  screen:
-    a screen
   saved: .rayo/d_failure.png
 [6/9] FAIL e  # s
+  e failed at waitForAnimationToEnd: step failed
   why: optional: not one of true, false: "maybe"
   cause: test
   step: waitForAnimationToEnd
   at: e.yaml:3
-  screen:
-    a screen
   saved: .rayo/e_failure.png
 [7/9] FAIL f  # s
+  f failed at runFlow ${'Windows'}: step failed
   why: platform: not one of Android, iOS, Web: "Windows"
   cause: test
   step: runFlow ${'Windows'}
   at: f.yaml:3
-  screen:
-    a screen
   saved: .rayo/f_failure.png
 [8/9] FAIL g  # s
+  g failed at launchApp ${'alow'}: step failed
   why: permissions: camera: not one of allow, deny, unset: "alow"
   cause: test
   step: launchApp ${'alow'}
   at: g.yaml:3
-  screen:
-    a screen
   saved: .rayo/g_failure.png
 [9/9] FAIL h  # s
+  h failed at runFlow x, index: ${'one'}: step failed
   why: index: not a whole number: "one"
   cause: test
   step: runFlow x, index: ${'one'}
   at: h.yaml:3
-  screen:
-    a screen
   saved: .rayo/h_failure.png
 
 PASS good  # s

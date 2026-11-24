@@ -19,22 +19,20 @@ appId: a.b
 1
 -- stdout --
 [1/3] FAIL a  # s
+  a failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: a.yaml:4
-  screen:
-    a screen
   saved: .rayo/a_failure.png
   recording: .rayo/a.mp4
 [2/3] PASS b  # s
 [3/3] FAIL c  # s
+  c failed at stopRecording: step failed
   why: nothing is being recorded
   cause: test
   step: stopRecording
   at: c.yaml:3
-  screen:
-    a screen
   saved: .rayo/c_failure.png
 
 FAIL a  # s
@@ -92,24 +90,22 @@ began: <now>
 
 FAIL a  # s
   file: a.yaml
+  a failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: a.yaml:4
-  screen:
-    a screen
   saved: .rayo/a_failure.png
   recording: .rayo/a.mp4
 PASS b  # s
   file: b.yaml
 FAIL c  # s
   file: c.yaml
+  c failed at stopRecording: step failed
   why: nothing is being recorded
   cause: test
   step: stopRecording
   at: c.yaml:3
-  screen:
-    a screen
   saved: .rayo/c_failure.png
 
 TOTAL 3: 1 passed, 2 failed  # s

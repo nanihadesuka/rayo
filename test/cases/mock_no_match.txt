@@ -36,14 +36,9 @@ emulator-5554, ready in # ms
   ✓ tapOn GET /q  # ms
   ✓ tapOn GET /nothing  # ms
   ✓ tapOn GET /nothing  # ms
-  last calls:
-    <time> GET /a -> not mocked
-    <time> GET /q?a=1 -> not mocked; nearest GET /q: query a: "1", expected "2"
-    <time> GET /q -> not mocked; nearest GET /q: query a: absent, expected "2"
-    <time> GET /nothing -> not mocked
-    <time> GET /nothing -> not mocked
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
 [1/1] FAIL case  # s
+  case failed at the end: unmocked call
   why: the app called what isn't mocked:
         POST /a
         GET /a
@@ -55,6 +50,17 @@ emulator-5554, ready in # ms
     tapOn GET /q
     tapOn GET /nothing
     tapOn GET /nothing
+  calls:
+    <time> POST /a -> not mocked; nearest POST /a: body: nothing at $.x
+    <time> POST /a -> not mocked; nearest POST /a: body: nothing at $.x
+    <time> POST /a -> not mocked; nearest POST /a: body: nothing at $.x
+    <time> POST /a -> not mocked; nearest POST /a: body: not JSON
+    <time> POST /a -> not mocked; nearest POST /a: body: not JSON
+    <time> GET /a -> not mocked
+    <time> GET /q?a=1 -> not mocked; nearest GET /q: query a: "1", expected "2"
+    <time> GET /q -> not mocked; nearest GET /q: query a: absent, expected "2"
+    <time> GET /nothing -> not mocked
+    <time> GET /nothing -> not mocked
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s

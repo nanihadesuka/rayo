@@ -88,7 +88,8 @@ Options of test: how they run
   -c, --continuous           run again whenever a file changes
 
 Options of test: what comes out
-  -v, --verbose              every step (always, for a single flow)
+  --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files
+  --failure-window <seconds> a failure's log and calls begin this long before the failing step (default 10)
   --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated
   --results-template <file>  write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end}
   --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
@@ -1131,6 +1132,8 @@ flows:
 | `capture` | a mapping | How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow) |
 | `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json`, `.xml` (JUnit) or `.md`, see [Results](#results) |
+| `detail` | `brief`, `normal`, `full` | As `--detail`, which wins: how much is printed, see [Results](#results) (default: `normal`) |
+| `failure-window` | seconds, from 1 | As `--failure-window`, which wins: a failure's log and calls begin this long before the failing step, see [Failures](#failures) (default: 10) |
 | `results-template` | file | As `--results-template`, which wins: the results with its extension are written as it says, see [A template of your own](#a-template-of-your-own) |
 | `show` | a name or a list | As `--show`, which wins: the flows the results list, of `failed`, `flaky`, `slow`, `all`, see [Results](#results) (default: `all`) |
 | `slowest` | a number from 1 | As `--slowest`, which wins: how many flows the slow list has (default: 5) |
@@ -1435,22 +1438,42 @@ failed, was interrupted or didn't run, until it passes.
 
 ### Results
 
-With several flows, one line each, and for a failure all there is to know. A single flow, or `-v`,
-shows every step.
+With several flows, one line each, and for a failure what helps to know why: first the verdict,
+`<flow> failed at <step>: <cause>`, then the rest. A single flow shows every step.
+
+How much is printed is `--detail`, or `detail:` in a suite:
+
+| | |
+|---|---|
+| `brief` | Only the verdict and `saved` of a failure; no steps |
+| `normal` | The default: as below; every step of a single flow |
+| `full` | Also `screen`, and every step of every flow; the [files](#failures) of a failure are whole |
+
+The cause of a verdict:
+
+| | |
+|---|---|
+| `not on screen` | What a step looked for wasn't there; `nearest` says what was most like it |
+| `timeout` | Something didn't happen in time, or stayed on screen |
+| `app crashed` | The app crashed, hung or isn't installed, see [Causes](#causes) |
+| `unmocked call` | The app called what no [mock](#mock) answers |
+| `device error` | The device was lost, restarted or hung, see [Causes](#causes) |
+| `step failed` | Anything else, such as a script or a command that failed |
 
 ```
 [1/3] PASS book  18.2 s
 [2/3] FAIL scan  9.1 s
+  scan failed at tapOn finished_close: not on screen
   why: not on screen: finished_close
   step: tapOn finished_close
   at: shared/flows/dock.yaml:8
   from: tests/scan/flow.yaml:23 runFlow ../../shared/flows/dock.yaml
   before:
     extendedWaitUntil finished
+  nearest:
+    id: com.rides:id/finish_close | text: Close  [40,2100][1040,2220]
   calls:
     12:00:01.250 GET /trips -> 200
-  screen:
-    ...
   saved: .results/scan
 [3/3] NOT_RUN long  (--fail-fast, after scan)
 
@@ -1466,14 +1489,16 @@ The list at the end is only there if something didn't pass. Under a failure:
 | Key | |
 |---|---|
 | `try` | Which, if there were several |
+| | The verdict, a line without a key |
 | `why` | The error |
 | `cause` | `test`, `app` or `device`, see [Causes](#causes) |
 | `step`, `at` | The step that failed, and where it is written |
 | `from` | The step that ran that flow, and so on outwards |
 | `crash` | The app crashed or hung during the flow: what the device log says |
 | `before` | The last 3 steps that passed |
-| `calls` | The last 5 to the [mock](#mock) |
-| `screen` | The elements on it, at most 40 lines |
+| `nearest` | Of `not on screen`, at most 5 elements on it most like what was looked for, the closest first |
+| `calls` | The last 5 to the [mock](#mock), and before them those of the failure window that weren't mocked or weren't answered 2xx or 3xx |
+| `screen` | With `--detail full`, the elements on it, at most 40 lines; they are all in `screen.txt` |
 | `saved` | The folder with the [rest](#failures) |
 | `recording` | A video; of flows that passed, only in the file |
 | `warning` | Something that may explain this, or the next flow |
@@ -1673,12 +1698,15 @@ Each of `failures`:
 | Key | | |
 |---|---|---|
 | `try` | number | From 1 |
+| `verdict` | text | In a line: '<flow> failed at <step>: <kind>' |
+| `kind` | text | What went wrong, see [Failures](#failures) |
 | `error` | mapping | What went wrong, at which step, see [Errors](#errors) |
 | `cause` | text | `test`, `app` or `device`, see [Causes](#causes) |
 | `because` | text | What shows that it isn't the test |
 | `from` | list | The step that ran that flow, and so on outwards |
 | `before` | list | The last 3 steps that passed |
-| `calls` | list | The last 5 to the mock |
+| `nearest` | list | Of 'not on screen', the elements on it most like what was looked for |
+| `calls` | list | The last 5 to the mock, and before them those that went wrong in the failure window |
 | `screen` | list | The elements on it |
 | `crash` | text | The app crashed or hung during the flow: what the device log says |
 | `saved` | text | The first file of the rest, which are named alike, see [Failures](#failures) |
@@ -1916,8 +1944,11 @@ Those of an earlier run are removed when the flow runs again. `saved` is the fir
 |---|---|---|
 | `failure.jpg` | `screenshot` | The screen, small: 480 pixels on the short side |
 | `screen.txt` | `screen` | The elements on it, as `rayo hierarchy` shows them |
-| `logcat.txt` | `logcat` | The end of the device log |
-| `requests.txt` | `requests` | Every call the app made to the [mock](#mock), with its body; `requests.json`, a list like `calls`, if the results are also written to a `.json`. The last five are printed |
+| `logcat.txt` | `logcat` | The device log from the failure window to the failure, of the app and of crashes; whole with `--detail full` |
+| `requests.txt` | `requests` | The calls the app made to the [mock](#mock) in the failure window, with their bodies; all with `--detail full`; `requests.json`, a list like `calls`, if the results are also written to a `.json` |
+
+The failure window begins 10 s before the failing step did; `--failure-window <seconds>`, or
+`failure-window:` in a suite, says how long.
 
 ### What is kept
 

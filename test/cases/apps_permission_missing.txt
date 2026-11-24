@@ -12,6 +12,7 @@ emulator-5554, ready in # ms
   ✗ setPermissions allow  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at setPermissions allow: step failed
   why: Error: a.b has no permission NO_SUCH that can be changed
   cause: test
   step: setPermissions allow

@@ -19,6 +19,7 @@ emulator-5554, ready in # ms
   ✗ tapOn missing  # ms
   saved .rayo/c-logcat.txt
 [1/1] FAIL c  # s
+  c failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing

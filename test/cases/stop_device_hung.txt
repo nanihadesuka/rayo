@@ -13,12 +13,11 @@ appId: a.b
 1
 -- stdout --
 [1/2] FAIL a  # s
+  a failed at tapOn android hangs: device error
   why: not on screen: home
   cause: device, Android's interface hung
   step: tapOn android hangs
   at: a.yaml:3
-  screen:
-    a screen
   saved: .rayo/a_failure.png
 [2/2] PASS b  # s
 

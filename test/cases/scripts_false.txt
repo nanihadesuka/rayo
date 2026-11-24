@@ -12,6 +12,7 @@ emulator-5554, ready in # ms
   ✗ assertTrue ${1 > 2}  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at assertTrue ${1 > 2}: step failed
   why: it is false
   cause: test
   step: assertTrue ${1 > 2}

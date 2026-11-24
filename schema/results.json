@@ -49,7 +49,7 @@
                   "type": "array"
                 },
                 "calls": {
-                  "description": "The last 5 to the mock",
+                  "description": "The last 5 to the mock, and before them those that went wrong in the failure window",
                   "items": {
                     "additionalProperties": false,
                     "properties": {
@@ -173,6 +173,24 @@
                   },
                   "type": "array"
                 },
+                "kind": {
+                  "description": "What went wrong",
+                  "enum": [
+                    "not on screen",
+                    "timeout",
+                    "app crashed",
+                    "unmocked call",
+                    "device error",
+                    "step failed"
+                  ]
+                },
+                "nearest": {
+                  "description": "Of 'not on screen', the elements on it most like what was looked for",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
                 "saved": {
                   "description": "The first file of the rest, which are named alike",
                   "type": "string"
@@ -187,15 +205,22 @@
                 "try": {
                   "description": "From 1",
                   "type": "integer"
+                },
+                "verdict": {
+                  "description": "In a line: '<flow> failed at <step>: <kind>'",
+                  "type": "string"
                 }
               },
               "required": [
                 "try",
+                "verdict",
+                "kind",
                 "error",
                 "cause",
                 "because",
                 "from",
                 "before",
+                "nearest",
                 "calls",
                 "screen",
                 "crash",

@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: -v is not an option of devices
+error: unknown option -v

@@ -12,6 +12,7 @@ emulator-5554, ready in # ms
   ✗ openLink nobody.opens://this  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at openLink nobody.opens://this: step failed
   why: Error: Activity not started, unable to resolve Intent
   cause: test
   step: openLink nobody.opens://this

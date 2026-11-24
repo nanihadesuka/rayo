@@ -68,7 +68,8 @@ Options of test: how they run
   -c, --continuous           run again whenever a file changes
 
 Options of test: what comes out
-  -v, --verbose              every step (always, for a single flow)
+  --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files
+  --failure-window <seconds> a failure's log and calls begin this long before the failing step (default 10)
   --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated
   --results-template <file>  write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end}
   --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
@@ -151,6 +152,8 @@ A suite, *.suite.yaml, lists flows that run together. A folder means its suite, 
   capture          a mapping                  How a capture calls the backend and becomes mocks, as the options of the same names, which win
   output           folder                     As --output, which wins (default: .rayo where rayo runs)
   results          a file or a list           As --results, which wins over all of them: .txt, .json, .xml (JUnit) or .md
+  detail           brief, normal, full        As --detail, which wins: how much is printed (default: normal)
+  failure-window   seconds, from 1            As --failure-window, which wins: a failure's log and calls begin this long before the failing step (default: 10)
   results-template file                       As --results-template, which wins: the results with its extension are written as it says
   show             a name or a list           As --show, which wins: the flows the results list, of failed, flaky, slow, all (default: all)
   slowest          a number from 1            As --slowest, which wins: how many flows the slow list has (default: 5)

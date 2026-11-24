@@ -51,12 +51,15 @@ type jsonFlow struct {
 // Failure is one, for a program.
 type Failure struct {
 	Try     int         `json:"try" about:"From 1"`
+	Verdict string      `json:"verdict" about:"In a line: '<flow> failed at <step>: <kind>'"`
+	Kind    string      `json:"kind" about:"What went wrong, see [Failures](#failures)" enum:"not on screen,timeout,app crashed,unmocked call,device error,step failed"`
 	Error   Problem     `json:"error" about:"What went wrong, at which step, see [Errors](#errors)"`
 	Cause   flow.Cause  `json:"cause" about:"'test', 'app' or 'device', see [Causes](#causes)" enum:"test,app,device"`
 	Because string      `json:"because" about:"What shows that it isn't the test"`
 	From    []jsonStep  `json:"from" about:"The step that ran that flow, and so on outwards"`
 	Before  []string    `json:"before" about:"The last 3 steps that passed"`
-	Calls   []mock.Call `json:"calls" about:"The last 5 to the mock"`
+	Nearest []string    `json:"nearest" about:"Of 'not on screen', the elements on it most like what was looked for"`
+	Calls   []mock.Call `json:"calls" about:"The last 5 to the mock, and before them those that went wrong in the failure window"`
 	Screen  []string    `json:"screen" about:"The elements on it"`
 	Crash   string      `json:"crash" about:"The app crashed or hung during the flow: what the device log says"`
 	Saved   string      `json:"saved" about:"The first file of the rest, which are named alike, see [Failures](#failures)"`
@@ -90,7 +93,7 @@ func Lines(text string) []string {
 
 // FailureOf describes a failure.
 func FailureOf(err error, e *flow.Failure) Failure {
-	x := Failure{Try: 1, Error: ProblemOf(err), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}}
+	x := Failure{Try: 1, Error: ProblemOf(err), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}, Nearest: []string{}, Kind: flow.StepFailed}
 	var step *flow.StepError
 	if errors.As(err, &step) {
 		for _, s := range step.From {
@@ -101,6 +104,7 @@ func FailureOf(err error, e *flow.Failure) Failure {
 		x.Cause, x.Because = e.Cause, e.Because
 		x.Before, x.Calls, x.Crash, x.Saved = List(e.Before), List(e.Calls), e.Crash, e.Saved
 		x.Screen = Lines(e.Screen)
+		x.Kind, x.Nearest = e.Kind, List(e.Nearest)
 	}
 	return x
 }
@@ -114,7 +118,7 @@ func (o *Outcome) json() jsonFlow {
 			continue
 		}
 		x := FailureOf(t.Err, t.Failure)
-		x.Try = i + 1
+		x.Try, x.Verdict = i+1, o.Verdict(t)
 		f.Failures = append(f.Failures, x)
 	}
 	f.Step, f.At, f.Why, _ = o.failing()

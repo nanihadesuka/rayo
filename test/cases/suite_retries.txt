@@ -31,12 +31,11 @@ appId: a.b
   try 1: b.yaml:3: tapOn flaky 2: flaked  (test)  .rayo/b_failure.png
   try 2: b.yaml:3: tapOn flaky 2: flaked  (test)  .rayo/b_retry1_failure.png
 [3/3] FAIL c  # s
+  c failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: c.yaml:3
-  screen:
-    a screen
   saved: .rayo/c_failure.png
 
 FLAKY a  # s  (failed once, then passed)
@@ -163,6 +162,8 @@ a screen
       "failures": [
         {
           "try": 1,
+          "verdict": "a failed at tapOn flaky 1: step failed",
+          "kind": "step failed",
           "error": {
             "file": "a.yaml",
             "line": 3,
@@ -176,6 +177,7 @@ a screen
           "because": "",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"
@@ -205,6 +207,8 @@ a screen
       "failures": [
         {
           "try": 1,
+          "verdict": "b failed at tapOn flaky 2: step failed",
+          "kind": "step failed",
           "error": {
             "file": "b.yaml",
             "line": 3,
@@ -218,6 +222,7 @@ a screen
           "because": "",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"
@@ -227,6 +232,8 @@ a screen
         },
         {
           "try": 2,
+          "verdict": "b failed at tapOn flaky 2: step failed",
+          "kind": "step failed",
           "error": {
             "file": "b.yaml",
             "line": 3,
@@ -240,6 +247,7 @@ a screen
           "because": "",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"
@@ -269,6 +277,8 @@ a screen
       "failures": [
         {
           "try": 1,
+          "verdict": "c failed at tapOn missing: not on screen",
+          "kind": "not on screen",
           "error": {
             "file": "c.yaml",
             "line": 3,
@@ -282,6 +292,7 @@ a screen
           "because": "",
           "from": [],
           "before": [],
+          "nearest": [],
           "calls": [],
           "screen": [
             "a screen"

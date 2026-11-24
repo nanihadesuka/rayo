@@ -23,6 +23,7 @@ emulator-5554, ready in # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
   ✓ tapOn cleanup  # ms
 [1/1] FAIL case  # s
+  case failed at Open it: not on screen
   why: not on screen: missing
   cause: test
   step: Open it

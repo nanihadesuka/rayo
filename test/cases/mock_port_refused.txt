@@ -16,6 +16,7 @@ emulator-5554, ready in # ms
 [1/1] case
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at the end: step failed
   why: adb reverse: denied
   cause: test
   saved: .rayo/case_failure.png

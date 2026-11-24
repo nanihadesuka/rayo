@@ -36,6 +36,7 @@ mock: ../mocks/b.json
 [1/3] PASS a  # s
 [2/3] PASS b  # s
 [3/3] FAIL own  # s
+  own failed at the end: unmocked call
   why: the app called what isn't mocked:
         GET /a
   cause: test
@@ -45,8 +46,6 @@ mock: ../mocks/b.json
   calls:
     <time> GET /b -> 200
     <time> GET /a -> not mocked
-  screen:
-    a screen
   saved: .rayo/own_failure.png
 
 PASS a  # s

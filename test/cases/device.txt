@@ -26,6 +26,7 @@ emulator-5554, ready in # ms
   ✗ shell boom  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at shell boom: step failed
   why: exit code 1
     it broke
   cause: test

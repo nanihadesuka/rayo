@@ -16,7 +16,8 @@ import (
 // console prints what happens: each step if verbose, or else a line for each flow.
 type console struct {
 	mu       sync.Mutex // a note of a slow step comes from elsewhere
-	verbose  bool
+	verbose  bool       // every step
+	detail   string     // of a failure
 	timings  bool
 	steps    []flow.StepReport // of the flow running now, with timings
 	terminal bool              // someone is looking, and not a file
@@ -78,7 +79,7 @@ func (c *console) end(i, of int, o *report.Outcome) {
 		fmt.Fprint(c.out, o.Notes()+o.WarningLines())
 		return
 	}
-	fmt.Fprint(c.out, o.Details(!c.verbose)) // verbose has shown the calls, and the screen is long
+	fmt.Fprint(c.out, o.Details(c.detail))
 }
 
 // slowestSteps prints, with --timings, the steps of the flow that took longest.

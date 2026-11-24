@@ -23,11 +23,9 @@ emulator-5554, ready in # ms
   ✓ waitForRequest /pay  # ms
   – waitForRequest path: /pay  # ms (optional)
   ✗ waitForRequest path: /pay  # ms
-  last calls:
-    <time> POST /pay -> 200
-    <time> POST /pay -> 200
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
 [1/1] FAIL case  # s
+  case failed at waitForRequest path: /pay: step failed
   why: the app didn't call it
   cause: test
   step: waitForRequest path: /pay
@@ -36,6 +34,9 @@ emulator-5554, ready in # ms
     tapOn POST /pay {"n":2}
     waitForRequest method: post, path: /pa., body: "n":2
     waitForRequest /pay
+  calls:
+    <time> POST /pay -> 200
+    <time> POST /pay -> 200
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s

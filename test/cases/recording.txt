@@ -24,6 +24,7 @@ emulator-5554, ready in # ms
   ✗ startRecording  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at startRecording: step failed
   why: a recording to .rayo/case_three.mp4 is going on
   cause: test
   step: startRecording

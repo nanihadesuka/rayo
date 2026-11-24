@@ -57,7 +57,8 @@ Options of test: how they run
   -c, --continuous           run again whenever a file changes
 
 Options of test: what comes out
-  -v, --verbose              every step (always, for a single flow)
+  --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files
+  --failure-window <seconds> a failure's log and calls begin this long before the failing step (default 10)
   --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated
   --results-template <file>  write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end}
   --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)

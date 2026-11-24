@@ -49,6 +49,7 @@ emulator-5554, ready in # ms
   ✗ runScript js/bad.js  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
+  case failed at runScript js/bad.js: step failed
   why: Error: on purpose
   cause: test
   step: runScript js/bad.js

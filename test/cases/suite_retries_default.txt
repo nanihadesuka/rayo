@@ -18,12 +18,11 @@ appId: a.b
 [1/2] FLAKY a  # s  (failed once, then passed)
   try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a_failure.png
 [2/2] FAIL b  # s
+  b failed at tapOn missing: not on screen
   why: not on screen: missing
   cause: test
   step: tapOn missing
   at: b.yaml:3
-  screen:
-    a screen
   saved: .rayo/b_failure.png
 
 FLAKY a  # s  (failed once, then passed)

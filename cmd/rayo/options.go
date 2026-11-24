@@ -37,8 +37,9 @@ type options struct {
 	seed                   uint64
 	retries                int // negative if not said
 	failFast, keepGoing    bool
-	flakyFails             bool // a flow that passed only on a retry fails the run
-	verbose                bool
+	flakyFails             bool     // a flow that passed only on a retry fails the run
+	detail                 string   // empty if not said
+	window                 int      // failure-window, seconds; 0 if not said
 	results                []string // files
 	show                   []string // nil if not said
 	slowest                int      // 0 if not said
@@ -191,7 +192,15 @@ var sections = []section{
 		flag("continuous", "run again whenever a file changes", func(o *options) *bool { return &o.continuous }).withShort("c"),
 	}},
 	{[]string{cmdTest}, "what comes out", []option{
-		flag("verbose", "every step (always, for a single flow)", func(o *options) *bool { return &o.verbose }).withShort("v"),
+		choice("detail", "how much", "printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files", func(o *options) *string { return &o.detail }, flow.Details...),
+		{name: "failure-window", value: "seconds", about: "a failure's log and calls begin this long before the failing step (default 10)", set: func(o *options, v string) error {
+			n, err := strconv.Atoi(v)
+			if err != nil || n < 1 {
+				return fmt.Errorf("--failure-window takes a number of seconds from 1, not %q", v)
+			}
+			o.window = n
+			return nil
+		}},
 		{name: "results", value: "file", about: "write the results: .txt, .json, .xml (JUnit) or .md; may be repeated", set: func(o *options, v string) error {
 			o.results = append(o.results, v)
 			if _, err := report.FormatOf(v); err != nil {
@@ -501,7 +510,10 @@ func (o *options) none(command string) error {
 
 // steps says whether to show every step, and not only how each flow went.
 func (o *options) steps(flows []*flow.Flow) bool {
-	return o.verbose || o.runner.Profile || o.runner.Timings || len(flows) == 1
+	if o.detail == flow.Brief {
+		return false
+	}
+	return o.detail == flow.Full || o.runner.Profile || o.runner.Timings || len(flows) == 1
 }
 
 // into settles the output folder: the option, or else the suite's.

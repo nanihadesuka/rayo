@@ -14,6 +14,7 @@ emulator-5554, ready in # ms
   ✗ camera ${'nope.png'}  # ms
   saved .rayo/a_failure.png, .rayo/a_screen.txt, .rayo/a_logcat.txt
 [1/1] FAIL a  # s
+  a failed at camera ${'nope.png'}: step failed
   why: no such file: nope.png
   cause: test
   step: camera ${'nope.png'}

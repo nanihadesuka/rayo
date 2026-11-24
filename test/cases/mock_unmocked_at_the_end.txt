@@ -16,17 +16,18 @@ emulator-5554, ready in # ms
 [1/1] case
   ✓ tapOn GET /a  # ms
   ✓ tapOn GET /late  # ms
-  last calls:
-    <time> GET /a -> 200
-    <time> GET /late -> not mocked
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
 [1/1] FAIL case  # s
+  case failed at the end: unmocked call
   why: the app called what isn't mocked:
         GET /late
   cause: test
   before:
     tapOn GET /a
     tapOn GET /late
+  calls:
+    <time> GET /a -> 200
+    <time> GET /late -> not mocked
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s

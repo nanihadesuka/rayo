@@ -153,7 +153,7 @@ func (o *options) retriesOf(f *flow.Flow) int {
 func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) error {
 	o := s.o
 	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), FlakyFails: o.flakyFails,
-		Show: o.show, Slowest: o.slowest, Template: o.resultsTemplate}
+		Detail: o.detail, Show: o.show, Slowest: o.slowest, Template: o.resultsTemplate}
 	say := human()
 	if o.shuffle {
 		sum.Order = fmt.Sprintf("--shuffle=%d", o.seed)
@@ -168,6 +168,7 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	lost := false // the device, for that
 	verbose := o.steps(flows)
 	s.reporter.(*console).verbose = verbose
+	s.reporter.(*console).detail = o.detail
 	s.reporter.(*console).timings = o.runner.Timings
 	for i, f := range flows {
 		out := report.Outcome{Flow: f, Retries: o.retriesOf(f), Began: time.Now()}
