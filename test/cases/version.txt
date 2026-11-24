@@ -4,4 +4,4 @@ version
 -- exit --
 0
 -- stdout --
-rayo 2.0.0
+rayo 2.0.1
