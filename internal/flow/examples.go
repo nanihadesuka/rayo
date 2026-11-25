@@ -3,12 +3,13 @@ package flow
 // Examples of each command. A test checks that rayo accepts them all.
 var examples = map[string]string{
 	"assertNotVisible":      "- assertNotVisible: Loading.*\n- assertNotVisible: { id: spinner, timeout: 10s }",
+	"assertRequest":         "- waitForRequest: { method: POST, path: \".*/payments\" }\n- assertRequest: { method: POST, path: \".*/payments\", times: 1 }\n- assertRequest: { path: \".*/analytics\", times: 0 }",
 	"assertTrue":            "- evalScript: ${output.total = 3}\n- assertTrue: ${output.total == 3}",
 	"assertVisible":         "- assertVisible: \"Welcome.*\"\n- assertVisible: { id: price, text: \"Price (€)\" }",
 	"back":                  "- back",
 	"camera":                "- camera: qr.png      # what the emulator's camera sees\n- camera: none        # the room as it was",
 	"clearState":            "- clearState\n- clearState: com.example.other",
-	"copyTextFrom":          "- copyTextFrom: { id: order_number }\n- tapOn: { id: search }\n- pasteText",
+	"copyTextFrom":          "- copyTextFrom: { id: order_number }\n- tapOn: { id: search }\n- pasteText\n- copyTextFrom: { id: total, output: total }\n- assertTrue: ${output.total == '5 €'}",
 	"doubleTapOn":           "- doubleTapOn: { id: photo }",
 	"eraseText":             "- tapOn: { id: email }\n- eraseText           # 50 characters\n- eraseText: 10",
 	"evalScript":            "- evalScript: ${output.count = 1}",
@@ -37,6 +38,7 @@ var examples = map[string]string{
 	"scrollUntilVisible":    "- scrollUntilVisible: { element: { text: Terms }, timeout: 30s }",
 	"setAirplaneMode":       "- setAirplaneMode: enabled\n- setAirplaneMode: disabled",
 	"setLocation":           "- setLocation: { latitude: 41.3785, longitude: 2.1765 }",
+	"setOrientation":        "- setOrientation: LANDSCAPE_LEFT\n- assertVisible: { id: player }\n- setOrientation: PORTRAIT",
 	"setPermissions":        "- setPermissions: { permissions: { all: deny, camera: allow } }",
 	"shell":                 "- shell: am broadcast -a com.example.REFRESH -p com.example.app",
 	"startRecording":        "- startRecording          # with the flow's name\n- tapOn: { id: login }\n- stopRecording\n- startRecording: checkout",

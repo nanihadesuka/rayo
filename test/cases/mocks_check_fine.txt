@@ -1,0 +1,11 @@
+-- args --
+mocks check mock
+-- mock/mappings/a.json --
+{"request":{"method":"GET","urlPath":"/profile"},"response":{"bodyFileName":"profile.json"}}
+-- mock/__files/profile.json --
+{}
+==== out ====
+-- exit --
+0
+-- stdout --
+1 mapping is fine

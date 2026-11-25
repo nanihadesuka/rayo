@@ -1,0 +1,22 @@
+-- args --
+check --shard 2/2 c.yaml a.yaml b.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+-- c.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+0
+-- stdout --
+1 flow is fine
+  b  b.yaml  retries: 1
+a run writes to .rayo, keeps the files of every try, with a video only of flows whose header says record
+such as .rayo/b_failure.png, and of a retry .rayo/b_retry1_logcat.txt

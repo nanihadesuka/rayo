@@ -1,0 +1,7 @@
+-- args --
+mocks check --prune mock
+==== out ====
+-- exit --
+2
+-- stderr --
+error: rayo mocks check takes only the mocks: a folder or a file

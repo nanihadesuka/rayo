@@ -35,6 +35,7 @@ type options struct {
 	continuous             bool
 	only, include, exclude []string
 	rerunFailed            bool
+	shard, shards          int // --shard shard/shards; 0 if not said
 	shuffle                bool
 	seed                   uint64
 	retries                int // negative if not said
@@ -61,7 +62,7 @@ type options struct {
 	noRun, serve bool
 
 	// Of do.
-	screen bool
+	screen, screenChanges bool
 
 	// Of hierarchy and do.
 	find string
@@ -183,6 +184,15 @@ var sections = []section{
 		list("include-tags", "only flows with one of these tags", func(o *options) *[]string { return &o.include }),
 		list("exclude-tags", "not flows with one of these tags", func(o *options) *[]string { return &o.exclude }),
 		flag("rerun-failed", "only those that haven't passed since they last failed", func(o *options) *bool { return &o.rerunFailed }),
+		{name: "shard", value: "i/n", about: "only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order", set: func(o *options, v string) error {
+			i, n, ok := strings.Cut(v, "/")
+			o.shard, _ = strconv.Atoi(i)
+			o.shards, _ = strconv.Atoi(n)
+			if !ok || o.shards < 1 || o.shard < 1 || o.shard > o.shards {
+				return fmt.Errorf("--shard takes i/n, a part of how many, such as 2/4, not %q", v)
+			}
+			return nil
+		}},
 	}},
 	{[]string{cmdTest, cmdCheck}, "as the suite says, for one run", []option{
 		{short: "e", name: "env", value: "KEY=VALUE", about: "a variable for the flows; over the suite's env, which is over a flow's own", set: func(o *options, v string) error {
@@ -382,7 +392,13 @@ var sections = []section{
 		flag("prune", "also take out the mocks that weren't called", func(o *options) *bool { return &o.prune }),
 	}},
 	{[]string{cmdDo}, "", []option{
-		flag("screen", "also what is on screen afterwards", func(o *options) *bool { return &o.screen }),
+		{name: "screen", value: "changes", optional: true, about: "also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave", set: func(o *options, v string) error {
+			if v != "" && v != "changes" {
+				return fmt.Errorf("--screen takes nothing, or =changes, not %q", v)
+			}
+			o.screen, o.screenChanges = true, v == "changes"
+			return nil
+		}},
 	}},
 	{[]string{cmdTest, cmdCheck, cmdExplain, cmdDevices, cmdHierarchy, cmdDo, cmdMocks}, "", []option{
 		choice("format", "how", "human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs",
@@ -403,6 +419,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo devices                                     connected devices
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
+  rayo mocks check <folder>                        mappings that never answer, and bodies no mapping uses
   rayo ca new [<folder>]                           a CA for the project, in .rayo/ca, to commit with the flows
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help

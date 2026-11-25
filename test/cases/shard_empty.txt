@@ -1,0 +1,15 @@
+-- args --
+test --shard 3/3 a.yaml b.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+0
+-- stdout --
+no flows in part 3 of 3

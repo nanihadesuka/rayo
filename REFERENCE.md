@@ -20,9 +20,9 @@ The tables between `generated` marks come from the code, as do `rayo help` and t
 | [Checks and waits](#checks-and-waits) | [assertVisible](#assertvisible) · [assertNotVisible](#assertnotvisible) · [extendedWaitUntil](#extendedwaituntil) · [assertTrue](#asserttrue) · [waitForAnimationToEnd](#waitforanimationtoend) |
 | [Control](#control) | [runFlow](#runflow) · [repeat](#repeat) · [retry](#retry) · [when](#when) |
 | [Scripts](#scripts) | [Expressions](#expressions) · [runScript](#runscript) · [evalScript](#evalscript) · [JavaScript API](#javascript-api) |
-| [Device](#device) | [setLocation](#setlocation) · [travel](#travel) · [setAirplaneMode](#setairplanemode) · [takeScreenshot](#takescreenshot) · [startRecording](#startrecording-stoprecording) · [stopRecording](#startrecording-stoprecording) · [camera](#camera) · [shell](#shell) |
+| [Device](#device) | [setLocation](#setlocation) · [travel](#travel) · [setAirplaneMode](#setairplanemode) · [setOrientation](#setorientation) · [takeScreenshot](#takescreenshot) · [startRecording](#startrecording-stoprecording) · [stopRecording](#startrecording-stoprecording) · [camera](#camera) · [shell](#shell) |
 | [Server](#server) | [http](#http) |
-| [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [Capture](#capture) |
+| [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [assertRequest](#assertrequest) · [Capture](#capture) |
 | [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Blame](#blame) · [Outcomes](#outcomes) · [Results](#results) · [For a program](#for-a-program) · [Exit codes](#exit-codes) · [Errors](#errors) · [Events](#events) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
 | [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Resume](#resume) · [Failures](#failures) · [Timings](#timings) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
@@ -48,6 +48,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo devices                                     connected devices
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
+  rayo mocks check <folder>                        mappings that never answer, and bodies no mapping uses
   rayo ca new [<folder>]                           a CA for the project, in .rayo/ca, to commit with the flows
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
@@ -93,6 +94,7 @@ Options of test and check: which flows of them
   --include-tags <a,b>       only flows with one of these tags
   --exclude-tags <a,b>       not flows with one of these tags
   --rerun-failed             only those that haven't passed since they last failed
+  --shard <i/n>              only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order
 
 Options of test and check: as the suite says, for one run
   -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own
@@ -163,7 +165,7 @@ Options of mocks
   --prune                    also take out the mocks that weren't called
 
 Options of do
-  --screen                   also what is on screen afterwards
+  --screen[=changes]         also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave
 
 Options of test, check, explain, devices, hierarchy, do and mocks
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs
@@ -469,6 +471,22 @@ Adds text to the focused field, waiting for one to be focused.
 🧪 `copyTextFrom` keeps an element's text, or its description if it has none, in
 `rayo.copiedText`. `pasteText` adds it to the focused field.
 
+`output` names where else to keep it, so that the next copy doesn't replace it: `output: orderId`
+keeps it in `${output.orderId}` too, for the rest of the flow and the flows it runs.
+
+```yaml
+- copyTextFrom: { id: order_number, output: orderId }
+- copyTextFrom: { id: total, output: total }
+- inputText: ${output.orderId}
+- assertTrue: ${output.total == '5 €'}
+```
+
+<!-- generated: keys copyTextFrom -->
+| Key | Takes | |
+|---|---|---|
+| `output` | name | Also keeps it in output.<this name>, which the next copy doesn't replace |
+<!-- end -->
+
 ### hideKeyboard
 
 🧪 Closes the keyboard if it is open with one Back, and waits until it has. Does nothing when none is
@@ -733,6 +751,18 @@ Android 12.
 | `value` | enabled/disabled/true/false | enabled or disabled. Short form |
 <!-- end -->
 
+### setOrientation
+
+🧪 `PORTRAIT`, `LANDSCAPE_LEFT`, `UPSIDE_DOWN` or `LANDSCAPE_RIGHT`, as Maestro names them. The screen stops
+turning by itself until the end of the flow, which puts both settings back as they were. The quickest
+way to see whether the app keeps what was typed and where it was when the activity is made again.
+
+<!-- generated: keys setOrientation -->
+| Key | Takes | |
+|---|---|---|
+| `orientation` | PORTRAIT/LANDSCAPE_LEFT/UPSIDE_DOWN/LANDSCAPE_RIGHT | How the screen is turned. Short form |
+<!-- end -->
+
 ### takeScreenshot
 
 🧪 Saves `<output>/<flow>_<name>.png`, named as [the other files](#what-is-kept).
@@ -958,6 +988,28 @@ Moves scenarios to a state. A scenario or state that no mock mentions is an erro
 Waits until the app calls `path`, a regular expression of the whole path. Optional: `method`, and
 `body`, a text in it. Calls already made in this flow count, but each is matched only once.
 
+### assertRequest
+
+<!-- generated: keys assertRequest -->
+| Key | Takes | |
+|---|---|---|
+| `method` | text | Such as POST (GET) |
+| `path` | pattern | Only these calls, a regular expression of the whole path |
+| `body` | text | A text in the body |
+| `times` | number | Exactly so many calls by now; 0 for none |
+<!-- end -->
+
+Checks, without waiting, that the app has called `path` exactly `times` times so far in this flow:
+`times: 0` for a call it must never make. `method` and `body` narrow it as in waitForRequest; calls
+that a waitForRequest matched count too. For a call that may still be on its way, waitForRequest first.
+
+```yaml
+- tapOn: Pay
+- waitForRequest: { method: POST, path: ".*/payments" }
+- assertRequest: { method: POST, path: ".*/payments", times: 1 }   # not twice
+- assertRequest: { path: ".*/analytics", times: 0 }
+```
+
 ### Capture
 
 Makes mocks from a real backend. Run the flow once with
@@ -1076,6 +1128,21 @@ A changed mapping is written where it was, with its body in the same file of `__
 mappings in other files stay where they are. It works the same with the interceptor and the proxy.
 Mocks captured before REST bodies and GraphQL variables were matched have other names: the first
 update of them shows each as `gone` and `new`; `rayo mocks apply --prune` takes the new ones.
+
+#### Checking mocks
+
+`rayo check` already fails on a mock that doesn't load. `rayo mocks check <folder>` also says what
+loads but is never used, and exits 1 if anything is:
+
+- a mapping that never answers, as a later one of the same priority and scenario state matches the
+  very same calls: the later one wins, so the earlier is dead, often a leftover of an edit;
+- a file of `__files` that no mapping's `bodyFileName` names.
+
+```
+$ rayo mocks check mock
+mock/mappings/profile.json never answers: mock/mappings/profile-new.json, after it, answers the same calls (GET /profile)
+mock/__files/old-profile.json: no mapping uses it
+```
 
 #### GraphQL
 

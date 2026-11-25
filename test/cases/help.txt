@@ -17,6 +17,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo devices                                     connected devices
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
+  rayo mocks check <folder>                        mappings that never answer, and bodies no mapping uses
   rayo ca new [<folder>]                           a CA for the project, in .rayo/ca, to commit with the flows
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
@@ -62,6 +63,7 @@ Options of test and check: which flows of them
   --include-tags <a,b>       only flows with one of these tags
   --exclude-tags <a,b>       not flows with one of these tags
   --rerun-failed             only those that haven't passed since they last failed
+  --shard <i/n>              only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order
 
 Options of test and check: as the suite says, for one run
   -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own
@@ -132,7 +134,7 @@ Options of mocks
   --prune                    also take out the mocks that weren't called
 
 Options of do
-  --screen                   also what is on screen afterwards
+  --screen[=changes]         also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave
 
 Options of test, check, explain, devices, hierarchy, do and mocks
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs

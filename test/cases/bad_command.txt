@@ -4,4 +4,4 @@ tset flow.yaml
 -- exit --
 2
 -- stderr --
-error: unknown command "tset", see rayo help
+error: unknown command "tset", did you mean test? See rayo help

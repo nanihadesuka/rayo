@@ -85,12 +85,29 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 	if len(chosen) == 0 && !o.rerunFailed {
 		return nil, errors.New("no flows have those tags")
 	}
+	if o.shards > 0 {
+		chosen = o.part(chosen)
+	}
 	if o.shuffle {
 		// By path first, so that a seed always means the same order.
 		slices.SortStableFunc(chosen, func(a, b *flow.Flow) int { return strings.Compare(report.Identity(a), report.Identity(b)) })
 		rand.New(rand.NewPCG(o.seed, 0)).Shuffle(len(chosen), func(i, j int) { chosen[i], chosen[j] = chosen[j], chosen[i] })
 	}
 	return chosen, nil
+}
+
+// part is those of --shard: each flow's place among all by path settles its part, so that every
+// machine agrees whatever the order or the other options.
+func (o *options) part(flows []*flow.Flow) []*flow.Flow {
+	byPath := slices.Clone(flows)
+	slices.SortStableFunc(byPath, func(a, b *flow.Flow) int { return strings.Compare(report.Identity(a), report.Identity(b)) })
+	mine := map[*flow.Flow]bool{}
+	for i, f := range byPath {
+		if i%o.shards == o.shard-1 {
+			mine[f] = true
+		}
+	}
+	return slices.DeleteFunc(flows, func(f *flow.Flow) bool { return !mine[f] })
 }
 
 // streak is the failures in a row that aren't the tests' own.

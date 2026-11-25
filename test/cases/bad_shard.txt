@@ -1,0 +1,7 @@
+-- args --
+test --shard 3/2 a.yaml
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --shard takes i/n, a part of how many, such as 2/4, not "3/2"

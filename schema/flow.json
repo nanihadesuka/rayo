@@ -296,6 +296,126 @@
               ],
               "description": "The element isn't on screen, or goes away in time"
             },
+            "assertRequest": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "body": {
+                      "anyOf": [
+                        {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "A text in the body"
+                    },
+                    "label": {
+                      "anyOf": [
+                        {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "What to show instead of the command"
+                    },
+                    "method": {
+                      "anyOf": [
+                        {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Such as POST (GET)"
+                    },
+                    "optional": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            true,
+                            false
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "A failure doesn't fail the flow"
+                    },
+                    "path": {
+                      "anyOf": [
+                        {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Only these calls, a regular expression of the whole path"
+                    },
+                    "timeout": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            {
+                              "pattern": "^[0-9_.]+(ms|s|m|h)?([0-9.]+(ms|s|m))*$",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "How long it may take"
+                    },
+                    "times": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Exactly so many calls by now; 0 for none"
+                    }
+                  },
+                  "type": "object"
+                }
+              ],
+              "description": "The app made a call exactly so many times by now, without waiting: times: 0 for none; waitForRequest first for one still on its way"
+            },
             "assertTrue": {
               "anyOf": [
                 {
@@ -1115,6 +1235,19 @@
                       ],
                       "description": "A failure doesn't fail the flow"
                     },
+                    "output": {
+                      "anyOf": [
+                        {
+                          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+                          "type": "string"
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Also keeps it in output.<this name>, which the next copy doesn't replace"
+                    },
                     "rightOf": {
                       "anyOf": [
                         {
@@ -1183,7 +1316,7 @@
                   "type": "object"
                 }
               ],
-              "description": "Keeps an element's text in rayo.copiedText"
+              "description": "Keeps an element's text in rayo.copiedText, and in output.<name> if output says one"
             },
             "doubleTapOn": {
               "anyOf": [
@@ -4330,6 +4463,110 @@
                 }
               ],
               "description": "Stays at a place"
+            },
+            "setOrientation": {
+              "anyOf": [
+                {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "PORTRAIT",
+                        "portrait",
+                        "LANDSCAPE_LEFT",
+                        "landscape_left",
+                        "UPSIDE_DOWN",
+                        "upside_down",
+                        "LANDSCAPE_RIGHT",
+                        "landscape_right"
+                      ]
+                    },
+                    {
+                      "pattern": "\\$\\{",
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "label": {
+                      "anyOf": [
+                        {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "What to show instead of the command"
+                    },
+                    "optional": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            true,
+                            false
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "A failure doesn't fail the flow"
+                    },
+                    "orientation": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "PORTRAIT",
+                            "portrait",
+                            "LANDSCAPE_LEFT",
+                            "landscape_left",
+                            "UPSIDE_DOWN",
+                            "upside_down",
+                            "LANDSCAPE_RIGHT",
+                            "landscape_right"
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "How the screen is turned"
+                    },
+                    "timeout": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            {
+                              "pattern": "^[0-9_.]+(ms|s|m|h)?([0-9.]+(ms|s|m))*$",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "How long it may take"
+                    }
+                  },
+                  "type": "object"
+                }
+              ],
+              "description": "Turns the screen, and keeps it so until the flow ends"
             },
             "setPermissions": {
               "anyOf": [

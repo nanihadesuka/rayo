@@ -58,24 +58,25 @@ func Nearest(name string, names []string) string {
 	return ""
 }
 
-// Distance is Levenshtein's.
+// Distance is Levenshtein's, with two letters swapped counted as one change, the commonest slip: tset, test.
 func Distance(a, b []rune) int {
-	row := make([]int, len(b)+1)
-	for j := range row {
-		row[j] = j
+	before, last, row := make([]int, len(b)+1), make([]int, len(b)+1), make([]int, len(b)+1)
+	for j := range last {
+		last[j] = j
 	}
 	for i := 1; i <= len(a); i++ {
-		prev := row[0]
 		row[0] = i
 		for j := 1; j <= len(b); j++ {
-			cur := row[j]
 			cost := 1
 			if a[i-1] == b[j-1] {
 				cost = 0
 			}
-			row[j] = min(row[j]+1, row[j-1]+1, prev+cost)
-			prev = cur
+			row[j] = min(last[j]+1, row[j-1]+1, last[j-1]+cost)
+			if i > 1 && j > 1 && a[i-1] == b[j-2] && a[i-2] == b[j-1] {
+				row[j] = min(row[j], before[j-2]+1)
+			}
 		}
+		before, last, row = last, row, before
 	}
-	return row[len(b)]
+	return last[len(b)]
 }

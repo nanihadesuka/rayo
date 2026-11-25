@@ -158,6 +158,7 @@ var (
 	keyInput  = newKey("text", aText, "The text to add")
 	keyLength = newKey("length", aNumber, "How long (8)")
 	keyErase  = newKey("charactersToErase", aNumber, "How many (50)")
+	keyKeptAs = newKey("output", aName, "Also keeps it in output.<this name>, which the next copy doesn't replace")
 	keyKey    = newKey("key", aKeyCode, "A name, such as Enter, or an Android key code")
 )
 
@@ -182,6 +183,7 @@ var (
 	keyPoints    = newKey("points", places, "A list of 'latitude,longitude'")
 	keySpeed     = newKey("speed", aSpeed, "Metres per second (7)")
 	keyOn        = newKey("value", onOff, "enabled or disabled")
+	keyTurned    = newKey("orientation", anOrientation, "How the screen is turned")
 	keyPath      = newKey("path", aText, "The file, in the debug output")
 	keyVideo     = newKey("path", aText, "The file, in the debug output; by default the flow's name")
 	keyImage     = newKey("image", aText, "What it sees, a path relative to this flow; or none")
@@ -211,6 +213,7 @@ var (
 	keyFail     = newKey("fail", aStatus, "Every answer is this status, 400 to 599")
 	keyCallPath = newKey("path", aPattern, "Only these calls, a regular expression of the whole path")
 	keyBody     = newKey("body", aText, "A text in the body")
+	keyCalls    = newKey("times", aNumber, "Exactly so many calls by now; 0 for none")
 )
 
 // lateKeys hold code, or what is filled in when it runs, so ${...} is left as it is. By name, as they may be nested.

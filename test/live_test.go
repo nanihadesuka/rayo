@@ -113,6 +113,14 @@ func TestLiveServed(t *testing.T) {
 	has(do(1, "- tapOm: x"), "unknown command")
 	has(do(0, ".screen"), "a screen")
 	has(do(0, ".save"), "saved 3 steps")
+	has(do(0, "--screen=changes", "- back"), "screen: the same") // as the --screen before it
+	if out := do(0, "--screen=changes", "--format", "json", "- back"); !strings.Contains(out, `"screen": []`) {
+		t.Errorf("a screen that is the same isn't an empty list:\n%s", out)
+	}
+	has(do(2, "--screen=changes", "--find", "x", ".from 99"), "--find looks through the whole screen")
+	has(do(2, "--screen=all", ".from 99"), `--screen takes nothing, or =changes, not "all"`)
+	has(do(0, ".undo"), "")
+	has(do(0, ".undo"), "")
 	second := d.command(dir, "live", "flow.yaml")
 	if out, err := second.CombinedOutput(); err == nil || !strings.Contains(string(out), "live already") {
 		t.Errorf("%v\n%s", err, out)

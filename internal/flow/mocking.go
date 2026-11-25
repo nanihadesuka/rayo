@@ -425,6 +425,19 @@ func awaitRequest(c *call) error {
 	return c.r.backend.mock.Await(c.ctx, arg(c, keyMethod), arg(c, keyCallPath), arg(c, keyBody), c.limit)
 }
 
+// --- assertRequest ---
+
+func assertRequest(c *call) error {
+	if c.r.backend.mock == nil {
+		return errNoMock
+	}
+	want := arg(c, keyCalls)
+	if n := c.r.backend.mock.Count(arg(c, keyMethod), arg(c, keyCallPath), arg(c, keyBody)); n != want {
+		return fmt.Errorf("the app made it %d times, not %d", n, want)
+	}
+	return nil
+}
+
 func countSame(changes []mock.Change) int {
 	n := 0
 	for _, c := range changes {

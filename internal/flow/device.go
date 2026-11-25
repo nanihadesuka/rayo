@@ -64,6 +64,45 @@ func (r *Runner) resetAirplane() error {
 	return err
 }
 
+// setOrientation notes how rotation was set, the first time, so that it can be put back.
+func setOrientation(c *call) error {
+	if c.r.turned == "" {
+		was, err := c.r.device.Exec("settings get system accelerometer_rotation; settings get system user_rotation")
+		if err != nil {
+			return err
+		}
+		c.r.turned = strings.Join(strings.Fields(string(was)), " ")
+		if len(strings.Fields(c.r.turned)) != 2 {
+			c.r.turned = ""
+			return fmt.Errorf("can't tell how the screen is turned: %q", strings.TrimSpace(string(was)))
+		}
+	}
+	return c.command(fmt.Sprintf("settings put system accelerometer_rotation 0; settings put system user_rotation %d", arg(c, keyTurned)))
+}
+
+// resetOrientation doesn't need the agent, which may be lost. A setting that was unset ("null") is left as it is now.
+func (r *Runner) resetOrientation() error {
+	auto, user, _ := strings.Cut(r.turned, " ")
+	if r.turned == "" {
+		return nil
+	}
+	var put []string
+	if user != "null" {
+		put = append(put, "settings put system user_rotation "+user)
+	}
+	if auto != "null" {
+		put = append(put, "settings put system accelerometer_rotation "+auto)
+	}
+	if len(put) == 0 {
+		return nil
+	}
+	out, err := r.device.Exec(strings.Join(put, "; "))
+	if err == nil {
+		err = complaint(string(out))
+	}
+	return err
+}
+
 func quote(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
 
 func (r *Runner) screenshot() ([]byte, error) {

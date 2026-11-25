@@ -15,6 +15,11 @@ func copyText(c *call) error {
 		return err
 	}
 	vm := c.r.script.vm
+	if name := arg(c, keyKeptAs); name != "" {
+		if err := vm.GlobalObject().Get("output").ToObject(vm).Set(name, a.Text); err != nil {
+			return err
+		}
+	}
 	return vm.GlobalObject().Get("rayo").ToObject(vm).Set("copiedText", a.Text)
 }
 

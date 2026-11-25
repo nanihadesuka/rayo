@@ -113,7 +113,10 @@ func changedFiles(ref string) (map[string]bool, error) {
 			if errors.As(err, &exit) && len(exit.Stderr) > 0 {
 				return nil, fmt.Errorf("--since %s: %s", ref, strings.TrimSpace(string(exit.Stderr)))
 			}
-			return nil, fmt.Errorf("--since needs git: %w", err)
+			if errors.Is(err, exec.ErrNotFound) {
+				return nil, fmt.Errorf("--since needs git: %w", err)
+			}
+			return nil, fmt.Errorf("--since %s: git %s: %w", ref, strings.Join(args, " "), err)
 		}
 		var lines []string
 		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {

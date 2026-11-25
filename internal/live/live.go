@@ -46,15 +46,16 @@ type Reply struct {
 	Failure       *report.Failure `json:"failure" about:"Of a step that failed, as in the results"`
 	Warnings      []string        `json:"warnings" about:"Such as calls without a mock"`
 	Calls         []mock.Call     `json:"calls" about:"To the mock meanwhile"`
-	Screen        []string        `json:"screen" about:"With --screen, or after a failure"`
+	Screen        []string        `json:"screen" about:"With --screen, or after a failure. With --screen=changes, only the lines that appeared, as '+ line', and those that went, as '- line', since the screen the session last gave; none if it is the same"`
 	Unsaved       int             `json:"unsaved" about:"Steps not saved to the flow yet"`
 }
 
 // Request is what is asked of a session.
 type Request struct {
-	Text   string `json:"text"`
-	Screen bool   `json:"screen"`
-	answer chan Reply
+	Text    string `json:"text"`
+	Screen  bool   `json:"screen"`
+	Changes bool   `json:"changes"` // of the screen, only what changed
+	answer  chan Reply
 }
 
 // live is a flow written as it runs.
@@ -65,8 +66,9 @@ type live struct {
 	unsaved []string
 	session *flow.Session
 	out     *liveOutput
-	done    []done // the steps that passed, in order
-	next    int    // the first of the file's steps not done
+	done    []done   // the steps that passed, in order
+	next    int      // the first of the file's steps not done
+	seen    []string // the screen it last gave, for --screen=changes; nil before the first
 }
 
 // done is a step that passed.
@@ -147,7 +149,7 @@ func (l *live) talk(ctx context.Context, p Params, f *flow.Flow) error {
 		l.next = len(f.Steps)
 	}
 	if len(f.Steps) > 0 && !p.NoRun {
-		fmt.Print(l.do(ctx, f.Steps, nil, false).Text())
+		fmt.Print(l.do(ctx, f.Steps, nil, Request{}).Text())
 		if err := l.session.Dead(); err != nil {
 			return err
 		}
@@ -219,7 +221,7 @@ func readCommands(in io.Reader, give func(text string)) {
 
 func (l *live) handle(ctx context.Context, q Request) Reply {
 	if text := strings.TrimSpace(q.Text); strings.HasPrefix(text, ".") {
-		return l.command(ctx, text, q.Screen)
+		return l.command(ctx, text, q)
 	}
 	written, err := flow.ParseSteps(l.path, q.Text)
 	if err != nil {
@@ -232,7 +234,7 @@ func (l *live) handle(ctx context.Context, q Request) Reply {
 	for _, w := range written {
 		steps, texts = append(steps, w.Step), append(texts, w.Text)
 	}
-	return l.do(ctx, steps, texts, q.Screen)
+	return l.do(ctx, steps, texts, q)
 }
 
 func (l *live) reply() Reply {
@@ -240,7 +242,7 @@ func (l *live) reply() Reply {
 }
 
 // do runs steps, and keeps those that pass if they have a text.
-func (l *live) do(ctx context.Context, steps []*flow.Step, texts []string, screen bool) Reply {
+func (l *live) do(ctx context.Context, steps []*flow.Step, texts []string, q Request) Reply {
 	d := l.session.Do(ctx, steps)
 	for i := range d.Passed {
 		k := done{text: "- " + steps[i].Text() + "\n", file: -1, mark: d.Marks[i]}
@@ -262,12 +264,18 @@ func (l *live) do(ctx context.Context, steps []*flow.Step, texts []string, scree
 		x := report.FailureOf(d.Err, d.Failure)
 		a.Failure = &x
 	}
-	if screen && l.session.Dead() == nil {
+	if q.Screen && l.session.Dead() == nil {
 		out, err := l.session.Screen(ctx)
 		if err != nil {
 			a.Warnings = append(a.Warnings, "couldn't read the screen: "+err.Error())
 		}
 		a.Screen = report.Lines(out)
+		if err == nil {
+			if q.Changes {
+				a.Screen = changes(l.seen, a.Screen)
+			}
+			l.seen = report.Lines(out)
+		}
 	}
 	return a
 }
@@ -279,7 +287,7 @@ func (l *live) failed(err error) Reply {
 }
 
 // command is one of those that begin with a dot.
-func (l *live) command(ctx context.Context, text string, screen bool) Reply {
+func (l *live) command(ctx context.Context, text string, q Request) Reply {
 	name, arg, _ := strings.Cut(text, " ")
 	arg = strings.TrimSpace(arg)
 	if name == ".retry" || name == ".from" { // they run steps, and answer as steps do
@@ -287,7 +295,7 @@ func (l *live) command(ctx context.Context, text string, screen bool) Reply {
 		if err != nil {
 			return l.failed(err)
 		}
-		return l.do(ctx, steps, nil, screen)
+		return l.do(ctx, steps, nil, q)
 	}
 	out, err := l.meta(ctx, name, arg)
 	if err != nil {
@@ -492,4 +500,29 @@ func (a Reply) Text() string {
 		fmt.Fprintf(&b, "  %s\n", line)
 	}
 	return b.String()
+}
+
+// changes is the lines of a screen that appeared, as "+ line", in the order they are now, then those
+// that went, as "- line", in the order they were; a line there twice counts twice. All appeared if
+// there was no screen before.
+func changes(before, now []string) []string {
+	left := map[string]int{}
+	for _, line := range before {
+		left[line]++
+	}
+	list := []string{}
+	for _, line := range now {
+		if left[line] > 0 {
+			left[line]--
+		} else {
+			list = append(list, "+ "+line)
+		}
+	}
+	for _, line := range before {
+		if left[line] > 0 {
+			left[line]--
+			list = append(list, "- "+line)
+		}
+	}
+	return list
 }

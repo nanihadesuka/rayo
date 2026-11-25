@@ -1,0 +1,11 @@
+-- args --
+check flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- copyTextFrom: { id: order, output: order-id }
+==== out ====
+-- exit --
+2
+-- stderr --
+error: flow.yaml:3: output: only letters, digits and _, as in output.orderId, not "order-id"

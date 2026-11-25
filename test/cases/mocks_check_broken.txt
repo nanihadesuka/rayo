@@ -1,0 +1,9 @@
+-- args --
+mocks check mock
+-- mock/mappings/a.json --
+{"request":{"method":"GET","urlPath":"/a"},"response":{"bodyFileName":"missing.json"}}
+==== out ====
+-- exit --
+2
+-- stderr --
+error: mock/mappings/a.json: mapping 1: can't read the body missing.json: no file mock/__files/missing.json

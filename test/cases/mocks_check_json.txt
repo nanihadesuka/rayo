@@ -1,0 +1,16 @@
+-- args --
+mocks check --format json mock
+-- mock/mappings/a.json --
+{"request":{"method":"GET","urlPath":"/a"},"response":{"body":"1"}}
+-- mock/mappings/b.json --
+{"request":{"method":"GET","urlPath":"/a"},"response":{"body":"2"}}
+==== out ====
+-- exit --
+1
+-- stdout --
+{
+  "schemaVersion": 3,
+  "notes": [
+    "mock/mappings/a.json never answers: mock/mappings/b.json, after it, answers the same calls (GET /a)"
+  ]
+}

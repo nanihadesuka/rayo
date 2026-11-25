@@ -398,6 +398,19 @@ func (m *Mock) Await(ctx context.Context, method string, path *regexp.Regexp, bo
 	return nil
 }
 
+// Count is how many calls received so far are of a method (any if empty), a path and have a text in the body.
+func (m *Mock) Count(method string, path *regexp.Regexp, body string) int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	n := 0
+	for _, c := range m.calls {
+		if (method == "" || strings.EqualFold(method, c.Method)) && path.MatchString(c.Path) && strings.Contains(c.Body, body) {
+			n++
+		}
+	}
+	return n
+}
+
 // Calls are those received so far.
 func (m *Mock) Calls() []Call {
 	m.mu.Lock()

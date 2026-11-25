@@ -1,0 +1,16 @@
+-- args --
+mocks check mock
+-- mock/mappings/a.json --
+{"request":{"method":"GET","urlPath":"/profile"},"response":{"bodyFileName":"profile.json"}}
+-- mock/mappings/b.json --
+{"request":{"method":"GET","urlPath":"/profile"},"response":{"body":"newer"}}
+-- mock/__files/profile.json --
+{}
+-- mock/__files/old.json --
+{}
+==== out ====
+-- exit --
+1
+-- stdout --
+mock/mappings/a.json never answers: mock/mappings/b.json, after it, answers the same calls (GET /profile)
+mock/__files/old.json: no mapping uses it

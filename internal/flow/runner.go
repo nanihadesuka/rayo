@@ -86,6 +86,7 @@ type Runner struct {
 	video      *video    // being recorded
 	recordings []string  // saved
 	airplane   string    // how airplane mode was before the flow changed it
+	turned     string    // the rotation settings before the flow changed them, as "auto user"
 	skipped    bool      // the step running now said it was skipped
 	stepBegan  time.Time // of the last step that isn't a group's
 	from       string    // the step to begin from, until it is reached
@@ -147,7 +148,7 @@ func (r *Runner) withEnv(f *Flow, fn func() error) error {
 func (r *Runner) prepare(ctx context.Context, f *Flow, a Attempt) {
 	r.flow, r.began, r.attempt = f, time.Now(), a
 	r.recent, r.failure, r.warnings, r.recordings, r.files = nil, nil, nil, nil, nil
-	r.log, r.located, r.airplane = "", false, ""
+	r.log, r.located, r.airplane, r.turned = "", false, "", ""
 	r.from, r.passed, r.trail = "", 0, nil
 	if r.Start != nil {
 		r.from = r.Start.From
@@ -183,6 +184,7 @@ func (r *Runner) reset() {
 		try("reset the location", err)
 	}
 	try("reset airplane mode", r.resetAirplane())
+	try("reset the orientation", r.resetOrientation())
 }
 
 // warn tells something that doesn't fail the flow, but may explain it or the next.

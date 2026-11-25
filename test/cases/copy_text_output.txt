@@ -1,0 +1,32 @@
+-- flow.yaml --
+appId: a.b
+---
+- copyTextFrom: { id: order, output: orderId }
+- copyTextFrom: total
+- assertTrue: ${output.orderId == 'text of order'}
+- assertTrue: ${rayo.copiedText == 'text of '}
+- inputText: ${output.orderId}
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ copyTextFrom order, output: orderId  # ms
+  ✓ copyTextFrom total  # ms
+  ✓ assertTrue ${output.orderId == 'text of order'}  # ms
+  ✓ assertTrue ${rayo.copiedText == 'text of '}  # ms
+  ✓ inputText ${output.orderId}  # ms
+[1/1] PASS case  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+wait {"sel":{"id":"order"},"timeout":15000}
+wait {"sel":{"text":"total"},"timeout":15000}
+input {"timeout":15000,"value":"text of order"}
+bye {"timeout":5000}

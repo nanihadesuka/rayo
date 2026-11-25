@@ -137,8 +137,8 @@ func init() {
 			keys: []anyKey{keyErase}, plain: keyErase, alone: true, run: func(c *call) error {
 				return c.do("erase", agent.Args{"count": argOr(c, keyErase, 50)})
 			}},
-		"copyTextFrom": {untested: true, about: "Keeps an element's text in rayo.copiedText",
-			plain: keyText, element: true, run: copyText},
+		"copyTextFrom": {untested: true, about: "Keeps an element's text in rayo.copiedText, and in output.<name> if output says one",
+			keys: []anyKey{keyKeptAs}, plain: keyText, element: true, run: copyText},
 		"pasteText": {untested: true, about: "Adds rayo.copiedText to the focused field",
 			alone: true, run: pasteText},
 		"hideKeyboard": {untested: true, about: "Closes the keyboard",
@@ -228,6 +228,8 @@ func init() {
 			keys: []anyKey{keyPoints, keySpeed}, check: needs(keyPoints), run: travel},
 		"setAirplaneMode": {untested: true, about: "Turns airplane mode on or off",
 			keys: []anyKey{keyOn}, plain: keyOn, run: setAirplane},
+		"setOrientation": {untested: true, about: "Turns the screen, and keeps it so until the flow ends",
+			keys: []anyKey{keyTurned}, plain: keyTurned, check: needs(keyTurned), run: setOrientation},
 		"takeScreenshot": {untested: true, about: "Saves the screen",
 			keys: []anyKey{keyPath}, plain: keyPath, run: func(c *call) error {
 				return c.r.saveScreenshot(c.r.named(strings.TrimSuffix(arg(c, keyPath), ".png"), "png"))
@@ -257,6 +259,8 @@ func init() {
 			keys: []anyKey{keyState, keyDelay, keyFail, keyCallPath}, plain: keyState, check: checkNetwork, run: setNetwork},
 		"waitForRequest": {about: "Waits until the app makes a call",
 			keys: []anyKey{keyMethod, keyCallPath, keyBody}, plain: keyCallPath, check: needs(keyCallPath), run: awaitRequest},
+		"assertRequest": {about: "The app made a call exactly so many times by now, without waiting: times: 0 for none; waitForRequest first for one still on its way",
+			keys: []anyKey{keyMethod, keyCallPath, keyBody, keyCalls}, check: needs(keyCallPath, keyCalls), run: assertRequest},
 	}
 }
 

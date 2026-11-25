@@ -1,0 +1,130 @@
+-- flow.yaml --
+appId: a.b
+mock: mock.json
+---
+- tapOn: { id: "POST /pay {\"n\":1}" }
+- assertRequest: { method: POST, path: /pay, times: 1 }
+- assertRequest: { path: /analytics, times: 0 }
+- assertRequest: { path: /pay, body: '"n":2', times: 0 }
+- tapOn: { id: "POST /pay {\"n\":2}" }
+- assertRequest: { path: /pay, times: 1 }
+-- mock.json --
+{"request":{"method":"POST","urlPath":"/pay"},"response":{"body":"ok"}}
+==== out ====
+-- exit --
+1
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+  ✓ tapOn POST /pay {"n":1}  # ms
+  ✓ assertRequest method: POST, path: /pay, times: 1  # ms
+  ✓ assertRequest path: /analytics, times: 0  # ms
+  ✓ assertRequest path: /pay, body: "n":2, times: 0  # ms
+  ✓ tapOn POST /pay {"n":2}  # ms
+  ✗ assertRequest path: /pay, times: 1  # ms
+  saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
+[1/1] FAIL case  # s
+  case failed at assertRequest path: /pay, times: 1: step failed
+  why: the app made it 2 times, not 1
+  blame: test
+  step: assertRequest path: /pay, times: 1
+  at: flow.yaml:9
+  before:
+    assertRequest path: /analytics, times: 0
+    assertRequest path: /pay, body: "n":2, times: 0
+    tapOn POST /pay {"n":2}
+  calls:
+    <time> POST /pay -> 200  by POST /pay (mock.json)
+    <time> POST /pay -> 200  by POST /pay (mock.json)
+  saved: .rayo/case_failure.png
+
+TOTAL 1: 0 passed, 1 failed  # s
+-- stderr --
+error: failed: case
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+adb reverse:forward:tcp:8080;tcp:<free>
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /pay {\"n\":1}"},"timeout":15000}
+  app: POST /pay {"n":1} -> 200  ok
+tap {"delay":100,"repeat":1,"sel":{"id":"POST /pay {\"n\":2}"},"timeout":15000}
+  app: POST /pay {"n":2} -> 200  ok
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb reverse:killforward:tcp:8080
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
+bye {"timeout":5000}
+-- file .rayo/case_failure.png --
+PNG...
+-- file .rayo/case_logcat.txt --
+the log
+-- file .rayo/case_requests.txt --
+<time> POST /pay -> 200  by POST /pay (mock.json)
+    {"n":1}
+<time> POST /pay -> 200  by POST /pay (mock.json)
+    {"n":2}
+-- file .rayo/case_screen.txt --
+a screen
+-- file .rayo/failed.json --
+{
+  "<dir>/flow.yaml": {
+    "status": "FAIL",
+    "name": "case",
+    "file": "flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "case failed at assertRequest path: /pay, times: 1: step failed",
+      "cause": "step failed",
+      "error": {
+        "file": "flow.yaml",
+        "line": 9,
+        "step": "assertRequest path: /pay, times: 1",
+        "message": "the app made it 2 times, not 1",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "blame": "test",
+      "because": "",
+      "from": [],
+      "before": [
+        "assertRequest path: /analytics, times: 0",
+        "assertRequest path: /pay, body: \"n\":2, times: 0",
+        "tapOn POST /pay {\"n\":2}"
+      ],
+      "nearest": [],
+      "calls": [
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/pay",
+          "outcome": "200",
+          "mocked": true,
+          "mapping": "POST /pay (mock.json)",
+          "scenario": "",
+          "body": ""
+        },
+        {
+          "at": "<now>",
+          "method": "POST",
+          "uri": "/pay",
+          "outcome": "200",
+          "mocked": true,
+          "mapping": "POST /pay (mock.json)",
+          "scenario": "",
+          "body": ""
+        }
+      ],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/case_failure.png",
+      "scenarios": [],
+      "trail": []
+    }
+  }
+}

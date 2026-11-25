@@ -172,6 +172,9 @@ func run(ctx context.Context, command string, args []string) error {
 	case "schema":
 		return printSchema(args)
 	}
+	if near := schema.Nearest(command, append(slices.Clone(commandNames), "help", "version")); near != "" {
+		return fmt.Errorf("unknown command %q, did you mean %s? See rayo help", command, near)
+	}
 	return fmt.Errorf("unknown command %q, see rayo help", command)
 }
 
@@ -392,7 +395,11 @@ func test(ctx context.Context, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	if len(flows) == 0 { // only with --rerun-failed
+	if len(flows) == 0 { // only with --rerun-failed or --shard
+		if o.shards > 0 && !o.rerunFailed {
+			fmt.Fprintf(human(), "no flows in part %d of %d\n", o.shard, o.shards)
+			return nil
+		}
 		if o.resume {
 			return o.nothingToResume()
 		}
@@ -445,6 +452,7 @@ func test(ctx context.Context, args []string) (err error) {
 	if group != nil {
 		watch[group.Path] = true
 	}
+	watch.app(group)
 	for {
 		err = s.runAll(ctx, flows, title)
 		if !o.continuous || ctx.Err() != nil {
@@ -465,6 +473,12 @@ func test(ctx context.Context, args []string) (err error) {
 			if err == nil {
 				o.suite = changed
 				again, err = o.choose(again)
+			}
+			if err == nil && changed != nil { // the same APK isn't installed again
+				watch.app(changed)
+				if err = changed.Install(d, printing == report.Human); err != nil {
+					err = fmt.Errorf("couldn't install the app: %w", err)
+				}
 			}
 			if err == nil {
 				flows = again
@@ -640,7 +654,10 @@ func runDo(args []string) error {
 	if o.find != "" && !o.screen {
 		return errors.New("--find needs --screen")
 	}
-	a, err := live.Ask(o.output, live.Request{Text: strings.Join(o.args, "\n"), Screen: o.screen})
+	if o.find != "" && o.screenChanges {
+		return errors.New("--find looks through the whole screen: use --screen, not --screen=changes")
+	}
+	a, err := live.Ask(o.output, live.Request{Text: strings.Join(o.args, "\n"), Screen: o.screen, Changes: o.screenChanges})
 	if err != nil {
 		return err
 	}
@@ -649,6 +666,9 @@ func runDo(args []string) error {
 	}
 	if printing == report.Human {
 		fmt.Print(a.Text())
+		if o.screenChanges && len(a.Screen) == 0 && a.Failure == nil {
+			fmt.Println("screen: the same")
+		}
 	} else {
 		err = emit(a)
 	}
@@ -745,6 +765,11 @@ func applyMocks(args []string) error {
 	}
 	var notes []string
 	switch {
+	case len(o.args) == 2 && o.args[0] == "check":
+		if !reflect.DeepEqual(o.runner.Matching, mock.Settings{}) || o.runner.Backend != "" || len(o.take) > 0 || o.prune {
+			return errors.New("rayo mocks check takes only the mocks: a folder or a file")
+		}
+		return checkMocks(o.args[1])
 	case len(o.args) == 2 && o.args[0] == "apply":
 		if !reflect.DeepEqual(o.runner.Matching, mock.Settings{}) || o.runner.Backend != "" {
 			return errors.New("rayo mocks apply takes the mocks as they were captured: --graphql, --rest and the like are of rayo mocks import")
@@ -761,7 +786,7 @@ func applyMocks(args []string) error {
 		notes, err = mock.ImportHAR(o.args[1], folder, o.runner.Backend, o.runner.Matching)
 	default:
 		return errors.New("rayo mocks apply [--only a,b] [--prune] <folder>, after rayo test --capture-update <folder>;\n" +
-			"or rayo mocks import [options] <file.har> <folder>")
+			"or rayo mocks import [options] <file.har> <folder>;\nor rayo mocks check <folder>")
 	}
 	switch {
 	case err != nil:
@@ -771,6 +796,27 @@ func applyMocks(args []string) error {
 	}
 	fmt.Println(strings.Join(notes, "\n"))
 	return nil
+}
+
+// checkMocks says what of mocks is never used; a mock that doesn't load is an error, as for rayo check.
+func checkMocks(path string) error {
+	n, problems, err := mock.Check(path)
+	if err != nil {
+		return err
+	}
+	if printing != report.Human {
+		err = emit(report.Notes{SchemaVersion: report.SchemaVersion, Notes: report.List(problems)})
+	} else if len(problems) == 0 && n == 1 {
+		fmt.Println("1 mapping is fine")
+	} else if len(problems) == 0 {
+		fmt.Println(n, "mappings are fine")
+	} else {
+		fmt.Println(strings.Join(problems, "\n"))
+	}
+	if err == nil && len(problems) > 0 {
+		err = errShown
+	}
+	return err
 }
 
 // caUsage is what rayo ca takes.

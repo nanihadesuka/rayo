@@ -124,7 +124,15 @@ var (
 		}
 		return mock.Pattern(text)
 	})
-	aDirection = oneOf([]string{"UP", "DOWN", "LEFT", "RIGHT"}, []Direction{{0, -1}, {0, 1}, {-1, 0}, {1, 0}})
+	aName = plain("name", schema.Pattern("^[A-Za-z_][A-Za-z0-9_]*$"), func(text string) (string, error) {
+		if !regexp.MustCompile("^[A-Za-z_][A-Za-z0-9_]*$").MatchString(text) {
+			return "", fmt.Errorf("only letters, digits and _, as in output.orderId, not %q", text)
+		}
+		return text, nil
+	})
+	// Of Surface.ROTATION_*: the turns of a quarter to the left, as user_rotation takes them.
+	anOrientation = oneOf([]string{"PORTRAIT", "LANDSCAPE_LEFT", "UPSIDE_DOWN", "LANDSCAPE_RIGHT"}, []int{0, 1, 2, 3})
+	aDirection    = oneOf([]string{"UP", "DOWN", "LEFT", "RIGHT"}, []Direction{{0, -1}, {0, 1}, {-1, 0}, {1, 0}})
 
 	anElement = kind[agent.Args]{name: "selector", shape: shapeOf(schema.Ref("selector")),
 		read:  func(n *yaml.Node) (agent.Args, error) { return selector(n), nil },

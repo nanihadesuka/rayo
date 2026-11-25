@@ -1,0 +1,7 @@
+-- args --
+frobnicate flow.yaml
+==== out ====
+-- exit --
+2
+-- stderr --
+error: unknown command "frobnicate", see rayo help

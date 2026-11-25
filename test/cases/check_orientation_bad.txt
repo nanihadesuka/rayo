@@ -1,0 +1,11 @@
+-- args --
+check flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- setOrientation: landscape
+==== out ====
+-- exit --
+2
+-- stderr --
+error: flow.yaml:3: orientation: not one of PORTRAIT, LANDSCAPE_LEFT, UPSIDE_DOWN, LANDSCAPE_RIGHT: "landscape"

@@ -1,0 +1,11 @@
+-- args --
+check flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- assertRequest: { path: /pay }
+==== out ====
+-- exit --
+2
+-- stderr --
+error: flow.yaml:3: assertRequest needs path and times

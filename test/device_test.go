@@ -195,6 +195,8 @@ func (d *fakeDevice) exec(c net.Conn, in *bufio.Reader, command string) {
 		io.WriteString(c, "gone\n")
 	case command == "cmd connectivity airplane-mode":
 		io.WriteString(c, "disabled\n")
+	case strings.HasPrefix(command, "settings get system accelerometer_rotation"):
+		io.WriteString(c, "1\nnull\n") // turns by itself; never turned by hand
 	case strings.HasPrefix(command, "pm install"):
 		io.WriteString(c, "Success\n")
 	case strings.HasPrefix(command, "date"):
