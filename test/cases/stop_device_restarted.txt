@@ -41,6 +41,7 @@ NOT_RUN c  (device: 2 failures in a row, the last: Android restarted during the 
 
 STOPPED device: 2 failures in a row, the last: Android restarted during the flow
 TOTAL 3: 0 passed, 2 failed, 1 not run, of those failed 2 device  # s
+next: rayo devices says if the device is there and ready; restart the emulator or reconnect it, then rayo test --rerun-failed
 -- stderr --
 error: failed: a, b, c (not run)
 -- device --

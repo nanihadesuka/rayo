@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: --keep none writes no files, so --name-template (or name-template of the suite) does nothing; see rayo help test
+error: --keep none writes no files, so --name-template (or the suite's output: { nameTemplate }) does nothing; see rayo help test

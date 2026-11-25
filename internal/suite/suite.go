@@ -59,21 +59,16 @@ type Suite struct {
 	App             *app
 	Flows           []entry
 	Retries         *int
-	Output          string
+	Output          Output
 	Results         []string
 	Format          string // of what is printed; --format wins
 	Device          *adb.Setup
-	Record          bool
-	RecordFolder    string
 	Detail          string   // empty if not said
 	FailureWindow   int      // seconds; 0 if not said
 	Show            []string // nil if not said
 	Slowest         int      // 0 if not said
 	ResultsTemplate string   // empty if not said
-	Keep            string   // empty if not said
 	FlakyFailsBuild bool
-	Artifacts       []string          // nil if not said
-	NameTemplate    string            // empty if not said
 	TimeoutScale    float64           // 0 if not said
 	Env             map[string]string // for every flow; -e wins
 	Network         string            // for every flow that doesn't say; --network wins
@@ -81,6 +76,15 @@ type Suite struct {
 	Capture         *Capture          // for every flow; nil if not said
 
 	Path string
+}
+
+// Output is what a run writes, and where.
+type Output struct {
+	Folder       string   // empty if not said
+	Keep         string   // empty if not said
+	Video        *bool    // nil if not said
+	Artifacts    []string // nil if not said
+	NameTemplate string   // empty if not said
 }
 
 // LowestScale and HighestScale bound timeoutScale and --timeout-scale.
@@ -166,15 +170,19 @@ func read(path string) (*Suite, error) {
 		return nil, &flow.Problem{Path: path, What: "is empty"}
 	}
 	s := &Suite{Path: path}
+	if top := doc.Content[0]; top.Kind == yaml.MappingNode {
+		for i := 0; i < len(top.Content); i += 2 {
+			if to, ok := Moved[top.Content[i].Value]; ok {
+				return nil, &flow.Problem{Path: path, Line: top.Content[i].Line, What: fmt.Sprintf("%s is now %s (rayo 3.0 put what a run writes under output, and spells every key in camelCase)", top.Content[i].Value, to)}
+			}
+		}
+	}
 	if err := schema.Read(Fields, s, doc.Content[0]); err != nil {
 		var here *schema.Error
 		if errors.As(err, &here) {
 			return nil, &flow.Problem{Path: path, Line: here.Line, What: here.What, Expected: here.Expected}
 		}
 		return nil, &flow.Problem{Path: path, What: err.Error(), Err: err}
-	}
-	if s.RecordFolder != "" && !s.Record {
-		return nil, &flow.Problem{Path: path, What: "recordFolder needs record: true"}
 	}
 	for _, e := range s.Flows {
 		if info, err := os.Stat(s.Relative(e.file)); err != nil || info.IsDir() {

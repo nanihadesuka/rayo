@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: --only is not an option of hierarchy, but of mocks, test; see rayo help hierarchy
+error: --only is not an option of hierarchy, but of check, mocks, test; see rayo help hierarchy

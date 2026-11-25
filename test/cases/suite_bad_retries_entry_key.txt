@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: s.suite.yaml:1: flows: unknown key "retry" (it takes file, retries, mock, network, unmocked, capture)
+error: s.suite.yaml:1: flows: unknown key "retry", did you mean retries? (it takes file, retries, mock, network, unmocked, capture)

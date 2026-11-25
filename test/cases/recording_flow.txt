@@ -72,6 +72,8 @@ PNG...
 the log
 -- file .rayo/a_screen.txt --
 a screen
+-- file .rayo/b_named.mp4 --
+a video ....................................................................................................
 -- file .rayo/c_failure.png --
 PNG...
 -- file .rayo/c_logcat.txt --
@@ -155,6 +157,7 @@ FAIL a  # s
   recording: .rayo/a.mp4
 PASS b  # s
   file: b.yaml
+  recording: .rayo/b_named.mp4
 FAIL c  # s
   file: c.yaml
   c failed at stopRecording: step failed

@@ -4,7 +4,7 @@ test s.suite.yaml
 -- s.suite.yaml --
 name: Rides
 results: [out.md, out.txt]
-results-template: report.txt
+resultsTemplate: report.txt
 show: [failed, flaky]
 flows:
   - a.yaml

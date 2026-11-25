@@ -29,32 +29,6 @@
       ],
       "type": "object"
     },
-    "artifacts": {
-      "anyOf": [
-        {
-          "enum": [
-            "video",
-            "screenshot",
-            "logcat",
-            "screen",
-            "requests"
-          ]
-        },
-        {
-          "items": {
-            "enum": [
-              "video",
-              "screenshot",
-              "logcat",
-              "screen",
-              "requests"
-            ]
-          },
-          "type": "array"
-        }
-      ],
-      "description": "As --artifacts, which wins: the kinds of file written, of video, screenshot, logcat, screen, requests (default: all)"
-    },
     "capture": {
       "additionalProperties": false,
       "description": "How a capture calls the backend and becomes mocks, as the options of the same names, which win",
@@ -190,7 +164,7 @@
       "type": "object"
     },
     "detail": {
-      "description": "As --detail, which wins: how much is printed (default: normal)",
+      "description": "--detail overrides it: how much is printed (default: normal)",
       "enum": [
         "brief",
         "normal",
@@ -233,16 +207,16 @@
           "boolean"
         ]
       },
-      "description": "Variables for every flow, as -e, which wins; they may use ${...}, such as ${rayo.file}",
+      "description": "Variables for every flow, over a flow's own env; -e overrides one; they may use ${...}, such as ${rayo.file}",
       "type": "object"
     },
-    "failure-window": {
-      "description": "As --failure-window, which wins: a failure's log and calls begin this long before the failing step (default: 10)",
+    "failureWindow": {
+      "description": "--failure-window overrides it: a failure's log and calls begin this long before the failing step (default: 10)",
       "minimum": 1,
       "type": "integer"
     },
-    "flaky-fails-build": {
-      "description": "As --flaky-fails-build: a run where every flow passed, some only on a retry, exits 4 (default: false: it exits 0)",
+    "flakyFailsBuild": {
+      "description": "--flaky-fails-build too: a run where every flow passed, some only on a retry, exits 4 (default: false: it exits 0)",
       "type": "boolean"
     },
     "flows": {
@@ -412,7 +386,7 @@
                 "description": "Who answers as the backend, as a flow's mock, relative to the suite; the flow's own mock wins"
               },
               "network": {
-                "description": "How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: the suite's)",
+                "description": "How the app's calls reach the mock, as a flow's network; the flow's own and --network override it (default: the suite's)",
                 "enum": [
                   "interceptor",
                   "proxy"
@@ -506,19 +480,11 @@
       "type": "array"
     },
     "format": {
-      "description": "What is printed, as --format, which wins (default: human)",
+      "description": "What is printed; --format overrides it (default: human)",
       "enum": [
         "human",
         "json",
         "ndjson"
-      ]
-    },
-    "keep": {
-      "description": "As --keep, which wins: the files of the attempts that failed, of all, or none (default: failed)",
-      "enum": [
-        "failed",
-        "all",
-        "none"
       ]
     },
     "name": {
@@ -529,36 +495,76 @@
         "boolean"
       ]
     },
-    "name-template": {
-      "description": "As --name-template, which wins: how the files are named in output (default: {flow}_{attempt}_{kind}.{ext})",
-      "type": "string"
-    },
     "network": {
-      "description": "How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: each flow's, else interceptor)",
+      "description": "How the app's calls reach the mock, as a flow's network; the flow's own and --network override it (default: each flow's, else interceptor)",
       "enum": [
         "interceptor",
         "proxy"
       ]
     },
     "output": {
-      "description": "As --output, which wins (default: .rayo where rayo runs)",
-      "type": [
-        "string",
-        "number",
-        "boolean"
-      ]
-    },
-    "record": {
-      "description": "A video of each flow that doesn't say (default: false)",
-      "type": "boolean"
-    },
-    "recordFolder": {
-      "description": "Where the videos go; needs record: true (default: output)",
-      "type": [
-        "string",
-        "number",
-        "boolean"
-      ]
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "artifacts": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "video",
+                    "screenshot",
+                    "logcat",
+                    "screen",
+                    "requests"
+                  ]
+                },
+                {
+                  "items": {
+                    "enum": [
+                      "video",
+                      "screenshot",
+                      "logcat",
+                      "screen",
+                      "requests"
+                    ]
+                  },
+                  "type": "array"
+                }
+              ],
+              "description": "The kinds of file written, of video, screenshot, logcat, screen, requests; --artifacts overrides it (default: all)"
+            },
+            "folder": {
+              "description": "Where everything goes; --output overrides it (default: .rayo where rayo runs)",
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            },
+            "keep": {
+              "description": "The files of every try (all), only of the tries that failed (failed), or none; --keep overrides it (default: all)",
+              "enum": [
+                "all",
+                "failed",
+                "none"
+              ]
+            },
+            "nameTemplate": {
+              "description": "How the files are named in the folder; --name-template overrides it (default: {flow}_{attempt}_{kind}.{ext})",
+              "type": "string"
+            },
+            "video": {
+              "description": "A video of each flow whose header doesn't say record; --video overrides it (default: false)",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "description": "What a run writes, and where: a folder, or folder, keep, video, artifacts and nameTemplate (default: .rayo where rayo runs)"
     },
     "results": {
       "anyOf": [
@@ -574,10 +580,10 @@
           "type": "array"
         }
       ],
-      "description": "As --results, which wins over all of them: .txt, .json, .xml (JUnit) or .md"
+      "description": "--results replaces them all: .txt, .json, .xml (JUnit) or .md"
     },
-    "results-template": {
-      "description": "As --results-template, which wins: the results with its extension are written as it says",
+    "resultsTemplate": {
+      "description": "--results-template overrides it: the results with its extension are written as it says",
       "type": "string"
     },
     "retries": {
@@ -607,15 +613,15 @@
           "type": "array"
         }
       ],
-      "description": "As --show, which wins: the flows the results list, of failed, flaky, slow, all (default: all)"
+      "description": "--show overrides it: the flows the results list, of failed, flaky, slow, all (default: all)"
     },
     "slowest": {
-      "description": "As --slowest, which wins: how many flows the slow list has (default: 5)",
+      "description": "--slowest overrides it: how many flows the slow list has (default: 5)",
       "minimum": 1,
       "type": "integer"
     },
     "timeoutScale": {
-      "description": "Multiplies the default waits; --timeout-scale wins (default: 1)",
+      "description": "Multiplies the default waits; --timeout-scale overrides it (default: 1)",
       "maximum": 10,
       "minimum": 0.1,
       "type": "number"

@@ -55,9 +55,20 @@ What it costs, roughly
   a capture         slow; it makes new ids, so diffs are noisy
   rayo live         holds the device until it ends
 
+I want to...
+  write a flow                         rayo help write-a-flow
+  find why a flow failed               rayo explain, then rayo help debug-a-flow
+  record a video                       record: true in the header; rayo help recipes
+  check the device log, reset the app  rayo help recipes
+  mock the backend                     rayo help record-mocks, rayo help connect-mocks
+  run in a CI                          rayo help run-in-ci
+  find any word in the help            rayo help search <word>
+
 ## commands and options
 
 rayo - runs flows on Android, fast
+
+New here, or driving rayo from a program? Start with: rayo help agents
 
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
@@ -71,6 +82,7 @@ rayo - runs flows on Android, fast
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
+  rayo help search <word>...                       the lines of all the help that have the words
   rayo schema <name>                               a JSON Schema: flow, suite, results, or of --format json
   rayo version
 
@@ -81,6 +93,7 @@ Topics, rayo help <topic>
   record-mocks               record mocks from the real backend
   connect-mocks              connect the app to the mocks: interceptor or proxy
   run-in-ci                  run in a CI
+  recipes                    short answers: video, logcat, reset, log in, deeplink, what a run leaves
   limits                     limitations and gotchas
   exit-codes                 exit codes
 
@@ -99,25 +112,33 @@ Options of test, live, do and explain
   --output <folder>          where failures and screenshots go (default .rayo)
 
 Options of test and live
-  -e, --env <KEY=VALUE>      a variable for the flows
   --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
   --mock-port <port>         where the app finds the mock on the device (default 8080)
   --animations               leave the device's animations on
   --profile                  where the time of each step went
 
-Options of test: which flows
+Options of test and check: which flows of them
   --only <a,b>               only the flows with these names
   --include-tags <a,b>       only flows with one of these tags
   --exclude-tags <a,b>       not flows with one of these tags
   --rerun-failed             only those that haven't passed since they last failed
 
+Options of test and check: as the suite says, for one run
+  -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own
+  --retries <n>              try again what fails, every flow, also one the suite gives its own retries (default 1, or the suite's)
+
 Options of test: how they run
-  --retries <n>              try again what fails, whatever the suite says (default 1)
   --fail-fast                stop at the first failure
   --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes
+
+Options of test and check: what is written, as the suite's output
+  --video                    a video of each flow whose header doesn't say record, as output: { video: true }
+  --keep <when>              the files of every try (all, default), only of the tries that failed, or none
+  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
+  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
 
 Options of test: what comes out
   --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files
@@ -127,9 +148,6 @@ Options of test: what comes out
   --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
   --slowest <n>              how many flows the slow list has (default 5)
   --timings                  while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
-  --keep <when>              the files of an attempt that failed (failed, default), of all, or none
-  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
-  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
 
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
@@ -190,39 +208,34 @@ Commands: assertNotVisible, assertTrue, assertVisible, back, camera, clearState,
 
 ## suite
 
-A suite, *.suite.yaml, lists flows that run together. A folder is the flows directly in it; a suite runs only when its file is given:
+A suite, *.suite.yaml, lists flows that run together, and is where a run's settings go. Paths in it are relative to it. An option of the same name in kebab-case overrides a key for one run (failureWindow, --failure-window). A folder is the flows directly in it; a suite runs only when its file is given:
 
   name             text                       Shown in the results (default: the file)
   flows            a list                     Files, run in this order; or mappings with file, retries, mock, network, unmocked and capture (required)
   retries          a number from 0            How many times a flow that fails is tried again (default: 1)
   app              a mapping                  Installed before the flows
   device           a mapping                  How it is while the flows run
-  env              values                     Variables for every flow, as -e, which wins; they may use ${...}, such as ${rayo.file}
-  timeoutScale     0.1 to 10                  Multiplies the default waits; --timeout-scale wins (default: 1)
-  network          interceptor or proxy       How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: each flow's, else interceptor)
+  env              values                     Variables for every flow, over a flow's own env; -e overrides one; they may use ${...}, such as ${rayo.file}
+  timeoutScale     0.1 to 10                  Multiplies the default waits; --timeout-scale overrides it (default: 1)
+  network          interceptor or proxy       How the app's calls reach the mock, as a flow's network; the flow's own and --network override it (default: each flow's, else interceptor)
   unmocked         a mapping                  Calls without a mock that don't fail the flow (default: none: each fails the flow)
   capture          a mapping                  How a capture calls the backend and becomes mocks, as the options of the same names, which win
-  output           folder                     As --output, which wins (default: .rayo where rayo runs)
-  results          a file or a list           As --results, which wins over all of them: .txt, .json, .xml (JUnit) or .md
-  detail           brief, normal, full        As --detail, which wins: how much is printed (default: normal)
-  failure-window   seconds, from 1            As --failure-window, which wins: a failure's log and calls begin this long before the failing step (default: 10)
-  results-template file                       As --results-template, which wins: the results with its extension are written as it says
-  show             a name or a list           As --show, which wins: the flows the results list, of failed, flaky, slow, all (default: all)
-  slowest          a number from 1            As --slowest, which wins: how many flows the slow list has (default: 5)
-  format           human, json or ndjson      What is printed, as --format, which wins (default: human)
-  record           true or false              A video of each flow that doesn't say (default: false)
-  recordFolder     folder                     Where the videos go; needs record: true (default: output)
-  flaky-fails-build true or false              As --flaky-fails-build: a run where every flow passed, some only on a retry, exits 4 (default: false: it exits 0)
-  keep             failed, all, none          As --keep, which wins: the files of the attempts that failed, of all, or none (default: failed)
-  artifacts        a name or a list           As --artifacts, which wins: the kinds of file written, of video, screenshot, logcat, screen, requests (default: all)
-  name-template    a template                 As --name-template, which wins: how the files are named in output (default: {flow}_{attempt}_{kind}.{ext})
+  output           a folder, or a mapping     What a run writes, and where: a folder, or folder, keep, video, artifacts and nameTemplate (default: .rayo where rayo runs)
+  results          a file or a list           --results replaces them all: .txt, .json, .xml (JUnit) or .md
+  detail           brief, normal, full        --detail overrides it: how much is printed (default: normal)
+  failureWindow    seconds, from 1            --failure-window overrides it: a failure's log and calls begin this long before the failing step (default: 10)
+  resultsTemplate  file                       --results-template overrides it: the results with its extension are written as it says
+  show             a name or a list           --show overrides it: the flows the results list, of failed, flaky, slow, all (default: all)
+  slowest          a number from 1            --slowest overrides it: how many flows the slow list has (default: 5)
+  format           human, json or ndjson      What is printed; --format overrides it (default: human)
+  flakyFailsBuild  true or false              --flaky-fails-build too: a run where every flow passed, some only on a retry, exits 4 (default: false: it exits 0)
 
 flows, when not only a file:
 
   file             file                       The flow (required)
   retries          a number from 0            How many times it is tried again if it fails (default: the suite's)
   mock             a path or a list           Who answers as the backend, as a flow's mock, relative to the suite; the flow's own mock wins
-  network          interceptor or proxy       How the app's calls reach the mock, as a flow's network; the flow's own and --network win (default: the suite's)
+  network          interceptor or proxy       How the app's calls reach the mock, as a flow's network; the flow's own and --network override it (default: the suite's)
   unmocked         a mapping                  Calls without a mock that don't fail the flow (default: the suite's; its calls are added to them)
   capture          a mapping                  How a capture calls the backend and becomes mocks, as the options of the same names, which win (default: the suite's; what it says wins over it)
 
@@ -237,6 +250,14 @@ an ignored call, when not text:
   host             host                       Of the call, or of its subdomains (default: any)
   path             a path                     Of the call, without the host; * is any text but /, ** any (default: any)
   graphql          a name or a list           GraphQL operations (default: any call)
+
+output, when a mapping (rayo check says what a run would write):
+
+  folder           folder                     Where everything goes; --output overrides it (default: .rayo where rayo runs)
+  keep             all, failed, none          The files of every try (all), only of the tries that failed (failed), or none; --keep overrides it (default: all)
+  video            true or false              A video of each flow whose header doesn't say record; --video overrides it (default: false)
+  artifacts        a name or a list           The kinds of file written, of video, screenshot, logcat, screen, requests; --artifacts overrides it (default: all)
+  nameTemplate     a template                 How the files are named in the folder; --name-template overrides it (default: {flow}_{attempt}_{kind}.{ext})
 
 capture:
 
@@ -1007,18 +1028,55 @@ The app's calls have to reach rayo to be mocked or captured. Two ways:
   rayo test --network proxy f.yaml                       the proxy
 
 Can change the app, one HTTP client: interceptor. Can't change it, or an SDK calls on its own: proxy.
-A host whose certificate the app pins isn't mocked through the proxy; it is listed after the flow.
+A host the app pins, or doesn't trust rayo's CA for, fails the flow at once: its calls never reach the real one.
 Both use the same mock folders. Code and details: MOCKING.md, "Two ways to connect the app".
 
 ## run in a CI
 
 Any CI with an emulator. The exit code isn't 0 if a flow fails, and .xml results are JUnit.
 
-  rayo check all.suite.yaml                                fail early, without a device
+One suite holds the settings; the CI's command changes only what differs, with the option of the same name:
+
+  rayo check --keep failed all.suite.yaml                  fail early, without a device; it says what the run would write
+  rayo test --emulator --keep failed all.suite.yaml        only the files, and videos, of the tries that failed
   rayo test --emulator --results junit.xml all.suite.yaml  run, and write the results
   rayo test --emulator --retries 2 all.suite.yaml          try a failing flow again
 
 Keep the --output folder as an artifact: it has the failures.
+
+## short answers: video, logcat, reset, log in, deeplink, what a run leaves
+
+Record a video, and keep it when the flow passes
+  record: true in the header (or startRecording and stopRecording around some steps). Every
+  try's files are kept; --keep failed keeps only those of the tries that failed, --keep none none.
+
+Check the device log
+  - shell: logcat -d | grep -q "payment done"
+  The command runs on the device; an exit code other than 0 fails the step. logcat -c clears it.
+
+Start from a clean app
+  - clearState      the app's data, as after an install
+  - launchApp       then open it
+
+Open a deeplink
+  - openLink: myapp://orders/42
+  Whichever app handles it opens.
+
+Log in once, use it everywhere
+  A flow of its own, run from the others:
+  - runFlow: { file: login.yaml, env: { EMAIL: me@example.com } }
+
+What a try leaves in --output (default .rayo)
+  <flow>_failure.jpg    the screen when it failed, if it did
+  <flow>_screen.txt     the elements on it
+  <flow>_logcat.txt     the device log, cut to the failure
+  <flow>_requests.txt   the calls to the backend
+  <flow>.mp4            the video, with record: true
+  failed.json           what failed, for rayo explain and --rerun-failed; always written
+  --name-template says how they are named, --artifacts which kinds are written.
+
+The device was lost
+  rayo devices; if it isn't listed, restart the emulator or reconnect it, then rayo test --rerun-failed.
 
 ## limitations and gotchas
 

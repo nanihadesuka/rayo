@@ -2,7 +2,7 @@
 check s.suite.yaml
 -- s.suite.yaml --
 flows: [a.yaml]
-artifacts: [video]
+output: { artifacts: [video] }
 -- a.yaml --
 appId: a.b
 ---

@@ -62,13 +62,17 @@ func (r *Runner) wants(kind string) bool {
 // named is where a file of the attempt goes: kind tells it from the others, such as failure or logcat, and is empty
 // for its video. A part of the path that is left without a name takes that of the attempt.
 func (r *Runner) named(kind, ext string) string {
-	a := r.attempt
+	return FileName(r.NameTemplate, r.attempt, kind, ext)
+}
+
+// FileName is where a file of a kind is written for an attempt, as a name template says; empty is
+// the default.
+func FileName(template string, a Attempt, kind, ext string) string {
 	attempt := ""
 	if a.Try > 0 {
 		attempt = fmt.Sprintf("retry%d", a.Try)
 	}
 	fill := strings.NewReplacer("{flow}", a.Flow, "{attempt}", attempt, "{kind}", kind, "{ext}", ext).Replace
-	template := r.NameTemplate
 	if template == "" {
 		template = DefaultTemplate
 	}

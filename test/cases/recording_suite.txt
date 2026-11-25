@@ -1,8 +1,7 @@
 -- args --
 test s.suite.yaml --retries 1
 -- s.suite.yaml --
-record: true
-recordFolder: videos
+output: { video: true, folder: videos }
 results: out.json
 flows: [a.yaml, b.yaml, c.yaml]
 -- a.yaml --
@@ -24,7 +23,7 @@ record: own
 0
 -- stdout --
 [1/3] FLAKY a  # s  (failed once, then passed)
-  try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a_failure.png
+  try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  videos/a_failure.png
 [2/3] PASS b  # s
 [3/3] PASS c  # s
 
@@ -56,12 +55,6 @@ key {"code":4,"timeout":15000}
 adb exec:kill -INT 4321 2>/dev/null
 adb exec:cat /data/local/tmp/rayo-<pid>.mp4; rm -f /data/local/tmp/rayo-<pid>.mp4
 bye {"timeout":5000}
--- file .rayo/a_failure.png --
-PNG...
--- file .rayo/a_logcat.txt --
-the log
--- file .rayo/a_screen.txt --
-a screen
 -- file out.json --
 {
   "schemaVersion": 3,
@@ -117,7 +110,8 @@ a screen
       "notRunReason": "",
       "warnings": [],
       "recordings": [
-        "videos/a.mp4"
+        "videos/a.mp4",
+        "videos/a_retry1.mp4"
       ],
       "failures": [
         {
@@ -143,7 +137,7 @@ a screen
             "a screen"
           ],
           "crash": "",
-          "saved": ".rayo/a_failure.png"
+          "saved": "videos/a_failure.png"
         }
       ]
     },
@@ -182,10 +176,22 @@ a screen
       "retries": 1,
       "notRunReason": "",
       "warnings": [],
-      "recordings": [],
+      "recordings": [
+        "videos/c_own.mp4"
+      ],
       "failures": []
     }
   ]
 }
 -- file videos/a.mp4 --
+a video ....................................................................................................
+-- file videos/a_failure.png --
+PNG...
+-- file videos/a_logcat.txt --
+the log
+-- file videos/a_retry1.mp4 --
+a video ....................................................................................................
+-- file videos/a_screen.txt --
+a screen
+-- file videos/c_own.mp4 --
 a video ....................................................................................................

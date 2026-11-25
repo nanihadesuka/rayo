@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/nanihadesuka/rayo/internal/flow"
@@ -56,6 +58,15 @@ What it costs, roughly
   a whole suite     many minutes
   a capture         slow; it makes new ids, so diffs are noisy
   rayo live         holds the device until it ends
+
+I want to...
+  write a flow                         rayo help write-a-flow
+  find why a flow failed               rayo explain, then rayo help debug-a-flow
+  record a video                       record: true in the header; rayo help recipes
+  check the device log, reset the app  rayo help recipes
+  mock the backend                     rayo help record-mocks, rayo help connect-mocks
+  run in a CI                          rayo help run-in-ci
+  find any word in the help            rayo help search <word>
 `},
 	{"write-a-flow", "write a flow", `A flow is a header, ---, and a list of commands. Each command waits for what it needs.
 
@@ -105,16 +116,51 @@ A suite's capture: says how to capture, so the commands need no options.
   rayo test --network proxy f.yaml                       the proxy
 
 Can change the app, one HTTP client: interceptor. Can't change it, or an SDK calls on its own: proxy.
-A host whose certificate the app pins isn't mocked through the proxy; it is listed after the flow.
+A host the app pins, or doesn't trust rayo's CA for, fails the flow at once: its calls never reach the real one.
 Both use the same mock folders. Code and details: MOCKING.md, "Two ways to connect the app".
 `},
 	{"run-in-ci", "run in a CI", `Any CI with an emulator. The exit code isn't 0 if a flow fails, and .xml results are JUnit.
 
-  rayo check all.suite.yaml                                fail early, without a device
+One suite holds the settings; the CI's command changes only what differs, with the option of the same name:
+
+  rayo check --keep failed all.suite.yaml                  fail early, without a device; it says what the run would write
+  rayo test --emulator --keep failed all.suite.yaml        only the files, and videos, of the tries that failed
   rayo test --emulator --results junit.xml all.suite.yaml  run, and write the results
   rayo test --emulator --retries 2 all.suite.yaml          try a failing flow again
 
 Keep the --output folder as an artifact: it has the failures.
+`},
+	{"recipes", "short answers: video, logcat, reset, log in, deeplink, what a run leaves", `Record a video, and keep it when the flow passes
+  record: true in the header (or startRecording and stopRecording around some steps). Every
+  try's files are kept; --keep failed keeps only those of the tries that failed, --keep none none.
+
+Check the device log
+  - shell: logcat -d | grep -q "payment done"
+  The command runs on the device; an exit code other than 0 fails the step. logcat -c clears it.
+
+Start from a clean app
+  - clearState      the app's data, as after an install
+  - launchApp       then open it
+
+Open a deeplink
+  - openLink: myapp://orders/42
+  Whichever app handles it opens.
+
+Log in once, use it everywhere
+  A flow of its own, run from the others:
+  - runFlow: { file: login.yaml, env: { EMAIL: me@example.com } }
+
+What a try leaves in --output (default .rayo)
+  <flow>_failure.jpg    the screen when it failed, if it did
+  <flow>_screen.txt     the elements on it
+  <flow>_logcat.txt     the device log, cut to the failure
+  <flow>_requests.txt   the calls to the backend
+  <flow>.mp4            the video, with record: true
+  failed.json           what failed, for rayo explain and --rerun-failed; always written
+  --name-template says how they are named, --artifacts which kinds are written.
+
+The device was lost
+  rayo devices; if it isn't listed, restart the emulator or reconnect it, then rayo test --rerun-failed.
 `},
 	{"limits", "limitations and gotchas", `- Android only, one device per run; it needs adb, and nothing installed on the device.
 - Mocks reach only the calls of the app's own client, through its interceptor, or those through
@@ -141,31 +187,68 @@ func helpTopic(name string) string {
 	return ""
 }
 
-// helpAll is all the help, on one page: each part begins with "## ".
-func helpAll() (string, error) {
-	var b strings.Builder
-	part := func(title, text string) {
-		fmt.Fprintf(&b, "## %s\n\n%s\n", title, strings.TrimRight(text, "\n"))
-		b.WriteString("\n")
-	}
-	part(topics[0].about, topics[0].text)
-	part("commands and options", help())
-	for _, name := range []string{"flow", "suite"} {
+// helpPart is a part of rayo help all: what rayo help takes to show it alone, its title and text.
+type helpPart struct{ name, title, text string }
+
+// helpParts are all the help, in the order of rayo help all.
+func helpParts() ([]helpPart, error) {
+	parts := []helpPart{{topics[0].name, topics[0].about, topics[0].text}, {"", "commands and options", help()}}
+	for _, name := range append([]string{"flow", "suite"}, flow.Commands()...) {
 		text, err := helpOn(name)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		part(name, text)
-	}
-	for _, name := range flow.Commands() {
-		text, err := flow.Help(name)
-		if err != nil {
-			return "", err
-		}
-		part(name, text)
+		parts = append(parts, helpPart{name, name, text})
 	}
 	for _, t := range topics[1:] {
-		part(t.about, t.text)
+		parts = append(parts, helpPart{t.name, t.about, t.text})
+	}
+	return parts, nil
+}
+
+// helpAll is all the help, on one page: each part begins with "## ".
+func helpAll() (string, error) {
+	parts, err := helpParts()
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	for _, p := range parts {
+		fmt.Fprintf(&b, "## %s\n\n%s\n\n", p.title, strings.TrimRight(p.text, "\n"))
+	}
+	return b.String(), nil
+}
+
+// helpSearch is the lines of all the help that have every word, ignoring case, under the
+// rayo help that shows each whole.
+func helpSearch(words []string) (string, error) {
+	if len(words) == 0 {
+		return "", errors.New("search for what? such as rayo help search video")
+	}
+	parts, err := helpParts()
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	for _, p := range parts {
+		var found []string
+		for _, line := range strings.Split(p.text, "\n") {
+			lower := strings.ToLower(line)
+			if !slices.ContainsFunc(words, func(w string) bool { return !strings.Contains(lower, strings.ToLower(w)) }) {
+				found = append(found, "  "+strings.TrimSpace(line))
+			}
+		}
+		if len(found) == 0 {
+			continue
+		}
+		where := "rayo help"
+		if p.name != "" {
+			where += " " + p.name
+		}
+		fmt.Fprintf(&b, "%s (%s)\n%s\n\n", p.title, where, strings.Join(found, "\n"))
+	}
+	if b.Len() == 0 {
+		return "", fmt.Errorf("no help has %q; rayo help all is all of it", strings.Join(words, " "))
 	}
 	return b.String(), nil
 }

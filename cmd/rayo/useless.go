@@ -18,10 +18,13 @@ func (o *options) checkKept() error {
 		return nil
 	}
 	if len(o.runner.Artifacts) > 0 {
-		return errors.New("--keep none writes no files, so --artifacts (or artifacts of the suite) does nothing; see rayo help test")
+		return errors.New("--keep none writes no files, so --artifacts (or the suite's output: { artifacts }) does nothing; see rayo help test")
+	}
+	if o.runner.Recording.On {
+		return errors.New("--keep none writes no files, so --video (or the suite's output: { video: true }) records for nothing; see rayo help test")
 	}
 	if o.runner.NameTemplate != "" {
-		return errors.New("--keep none writes no files, so --name-template (or name-template of the suite) does nothing; see rayo help test")
+		return errors.New("--keep none writes no files, so --name-template (or the suite's output: { nameTemplate }) does nothing; see rayo help test")
 	}
 	return nil
 }

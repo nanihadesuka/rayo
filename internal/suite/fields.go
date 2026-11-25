@@ -231,7 +231,7 @@ var FlowFields = []schema.Field[entry]{
 
 // networkField is the suite's network, and that of one of its flows.
 func networkField[T any](to func(*T) *string) schema.Field[T] {
-	return schema.Field[T]{Name: "network", Takes: "`interceptor` or `proxy`", About: "How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite)",
+	return schema.Field[T]{Name: "network", Takes: "`interceptor` or `proxy`", About: "How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` override it, see [Mocks of a suite](#mocks-of-a-suite)",
 		Schema: schema.Enum(flow.Interceptor, flow.Proxy), Read: func(t *T, n *yaml.Node) error {
 			if n.Kind != yaml.ScalarNode || n.Value != flow.Interceptor && n.Value != flow.Proxy {
 				return errors.New("takes interceptor or proxy")
@@ -271,20 +271,27 @@ var Fields = []schema.Field[Suite]{
 		s.Device = &adb.Setup{}
 		return schema.Read(DeviceFields, s.Device, n)
 	}},
-	{Name: "env", Takes: "values", About: "Variables for every flow, as `-e`, which wins; they may use `${...}`, such as `${rayo.file}`, see [Variables](#variables)", Schema: schema.Map(schema.Text()), Read: func(s *Suite, n *yaml.Node) (err error) {
+	{Name: "env", Takes: "values", About: "Variables for every flow, over a flow's own `env`; `-e` overrides one; they may use `${...}`, such as `${rayo.file}`, see [Variables](#variables)", Schema: schema.Map(schema.Text()), Read: func(s *Suite, n *yaml.Node) (err error) {
 		s.Env, err = flow.Variables(n)
 		return err
 	}},
-	schema.NumberField("timeoutScale", "0.1 to 10", "Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins", LowestScale, HighestScale, func(s *Suite, v float64) { s.TimeoutScale = v }).Optional("1"),
+	schema.NumberField("timeoutScale", "0.1 to 10", "Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` overrides it", LowestScale, HighestScale, func(s *Suite, v float64) { s.TimeoutScale = v }).Optional("1"),
 	networkField(func(s *Suite) *string { return &s.Network }).Optional("each flow's, else `interceptor`"),
 	unmockedField(func(s *Suite) **mock.Unmocked { return &s.Unmocked }).Optional("none: each fails the flow"),
 	captureField(func(s *Suite) **Capture { return &s.Capture }),
-	schema.TextField("output", "folder", "As `--output`, which wins", func(s *Suite) *string { return &s.Output }).Optional("`.rayo` where rayo runs"),
-	{Name: "results", Takes: "a file or a list", About: "As `--results`, which wins over all of them: `.txt`, `.json`, `.xml` (JUnit) or `.md`, see [Results](#results)",
+	{Name: "output", Takes: "a folder, or a mapping", About: "What a run writes, and where: a folder, or folder, keep, video, artifacts and nameTemplate, see [What is kept](#what-is-kept)", Default: "`.rayo` where rayo runs",
+		Schema: schema.AnyOf(schema.Type("string"), schema.Of(OutputFields)), Read: func(s *Suite, n *yaml.Node) error {
+			if n.Kind == yaml.ScalarNode {
+				s.Output.Folder = n.Value
+				return nil
+			}
+			return schema.Read(OutputFields, &s.Output, n)
+		}},
+	{Name: "results", Takes: "a file or a list", About: "`--results` replaces them all: `.txt`, `.json`, `.xml` (JUnit) or `.md`, see [Results](#results)",
 		Schema: func() schema.S { f := schema.Pattern(`\.(txt|json|xml|md)$`); return schema.AnyOf(f, schema.List(f)) }(), Read: readResults},
-	choiceField("detail", "As `--detail`, which wins: how much is printed, see [Results](#results)", func(s *Suite) *string { return &s.Detail }, flow.Details...).Optional("`normal`"),
-	schema.NumberField("failure-window", "seconds, from 1", "As `--failure-window`, which wins: a failure's log and calls begin this long before the failing step, see [Failures](#failures)", 1, 0, func(s *Suite, v int) { s.FailureWindow = v }).Optional("10"),
-	{Name: "results-template", Takes: "file", About: "As `--results-template`, which wins: the results with its extension are written as it says, see [A template of your own](#a-template-of-your-own)",
+	choiceField("detail", "`--detail` overrides it: how much is printed, see [Results](#results)", func(s *Suite) *string { return &s.Detail }, flow.Details...).Optional("`normal`"),
+	schema.NumberField("failureWindow", "seconds, from 1", "`--failure-window` overrides it: a failure's log and calls begin this long before the failing step, see [Failures](#failures)", 1, 0, func(s *Suite, v int) { s.FailureWindow = v }).Optional("10"),
+	{Name: "resultsTemplate", Takes: "file", About: "`--results-template` overrides it: the results with its extension are written as it says, see [A template of your own](#a-template-of-your-own)",
 		Schema: schema.Type("string"), Read: func(s *Suite, n *yaml.Node) error {
 			if n.Kind != yaml.ScalarNode {
 				return errors.New("takes a file")
@@ -295,7 +302,7 @@ var Fields = []schema.Field[Suite]{
 			s.ResultsTemplate = n.Value
 			return nil
 		}},
-	{Name: "show", Takes: "a name or a list", About: "As `--show`, which wins: the flows the results list, of `" + strings.Join(report.Shows, "`, `") + "`, see [Results](#results)",
+	{Name: "show", Takes: "a name or a list", About: "`--show` overrides it: the flows the results list, of `" + strings.Join(report.Shows, "`, `") + "`, see [Results](#results)",
 		Schema: schema.AnyOf(schema.Enum(anys(report.Shows)...), schema.List(schema.Enum(anys(report.Shows)...))), Default: "`all`", Read: func(s *Suite, n *yaml.Node) (err error) {
 			if s.Show, err = readNames(n); err != nil {
 				return err
@@ -305,8 +312,8 @@ var Fields = []schema.Field[Suite]{
 			}
 			return nil
 		}},
-	schema.NumberField("slowest", "a number from 1", "As `--slowest`, which wins: how many flows the slow list has", 1, 0, func(s *Suite, v int) { s.Slowest = v }).Optional(fmt.Sprint(report.DefaultSlowest)),
-	{Name: "format", Takes: "`human`, `json` or `ndjson`", About: "What is printed, as `--format`, which wins, see [For a program](#for-a-program)", Default: "`human`",
+	schema.NumberField("slowest", "a number from 1", "`--slowest` overrides it: how many flows the slow list has", 1, 0, func(s *Suite, v int) { s.Slowest = v }).Optional(fmt.Sprint(report.DefaultSlowest)),
+	{Name: "format", Takes: "`human`, `json` or `ndjson`", About: "What is printed; `--format` overrides it, see [For a program](#for-a-program)", Default: "`human`",
 		Schema: schema.Enum(report.Human, report.JSON, report.NDJSON), Read: func(s *Suite, n *yaml.Node) error {
 			if n.Kind != yaml.ScalarNode || !slices.Contains(report.Formats, n.Value) {
 				return errors.New("takes human, json or ndjson")
@@ -314,31 +321,50 @@ var Fields = []schema.Field[Suite]{
 			s.Format = n.Value
 			return nil
 		}},
-	schema.FlagField("record", "A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow)", func(s *Suite) *bool { return &s.Record }).Optional("`false`"),
-	schema.TextField("recordFolder", "folder", "Where the videos go; needs `record: true`", func(s *Suite) *string { return &s.RecordFolder }).Optional("`output`"),
-	schema.FlagField("flaky-fails-build", "As `--flaky-fails-build`: a run where every flow passed, some only on a retry, exits `4`, see [Flaky flows](#flaky-flows)", func(s *Suite) *bool { return &s.FlakyFailsBuild }).Optional("`false`: it exits `0`"),
-	choiceField("keep", "As `--keep`, which wins: the files of the attempts that failed, of all, or none, see [What is kept](#what-is-kept)", func(s *Suite) *string { return &s.Keep }, KeepFailed, KeepAll, KeepNone).Optional("`failed`"),
-	{Name: "artifacts", Takes: "a name or a list", About: "As `--artifacts`, which wins: the kinds of file written, of `" + strings.Join(flow.Artifacts, "`, `") + "`, see [What is kept](#what-is-kept)",
-		Schema: schema.AnyOf(schema.Enum(anys(flow.Artifacts)...), schema.List(schema.Enum(anys(flow.Artifacts)...))), Default: "all", Read: func(s *Suite, n *yaml.Node) (err error) {
-			if s.Artifacts, err = readNames(n); err != nil {
+	schema.FlagField("flakyFailsBuild", "`--flaky-fails-build` too: a run where every flow passed, some only on a retry, exits `4`, see [Flaky flows](#flaky-flows)", func(s *Suite) *bool { return &s.FlakyFailsBuild }).Optional("`false`: it exits `0`"),
+}
+
+// OutputFields are those of output, when a mapping. Each has an option of the same name that overrides it.
+var OutputFields = []schema.Field[Output]{
+	schema.TextField("folder", "folder", "Where everything goes; `--output` overrides it", func(o *Output) *string { return &o.Folder }).Optional("`.rayo` where rayo runs"),
+	choiceField("keep", "The files of every try (`all`), only of the tries that failed (`failed`), or none; `--keep` overrides it", func(o *Output) *string { return &o.Keep }, KeepAll, KeepFailed, KeepNone).Optional("`all`"),
+	{Name: "video", Takes: "`true` or `false`", About: "A video of each flow whose header doesn't say `record`; `--video` overrides it", Default: "`false`", Schema: schema.Type("boolean"), Read: func(o *Output, n *yaml.Node) error {
+		o.Video = new(bool)
+		return schema.FlagField("", "", func(b *bool) *bool { return b }).Read(o.Video, n)
+	}},
+	{Name: "artifacts", Takes: "a name or a list", About: "The kinds of file written, of `" + strings.Join(flow.Artifacts, "`, `") + "`; `--artifacts` overrides it",
+		Schema: schema.AnyOf(schema.Enum(anys(flow.Artifacts)...), schema.List(schema.Enum(anys(flow.Artifacts)...))), Default: "all", Read: func(o *Output, n *yaml.Node) (err error) {
+			if o.Artifacts, err = readNames(n); err != nil {
 				return err
 			}
-			if err := flow.CheckArtifacts(s.Artifacts); err != nil {
+			if err := flow.CheckArtifacts(o.Artifacts); err != nil {
 				return &schema.Error{Line: n.Line, What: err.Error()}
 			}
 			return nil
 		}},
-	{Name: "name-template", Takes: "a template", About: "As `--name-template`, which wins: how the files are named in `output`, see [What is kept](#what-is-kept)",
-		Schema: schema.Type("string"), Default: "`" + flow.DefaultTemplate + "`", Read: func(s *Suite, n *yaml.Node) error {
+	{Name: "nameTemplate", Takes: "a template", About: "How the files are named in the folder; `--name-template` overrides it",
+		Schema: schema.Type("string"), Default: "`" + flow.DefaultTemplate + "`", Read: func(o *Output, n *yaml.Node) error {
 			if n.Kind != yaml.ScalarNode {
 				return errors.New("takes a template")
 			}
 			if err := flow.CheckTemplate(n.Value); err != nil {
 				return &schema.Error{Line: n.Line, What: err.Error()}
 			}
-			s.NameTemplate = n.Value
+			o.NameTemplate = n.Value
 			return nil
 		}},
+}
+
+// Moved are the keys a suite had before 3.0, and where they are now.
+var Moved = map[string]string{
+	"record":            "output: { video: true }",
+	"recordFolder":      "output: { folder: ... }, or a nameTemplate with a /",
+	"keep":              "output: { keep: ... }",
+	"artifacts":         "output: { artifacts: ... }",
+	"name-template":     "output: { nameTemplate: ... }",
+	"failure-window":    "failureWindow",
+	"results-template":  "resultsTemplate",
+	"flaky-fails-build": "flakyFailsBuild",
 }
 
 // What keep takes.

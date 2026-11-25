@@ -37,6 +37,8 @@ As `rayo help` prints them. An option of another command is an error, never igno
 ```
 rayo - runs flows on Android, fast
 
+New here, or driving rayo from a program? Start with: rayo help agents
+
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
   rayo explain [<run folder or flow>]              why the flows of the last run failed, in a few lines
@@ -49,6 +51,7 @@ rayo - runs flows on Android, fast
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
+  rayo help search <word>...                       the lines of all the help that have the words
   rayo schema <name>                               a JSON Schema: flow, suite, results, or of --format json
   rayo version
 
@@ -59,6 +62,7 @@ Topics, rayo help <topic>
   record-mocks               record mocks from the real backend
   connect-mocks              connect the app to the mocks: interceptor or proxy
   run-in-ci                  run in a CI
+  recipes                    short answers: video, logcat, reset, log in, deeplink, what a run leaves
   limits                     limitations and gotchas
   exit-codes                 exit codes
 
@@ -77,25 +81,33 @@ Options of test, live, do and explain
   --output <folder>          where failures and screenshots go (default .rayo)
 
 Options of test and live
-  -e, --env <KEY=VALUE>      a variable for the flows
   --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
   --mock-port <port>         where the app finds the mock on the device (default 8080)
   --animations               leave the device's animations on
   --profile                  where the time of each step went
 
-Options of test: which flows
+Options of test and check: which flows of them
   --only <a,b>               only the flows with these names
   --include-tags <a,b>       only flows with one of these tags
   --exclude-tags <a,b>       not flows with one of these tags
   --rerun-failed             only those that haven't passed since they last failed
 
+Options of test and check: as the suite says, for one run
+  -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own
+  --retries <n>              try again what fails, every flow, also one the suite gives its own retries (default 1, or the suite's)
+
 Options of test: how they run
-  --retries <n>              try again what fails, whatever the suite says (default 1)
   --fail-fast                stop at the first failure
   --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes
+
+Options of test and check: what is written, as the suite's output
+  --video                    a video of each flow whose header doesn't say record, as output: { video: true }
+  --keep <when>              the files of every try (all, default), only of the tries that failed, or none
+  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
+  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
 
 Options of test: what comes out
   --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files
@@ -105,9 +117,6 @@ Options of test: what comes out
   --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
   --slowest <n>              how many flows the slow list has (default 5)
   --timings                  while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
-  --keep <when>              the files of an attempt that failed (failed, default), of all, or none
-  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
-  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
 
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed
@@ -745,18 +754,17 @@ fails. Without a path it has the flow's name.
 
 #### Recording a whole flow
 
-`record` in its header; or in a [suite](#suites), for those of its flows that don't say:
+`record` in its header; or `video` in a [suite's `output`](#what-is-kept), for those of its flows that don't say:
 
 | Where | | Saved as |
 |---|---|---|
 | Flow header | `record: true` | `<output>/<flow>.mp4` |
 | | `record: name`, or an absolute path | `<output>/<flow>_name.mp4`, or that path |
 | | `record: false` | Not recorded, whatever the suite says |
-| Suite | `record: true` | `<output>/<flow>.mp4` |
-| | and `recordFolder: videos`, relative to the suite | `videos/<flow>.mp4` |
+| Suite | `output: { video: true }`, or `--video` | `<output>/<flow>.mp4` |
 
-Each try of a flow has its own, such as `<flow>_retry1.mp4`. Those of a try that passed are removed,
-unless [`keep`](#what-is-kept) says otherwise. One recording at a time: with one in
+Each try of a flow has its own, such as `<flow>_retry1.mp4`. All are kept, unless
+[`keep`](#what-is-kept) says otherwise: `keep: failed` keeps only those of the tries that failed. One recording at a time: with one in
 the header, another needs `stopRecording` first. At most 30 minutes, or 3 before Android 11 or so;
 the rest isn't recorded. Without sound, and small on purpose: 480 pixels on the short side, 0.6 Mbps,
 which is under 5 MB a minute. The device encodes it as it records.
@@ -1119,7 +1127,7 @@ app:
   id: com.example.app
   apk: ../app/build/outputs/apk/debug/app-debug.apk
 output: .results
-results: .results/results.txt
+results: .results/results.txt   # relative to the suite, as every path in it
 flows:
   # Books a bike and rides it.
   - tests/book/flow.yaml
@@ -1135,25 +1143,20 @@ flows:
 | `retries` | a number from 0 | How many times a flow that fails is tried again, see [Retries](#retries) (default: 1) |
 | `app` | a mapping | Installed before the flows, see [below](#the-app-of-a-suite) |
 | `device` | a mapping | How it is while the flows run, see [Device setup](#device-setup) |
-| `env` | values | Variables for every flow, as `-e`, which wins; they may use `${...}`, such as `${rayo.file}`, see [Variables](#variables) |
-| `timeoutScale` | 0.1 to 10 | Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` wins (default: 1) |
-| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite) (default: each flow's, else `interceptor`) |
+| `env` | values | Variables for every flow, over a flow's own `env`; `-e` overrides one; they may use `${...}`, such as `${rayo.file}`, see [Variables](#variables) |
+| `timeoutScale` | 0.1 to 10 | Multiplies the default waits, see [Default times](#default-times); `--timeout-scale` overrides it (default: 1) |
+| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` override it, see [Mocks of a suite](#mocks-of-a-suite) (default: each flow's, else `interceptor`) |
 | `unmocked` | a mapping | Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking) (default: none: each fails the flow) |
 | `capture` | a mapping | How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow) |
-| `output` | folder | As `--output`, which wins (default: `.rayo` where rayo runs) |
-| `results` | a file or a list | As `--results`, which wins over all of them: `.txt`, `.json`, `.xml` (JUnit) or `.md`, see [Results](#results) |
-| `detail` | `brief`, `normal`, `full` | As `--detail`, which wins: how much is printed, see [Results](#results) (default: `normal`) |
-| `failure-window` | seconds, from 1 | As `--failure-window`, which wins: a failure's log and calls begin this long before the failing step, see [Failures](#failures) (default: 10) |
-| `results-template` | file | As `--results-template`, which wins: the results with its extension are written as it says, see [A template of your own](#a-template-of-your-own) |
-| `show` | a name or a list | As `--show`, which wins: the flows the results list, of `failed`, `flaky`, `slow`, `all`, see [Results](#results) (default: `all`) |
-| `slowest` | a number from 1 | As `--slowest`, which wins: how many flows the slow list has (default: 5) |
-| `format` | `human`, `json` or `ndjson` | What is printed, as `--format`, which wins, see [For a program](#for-a-program) (default: `human`) |
-| `record` | `true` or `false` | A video of each flow that doesn't say, see [Recording a whole flow](#recording-a-whole-flow) (default: `false`) |
-| `recordFolder` | folder | Where the videos go; needs `record: true` (default: `output`) |
-| `flaky-fails-build` | `true` or `false` | As `--flaky-fails-build`: a run where every flow passed, some only on a retry, exits `4`, see [Flaky flows](#flaky-flows) (default: `false`: it exits `0`) |
-| `keep` | `failed`, `all`, `none` | As `--keep`, which wins: the files of the attempts that failed, of all, or none, see [What is kept](#what-is-kept) (default: `failed`) |
-| `artifacts` | a name or a list | As `--artifacts`, which wins: the kinds of file written, of `video`, `screenshot`, `logcat`, `screen`, `requests`, see [What is kept](#what-is-kept) (default: all) |
-| `name-template` | a template | As `--name-template`, which wins: how the files are named in `output`, see [What is kept](#what-is-kept) (default: `{flow}_{attempt}_{kind}.{ext}`) |
+| `output` | a folder, or a mapping | What a run writes, and where: a folder, or folder, keep, video, artifacts and nameTemplate, see [What is kept](#what-is-kept) (default: `.rayo` where rayo runs) |
+| `results` | a file or a list | `--results` replaces them all: `.txt`, `.json`, `.xml` (JUnit) or `.md`, see [Results](#results) |
+| `detail` | `brief`, `normal`, `full` | `--detail` overrides it: how much is printed, see [Results](#results) (default: `normal`) |
+| `failureWindow` | seconds, from 1 | `--failure-window` overrides it: a failure's log and calls begin this long before the failing step, see [Failures](#failures) (default: 10) |
+| `resultsTemplate` | file | `--results-template` overrides it: the results with its extension are written as it says, see [A template of your own](#a-template-of-your-own) |
+| `show` | a name or a list | `--show` overrides it: the flows the results list, of `failed`, `flaky`, `slow`, `all`, see [Results](#results) (default: `all`) |
+| `slowest` | a number from 1 | `--slowest` overrides it: how many flows the slow list has (default: 5) |
+| `format` | `human`, `json` or `ndjson` | What is printed; `--format` overrides it, see [For a program](#for-a-program) (default: `human`) |
+| `flakyFailsBuild` | `true` or `false` | `--flaky-fails-build` too: a run where every flow passed, some only on a retry, exits `4`, see [Flaky flows](#flaky-flows) (default: `false`: it exits `0`) |
 <!-- end -->
 
 #### A flow of a suite
@@ -1164,7 +1167,7 @@ flows:
 | `file` | file | The flow (required) |
 | `retries` | a number from 0 | How many times it is tried again if it fails (default: the suite's) |
 | `mock` | a path or a list | Who answers as the backend, as a flow's `mock`, relative to the suite; the flow's own `mock` wins, see [Mocks of a suite](#mocks-of-a-suite) |
-| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` win, see [Mocks of a suite](#mocks-of-a-suite) (default: the suite's) |
+| `network` | `interceptor` or `proxy` | How the app's calls reach the mock, as a flow's `network`; the flow's own and `--network` override it, see [Mocks of a suite](#mocks-of-a-suite) (default: the suite's) |
 | `unmocked` | a mapping | Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking) (default: the suite's; its calls are added to them) |
 | `capture` | a mapping | How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow) (default: the suite's; what it says wins over it) |
 <!-- end -->
@@ -1384,7 +1387,7 @@ TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  78.1 s
 #### Flaky flows
 
 A run whose flows all passed, some of them `FLAKY`, exits `0`; with `--flaky-fails-build`, or
-`flaky-fails-build: true` in the suite, it exits `4`, see [Exit codes](#exit-codes).
+`flakyFailsBuild: true` in the suite, it exits `4`, see [Exit codes](#exit-codes).
 
 In JUnit, as Maven Surefire writes it, which Jenkins, GitLab and most CI read: the `testcase` passes, and
 has a `flakyFailure` for each try that failed, its `message` the error, its `type` the [blame](#blame) and its
@@ -1440,7 +1443,7 @@ Every flow asked for has one; none is left out of the count.
 | | | Exit code |
 |---|---|---|
 | `PASS` | At the first try | 0 |
-| `FLAKY` | It failed, and passed when [retried](#retries) | 0, or 4 with [`flaky-fails-build`](#flaky-flows) |
+| `FLAKY` | It failed, and passed when [retried](#retries) | 0, or 4 with [`flakyFailsBuild`](#flaky-flows) |
 | `FAIL` | | 1 |
 | `INTERRUPTED` | Ctrl-C while it ran | 130 |
 | `NOT_RUN` | With the reason: interrupted, `--fail-fast`, or the run [stopped](#blame) | 1 |
@@ -1562,7 +1565,7 @@ step that failed and why. `--timings` and `--profile` are only for the screen, w
 
 #### A template of your own
 
-`--results-template <file>`, or `results-template:` in a suite, writes the results whose name ends as its own does
+`--results-template <file>`, or `resultsTemplate:` in a suite, writes the results whose name ends as its own does
 (`report.md` writes every `--results *.md`) as it says, instead of the format built in:
 
 ```
@@ -1985,27 +1988,35 @@ Those of an earlier run are removed when the flow runs again. `saved` is the fir
 | `requests.txt` | `requests` | The calls the app made to the [mock](#mock) in the failure window, with their bodies; all with `--detail full`; `requests.json`, a list like `calls`, if the results are also written to a `.json` |
 
 The failure window begins 10 s before the failing step did; `--failure-window <seconds>`, or
-`failure-window:` in a suite, says how long.
+`failureWindow:` in a suite, says how long.
 
 ### What is kept
 
-Three settings, each an option of `rayo test` and a key of a [suite](#suites) with the same name;
-the option wins.
+What a run writes, and where, is said in one place: `output` in a [suite](#suites). Each key has an
+option of `rayo test` with the same name, in kebab-case, that overrides it for one run; `rayo check`
+takes them too, and says what the run would write.
+
+```yaml
+output: .rayo                                  # only the folder
+output: { folder: out, keep: failed, video: true }
+```
 
 | | Takes | |
 |---|---|---|
-| `keep` | `failed` (default), `all`, `none` | `failed`: the files of a try that passed are removed, also its videos and screenshots. A try that failed keeps its own, even if a retry then passes. `none` writes none. `failed.json` and the [results](#results) are always written |
-| `artifacts` | `video`, `screenshot`, `logcat`, `screen`, `requests` (default all) | The kinds of file written; `screenshot` is also that of `takeScreenshot` |
-| `name-template` | `{flow}`, `{attempt}`, `{kind}` and `{ext}` (default `{flow}_{attempt}_{kind}.{ext}`) | How the files are named in `<output>`. `{attempt}` is empty for the first try, then `retry1`..., `{kind}` is `failure`, `screen`, `logcat`, `requests`, a screenshot's name, and empty for the flow's video; the `_` or `-` around what is empty goes. A `/` makes folders, and a part of the path left without a name takes the try's |
+| `folder`, `--output` | a folder, relative to the suite (default `.rayo` where rayo runs) | Where everything goes |
+| `video`, `--video` | `true` or `false` (default `false`) | A video of each flow whose header doesn't say `record`, see [Recording a whole flow](#recording-a-whole-flow) |
+| `keep`, `--keep` | `all` (default), `failed`, `none` | `all`: the files of every try. `failed`: the files of a try that passed are removed, also its videos and screenshots; a try that failed keeps its own, even if a retry then passes. `none` writes none. `failed.json` and the [results](#results) are always written |
+| `artifacts`, `--artifacts` | `video`, `screenshot`, `logcat`, `screen`, `requests` (default all) | The kinds of file written; `screenshot` is also that of `takeScreenshot` |
+| `nameTemplate`, `--name-template` | `{flow}`, `{attempt}`, `{kind}` and `{ext}` (default `{flow}_{attempt}_{kind}.{ext}`) | How the files are named in `<output>`. `{attempt}` is empty for the first try, then `retry1`..., `{kind}` is `failure`, `screen`, `logcat`, `requests`, a screenshot's name, and empty for the flow's video; the `_` or `-` around what is empty goes. A `/` makes folders, and a part of the path left without a name takes the try's |
 
 What would change nothing is an error, before the run, and `rayo check` says the same of a suite:
-`video` when no flow is recorded (`record: true` in the suite or the flow, or `startRecording`),
-`artifacts` or `name-template` with `keep: none`. So are `--flaky-fails-build` with `--retries 0`,
+`video` in `artifacts` when no flow is recorded (`video: true`, `record: true` in a flow, or `startRecording`),
+`artifacts` or `nameTemplate` with `keep: none`. So are `--flaky-fails-build` with `--retries 0`,
 and `--hosts` when no flow goes through the proxy.
 
 ```
-rayo test --keep all --artifacts video,screenshot all.rayo.yaml        # with record: true in the suite
-rayo test --name-template '{flow}_{attempt}/{kind}.{ext}' all.rayo.yaml   # a folder for each try: pay/failure.jpg, pay/pay.mp4, pay_retry1/...
+rayo test --keep failed --artifacts video,screenshot all.suite.yaml   # with output: { video: true } in the suite
+rayo test --name-template '{flow}_{attempt}/{kind}.{ext}' all.suite.yaml   # a folder for each try: pay/failure.jpg, pay/pay.mp4, pay_retry1/...
 ```
 
 | Exit code | |

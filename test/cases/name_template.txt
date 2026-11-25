@@ -2,8 +2,7 @@
 -- args --
 test s.suite.yaml --retries 1 --name-template {flow}_{attempt}/{kind}.{ext}
 -- s.suite.yaml --
-record: true
-keep: all
+output: { video: true, keep: all }
 flows: [a.yaml, b.yaml]
 -- a.yaml --
 appId: a.b

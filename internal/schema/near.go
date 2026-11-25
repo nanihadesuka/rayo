@@ -1,21 +1,61 @@
 package schema
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
-// Nearest is the name most like one that isn't one: the same but for case, or a few letters away;
-// empty if none is close enough to be what was meant.
+// synonyms are words someone new may write for a name of rayo's, from other tools or plain English.
+var synonyms = map[string][]string{
+	"folder":  {"dir", "directory", "path", "outdir", "output-dir", "outputdir"},
+	"video":   {"record", "recording", "videos", "screenrecord"},
+	"results": {"junit", "report", "reports", "result"},
+	"retries": {"retry", "rerun", "reruns", "attempts"},
+	"env":     {"vars", "variables", "environment", "var"},
+	"keep":    {"retain", "keep-files"},
+}
+
+// Nearest is the name most like one that isn't one: the same but for case, a word of the same
+// meaning, a few letters away, or the only one it begins like; empty if none is close enough to be
+// what was meant. A leading - is ignored, for options.
 func Nearest(name string, names []string) string {
-	best, bestD := "", 0
+	bare := func(s string) string { return strings.ToLower(strings.TrimLeft(s, "-")) }
+	want := bare(name)
 	for _, n := range names {
-		if strings.EqualFold(n, name) {
+		if bare(n) == want {
 			return n
 		}
-		d := Distance([]rune(strings.ToLower(name)), []rune(strings.ToLower(n)))
-		if d <= max(1, len([]rune(n))/3) && (best == "" || d < bestD) {
+	}
+	for _, n := range names {
+		if slices.Contains(synonyms[bare(n)], want) {
+			return n
+		}
+	}
+	best, bestD := "", 0
+	for _, n := range names {
+		d := Distance([]rune(want), []rune(bare(n)))
+		if d <= max(1, len([]rune(bare(n)))/3) && (best == "" || d < bestD) {
 			best, bestD = n, d
 		}
 	}
-	return best
+	if best != "" {
+		return best
+	}
+	// the same beginning, of at least 4 letters, that only one name has: retry, retries
+	var alike []string
+	for _, n := range names {
+		b, i := bare(n), 0
+		for i < len(b) && i < len(want) && b[i] == want[i] {
+			i++
+		}
+		if i >= 4 && i*3 >= len(want)*2 {
+			alike = append(alike, n)
+		}
+	}
+	if len(alike) == 1 {
+		return alike[0]
+	}
+	return ""
 }
 
 // Distance is Levenshtein's.

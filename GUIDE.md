@@ -92,9 +92,12 @@ flows:
   - { file: tests/pay.yaml, retries: 3 }
 app: { id: com.example.app, apk: app-debug.apk }
 results: [results/results.txt, results/junit.xml]
-record: true
-recordFolder: results/videos
+output: { folder: results, video: true }   # a video of every flow, and every file, in results/
 ```
+
+Every key of a suite has an option of the same name, in kebab-case, that overrides it for one run:
+`output: { keep: failed }` in the suite, `--keep failed` on the command line. `rayo check all.suite.yaml`
+says what it will write, and where.
 
 ```
 rayo test --emulator all.suite.yaml
@@ -127,7 +130,7 @@ Here `nearest` shows the button's id is `pay`, not `pay_button`: fix the test.
 app or the device keeps failing, rayo stops early, so you don't wait for every test to fail the same way.
 
 In `saved`, the screen, `pay_screen.txt`, `pay_logcat.txt` and `pay_requests.txt`: what was on
-screen, the device log and the calls to the backend. Those of the tries that passed aren't kept, see [What is kept](REFERENCE.md#what-is-kept).
+screen, the device log and the calls to the backend. Those of every try are kept; `--keep failed` keeps only those of the tries that failed, see [What is kept](REFERENCE.md#what-is-kept).
 
 Later, to see again why it failed, without running anything:
 
@@ -171,7 +174,7 @@ env:
 
 ## Set variables for every flow
 
-In the suite, under `-e`, which wins; values may use `${...}`:
+In the suite, under `env`; `-e` overrides one. Values may use `${...}`:
 
 ```yaml
 env:

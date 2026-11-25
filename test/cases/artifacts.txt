@@ -2,8 +2,7 @@
 -- args --
 test s.suite.yaml --artifacts video,logcat
 -- s.suite.yaml --
-record: true
-name-template: "{attempt}-{flow}-{kind}.{ext}"
+output: { video: true, nameTemplate: "{attempt}-{flow}-{kind}.{ext}" }
 flows: [c.yaml]
 -- c.yaml --
 appId: a.b

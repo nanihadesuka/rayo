@@ -6,6 +6,8 @@ help
 -- stdout --
 rayo - runs flows on Android, fast
 
+New here, or driving rayo from a program? Start with: rayo help agents
+
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
   rayo explain [<run folder or flow>]              why the flows of the last run failed, in a few lines
@@ -18,6 +20,7 @@ rayo - runs flows on Android, fast
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
+  rayo help search <word>...                       the lines of all the help that have the words
   rayo schema <name>                               a JSON Schema: flow, suite, results, or of --format json
   rayo version
 
@@ -28,6 +31,7 @@ Topics, rayo help <topic>
   record-mocks               record mocks from the real backend
   connect-mocks              connect the app to the mocks: interceptor or proxy
   run-in-ci                  run in a CI
+  recipes                    short answers: video, logcat, reset, log in, deeplink, what a run leaves
   limits                     limitations and gotchas
   exit-codes                 exit codes
 
@@ -46,25 +50,33 @@ Options of test, live, do and explain
   --output <folder>          where failures and screenshots go (default .rayo)
 
 Options of test and live
-  -e, --env <KEY=VALUE>      a variable for the flows
   --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
   --mock-port <port>         where the app finds the mock on the device (default 8080)
   --animations               leave the device's animations on
   --profile                  where the time of each step went
 
-Options of test: which flows
+Options of test and check: which flows of them
   --only <a,b>               only the flows with these names
   --include-tags <a,b>       only flows with one of these tags
   --exclude-tags <a,b>       not flows with one of these tags
   --rerun-failed             only those that haven't passed since they last failed
 
+Options of test and check: as the suite says, for one run
+  -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own
+  --retries <n>              try again what fails, every flow, also one the suite gives its own retries (default 1, or the suite's)
+
 Options of test: how they run
-  --retries <n>              try again what fails, whatever the suite says (default 1)
   --fail-fast                stop at the first failure
   --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes
+
+Options of test and check: what is written, as the suite's output
+  --video                    a video of each flow whose header doesn't say record, as output: { video: true }
+  --keep <when>              the files of every try (all, default), only of the tries that failed, or none
+  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
+  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
 
 Options of test: what comes out
   --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files
@@ -74,9 +86,6 @@ Options of test: what comes out
   --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
   --slowest <n>              how many flows the slow list has (default 5)
   --timings                  while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
-  --keep <when>              the files of an attempt that failed (failed, default), of all, or none
-  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
-  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
 
 Options of test and live: mocks from the real backend
   --capture <folder>         call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed

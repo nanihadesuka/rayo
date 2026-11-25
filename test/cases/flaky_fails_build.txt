@@ -2,7 +2,7 @@
 -- args --
 test s.suite.yaml
 -- s.suite.yaml --
-flaky-fails-build: true
+flakyFailsBuild: true
 flows:
   - a.yaml
   - b.yaml

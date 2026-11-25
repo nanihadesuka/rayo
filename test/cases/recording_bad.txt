@@ -16,4 +16,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: b.suite.yaml: recordFolder needs record: true
+error: b.suite.yaml:2: recordFolder is now output: { folder: ... }, or a nameTemplate with a / (rayo 3.0 put what a run writes under output, and spells every key in camelCase)

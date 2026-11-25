@@ -5,10 +5,8 @@ app:
   id: com.example.shop
   apk: app-debug.apk
 
-output: results
+output: { folder: results, video: true }
 results: [results/results.txt, results/junit.xml]
-record: true
-recordFolder: results/videos
 retries: 1
 device: { size: 1080x2400, dpi: 420, fontScale: 1.0, darkMode: false }
 

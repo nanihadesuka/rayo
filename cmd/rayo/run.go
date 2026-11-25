@@ -225,6 +225,9 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	fmt.Fprintln(say)
 	fmt.Fprint(say, sum.Text(true))
 	s.reporter.(*console).slowestFlows(sum.Outcomes)
+	if lost {
+		fmt.Fprintln(say, "next: rayo devices says if the device is there and ready; restart the emulator or reconnect it, then rayo test --rerun-failed")
+	}
 	err := sum.SaveLast(report.LastFile(o.output))
 	for _, file := range o.results {
 		err = errors.Join(err, sum.Write(file))

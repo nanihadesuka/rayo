@@ -46,6 +46,7 @@ type options struct {
 	slowest                int      // 0 if not said
 	resultsTemplate        string
 	keep                   string // empty if not said
+	video                  bool   // --video
 	suite                  *suite.Suite
 	updateOwn              bool // --capture-update of the flow's own mock
 
@@ -153,14 +154,6 @@ var sections = []section{
 		text("output", "folder", "where failures and screenshots go (default .rayo)", func(o *options) *string { return &o.output }),
 	}},
 	{[]string{cmdTest, cmdLive}, "", []option{
-		{short: "e", name: "env", value: "KEY=VALUE", about: "a variable for the flows", set: func(o *options, v string) error {
-			k, value, ok := strings.Cut(v, "=")
-			if !ok {
-				return errors.New("--env takes KEY=VALUE")
-			}
-			o.runner.Env[k] = value
-			return nil
-		}},
 		{name: "timeout-scale", value: "factor", about: "multiply the default waits, not a step's own timeout (default 1)", set: func(o *options, v string) error {
 			f, err := strconv.ParseFloat(v, 64)
 			if err != nil || f < suite.LowestScale || f > suite.HighestScale {
@@ -180,14 +173,22 @@ var sections = []section{
 		flag("animations", "leave the device's animations on", func(o *options) *bool { return &o.animations }),
 		flag("profile", "where the time of each step went", func(o *options) *bool { return &o.runner.Profile }),
 	}},
-	{[]string{cmdTest}, "which flows", []option{
+	{[]string{cmdTest, cmdCheck}, "which flows of them", []option{
 		list("only", "only the flows with these names", func(o *options) *[]string { return &o.only }),
 		list("include-tags", "only flows with one of these tags", func(o *options) *[]string { return &o.include }),
 		list("exclude-tags", "not flows with one of these tags", func(o *options) *[]string { return &o.exclude }),
 		flag("rerun-failed", "only those that haven't passed since they last failed", func(o *options) *bool { return &o.rerunFailed }),
 	}},
-	{[]string{cmdTest}, "how they run", []option{
-		{name: "retries", value: "n", about: "try again what fails, whatever the suite says (default 1)", set: func(o *options, v string) error {
+	{[]string{cmdTest, cmdCheck}, "as the suite says, for one run", []option{
+		{short: "e", name: "env", value: "KEY=VALUE", about: "a variable for the flows; over the suite's env, which is over a flow's own", set: func(o *options, v string) error {
+			k, value, ok := strings.Cut(v, "=")
+			if !ok {
+				return errors.New("--env takes KEY=VALUE")
+			}
+			o.runner.Env[k] = value
+			return nil
+		}},
+		{name: "retries", value: "n", about: "try again what fails, every flow, also one the suite gives its own retries (default 1, or the suite's)", set: func(o *options, v string) error {
 			n, err := strconv.Atoi(v)
 			if err != nil || n < 0 {
 				return fmt.Errorf("--retries takes a number, not %q", v)
@@ -195,6 +196,8 @@ var sections = []section{
 			o.retries = n
 			return nil
 		}},
+	}},
+	{[]string{cmdTest}, "how they run", []option{
 		flag("fail-fast", "stop at the first failure", func(o *options) *bool { return &o.failFast }),
 		flag("flaky-fails-build", "exit 4 if every flow passed but some only on a retry (default: exit 0)", func(o *options) *bool { return &o.flakyFails }),
 		flag("keep-going", "don't stop when the device or the app fails over and over", func(o *options) *bool { return &o.keepGoing }),
@@ -210,6 +213,25 @@ var sections = []section{
 			return nil
 		}},
 		flag("continuous", "run again whenever a file changes", func(o *options) *bool { return &o.continuous }).withShort("c"),
+	}},
+	{[]string{cmdTest, cmdCheck}, "what is written, as the suite's output", []option{
+		flag("video", "a video of each flow whose header doesn't say record, as output: { video: true }", func(o *options) *bool { return &o.video }),
+		choice("keep", "when", "the files of every try (all, default), only of the tries that failed, or none", func(o *options) *string { return &o.keep }, suite.KeepAll, suite.KeepFailed, suite.KeepNone),
+		{name: "artifacts", value: "a,b", about: "the kinds of file written: video, screenshot, logcat, screen, requests (default all)", set: func(o *options, v string) error {
+			kinds := strings.Split(v, ",")
+			if err := flow.CheckArtifacts(kinds); err != nil {
+				return fmt.Errorf("--artifacts %w", err)
+			}
+			o.runner.Artifacts = kinds
+			return nil
+		}},
+		{name: "name-template", value: "template", about: "how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})", set: func(o *options, v string) error {
+			if err := flow.CheckTemplate(v); err != nil {
+				return fmt.Errorf("--name-template %w", err)
+			}
+			o.runner.NameTemplate = v
+			return nil
+		}},
 	}},
 	{[]string{cmdTest}, "what comes out", []option{
 		choice("detail", "how much", "printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files", func(o *options) *string { return &o.detail }, flow.Details...),
@@ -252,22 +274,6 @@ var sections = []section{
 			return nil
 		}},
 		flag("timings", "while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs", func(o *options) *bool { return &o.runner.Timings }),
-		choice("keep", "when", "the files of an attempt that failed (failed, default), of all, or none", func(o *options) *string { return &o.keep }, suite.KeepFailed, suite.KeepAll, suite.KeepNone),
-		{name: "artifacts", value: "a,b", about: "the kinds of file written: video, screenshot, logcat, screen, requests (default all)", set: func(o *options, v string) error {
-			kinds := strings.Split(v, ",")
-			if err := flow.CheckArtifacts(kinds); err != nil {
-				return fmt.Errorf("--artifacts %w", err)
-			}
-			o.runner.Artifacts = kinds
-			return nil
-		}},
-		{name: "name-template", value: "template", about: "how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})", set: func(o *options, v string) error {
-			if err := flow.CheckTemplate(v); err != nil {
-				return fmt.Errorf("--name-template %w", err)
-			}
-			o.runner.NameTemplate = v
-			return nil
-		}},
 	}},
 	{[]string{cmdTest, cmdLive}, "mocks from the real backend", []option{
 		text("capture", "folder", "call the real backend, and write what it answers as mocks; in live, on .quit, without the calls of steps that failed", func(o *options) *string { return &o.runner.Capture }),
@@ -359,6 +365,8 @@ var sections = []section{
 
 const usage = `rayo - runs flows on Android, fast
 
+New here, or driving rayo from a program? Start with: rayo help agents
+
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
   rayo explain [<run folder or flow>]              why the flows of the last run failed, in a few lines
@@ -371,6 +379,7 @@ const usage = `rayo - runs flows on Android, fast
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
+  rayo help search <word>...                       the lines of all the help that have the words
   rayo schema <name>                               a JSON Schema: flow, suite, results, or of --format json
   rayo version
 `

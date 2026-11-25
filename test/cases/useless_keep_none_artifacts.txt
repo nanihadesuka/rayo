@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: --keep none writes no files, so --artifacts (or artifacts of the suite) does nothing; see rayo help test
+error: --keep none writes no files, so --artifacts (or the suite's output: { artifacts }) does nothing; see rayo help test

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -70,8 +71,33 @@ func exiting(code int, err error) error {
 	return &exitError{code, err}
 }
 
+// written settles what a run writes, and where: an option overrides the suite's output.
+func (o *options) written(group *suite.Suite) {
+	video := o.video
+	if group != nil {
+		g := group.Output
+		if g.Folder != "" {
+			o.into(group.Relative(g.Folder))
+		}
+		o.keep = cmp.Or(o.keep, g.Keep)
+		o.runner.NameTemplate = cmp.Or(o.runner.NameTemplate, g.NameTemplate)
+		if o.runner.Artifacts == nil {
+			o.runner.Artifacts = g.Artifacts
+		}
+		video = video || g.Video != nil && *g.Video
+	}
+	o.into("")
+	o.keep = cmp.Or(o.keep, suite.KeepAll)
+	o.runner.Recording = &flow.Recording{On: video}
+}
+
 // ofDevice is an error of the device, or of reaching it.
-func ofDevice(err error) error { return exiting(report.ExitDevice, err) }
+func ofDevice(err error) error {
+	if errors.Is(err, os.ErrDeadlineExceeded) { // the device took the command and never answered
+		err = fmt.Errorf("the device didn't answer, so it is hung or very slow: restart it (an emulator: a cold boot), check it with rayo devices, then run again (%w)", err)
+	}
+	return exiting(report.ExitDevice, err)
+}
 
 // exitOf is the exit code for an error: one that doesn't say is of something written.
 func exitOf(err error) int {
@@ -131,9 +157,14 @@ func run(ctx context.Context, command string, args []string) error {
 		fmt.Println("rayo " + version)
 		return nil
 	case "help", "--help", "-h":
-		if len(args) == 0 {
+		if len(args) == 0 || args[0] == "topics" {
 			fmt.Print(help())
 			return nil
+		}
+		if args[0] == "search" {
+			text, err := helpSearch(args[1:])
+			fmt.Print(text)
+			return err
 		}
 		text, err := helpOn(args[0])
 		fmt.Print(text)
@@ -156,30 +187,95 @@ func check(args []string) error {
 	if err != nil {
 		return err
 	}
-	if group != nil { // what the suite asks for that would do nothing, as rayo test says it
-		o.keep, o.runner.Artifacts, o.runner.NameTemplate = group.Keep, group.Artifacts, group.NameTemplate
-		o.runner.Recording = &flow.Recording{On: group.Record}
-		if err := o.checkKept(); err != nil {
-			return err
-		}
-		if err := o.checkUseful(flows); err != nil {
-			return err
-		}
+	o.written(group)
+	if flows, err = o.choose(flows); err != nil { // those rayo test would run
+		return err
+	}
+	// what would do nothing, as rayo test says it
+	if err := o.checkKept(); err != nil {
+		return err
+	}
+	if err := o.checkUseful(flows); err != nil {
+		return err
 	}
 	list := plan(flows, group)
+	if o.retries >= 0 { // as rayo test would
+		for i := range list {
+			list[i].Retries = o.retries
+		}
+	}
 	if printing != report.Human {
 		return emit(report.Check{SchemaVersion: report.SchemaVersion, OK: true, Count: len(flows), Flows: list})
 	}
-	fmt.Printf("%d flows are fine\n", len(flows))
-	for _, p := range list {
-		line := "  " + p.Name + "  " + p.File
+	if len(flows) == 1 {
+		fmt.Println("1 flow is fine")
+	} else {
+		fmt.Printf("%d flows are fine\n", len(flows))
+	}
+	env := maps.Clone(o.runner.Env)
+	if group != nil {
+		for k, v := range group.Env {
+			if _, set := env[k]; !set {
+				env[k] = v
+			}
+		}
+	}
+	pairs := func(vars map[string]string) string {
+		var all []string
+		for _, k := range slices.Sorted(maps.Keys(vars)) {
+			all = append(all, k+"="+vars[k])
+		}
+		return strings.Join(all, ", ")
+	}
+	for i, p := range list {
+		line := fmt.Sprintf("  %s  %s  retries: %d", p.Name, p.File, p.Retries)
 		if len(p.Tags) > 0 {
 			line += "  tags: " + strings.Join(p.Tags, ", ")
 		}
 		if len(p.Mocks) > 0 {
 			line += "  mocks: " + strings.Join(p.Mocks, ", ")
 		}
+		own := map[string]string{}
+		for k, v := range flows[i].Env {
+			if _, over := env[k]; !over {
+				own[k] = v
+			}
+		}
+		if len(own) > 0 {
+			line += "  own env: " + pairs(own)
+		}
 		fmt.Println(line)
+	}
+	kept := map[string]string{suite.KeepAll: "keeps the files of every try", suite.KeepFailed: "keeps only the files of the tries that failed", suite.KeepNone: "keeps no files"}[o.keep]
+	if o.keep != suite.KeepNone && o.runner.Artifacts != nil {
+		kept += " (only " + strings.Join(o.runner.Artifacts, ", ") + ")"
+	}
+	video := "a video only of flows whose header says record"
+	switch {
+	case o.runner.Recording.On && o.keep == suite.KeepFailed:
+		video = "a video of each flow, kept only if its try failed"
+	case o.runner.Recording.On:
+		video = "a video of each flow"
+	}
+	fmt.Printf("a run writes to %s, %s, with %s\n", o.output, kept, video)
+	if o.keep != suite.KeepNone && len(flows) > 0 {
+		a := flow.Attempt{Out: o.output, Flow: flow.FolderName(flows[0].Name)}
+		retry := a
+		retry.Try = 1
+		fmt.Printf("such as %s, and of a retry %s\n", filepath.ToSlash(flow.FileName(o.runner.NameTemplate, a, "failure", "png")),
+			filepath.ToSlash(flow.FileName(o.runner.NameTemplate, retry, "logcat", "txt")))
+	}
+	results := o.results
+	if results == nil && group != nil {
+		for _, file := range group.Results {
+			results = append(results, group.Relative(file))
+		}
+	}
+	if len(results) > 0 {
+		fmt.Println("results:", filepath.ToSlash(strings.Join(results, ", ")))
+	}
+	if len(env) > 0 {
+		fmt.Println("env, over each flow's own:", pairs(env))
 	}
 	return nil
 }
@@ -241,7 +337,6 @@ func test(ctx context.Context, args []string) (err error) {
 		if o.format == "" && group.Format != "" {
 			printing = group.Format
 		}
-		o.into(group.Relative(group.Output))
 		if o.runner.Scale == 0 {
 			o.runner.Scale = group.TimeoutScale
 		}
@@ -250,13 +345,7 @@ func test(ctx context.Context, args []string) (err error) {
 				o.runner.Env[k] = v
 			}
 		}
-		o.runner.Recording = &flow.Recording{On: group.Record, Path: group.Relative(group.RecordFolder)}
-		o.keep = cmp.Or(o.keep, group.Keep)
 		o.flakyFails = o.flakyFails || group.FlakyFailsBuild
-		o.runner.NameTemplate = cmp.Or(o.runner.NameTemplate, group.NameTemplate)
-		if o.runner.Artifacts == nil {
-			o.runner.Artifacts = group.Artifacts
-		}
 		o.detail = cmp.Or(o.detail, group.Detail)
 		if o.window == 0 {
 			o.window = group.FailureWindow
@@ -281,10 +370,9 @@ func test(ctx context.Context, args []string) (err error) {
 			o.runner.JSON = true
 		}
 	}
-	o.into("")
+	o.written(group)
 	o.detail = cmp.Or(o.detail, flow.Normal)
 	o.runner.Detail, o.runner.Window = o.detail, time.Duration(o.window)*time.Second
-	o.keep = cmp.Or(o.keep, suite.KeepFailed)
 	if err := o.checkKept(); err != nil {
 		return err
 	}
@@ -554,8 +642,9 @@ func helpOn(name string) (string, error) {
 		return "A flow begins with a header, then ---, then a list of commands. The header:\n\n" + flow.HeaderHelp() +
 			"\nCommands: " + strings.Join(flow.Commands(), ", ") + "\n", nil
 	case "suite":
-		return "A suite, *.suite.yaml, lists flows that run together. A folder is the flows directly in it; a suite runs only when its file is given:\n\n" + schema.Help(suite.Fields) + "\nflows, when not only a file:\n\n" + schema.Help(suite.FlowFields) +
+		return "A suite, *.suite.yaml, lists flows that run together, and is where a run's settings go. Paths in it are relative to it. An option of the same name in kebab-case overrides a key for one run (failureWindow, --failure-window). A folder is the flows directly in it; a suite runs only when its file is given:\n\n" + schema.Help(suite.Fields) + "\nflows, when not only a file:\n\n" + schema.Help(suite.FlowFields) +
 			"\nunmocked:\n\n" + schema.Help(suite.UnmockedFields) + "\nan ignored call, when not text:\n\n" + schema.Help(suite.IgnoredFields) +
+			"\noutput, when a mapping (rayo check says what a run would write):\n\n" + schema.Help(suite.OutputFields) +
 			"\ncapture:\n\n" + schema.Help(suite.CaptureFields) +
 			"\napp:\n\n" + schema.Help(suite.AppFields) + "\ndevice:\n\n" + schema.Help(suite.DeviceFields), nil
 	}

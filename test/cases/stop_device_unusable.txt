@@ -28,6 +28,7 @@ NOT_RUN b  (device: the device is starting)
 
 STOPPED device: the device is starting
 TOTAL 2: 0 passed, 1 failed, 1 not run, of those failed 1 device  # s
+next: rayo devices says if the device is there and ready; restart the emulator or reconnect it, then rayo test --rerun-failed
 -- stderr --
 error: failed: a, b (not run)
 -- device --

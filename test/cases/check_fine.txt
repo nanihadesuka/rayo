@@ -18,5 +18,7 @@ mock: ["${DIR}/x"]
 0
 -- stdout --
 2 flows are fine
-  a  flows/a.yaml
-  b  flows/b.yaml  mocks: ${DIR}/x
+  a  flows/a.yaml  retries: 1
+  b  flows/b.yaml  retries: 1  mocks: ${DIR}/x
+a run writes to .rayo, keeps the files of every try, with a video only of flows whose header says record
+such as .rayo/a_failure.png, and of a retry .rayo/a_retry1_logcat.txt

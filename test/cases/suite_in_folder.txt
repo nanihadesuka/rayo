@@ -21,7 +21,9 @@ appId: a.b
 0
 -- stdout --
 2 flows are fine
-  a  e2e/a.yaml
-  b  e2e/b.yaml
+  a  e2e/a.yaml  retries: 1
+  b  e2e/b.yaml  retries: 1
+a run writes to .rayo, keeps the files of every try, with a video only of flows whose header says record
+such as .rayo/a_failure.png, and of a retry .rayo/a_retry1_logcat.txt
 -- stderr --
 skipped e2e/all.suite.yaml (a suite; name it to run it)
