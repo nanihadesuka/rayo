@@ -41,10 +41,16 @@ emulator-5554, ready in # ms
   case failed at the end: unmocked call
   why: the app called what isn't mocked:
         POST /a
+          nearest POST /a: body: nothing at $.x
+        POST /a
+          nearest POST /a: body: not JSON
         GET /a
         GET /q?a=1
+          nearest GET /q: query a: "1", expected "2"
         GET /q
+          nearest GET /q: query a: absent, expected "2"
         GET /nothing
+      mocks loaded: mock.json (2)
   blame: test
   before:
     tapOn GET /q
@@ -145,7 +151,7 @@ a screen
         "file": "",
         "line": 0,
         "step": "",
-        "message": "the app called what isn't mocked:\n    POST /a\n    GET /a\n    GET /q?a=1\n    GET /q\n    GET /nothing",
+        "message": "the app called what isn't mocked:\n    POST /a\n      nearest POST /a: body: nothing at $.x\n    POST /a\n      nearest POST /a: body: not JSON\n    GET /a\n    GET /q?a=1\n      nearest GET /q: query a: \"1\", expected \"2\"\n    GET /q\n      nearest GET /q: query a: absent, expected \"2\"\n    GET /nothing\n  mocks loaded: mock.json (2)",
         "expected": "",
         "nearest": "",
         "fix": ""

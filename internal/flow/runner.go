@@ -111,6 +111,7 @@ func (r *Runner) Run(ctx context.Context, f *Flow, a Attempt) Result {
 	}
 	r.noteProxy()
 	r.noteIgnored()
+	r.noteUnreached(err)
 	r.reset()
 	if err != nil && ctx.Err() == nil {
 		if r.failure == nil {

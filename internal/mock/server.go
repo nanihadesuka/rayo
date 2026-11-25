@@ -59,9 +59,17 @@ func (m *Mock) fail(err error) {
 }
 
 func (m *Mock) ServeHTTP(w http.ResponseWriter, q *http.Request) {
-	data, err := io.ReadAll(io.LimitReader(q.Body, maxRequest))
+	data, err := io.ReadAll(io.LimitReader(q.Body, maxRequest+1))
 	if err != nil {
 		return // the app hung up
+	}
+	if len(data) > maxRequest { // never compared cut short: it could match what it isn't
+		m.mu.Lock()
+		m.calls = append(m.calls, &Call{At: time.Now(), Method: q.Method, Path: q.URL.EscapedPath(), URI: q.URL.RequestURI(),
+			Outcome: fmt.Sprintf("413: its body is over %d MB, more than the mock reads", maxRequest>>20), Unmocked: true})
+		m.mu.Unlock()
+		http.Error(w, fmt.Sprintf("rayo's mock: the body is over %d MB", maxRequest>>20), http.StatusRequestEntityTooLarge)
+		return
 	}
 	if m.real != nil {
 		m.pass(w, q, data)
@@ -409,6 +417,40 @@ func (m *Mock) Count(method string, path *regexp.Regexp, body string) int {
 		}
 	}
 	return n
+}
+
+// Missed says, of the last calls received, why each isn't one of a method (any if empty), a path and
+// a text in the body: for a request that was waited for or counted and not found.
+func (m *Mock) Missed(method string, path *regexp.Regexp, body string) []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if len(m.calls) == 0 {
+		return []string{"the mock received no call"}
+	}
+	const last = 5
+	from := max(len(m.calls)-last, 0)
+	lines := []string{fmt.Sprintf("the last %d of %d calls:", len(m.calls)-from, len(m.calls))}
+	for _, c := range m.calls[from:] {
+		var why []string
+		if method != "" && !strings.EqualFold(method, c.Method) {
+			why = append(why, "method "+c.Method+", not "+strings.ToUpper(method))
+		}
+		if !path.MatchString(c.Path) {
+			why = append(why, fmt.Sprintf("path %s doesn't match %s", c.Path, path))
+		}
+		if !strings.Contains(c.Body, body) {
+			why = append(why, fmt.Sprintf("body hasn't %q", body))
+		}
+		switch {
+		case len(why) > 0:
+		case c.awaited:
+			why = append(why, "fits, but an earlier waitForRequest took it")
+		default:
+			why = append(why, "fits")
+		}
+		lines = append(lines, "  "+c.Method+" "+c.URI+": "+strings.Join(why, "; "))
+	}
+	return lines
 }
 
 // Calls are those received so far.

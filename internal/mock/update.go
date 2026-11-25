@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"unicode/utf8"
 )
 
 // Updating mocks: a new capture is compared with the mocks there are, mapping by mapping, and the
@@ -153,17 +154,7 @@ func Compare(folder, update string) ([]Change, error) {
 		case b == nil:
 			changes = append(changes, Change{Key: k, Kind: KindNew})
 		default:
-			var diff []string
-			if !reflect.DeepEqual(normal(a.request), normal(b.request)) {
-				diff = append(diff, "request: what it matches changed")
-			}
-			if fmt.Sprint(a.status) != fmt.Sprint(b.status) {
-				diff = append(diff, fmt.Sprintf("status: %v -> %v", b.status, a.status))
-			}
-			if !reflect.DeepEqual(normal(a.headers), normal(b.headers)) {
-				diff = append(diff, fmt.Sprintf("headers: %v -> %v", compact(b.headers), compact(a.headers)))
-			}
-			diffJSON("body", b.body, a.body, &diff)
+			diff := differences(b, a)
 			kind := KindSame
 			if len(diff) > 0 {
 				kind = KindChanged
@@ -191,18 +182,80 @@ func compact(v any) string {
 	return string(b)
 }
 
+// maxDiff is how many differences of one mapping are said; past it, how many more there are.
 const maxDiff = 20
+
+// differences says what changed from one mapping to another: what it matches, how it answers and what
+// it does to a scenario.
+func differences(b, a *found) []string {
+	var diff []string
+	diffJSON("request", normal(b.request), normal(a.request), &diff)
+	if fmt.Sprint(b.status) != fmt.Sprint(a.status) {
+		diff = append(diff, fmt.Sprintf("status: %v -> %v", b.status, a.status))
+	}
+	diffJSON("headers", normal(b.headers), normal(a.headers), &diff)
+	br, _ := b.raw["response"].(map[string]any)
+	ar, _ := a.raw["response"].(map[string]any)
+	for _, k := range []string{"fixedDelayMilliseconds", "delayDistribution", "chunkedDribbleDelay", "fault"} {
+		diffJSON("response."+k, normal(br[k]), normal(ar[k]), &diff)
+	}
+	for _, k := range []string{"priority", "scenarioName", "newScenarioState"} {
+		diffJSON(k, normal(b.raw[k]), normal(a.raw[k]), &diff)
+	}
+	bs, bText := b.body.(string)
+	as, aText := a.body.(string)
+	if bText && aText {
+		diffText("body", bs, as, &diff)
+	} else {
+		diffJSON("body", b.body, a.body, &diff)
+	}
+	if len(diff) > maxDiff {
+		diff = append(diff[:maxDiff], fmt.Sprintf("... and %d more", len(diff)-maxDiff))
+	}
+	return diff
+}
+
+// diffText says where two texts differ, by line: the first line that does, and how many more do.
+func diffText(at, before, after string, out *[]string) {
+	if before == after {
+		return
+	}
+	b, a := strings.Split(before, "\n"), strings.Split(after, "\n")
+	first, n := -1, 0
+	for i := range max(len(a), len(b)) {
+		var x, y string
+		if i < len(b) {
+			x = b[i]
+		}
+		if i < len(a) {
+			y = a[i]
+		}
+		if x != y || i >= len(a) || i >= len(b) {
+			if first < 0 {
+				first = i
+			}
+			n++
+		}
+	}
+	line := func(list []string, i int) any {
+		if i < len(list) {
+			return list[i]
+		}
+		return nil
+	}
+	*out = append(*out, fmt.Sprintf("%s:%d: %s -> %s", at, first+1, short(line(b, first)), short(line(a, first))))
+	if n > 1 {
+		*out = append(*out, fmt.Sprintf("%s: %d more lines differ", at, n-1))
+	}
+}
 
 // diffJSON says where two values differ, as paths.
 func diffJSON(at string, before, after any, out *[]string) {
-	if len(*out) >= maxDiff {
-		return
-	}
 	switch b := before.(type) {
 	case map[string]any:
 		if a, ok := after.(map[string]any); ok {
 			keys := slices.Sorted(maps.Keys(b))
-			for k := range a {
+			for _, k := range slices.Sorted(maps.Keys(a)) {
 				if _, in := b[k]; !in {
 					keys = append(keys, k)
 				}
@@ -217,10 +270,6 @@ func diffJSON(at string, before, after any, out *[]string) {
 					*out = append(*out, fmt.Sprintf("%s.%s: new %s", at, k, short(av)))
 				default:
 					diffJSON(at+"."+k, bv, av, out)
-				}
-				if len(*out) >= maxDiff {
-					*out = append(*out, "…")
-					return
 				}
 			}
 			return
@@ -241,10 +290,12 @@ func diffJSON(at string, before, after any, out *[]string) {
 	}
 }
 
+// short is a value as JSON, cut to about 60 characters, never inside one.
 func short(v any) string {
 	s := compact(v)
-	if len(s) > 60 {
-		s = s[:57] + "..."
+	if utf8.RuneCountInString(s) > 60 {
+		r := []rune(s)
+		s = string(r[:57]) + "..."
 	}
 	return s
 }

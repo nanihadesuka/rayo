@@ -1099,7 +1099,9 @@ How it becomes mocks, as WireMock's recorder does by default:
 `rayo mocks import flows.har mock` makes mocks of a HAR file in the same way, as if captured: one of
 mitmproxy (`mitmdump -nr flows --set hardump=flows.har`), Charles, or a browser. With `--capture-from
 https://api.example.com`, only the calls to it are taken, without the host in the path; else every
-call, with its host, but those to Google, Firebase, analytics and crash reports.
+call, with its host, but those to Google, Firebase, analytics and crash reports. The values of `--env`
+and the suite's `env` are hidden as in a capture. Calls are taken in the order they started (those
+without a time last, then as written), so the same file always makes the same mocks.
 
 #### Updating mocks
 
@@ -1111,9 +1113,12 @@ rayo test --capture-update mock --capture-from https://api.example.com flow.yaml
 
 The new capture goes to `mock/.update/`, and each of its mappings is compared with the mapping of
 the same name (and state) in `mock/`, including hand-written ones. What is printed, and kept in
-`mock/.update/changes.txt`, is each mapping that is `changed` (status, headers, and the paths in the
-body that differ, such as `body.data.wallet.price: 5 -> 7`), `new` or `gone`. Then take what you
-want:
+`mock/.update/changes.txt`, is each mapping that is `changed` (the paths that differ in what it
+matches, such as `request.urlPath: "/a" -> "/b"`; status; each header by name; delay, fault,
+`priority`, `scenarioName` and `newScenarioState`; the paths in the body that differ, such as
+`body.data.wallet.price: 5 -> 7`, or for a body that isn't JSON its first line that does, such as
+`body:12: ... -> ...`), `new` or `gone`. Past 20 differences of a mapping, `... and N more`. Then
+take what you want:
 
 ```sh
 rayo mocks apply mock                                   # all the changes and new ones

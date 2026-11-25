@@ -234,12 +234,19 @@ func stateless(globs []string, uri string) bool {
 
 // Forward passes every call to the real backend. Without a base, /host/path goes to https://host/path.
 func (m *Mock) Forward(base string, secrets map[string]string, settings Settings) {
-	m.real = &real{base: strings.TrimSuffix(base, "/"), client: &http.Client{Timeout: time.Minute}, settings: settings}
+	m.real = &real{base: strings.TrimSuffix(base, "/"), client: &http.Client{Timeout: time.Minute}, settings: settings, secrets: secretValues(secrets)}
+}
+
+// secretValues are the values to hide: anything shorter than 4 would be found everywhere.
+func secretValues(secrets map[string]string) []string {
+	var list []string
 	for _, v := range secrets {
-		if len(v) >= 4 { // anything shorter would be found everywhere
-			m.real.secrets = append(m.real.secrets, v)
+		if len(v) >= 4 {
+			list = append(list, v)
 		}
 	}
+	slices.Sort(list)
+	return list
 }
 
 // UseSettingsOf takes the settings of the capture in a folder, for what wasn't given: so that an update

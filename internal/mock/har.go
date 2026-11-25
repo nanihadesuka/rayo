@@ -63,7 +63,7 @@ func harHeaders(pairs []harPair) http.Header {
 // ImportHAR writes the calls of a HAR file in a new folder of mocks. With a base, only the calls to it
 // are taken, without it in their paths; else every call to a host that isn't Google's, Firebase's,
 // analytics or crash reports, with the host at the start of the path.
-func ImportHAR(file, folder, base string, s Settings) ([]string, error) {
+func ImportHAR(file, folder, base string, secrets map[string]string, s Settings) ([]string, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -78,16 +78,38 @@ func ImportHAR(file, folder, base string, s Settings) ([]string, error) {
 			return nil, fmt.Errorf("--capture-from: not an address: %q", base)
 		}
 	}
+	// by time, those without one last, then as written: a total order, so the same file gives the same mocks
 	entries := slices.Clone(har.Log.Entries)
-	slices.SortStableFunc(entries, func(a, b harEntry) int {
-		x, errX := time.Parse(time.RFC3339Nano, a.StartedDateTime)
-		y, errY := time.Parse(time.RFC3339Nano, b.StartedDateTime)
-		if errX != nil || errY != nil {
-			return 0
+	at := make(map[*harEntry]time.Time, len(entries))
+	for i := range entries {
+		if t, err := time.Parse(time.RFC3339Nano, entries[i].StartedDateTime); err == nil {
+			at[&entries[i]] = t
 		}
-		return x.Compare(y)
+	}
+	order := make([]int, len(entries))
+	for i := range order {
+		order[i] = i
+	}
+	slices.SortFunc(order, func(i, j int) int {
+		x, okX := at[&entries[i]]
+		y, okY := at[&entries[j]]
+		switch {
+		case okX && okY && !x.Equal(y):
+			return x.Compare(y)
+		case okX != okY:
+			if okX {
+				return -1
+			}
+			return 1
+		}
+		return i - j
 	})
-	r := &real{settings: s}
+	sorted := make([]harEntry, len(entries))
+	for k, i := range order {
+		sorted[k] = entries[i]
+	}
+	entries = sorted
+	r := &real{settings: s, secrets: secretValues(secrets)}
 	var calls []captured
 	left := map[string]int{}
 	for _, e := range entries {

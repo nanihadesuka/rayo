@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -34,6 +35,7 @@ type Mock struct {
 	vm       *goja.Runtime
 	real     *real     // nil unless capturing
 	unmocked *Unmocked // calls without a mock that are answered anyway; nil for none
+	loaded   []string  // each folder or file loaded, with how many mappings it had
 }
 
 // Network is how the connection to the backend behaves.
@@ -123,13 +125,20 @@ func (m *Mock) Load(path string) error {
 			}
 			return err
 		})
-		if err != nil {
+		if err != nil && !errors.Is(err, fs.ErrNotExist) { // without mappings/ is said below
 			return err
 		}
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.folders = append([]string{filepath.Join(root, "__files")}, m.folders...)
+	had := len(m.rules)
+	defer func() {
+		m.loaded = append(m.loaded, fmt.Sprintf("%s (%d)", filepath.ToSlash(path), len(m.rules)-had))
+	}()
+	if len(files) == 0 {
+		return fmt.Errorf("no mappings in %s: a folder of mocks has them in mappings/*.json", filepath.ToSlash(path))
+	}
 	for _, file := range files {
 		data, err := os.ReadFile(file)
 		if err != nil {
@@ -219,6 +228,32 @@ func (m *Mock) hosts() map[string]bool {
 		}
 	}
 	return hosts
+}
+
+// Loaded is each folder or file of mappings loaded, with how many it had, such as "mocks/a (12)".
+func (m *Mock) Loaded() []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.loaded)
+}
+
+// Rules is how many mappings there are.
+func (m *Mock) Rules() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return len(m.rules)
+}
+
+// Why is what was wrong with a call that isn't mocked, beyond that: the mapping nearest to it, or that
+// its body was too big; empty if nothing.
+func (c *Call) Why() string {
+	if strings.HasPrefix(c.Outcome, "413") {
+		return c.Outcome
+	}
+	if _, near, ok := strings.Cut(c.Outcome, "; nearest "); ok {
+		return "nearest " + near
+	}
+	return ""
 }
 
 // What is the call as said when it isn't mocked: with its GraphQL operation, if it has one.

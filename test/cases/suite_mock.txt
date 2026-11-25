@@ -39,6 +39,7 @@ mock: ../mocks/b.json
   own failed at the end: unmocked call
   why: the app called what isn't mocked:
         GET /a
+      mocks loaded: mocks/b.json (1)
   blame: test
   before:
     tapOn GET /b
@@ -96,7 +97,7 @@ bye {"timeout":5000}
         "file": "",
         "line": 0,
         "step": "",
-        "message": "the app called what isn't mocked:\n    GET /a",
+        "message": "the app called what isn't mocked:\n    GET /a\n  mocks loaded: mocks/b.json (1)",
         "expected": "",
         "nearest": "",
         "fix": ""
