@@ -64,7 +64,7 @@ TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s
 - **[Retries](REFERENCE.md#retries)**, with [flaky](REFERENCE.md#flaky-flows) tests shown as such, and it
   [stops early](REFERENCE.md#blame) if the device or the app is what fails.
 - **[For programs](REFERENCE.md#for-a-program).** JSON output and clear exit codes, for CI, scripts and AI agents.
-- **And** QR for the camera, permissions, airplane mode, screen size and font, scripts, tags,
+- **And** QR for the camera, permissions, airplane mode, screen rotation, size and font, scripts, tags,
   random order, [schemas](schema) for your editor.
 
 ## Start
@@ -90,6 +90,8 @@ Or build it, with Go: `bash build.sh`.
 | `rayo test --capture mock flow.yaml` | Make mocks from the real backend |
 | `rayo test --capture-update mock flow.yaml` | What changed in the backend since; `rayo mocks apply mock` takes it |
 | `rayo mocks import flows.har mock` | Make mocks of mitmproxy's, a browser's or Charles' calls |
+| `rayo mocks check mock` | Mappings that never answer, and bodies no mapping uses |
+| `rayo test --shard 2/4 all.suite.yaml` | Run a quarter of the tests, on each of 4 CI machines |
 | `rayo help agents` | How a script or an AI agent should use rayo |
 | `rayo help` | Everything else |
 

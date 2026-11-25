@@ -26,7 +26,7 @@ const pages = [
     R('Flow file', 'The file'), R('Header', 'The header'), R('Common options', 'Options of every command'), R('Values'), R('Selectors', 'Finding elements'),
     R('Conditions', 'Selector keys'), R('Relations'), R('when', 'Conditions: when and while'), R('Variables'), R('Expressions', 'Expressions: ${…}'), R('JavaScript API'), R('Tags')] },
   { id: 'mocking', title: 'Mocking', about: 'Answer as the backend, or capture what the real one says.', all: 'MOCKING.md',
-    sections: [R('Mock', 'In a flow'), R('Mock files', 'What a mapping can say'), R('Capture', 'Capture the real backend'), R('GraphQL'), R('Updating mocks')] },
+    sections: [R('Mock', 'In a flow'), R('Mock files', 'What a mapping can say'), R('Capture', 'Capture the real backend'), R('GraphQL'), R('Updating mocks'), R('Checking mocks')] },
   { id: 'suites', title: 'Suites and devices', about: 'Many tests together: retries, videos, and how the device is.', sections: [
     R('Suites', 'A suite'), R('A flow of a suite'), R('Mocks of a suite'), R('Calls not worth mocking'), R("Capturing a suite's flow"), R('The app of a suite'), R('What goes where'),
     R('Retries'), R('Flaky flows'), R('Recording a whole flow', 'Videos'), R('Device setup'), R('Clean state')] },

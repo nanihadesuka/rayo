@@ -228,7 +228,34 @@ Or let a step fail without failing the test:
 ```yaml
 - tapOn: { id: pay }
 - waitForRequest: { method: POST, path: ".*/payments", body: "\"amount\":5" }
+- assertRequest: { method: POST, path: ".*/payments", times: 1 }   # and only once
+- assertRequest: { path: ".*/analytics", times: 0 }                # never this one
 ```
+
+## Keep a text for later
+
+```yaml
+- copyTextFrom: { id: order_number, output: orderId }
+- tapOn: { id: search }
+- inputText: ${output.orderId}
+```
+
+## Check that the screen survives a rotation
+
+```yaml
+- inputText: half-written
+- setOrientation: LANDSCAPE_LEFT
+- assertVisible: half-written
+- setOrientation: PORTRAIT        # the end of the flow puts it back anyway
+```
+
+## Split the tests between CI machines
+
+```sh
+rayo test --shard 1/4 all.suite.yaml   # on the first of 4 machines; 2/4 on the second…
+```
+
+Each test is in one part, by its path, so all machines agree whatever the order.
 
 ## Refuse a permission
 

@@ -40,7 +40,9 @@ Batch edits, then verify once
 
 Author forward
   rayo live <flow>, then rayo do --screen --find <text> <command>: one command, see only the
-  elements that matter, go on from it.
+  elements that matter, go on from it. rayo do --screen=changes gives only the lines that
+  appeared (+) or went (-) since the last screen: after - waitForAnimationToEnd, as --screen
+  doesn't wait for a screen still moving.
   rayo do .quit ends the session and frees the device.
 
 Stop after a pass

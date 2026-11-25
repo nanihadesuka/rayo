@@ -2176,8 +2176,8 @@ and a flow that failed first has its failed tries in `system-out`.
 
 ## Limitations
 
-- Not supported: `addMedia`,
-  `setOrientation`, sharding across devices, a
+- Not supported: `addMedia`, running on several devices at once (`--shard i/n` splits the flows
+  between machines instead), a
   `config.yaml` (see [suites](#suites)), and selectors by `css`, `width`, `height` or `traits`. An unknown command is an
   error, never ignored.
 - `setLocation` and `travel` need Android 12 or newer.

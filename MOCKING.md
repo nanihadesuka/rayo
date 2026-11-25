@@ -243,8 +243,11 @@ Each of these calls the real backend, for the flows it runs: it has to be reacha
 accounts and data the flows need. `--only` keeps that to the flows that changed. Commit the mocks
 after `rayo mocks apply`, and leave `mock/.update/` out (add it to `.gitignore`).
 
+**Tidy.** `rayo mocks check mock` says which mappings never answer, as a later one matches the very
+same calls, and which bodies in `__files` no mapping uses: often leftovers of edits by hand.
+
 All that a mapping can say, and
-the commands `mock`, `mockState`, `network` and `waitForRequest`, are in the
+the commands `mock`, `mockState`, `network`, `waitForRequest` and `assertRequest`, are in the
 [reference](REFERENCE.md#mock).
 
 ## Coming from WireMock or mitmproxy
