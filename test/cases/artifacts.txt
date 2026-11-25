@@ -27,6 +27,7 @@ emulator-5554, ready in # ms
   recording: .rayo/c.mp4
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: c
 -- device --

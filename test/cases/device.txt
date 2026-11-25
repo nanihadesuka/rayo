@@ -26,7 +26,7 @@ emulator-5554, ready in # ms
   ✗ shell boom  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
-  case failed at shell boom: step failed
+  case failed at shell boom: step failed: exit code 1 (flow.yaml:10)
   why: exit code 1
     it broke
   blame: test
@@ -39,6 +39,7 @@ emulator-5554, ready in # ms
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -83,7 +84,7 @@ PNG...
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at shell boom: step failed",
+      "verdict": "case failed at shell boom: step failed: exit code 1 (flow.yaml:10)",
       "cause": "step failed",
       "error": {
         "file": "flow.yaml",

@@ -67,6 +67,7 @@ FAIL c  # s
 PASS a  # s
 
 TOTAL 3: 1 passed, 2 failed, of those failed 2 app  # s
+results: e2e/results  (rayo explain)
 -- stderr --
 error: failed: b, c
 -- device --

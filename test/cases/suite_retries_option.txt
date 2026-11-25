@@ -25,14 +25,14 @@ appId: a.b
 1
 -- stdout --
 [1/3] FAIL a  # s
-  a failed at tapOn flaky 1: step failed
+  a failed at tapOn flaky 1: step failed: flaked (a.yaml:3)
   why: flaked
   blame: test
   step: tapOn flaky 1
   at: a.yaml:3
   saved: .rayo/a_failure.png
 [2/3] FAIL b  # s
-  b failed at tapOn flaky 2: step failed
+  b failed at tapOn flaky 2: step failed: flaked (b.yaml:3)
   why: flaked
   blame: test
   step: tapOn flaky 2
@@ -51,6 +51,7 @@ FAIL b  # s
 FAIL c  # s
 
 TOTAL 3: 0 passed, 3 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a, b, c
 -- device --
@@ -101,7 +102,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "a failed at tapOn flaky 1: step failed",
+      "verdict": "a failed at tapOn flaky 1: step failed: flaked (a.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "a.yaml",
@@ -132,7 +133,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "b failed at tapOn flaky 2: step failed",
+      "verdict": "b failed at tapOn flaky 2: step failed: flaked (b.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "b.yaml",
@@ -195,7 +196,7 @@ began: <now>
 
 FAIL a  # s
   file: a.yaml
-  a failed at tapOn flaky 1: step failed
+  a failed at tapOn flaky 1: step failed: flaked (a.yaml:3)
   why: flaked
   blame: test
   step: tapOn flaky 1
@@ -203,7 +204,7 @@ FAIL a  # s
   saved: .rayo/a_failure.png
 FAIL b  # s
   file: b.yaml
-  b failed at tapOn flaky 2: step failed
+  b failed at tapOn flaky 2: step failed: flaked (b.yaml:3)
   why: flaked
   blame: test
   step: tapOn flaky 2

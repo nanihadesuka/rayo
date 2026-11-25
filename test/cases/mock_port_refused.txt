@@ -16,12 +16,13 @@ emulator-5554, ready in # ms
 [1/1] case
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
-  case failed at the end: step failed
+  case failed before its first step: step failed: adb reverse: denied
   why: adb reverse: denied
   blame: test
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -50,7 +51,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at the end: step failed",
+      "verdict": "case failed before its first step: step failed: adb reverse: denied",
       "cause": "step failed",
       "error": {
         "file": "",

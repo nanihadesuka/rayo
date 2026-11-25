@@ -75,6 +75,7 @@ PASS a  # s
 FLAKY c  # s  (failed once, then passed)
 
 TOTAL 3: 1 passed, 1 flaky, 1 failed, of those failed 1 app, 2 retried  # s
+results: e2e/results  (rayo explain)
 -- stderr --
 error: failed: b
 -- device --

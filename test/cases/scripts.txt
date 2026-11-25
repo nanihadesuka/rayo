@@ -49,7 +49,7 @@ emulator-5554, ready in # ms
   ✗ runScript js/bad.js  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
-  case failed at runScript js/bad.js: step failed
+  case failed at runScript js/bad.js: step failed: Error: on purpose (flow.yaml:15)
   why: Error: on purpose
   blame: test
   step: runScript js/bad.js
@@ -61,6 +61,7 @@ emulator-5554, ready in # ms
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -90,7 +91,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at runScript js/bad.js: step failed",
+      "verdict": "case failed at runScript js/bad.js: step failed: Error: on purpose (flow.yaml:15)",
       "cause": "step failed",
       "error": {
         "file": "flow.yaml",

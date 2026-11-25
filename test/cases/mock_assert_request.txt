@@ -25,7 +25,7 @@ emulator-5554, ready in # ms
   ✗ assertRequest path: /pay, times: 1  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
 [1/1] FAIL case  # s
-  case failed at assertRequest path: /pay, times: 1: step failed
+  case failed at assertRequest path: /pay, times: 1: step failed: the app made it 2 times, not 1 (flow.yaml:9)
   why: the app made it 2 times, not 1
   blame: test
   step: assertRequest path: /pay, times: 1
@@ -40,6 +40,7 @@ emulator-5554, ready in # ms
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -78,7 +79,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at assertRequest path: /pay, times: 1: step failed",
+      "verdict": "case failed at assertRequest path: /pay, times: 1: step failed: the app made it 2 times, not 1 (flow.yaml:9)",
       "cause": "step failed",
       "error": {
         "file": "flow.yaml",

@@ -14,7 +14,7 @@ emulator-5554, ready in # ms
   ✗ camera ${'nope.png'}  # ms
   saved .rayo/a_failure.png, .rayo/a_screen.txt, .rayo/a_logcat.txt
 [1/1] FAIL a  # s
-  a failed at camera ${'nope.png'}: step failed
+  a failed at camera ${'nope.png'}: step failed: no such file: nope.png (a.yaml:3)
   why: no such file: nope.png
   blame: test
   step: camera ${'nope.png'}
@@ -22,6 +22,7 @@ emulator-5554, ready in # ms
   saved: .rayo/a_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a
 -- device --
@@ -49,7 +50,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "a failed at camera ${'nope.png'}: step failed",
+      "verdict": "a failed at camera ${'nope.png'}: step failed: no such file: nope.png (a.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "a.yaml",

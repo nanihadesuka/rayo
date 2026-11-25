@@ -12,7 +12,7 @@ emulator-5554, ready in # ms
   ✗ inputText ${output.nothing}  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
-  case failed at inputText ${output.nothing}: step failed
+  case failed at inputText ${output.nothing}: step failed: ${output.nothing}: it is undefined (flow.yaml:3)
   why: ${output.nothing}: it is undefined
   blame: test
   step: inputText ${output.nothing}
@@ -20,6 +20,7 @@ emulator-5554, ready in # ms
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -47,7 +48,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at inputText ${output.nothing}: step failed",
+      "verdict": "case failed at inputText ${output.nothing}: step failed: ${output.nothing}: it is undefined (flow.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "flow.yaml",

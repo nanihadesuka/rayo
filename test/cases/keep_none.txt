@@ -36,6 +36,7 @@ FLAKY a  # s  (failed once, then passed)
 FAIL c  # s  (failed 2 times)
 
 TOTAL 2: 0 passed, 1 flaky, 1 failed, 2 retried  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: c
 -- device --

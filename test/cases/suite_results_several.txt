@@ -39,5 +39,5 @@ TOTAL 1: 1 passed, 0 failed  # s
 -- file o/r.xml --
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="rayo" tests="1" failures="0" errors="0" skipped="0" time="#">
-  <testcase name="a" file="a.yaml" time="#"></testcase>
+  <testcase name="a" classname="rayo" file="a.yaml" time="#"></testcase>
 </testsuite>

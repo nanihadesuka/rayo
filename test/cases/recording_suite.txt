@@ -90,7 +90,11 @@ bye {"timeout":5000}
         "name": "c",
         "seconds": #
       }
-    ]
+    ],
+    "exit": {
+      "code": 0,
+      "name": "passed"
+    }
   },
   "flows": [
     {
@@ -116,7 +120,7 @@ bye {"timeout":5000}
       "failures": [
         {
           "try": 1,
-          "verdict": "a failed at tapOn flaky 1: step failed",
+          "verdict": "a failed at tapOn flaky 1: step failed: flaked (a.yaml:3)",
           "cause": "step failed",
           "error": {
             "file": "a.yaml",

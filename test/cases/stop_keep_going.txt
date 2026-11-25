@@ -58,6 +58,7 @@ FAIL c  # s
 PASS d  # s
 
 TOTAL 4: 1 passed, 3 failed, of those failed 3 app  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a, b, c
 -- device --

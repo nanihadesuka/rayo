@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -250,10 +251,6 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	if lost {
 		fmt.Fprintln(say, "next: rayo devices says if the device is there and ready; restart the emulator or reconnect it, then rayo test --rerun-failed")
 	}
-	err := sum.SaveLast(report.LastFile(o.output))
-	for _, file := range o.results {
-		err = errors.Join(err, sum.Write(file))
-	}
 	failed := sum.Err()
 	if failed != nil && lost {
 		failed = ofDevice(failed)
@@ -263,6 +260,17 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 		failed = exiting(report.ExitFlaky, failed)
 	}
 	failed = exiting(report.ExitFailed, failed)
+	sum.Exit = exitOf(failed)
+	if ctx.Err() != nil {
+		sum.Exit = report.ExitInterrupted
+	}
+	err := sum.SaveLast(report.LastFile(o.output))
+	for _, file := range o.results {
+		err = errors.Join(err, sum.Write(file))
+	}
+	if !sum.AllPassed() {
+		fmt.Fprintf(say, "results: %s  (rayo explain)\n", filepath.ToSlash(o.output))
+	}
 	if printing != report.Human && failed != nil {
 		failed = &exitError{exitOf(failed), errShown} // the results say it
 	}

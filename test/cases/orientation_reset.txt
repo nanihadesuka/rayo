@@ -30,6 +30,7 @@ FAIL a  # s
 PASS b  # s
 
 TOTAL 2: 1 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a
 -- device --

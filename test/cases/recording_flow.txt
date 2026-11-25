@@ -28,7 +28,7 @@ appId: a.b
   recording: .rayo/a.mp4
 [2/3] PASS b  # s
 [3/3] FAIL c  # s
-  c failed at stopRecording: step failed
+  c failed at stopRecording: step failed: nothing is being recorded (c.yaml:3)
   why: nothing is being recorded
   blame: test
   step: stopRecording
@@ -40,6 +40,7 @@ PASS b  # s
 FAIL c  # s
 
 TOTAL 3: 1 passed, 2 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a, c
 -- device --
@@ -120,7 +121,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "c failed at stopRecording: step failed",
+      "verdict": "c failed at stopRecording: step failed: nothing is being recorded (c.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "c.yaml",
@@ -164,7 +165,7 @@ PASS b  # s
   recording: .rayo/b_named.mp4
 FAIL c  # s
   file: c.yaml
-  c failed at stopRecording: step failed
+  c failed at stopRecording: step failed: nothing is being recorded (c.yaml:3)
   why: nothing is being recorded
   blame: test
   step: stopRecording

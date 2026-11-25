@@ -75,6 +75,7 @@ PASS a  # s
 FLAKY c  # s  (failed once, then passed)
 
 TOTAL 3: 1 passed, 1 flaky, 1 failed, of those failed 1 app, 2 retried  # s
+results: e2e/results  (rayo explain)
 -- stderr --
 error: failed: b
 -- device --
@@ -196,12 +197,12 @@ a screen
 -- file out.xml --
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="rayo" tests="3" failures="1" errors="0" skipped="0" time="#">
-  <testcase name="b" file="e2e/b/flow.yaml" time="#">
-    <failure>  try: 1&#xA;  b failed at tapOn app crashes: app crashed&#xA;  why: not on screen: home&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200  by ANY /a (e2e/b/mock.json)&#xA;  saved: e2e/results/b_failure.png&#xA;  try: 2&#xA;  b failed at tapOn app crashes: app crashed&#xA;  why: not on screen: home&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200  by ANY /a (e2e/b/mock.json)&#xA;  saved: e2e/results/b_retry1_failure.png&#xA;</failure>
+  <testcase name="b" classname="b" file="e2e/b/flow.yaml" time="#">
+    <failure message="b failed at tapOn app crashes: app crashed" type="app crashed">  try: 1&#xA;  b failed at tapOn app crashes: app crashed&#xA;  why: not on screen: home&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200  by ANY /a (e2e/b/mock.json)&#xA;  saved: e2e/results/b_failure.png&#xA;  try: 2&#xA;  b failed at tapOn app crashes: app crashed&#xA;  why: not on screen: home&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200  by ANY /a (e2e/b/mock.json)&#xA;  saved: e2e/results/b_retry1_failure.png&#xA;</failure>
   </testcase>
-  <testcase name="a" file="e2e/a/flow.yaml" time="#"></testcase>
-  <testcase name="c" file="e2e/c/flow.yaml" time="#">
-    <flakyFailure message="try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked" type="app">
+  <testcase name="a" classname="a" file="e2e/a/flow.yaml" time="#"></testcase>
+  <testcase name="c" classname="c" file="e2e/c/flow.yaml" time="#">
+    <flakyFailure message="try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked (app, the app crashed: java.lang.IllegalStateException: oops)" type="app crashed">
       <stackTrace>  c failed at tapOn flaky 1: app crashed&#xA;  why: flaked&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn flaky 1&#xA;  at: e2e/c/flow.yaml:3&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  saved: e2e/results/c_failure.png&#xA;</stackTrace>
     </flakyFailure>
   </testcase>
