@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/flow"
 	"github.com/nanihadesuka/rayo/internal/mock"
 	"github.com/nanihadesuka/rayo/internal/report"
+	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
 // Help is what a session takes, as .help says it.
@@ -25,16 +27,16 @@ const Help = liveHelp
 
 const liveHelp = `  - tapOn: { id: save }   any command, or a list; what passes is kept as a step
   .screen                 what is on screen, and how to refer to it
-  .steps                  the steps kept
+  .steps                  the steps done, numbered as .rewind counts them, each saved (its line) or not
   .states                 the mocks' scenarios and the state of each; mockState: { booking: booked } sets one
   .undo                   forget the last step; the device stays as it is
-  .save                   add the steps to the flow's file
+  .save                   add the steps to the flow's file, say on which lines, and check it
   .retry                  read the flow's file again, and run its steps from the one that failed
   .from <n>               the same, from its n-th step
   .rewind [n]             forget the last n steps done (1), and the calls they made to a capture;
                           move the app back to where it was by hand
   .help
-  .quit                   end, without saving
+  .quit [--discard]       end; with steps not saved, only with --discard
 `
 
 // Reply is how a request went. Every key is always there.
@@ -47,6 +49,8 @@ type Reply struct {
 	Warnings      []string        `json:"warnings" about:"Such as calls without a mock"`
 	Calls         []mock.Call     `json:"calls" about:"To the mock meanwhile"`
 	Screen        []string        `json:"screen" about:"With --screen, or after a failure. With --screen=changes, only the lines that appeared, as '+ line', and those that went, as '- line', since the screen the session last gave; none if it is the same"`
+	Baseline      bool            `json:"baseline" about:"With --screen=changes, there was no screen before: all its lines are there, as appeared"`
+	Ignored       int             `json:"ignored" about:"With --ignore-screen, the lines of the screen left out"`
 	Unsaved       int             `json:"unsaved" about:"Steps not saved to the flow yet"`
 }
 
@@ -55,6 +59,7 @@ type Request struct {
 	Text    string `json:"text"`
 	Screen  bool   `json:"screen"`
 	Changes bool   `json:"changes"` // of the screen, only what changed
+	Ignore  string `json:"ignore"`  // a regular expression of the screen's lines to leave out
 	answer  chan Reply
 }
 
@@ -120,7 +125,7 @@ func Run(ctx context.Context, p Params, start Start) error {
 	if err != nil {
 		return err
 	}
-	if _, err := Ask(p.Output, Request{Text: ".help"}); err == nil {
+	if _, err := Ask(p.Output, Request{Text: ".help"}, 0); err == nil {
 		return errors.New("a session is live already, see rayo do .help; or use another --output")
 	}
 	runner, end, err := start(l.out)
@@ -168,8 +173,8 @@ func (l *live) talk(ctx context.Context, p Params, f *flow.Flow) error {
 		var q Request
 		select {
 		case text, more := <-typed:
-			if !more { // the end of what is typed
-				text = ".quit"
+			if !more { // the end of what is typed: what isn't saved is said, and lost
+				text = ".quit --discard"
 			}
 			q.Text = text
 		case q = <-requests:
@@ -179,8 +184,9 @@ func (l *live) talk(ctx context.Context, p Params, f *flow.Flow) error {
 			fmt.Println("no one has used it for an hour")
 			return nil
 		}
-		quit := strings.TrimSpace(q.Text) == ".quit"
+		name, _, _ := strings.Cut(strings.TrimSpace(q.Text), " ")
 		a := l.handle(ctx, q)
+		quit := name == ".quit" && a.OK
 		fmt.Print(a.Text())
 		if q.answer != nil {
 			q.answer <- a
@@ -269,12 +275,17 @@ func (l *live) do(ctx context.Context, steps []*flow.Step, texts []string, q Req
 		if err != nil {
 			a.Warnings = append(a.Warnings, "couldn't read the screen: "+err.Error())
 		}
-		a.Screen = report.Lines(out)
+		lines := report.Lines(out)
+		if q.Ignore != "" {
+			lines, a.Ignored = ignoring(lines, q.Ignore)
+		}
+		a.Screen = lines
 		if err == nil {
 			if q.Changes {
-				a.Screen = changes(l.seen, a.Screen)
+				a.Baseline = l.seen == nil
+				a.Screen = changes(l.seen, lines)
 			}
-			l.seen = report.Lines(out)
+			l.seen = lines
 		}
 	}
 	return a
@@ -310,8 +321,22 @@ func (l *live) command(ctx context.Context, text string, q Request) Reply {
 
 // meta is a command that only answers with text.
 func (l *live) meta(ctx context.Context, name, arg string) (string, error) {
-	if name == ".rewind" {
+	switch name {
+	case ".rewind":
 		return l.rewind(arg)
+	case ".quit":
+		if arg != "" && arg != "--discard" {
+			return "", errors.New(".quit takes nothing, or --discard")
+		}
+		n := len(l.unsaved)
+		if n == 0 {
+			return "", nil
+		}
+		list := fmt.Sprintf("%s not saved:\n%s", steps(n), strings.Join(l.unsaved, ""))
+		if arg == "" {
+			return list, fmt.Errorf("%s not saved: .save them, or .quit --discard", steps(n))
+		}
+		return list, nil
 	}
 	if arg != "" {
 		return "", fmt.Errorf("%s takes nothing", name)
@@ -319,15 +344,10 @@ func (l *live) meta(ctx context.Context, name, arg string) (string, error) {
 	switch name {
 	case ".help":
 		return liveHelp, nil
-	case ".quit":
-		if n := len(l.unsaved); n > 0 {
-			return fmt.Sprintf("%d steps were not saved:\n%s", n, strings.Join(l.unsaved, "")), nil
-		}
-		return "", nil
 	case ".screen":
 		return l.session.Screen(ctx)
 	case ".steps":
-		return strings.Join(l.unsaved, ""), nil
+		return l.steps()
 	case ".states":
 		return l.session.States()
 	case ".undo":
@@ -345,12 +365,54 @@ func (l *live) undo() (string, error) {
 	}
 	i := l.lastTyped()
 	if i == len(l.done)-1 { // its calls are the last ones
-		return l.forget(1), nil
+		return l.forget(1) + l.now(), nil
 	}
 	l.done = slices.Delete(l.done, i, i+1) // steps of the file came after it: their calls stay
 	text := l.unsaved[len(l.unsaved)-1]
 	l.unsaved = l.unsaved[:len(l.unsaved)-1]
-	return "forgot " + text, nil
+	return "forgot " + text + l.now(), nil
+}
+
+// now says how many steps are done after some were forgotten.
+func (l *live) now() string {
+	return fmt.Sprintf("now: %s done, %d unsaved\n", steps(len(l.done)), len(l.unsaved))
+}
+
+func steps(n int) string {
+	if n == 1 {
+		return "1 step"
+	}
+	return fmt.Sprintf("%d steps", n)
+}
+
+// steps lists the steps done, numbered from the first, so that .rewind n forgets the last n listed.
+func (l *live) steps() (string, error) {
+	if len(l.done) == 0 {
+		return "no steps done\n", nil
+	}
+	lines := map[int]int{} // of the file's steps, their lines
+	if !l.isNew {
+		if data, err := os.ReadFile(l.path); err == nil {
+			if f, err := flow.Parse(l.path, data); err == nil {
+				for i, s := range f.Steps {
+					lines[i] = s.Line
+				}
+			}
+		}
+	}
+	var b strings.Builder
+	for i, d := range l.done {
+		where := "unsaved"
+		if d.file >= 0 {
+			where = fmt.Sprintf("saved, step %d of the file", d.file+1)
+			if line := lines[d.file]; line > 0 {
+				where = fmt.Sprintf("saved, step %d of the file (line %d)", d.file+1, line)
+			}
+		}
+		text := strings.TrimRight(d.text, "\n")
+		fmt.Fprintf(&b, "%d. [%s]\n   %s\n", i+1, where, strings.ReplaceAll(text, "\n", "\n   "))
+	}
+	return b.String(), nil
 }
 
 // lastTyped is where the newest typed step is in done; while some aren't saved, it is the last of them.
@@ -404,7 +466,7 @@ func (l *live) rewind(arg string) (string, error) {
 	if n > len(l.done) {
 		return "", fmt.Errorf("only %d steps have been done", len(l.done))
 	}
-	return l.forget(n) + "the app stays as it is: move it back by hand; .retry runs the file's steps from there\n", nil
+	return l.forget(n) + l.now() + "the app stays as it is: move it back by hand; .retry runs the file's steps from there\n", nil
 }
 
 // forget forgets the last n steps done, and the calls made since the first of them.
@@ -459,7 +521,35 @@ func (l *live) save() (string, error) {
 		l.nowInFile(n, len(f.Steps))
 	}
 	l.isNew, l.unsaved = false, nil
-	return fmt.Sprintf("saved %d steps in %s\n", n, filepath.ToSlash(l.path)), nil
+	first, last := f.Steps[len(f.Steps)-n].Line, lastLine(data)
+	out := fmt.Sprintf("saved %s in %s:%d-%d\n", steps(n), filepath.ToSlash(l.path), first, last)
+	if first == last {
+		out = fmt.Sprintf("saved %s in %s:%d\n", steps(n), filepath.ToSlash(l.path), first)
+	}
+	if _, _, err := suite.Load([]string{l.path}); err != nil {
+		return out, fmt.Errorf("saved, but rayo check finds: %w", err)
+	}
+	return out + "rayo check: the flow is fine\n", nil
+}
+
+// lastLine is the number of the last line of a file that isn't empty.
+func lastLine(data []byte) int {
+	return bytes.Count(bytes.TrimRight(data, "\n \t\r"), []byte("\n")) + 1
+}
+
+// ignoring leaves out the lines that match a regular expression, and says how many.
+func ignoring(lines []string, pattern string) ([]string, int) {
+	re, err := regexp.Compile(pattern)
+	if err != nil { // rayo do checks it
+		return lines, 0
+	}
+	kept := []string{}
+	for _, line := range lines {
+		if !re.MatchString(line) {
+			kept = append(kept, line)
+		}
+	}
+	return kept, len(lines) - len(kept)
 }
 
 // nowInFile makes the newest n typed steps done the file's last ones, which end at end, so that

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -63,6 +64,9 @@ type options struct {
 
 	// Of do.
 	screen, screenChanges bool
+	ignoreScreen          string        // a regular expression
+	doTimeout             time.Duration // 0 to wait as long as it takes
+	discard               bool
 
 	// Of hierarchy and do.
 	find string
@@ -399,6 +403,22 @@ var sections = []section{
 			o.screen, o.screenChanges = true, v == "changes"
 			return nil
 		}},
+		{name: "ignore-screen", value: "regex", about: "with --screen, leave out the lines that match, such as a clock's; says how many", set: func(o *options, v string) error {
+			if _, err := regexp.Compile(v); err != nil || v == "" {
+				return fmt.Errorf("--ignore-screen takes a regular expression, not %q", v)
+			}
+			o.ignoreScreen = v
+			return nil
+		}},
+		{name: "timeout", value: "duration", about: "how long to wait for the answer, such as 30s (default as long as it takes); the session goes on", set: func(o *options, v string) error {
+			d, err := time.ParseDuration(v)
+			if err != nil || d <= 0 {
+				return fmt.Errorf("--timeout takes how long, such as 30s or 2m, not %q", v)
+			}
+			o.doTimeout = d
+			return nil
+		}},
+		flag("discard", "with .quit, end even if steps were not saved", func(o *options) *bool { return &o.discard }),
 	}},
 	{[]string{cmdTest, cmdCheck, cmdExplain, cmdDevices, cmdHierarchy, cmdDo, cmdMocks}, "", []option{
 		choice("format", "how", "human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs",

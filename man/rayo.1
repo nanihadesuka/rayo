@@ -29,8 +29,9 @@ Author forward
   rayo live <flow>, then rayo do --screen --find <text> <command>: one command, see only the
   elements that matter, go on from it. rayo do --screen=changes gives only the lines that
   appeared (+) or went (-) since the last screen: after - waitForAnimationToEnd, as --screen
-  doesn't wait for a screen still moving.
-  rayo do .quit ends the session and frees the device.
+  doesn't wait for a screen still moving; --ignore-screen <regex> leaves out a clock.
+  rayo do --timeout 2m never waits for ever. rayo do .save says the lines it wrote and checks them.
+  rayo do .quit ends the session and frees the device; with steps not saved, only with --discard.
 
 Stop after a pass
 
@@ -187,6 +188,9 @@ Options of mocks
 
 Options of do
   --screen[=changes]         also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave
+  --ignore-screen <regex>    with --screen, leave out the lines that match, such as a clock's; says how many
+  --timeout <duration>       how long to wait for the answer, such as 30s (default as long as it takes); the session goes on
+  --discard                  with .quit, end even if steps were not saved
 
 Options of test, check, explain, devices, hierarchy, do and mocks
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs

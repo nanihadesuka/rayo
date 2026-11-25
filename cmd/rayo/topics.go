@@ -46,8 +46,9 @@ Author forward
   rayo live <flow>, then rayo do --screen --find <text> <command>: one command, see only the
   elements that matter, go on from it. rayo do --screen=changes gives only the lines that
   appeared (+) or went (-) since the last screen: after - waitForAnimationToEnd, as --screen
-  doesn't wait for a screen still moving.
-  rayo do .quit ends the session and frees the device.
+  doesn't wait for a screen still moving; --ignore-screen <regex> leaves out a clock.
+  rayo do --timeout 2m never waits for ever. rayo do .save says the lines it wrote and checks them.
+  rayo do .quit ends the session and frees the device; with steps not saved, only with --discard.
 
 Stop after a pass
 

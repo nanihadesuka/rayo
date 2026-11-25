@@ -657,7 +657,17 @@ func runDo(args []string) error {
 	if o.find != "" && o.screenChanges {
 		return errors.New("--find looks through the whole screen: use --screen, not --screen=changes")
 	}
-	a, err := live.Ask(o.output, live.Request{Text: strings.Join(o.args, "\n"), Screen: o.screen, Changes: o.screenChanges})
+	if o.ignoreScreen != "" && !o.screen {
+		return errors.New("--ignore-screen needs --screen")
+	}
+	text := strings.Join(o.args, "\n")
+	if o.discard {
+		if strings.TrimSpace(text) != ".quit" {
+			return errors.New("--discard is of .quit")
+		}
+		text = ".quit --discard"
+	}
+	a, err := live.Ask(o.output, live.Request{Text: text, Screen: o.screen, Changes: o.screenChanges, Ignore: o.ignoreScreen}, o.doTimeout)
 	if err != nil {
 		return err
 	}
@@ -666,8 +676,15 @@ func runDo(args []string) error {
 	}
 	if printing == report.Human {
 		fmt.Print(a.Text())
-		if o.screenChanges && len(a.Screen) == 0 && a.Failure == nil {
+		switch {
+		case a.Failure != nil:
+		case o.screenChanges && a.Baseline:
+			fmt.Println("(whole screen: nothing before)")
+		case o.screenChanges && len(a.Screen) == 0:
 			fmt.Println("screen: the same")
+		}
+		if a.Ignored > 0 {
+			fmt.Printf("screen: %d ignored\n", a.Ignored)
 		}
 	} else {
 		err = emit(a)
