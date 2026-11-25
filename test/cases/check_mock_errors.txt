@@ -157,7 +157,7 @@ error: flows/a01.yaml:2: no file flows/nope
        flows/a05.yaml:2: bad/syntax.json: unexpected end of JSON input
        flows/a06.yaml:2: bad/extra.json: expected only mappings
        flows/a07.yaml:2: bad/second.json: mapping 2: a request needs one of url, urlPattern, urlPath, urlPathPattern, urlPathTemplate
-       flows/a08.yaml:2: no file bad/mappings
+       flows/a08.yaml:2: no mappings in bad: a folder of mocks has them in mappings/*.json
        flows/b01.yaml:3: no file flows/nope.json
        flows/b02.yaml:3: mock needs either a file or a request and a response
        flows/b03.yaml:3: mock needs a response

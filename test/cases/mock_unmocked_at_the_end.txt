@@ -21,6 +21,7 @@ emulator-5554, ready in # ms
   case failed at the end: unmocked call
   why: the app called what isn't mocked:
         GET /late
+      mocks loaded: mock.json (1)
   blame: test
   before:
     tapOn GET /a
@@ -73,7 +74,7 @@ a screen
         "file": "",
         "line": 0,
         "step": "",
-        "message": "the app called what isn't mocked:\n    GET /late",
+        "message": "the app called what isn't mocked:\n    GET /late\n  mocks loaded: mock.json (1)",
         "expected": "",
         "nearest": "",
         "fix": ""

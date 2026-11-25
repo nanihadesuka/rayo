@@ -209,7 +209,16 @@ mapping answers, and says which calls, and the nearest mapping:
 ```
 the app called what isn't mocked:
     GET /api/users/me/badges
+    GET /api/users/me?lang=en
+      nearest GET /api/users/me: query lang: "en", expected "de"
+  mocks loaded: mock (12)
 ```
+
+A folder without mappings is an error when it is loaded (`no mappings in <path>`). A flow that fails
+when no call reached its mocks at all says so: the app's interceptor may be off in that build, else try
+`network: proxy`. A request body over 10 MB is answered 413 and fails the flow as unmocked, never
+compared cut short. When `waitForRequest` or `assertRequest` doesn't find its call, the error lists the
+last 5 calls and why each didn't fit (method, path, body, or taken by an earlier `waitForRequest`).
 
 A mapping that is no longer called doesn't fail anything: an update shows it as `gone`.
 

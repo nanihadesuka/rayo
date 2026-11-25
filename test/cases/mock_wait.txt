@@ -27,6 +27,9 @@ emulator-5554, ready in # ms
 [1/1] FAIL case  # s
   case failed at waitForRequest path: /pay: step failed
   why: the app didn't call it
+        the last 2 of 2 calls:
+          POST /pay: fits, but an earlier waitForRequest took it
+          POST /pay: fits, but an earlier waitForRequest took it
   blame: test
   step: waitForRequest path: /pay
   at: flow.yaml:9
@@ -84,7 +87,7 @@ a screen
         "file": "flow.yaml",
         "line": 9,
         "step": "waitForRequest path: /pay",
-        "message": "the app didn't call it",
+        "message": "the app didn't call it\n    the last 2 of 2 calls:\n      POST /pay: fits, but an earlier waitForRequest took it\n      POST /pay: fits, but an earlier waitForRequest took it",
         "expected": "",
         "nearest": "",
         "fix": ""

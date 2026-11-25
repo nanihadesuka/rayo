@@ -783,7 +783,7 @@ func applyMocks(args []string) error {
 		if list, err := os.ReadDir(folder); err == nil && len(list) > 0 {
 			return fmt.Errorf("%s is there already: import into a new folder", filepath.ToSlash(folder))
 		}
-		notes, err = mock.ImportHAR(o.args[1], folder, o.runner.Backend, o.runner.Matching)
+		notes, err = mock.ImportHAR(o.args[1], folder, o.runner.Backend, o.runner.Env, o.runner.Matching)
 	default:
 		return errors.New("rayo mocks apply [--only a,b] [--prune] <folder>, after rayo test --capture-update <folder>;\n" +
 			"or rayo mocks import [options] <file.har> <folder>;\nor rayo mocks check <folder>")

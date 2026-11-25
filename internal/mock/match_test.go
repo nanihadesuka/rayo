@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -544,14 +545,17 @@ func TestImportHAR(t *testing.T) {
 	   "response":{"status":200,"headers":[],"content":{"mimeType":"application/json","text":"eyJhdmFpbGFibGUiOmZhbHNlfQ==","encoding":"base64"}}},
 	  {"startedDateTime":"2026-11-23T10:00:02.000Z",
 	   "request":{"method":"GET","url":"https://www.google-analytics.com/collect","headers":[]},
-	   "response":{"status":200,"headers":[],"content":{"text":""}}}
+	   "response":{"status":200,"headers":[],"content":{"text":""}}},
+	  {"startedDateTime":"not a time",
+	   "request":{"method":"GET","url":"https://api.example.com/me","headers":[]},
+	   "response":{"status":200,"headers":[],"content":{"mimeType":"text/plain","text":"token tok-secret-123"}}}
 	]}}`
 	file := filepath.Join(dir, "flows.har")
 	if err := os.WriteFile(file, []byte(har), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	folder := filepath.Join(dir, "mock")
-	notes, err := ImportHAR(file, folder, "", Settings{})
+	notes, err := ImportHAR(file, folder, "", map[string]string{"TOKEN": "tok-secret-123"}, Settings{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -570,5 +574,52 @@ func TestImportHAR(t *testing.T) {
 	mappings, _ := os.ReadFile(filepath.Join(folder, "mappings", "capture.json"))
 	if strings.Contains(string(mappings), "a@b.com") || strings.Contains(string(mappings), `"Date"`) {
 		t.Errorf("private or volatile:\n%s", mappings)
+	}
+	_ = filepath.WalkDir(folder, func(path string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			if data, _ := os.ReadFile(path); strings.Contains(string(data), "tok-secret-123") {
+				t.Errorf("a secret in %s", path)
+			}
+		}
+		return nil
+	})
+}
+
+func TestImportHAROrder(t *testing.T) {
+	dir := t.TempDir()
+	entry := func(at, body string) string {
+		return `{"startedDateTime":"` + at + `","request":{"method":"GET","url":"https://api.example.com/n","headers":[]},` +
+			`"response":{"status":200,"headers":[],"content":{"mimeType":"text/plain","text":"` + body + `"}}}`
+	}
+	har := `{"log":{"entries":[` + entry("bad", "c") + `,` + entry("2026-11-23T10:00:01Z", "b") + `,` + entry("bad too", "d") + `,` + entry("2026-11-23T10:00:00Z", "a") + `]}}`
+	file := filepath.Join(dir, "n.har")
+	if err := os.WriteFile(file, []byte(har), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var first string
+	for i := range 3 {
+		folder := filepath.Join(dir, "mock"+strconv.Itoa(i))
+		if _, err := ImportHAR(file, folder, "", nil, Settings{}); err != nil {
+			t.Fatal(err)
+		}
+		data, _ := os.ReadFile(filepath.Join(folder, "mappings", "capture.json"))
+		if i == 0 {
+			first = string(data)
+		} else if string(data) != first {
+			t.Errorf("not the same mocks twice:\n%s\n%s", first, data)
+		}
+	}
+}
+
+func TestWithoutHost(t *testing.T) {
+	m := New()
+	for path, host := range map[string]bool{
+		"/v1.5/users": false, "/v2/users": false, "/1.2.3.4/x": false, "/api.v2/users": false,
+		"/api.example.com/users": true, "/localhost/x": false,
+	} {
+		q := httptest.NewRequest("GET", path, nil)
+		if got := m.withoutHost(q) != nil; got != host {
+			t.Errorf("%s: taken as a host %v, want %v", path, got, host)
+		}
 	}
 }

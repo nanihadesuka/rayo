@@ -163,14 +163,33 @@ func (b *backend) check() error {
 	}
 	var list []string
 	for _, c := range b.mock.Calls() {
-		if call := c.What(); c.Unmocked && !slices.Contains(list, call) {
+		call := c.What()
+		if why := c.Why(); why != "" {
+			call += "\n      " + why
+		}
+		if c.Unmocked && !slices.Contains(list, call) {
 			list = append(list, call)
 		}
 	}
 	if list == nil {
 		return nil
 	}
-	return fmt.Errorf("the app called what isn't mocked:\n    %s", strings.Join(list, "\n    "))
+	text := "the app called what isn't mocked:\n    " + strings.Join(list, "\n    ")
+	if loaded := b.mock.Loaded(); len(loaded) > 0 {
+		text += "\n  mocks loaded: " + strings.Join(loaded, ", ")
+	} else {
+		text += "\n  no mocks were loaded: the flow's mock: says which"
+	}
+	return errors.New(text)
+}
+
+// noteUnreached says, of a flow that failed with mocks no call reached, why that may be.
+func (r *Runner) noteUnreached(err error) {
+	b := r.backend
+	if err == nil || b.mock == nil || b.capturing || b.proxy || b.mock.Rules() == 0 || len(b.mock.Calls()) > 0 {
+		return
+	}
+	r.reporter.Note(1, "no call reached the mock: is the app's interceptor on in this build? else try network: proxy")
 }
 
 const fewCalls = 5
@@ -422,7 +441,12 @@ func awaitRequest(c *call) error {
 	if c.r.backend.mock == nil {
 		return errNoMock
 	}
-	return c.r.backend.mock.Await(c.ctx, arg(c, keyMethod), arg(c, keyCallPath), arg(c, keyBody), c.limit)
+	m := c.r.backend.mock
+	err := m.Await(c.ctx, arg(c, keyMethod), arg(c, keyCallPath), arg(c, keyBody), c.limit)
+	if err != nil && c.ctx.Err() == nil {
+		err = fmt.Errorf("%w\n    %s", err, strings.Join(m.Missed(arg(c, keyMethod), arg(c, keyCallPath), arg(c, keyBody)), "\n    "))
+	}
+	return err
 }
 
 // --- assertRequest ---
@@ -433,7 +457,11 @@ func assertRequest(c *call) error {
 	}
 	want := arg(c, keyCalls)
 	if n := c.r.backend.mock.Count(arg(c, keyMethod), arg(c, keyCallPath), arg(c, keyBody)); n != want {
-		return fmt.Errorf("the app made it %d times, not %d", n, want)
+		text := fmt.Sprintf("the app made it %d times, not %d", n, want)
+		if n < want {
+			text += "\n    " + strings.Join(c.r.backend.mock.Missed(arg(c, keyMethod), arg(c, keyCallPath), arg(c, keyBody)), "\n    ")
+		}
+		return errors.New(text)
 	}
 	return nil
 }
