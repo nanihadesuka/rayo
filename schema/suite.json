@@ -29,6 +29,10 @@
       ],
       "type": "object"
     },
+    "ca": {
+      "description": "--ca overrides it: the CA the proxy signs with, its ca.pem and ca-key.pem, relative to the suite; rayo ca new makes one (default: .rayo/ca next to the suite or above it, up to the repository's root; else ~/.rayo)",
+      "type": "string"
+    },
     "capture": {
       "additionalProperties": false,
       "description": "How a capture calls the backend and becomes mocks, as the options of the same names, which win",

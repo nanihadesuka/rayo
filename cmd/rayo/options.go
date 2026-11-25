@@ -348,7 +348,7 @@ var sections = []section{
 			return nil
 		}},
 	}},
-	{[]string{cmdTest, cmdLive}, "how calls reach the mock", []option{
+	{[]string{cmdTest, cmdLive, cmdCA}, "how calls reach the mock", []option{
 		{name: "network", value: "way", about: "interceptor, the app sends them, with code in its debug build (default, or the flow's); proxy, the device's proxy does, no code; see rayo help connect-mocks", set: func(o *options, v string) error {
 			if v != flow.Interceptor && v != flow.Proxy {
 				return fmt.Errorf("--network takes interceptor or proxy, not %q", v)
@@ -368,6 +368,7 @@ var sections = []section{
 			o.runner.Unmocked = o.runner.Unmocked.Merge(u)
 			return nil
 		}},
+		text("ca", "folder", "with a proxy, the CA it signs with, its ca.pem and ca-key.pem (default .rayo/ca next to the suite or above it, else ~/.rayo); see rayo ca", func(o *options) *string { return &o.runner.CA }),
 		list("hosts", "with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)", func(o *options) *[]string { return &o.runner.Hosts }),
 	}},
 	{[]string{cmdLive}, "", []option{
@@ -402,6 +403,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo devices                                     connected devices
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
+  rayo ca new [<folder>]                           a CA for the project, in .rayo/ca, to commit with the flows
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below

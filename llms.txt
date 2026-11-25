@@ -80,6 +80,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo devices                                     connected devices
   rayo mocks apply [options] <folder>              take the changes of rayo test --capture-update into the mocks
   rayo mocks import [options] <file.har> <folder>  write the calls of a HAR file, such as mitmproxy's, as mocks
+  rayo ca new [<folder>]                           a CA for the project, in .rayo/ca, to commit with the flows
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
@@ -177,9 +178,10 @@ Options of test, live and mocks: how a capture or an import becomes mocks
   --ignore-path-ids          match UUIDs and ULIDs in paths by their form, as they are new on each run
   --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)
 
-Options of test and live: how calls reach the mock
+Options of test, live and ca: how calls reach the mock
   --network <way>            interceptor, the app sends them, with code in its debug build (default, or the flow's); proxy, the device's proxy does, no code; see rayo help connect-mocks
   --ignore-unmocked <a,b>    calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any)
+  --ca <folder>              with a proxy, the CA it signs with, its ca.pem and ca-key.pem (default .rayo/ca next to the suite or above it, else ~/.rayo); see rayo ca
   --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)
 
 Options of live
@@ -228,6 +230,7 @@ A suite, *.suite.yaml, lists flows that run together, and is where a run's setti
   network          interceptor or proxy       How the app's calls reach the mock, as a flow's network; the flow's own and --network override it (default: each flow's, else interceptor)
   unmocked         a mapping                  Calls without a mock that don't fail the flow (default: none: each fails the flow)
   capture          a mapping                  How a capture calls the backend and becomes mocks, as the options of the same names, which win
+  ca               folder                     --ca overrides it: the CA the proxy signs with, its ca.pem and ca-key.pem, relative to the suite; rayo ca new makes one (default: .rayo/ca next to the suite or above it, up to the repository's root; else ~/.rayo)
   output           a folder, or a mapping     What a run writes, and where: a folder, or folder, keep, video, artifacts and nameTemplate (default: .rayo where rayo runs)
   results          a file or a list           --results replaces them all: .txt, .json, .xml (JUnit) or .md
   detail           brief, normal, full        --detail overrides it: how much is printed (default: normal)
@@ -1066,7 +1069,8 @@ The app's calls have to reach rayo to be mocked or captured. Two ways:
                          trusts rayo's certificate; sees every call, also of SDKs
 
   rayo test f.yaml                                       the interceptor, or the flow's network:
-  rayo ca export app/src/debug/res/raw/rayo_ca.pem       once, for the proxy
+  rayo ca new                                            once, for the proxy: .rayo/ca, to commit
+  rayo ca export app/src/debug/res/raw/rayo_ca.pem       and the certificate the app trusts
   rayo test --network proxy f.yaml                       the proxy
 
 Can change the app, one HTTP client: interceptor. Can't change it, or an SDK calls on its own: proxy.

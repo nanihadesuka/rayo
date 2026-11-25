@@ -39,6 +39,7 @@ type Options struct {
 	Scale         float64        // of the default waits; 0 is 1. A step's own timeout isn't scaled
 	Network       string         // how calls reach the mock: interceptor or proxy; empty for the flow's
 	Hosts         []string       // with a proxy, those to open; empty for the default
+	CA            string         // the folder of the CA the proxy signs with; empty for the computer's
 	Matching      mock.Settings  // how a capture becomes mocks; what isn't set is the saved capture's, or the default
 	Unmocked      *mock.Unmocked // calls without a mock that don't fail a flow, besides its own; nil for none
 	NameTemplate  string         // of the files of an attempt; empty for DefaultTemplate

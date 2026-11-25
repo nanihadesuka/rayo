@@ -150,7 +150,7 @@ func run(ctx context.Context, command string, args []string) error {
 		fmt.Println(strings.Join(list, "\n"))
 		return nil
 	case cmdCA:
-		return exportCA(args)
+		return commandCA(args)
 	case cmdMocks:
 		return applyMocks(args)
 	case "version", "--version", "-v":
@@ -356,6 +356,9 @@ func test(ctx context.Context, args []string) (err error) {
 		if o.slowest == 0 {
 			o.slowest = group.Slowest
 		}
+		if o.runner.CA == "" && group.CA != "" {
+			o.runner.CA = group.Relative(group.CA)
+		}
 		if o.resultsTemplate == "" && group.ResultsTemplate != "" {
 			o.resultsTemplate = group.Relative(group.ResultsTemplate)
 		}
@@ -371,6 +374,9 @@ func test(ctx context.Context, args []string) (err error) {
 		}
 	}
 	o.written(group)
+	if err := o.findCA(group, true); err != nil {
+		return err
+	}
 	o.detail = cmp.Or(o.detail, flow.Normal)
 	o.runner.Detail, o.runner.Window = o.detail, time.Duration(o.window)*time.Second
 	if err := o.checkKept(); err != nil {
@@ -569,6 +575,9 @@ func runLive(ctx context.Context, args []string) error {
 	if err := o.checkCaptureFolder(); err != nil {
 		return err
 	}
+	if err := o.findCA(nil, true); err != nil {
+		return err
+	}
 	p := live.Params{Path: o.args[0], App: o.app, Mocks: o.mocks, Output: o.output, NoRun: o.noRun, Serve: o.serve}
 	return live.Run(ctx, p, func(reporter flow.Reporter) (*flow.Runner, func(), error) {
 		d, err := adb.Pick(o.device, o.emulator)
@@ -581,6 +590,29 @@ func runLive(ctx context.Context, args []string) error {
 		}
 		return s.runner, func() { s.agent.Close() }, nil
 	})
+}
+
+// findCA settles the CA the proxy signs with: --ca, else the suite's, else .rayo/ca where the suite or
+// the flow is, or above it, else the computer's. One said must be there.
+func (o *options) findCA(group *suite.Suite, flows bool) error {
+	if o.runner.CA != "" {
+		if _, err := os.Stat(filepath.Join(o.runner.CA, "ca.pem")); err != nil {
+			return fmt.Errorf("there is no CA in %s: it takes ca.pem and ca-key.pem; rayo ca new %s makes one", filepath.ToSlash(o.runner.CA), filepath.ToSlash(o.runner.CA))
+		}
+		return nil
+	}
+	from := "."
+	switch {
+	case group != nil:
+		from = filepath.Dir(group.Path)
+	case flows && len(o.args) > 0:
+		from = o.args[0]
+		if info, err := os.Stat(from); err != nil || !info.IsDir() {
+			from = filepath.Dir(from)
+		}
+	}
+	o.runner.CA = mock.FindCA(from)
+	return nil
 }
 
 // errShown is a failure that has been printed.
@@ -741,16 +773,41 @@ func applyMocks(args []string) error {
 	return nil
 }
 
-// exportCA writes the certificate of this computer's CA, for an app to trust in its debug build.
-func exportCA(args []string) error {
+// caUsage is what rayo ca takes.
+const caUsage = "rayo ca new [<folder>], a CA for the project, in .rayo/ca if not said;\n" +
+	"or rayo ca export [--ca <folder>] <file>, such as app/src/debug/res/raw/rayo_ca.pem"
+
+// commandCA makes a project's CA, or writes the certificate of the CA the proxy would sign with, for an
+// app to trust in its debug build.
+func commandCA(args []string) error {
 	o, err := parse(cmdCA, args)
 	if err != nil {
 		return err
 	}
-	if len(o.args) != 2 || o.args[0] != "export" {
-		return errors.New("rayo ca export <file>, such as app/src/debug/res/raw/rayo_ca.pem")
+	switch {
+	case len(o.args) >= 1 && len(o.args) <= 2 && o.args[0] == "new":
+		if o.runner.CA != "" {
+			return errors.New("rayo ca new takes the folder, not --ca")
+		}
+		folder := filepath.FromSlash(mock.ProjectCA)
+		if len(o.args) == 2 {
+			folder = o.args[1]
+		}
+		if err := mock.MakeCA(folder); err != nil {
+			return err
+		}
+		fmt.Printf(`made a CA in %[1]s: commit it with the flows, so that every checkout and CI signs alike.
+rayo finds .rayo/ca next to a suite or above it; else a suite says ca: %[1]s, or --ca %[1]s.
+Then rayo ca export app/src/debug/res/raw/rayo_ca.pem, for the app to trust it.
+`, filepath.ToSlash(folder))
+		return nil
+	case len(o.args) != 2 || o.args[0] != "export":
+		return errors.New(caUsage)
 	}
-	ca, err := mock.LoadCA()
+	if err := o.findCA(nil, false); err != nil {
+		return err
+	}
+	ca, err := mock.LoadCA(o.runner.CA)
 	if err != nil {
 		return err
 	}

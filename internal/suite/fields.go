@@ -279,6 +279,15 @@ var Fields = []schema.Field[Suite]{
 	networkField(func(s *Suite) *string { return &s.Network }).Optional("each flow's, else `interceptor`"),
 	unmockedField(func(s *Suite) **mock.Unmocked { return &s.Unmocked }).Optional("none: each fails the flow"),
 	captureField(func(s *Suite) **Capture { return &s.Capture }),
+	{Name: "ca", Takes: "folder", About: "`--ca` overrides it: the CA the proxy signs with, its ca.pem and ca-key.pem, relative to the suite; `rayo ca new` makes one, see [Mocks of a suite](#mocks-of-a-suite)",
+		Default: "`.rayo/ca` next to the suite or above it, up to the repository's root; else `~/.rayo`",
+		Schema:  schema.Type("string"), Read: func(s *Suite, n *yaml.Node) error {
+			if n.Kind != yaml.ScalarNode || n.Value == "" {
+				return errors.New("takes a folder")
+			}
+			s.CA = n.Value
+			return nil
+		}},
 	{Name: "output", Takes: "a folder, or a mapping", About: "What a run writes, and where: a folder, or folder, keep, video, artifacts and nameTemplate, see [What is kept](#what-is-kept)", Default: "`.rayo` where rayo runs",
 		Schema: schema.AnyOf(schema.Type("string"), schema.Of(OutputFields)), Read: func(s *Suite, n *yaml.Node) error {
 			if n.Kind == yaml.ScalarNode {

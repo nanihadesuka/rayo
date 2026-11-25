@@ -92,7 +92,8 @@ misses those calls without saying so, and a mock run sends them live. With `--ne
 `network: proxy` in a flow's header, the device's HTTP proxy sends every call to rayo instead.
 
 ```
-rayo ca export app/src/debug/res/raw/rayo_ca.pem      # once per computer
+rayo ca new                                           # once per project: .rayo/ca, committed
+rayo ca export app/src/debug/res/raw/rayo_ca.pem      # once, for the app to trust it
 rayo test --capture mock/ --network proxy flow.yaml   # capture
 rayo test --network proxy flow.yaml                   # mock
 ```
@@ -107,8 +108,12 @@ rayo test --network proxy flow.yaml                   # mock
 Both write and read the same folders, with the host in the path, so a capture made one way replays the
 other way. An app that still rewrites its URLs works behind the proxy too.
 
-- **The CA** is made the first time, in `~/.rayo` (`ca.pem`, and `ca-key.pem`, which never leaves it).
-  `rayo ca export` writes the certificate and the `network_security_config` that trusts it in
+- **The CA** (`ca.pem` and `ca-key.pem`) is, in this order: the folder of `--ca`, or of `ca:` in the
+  suite; else `.rayo/ca` next to the suite or the flow, or in a folder above it up to the repository's
+  root; else that of the computer, in `~/.rayo`, made the first time. `rayo ca new [<folder>]` makes one
+  for the project, in `.rayo/ca` if not said: committed with the flows and the mocks, a fresh checkout
+  or CI signs as the app expects, with no setup. Its key signs only for test builds that trust it.
+  The run says which CA the proxy signed with. `rayo ca export` writes the certificate and the `network_security_config` that trusts it in
   `debug-overrides` only. A release build ignores it.
 - **Hosts.** The proxy decrypts only some hosts and tunnels the rest untouched: those of `--hosts`, and
   their subdomains; else, capturing, all but Google's, Firebase's, analytics and crash reports; else

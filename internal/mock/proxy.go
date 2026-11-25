@@ -35,6 +35,9 @@ type Proxy struct {
 	conns     map[net.Conn]bool // hijacked, which the server doesn't close
 }
 
+// CA is the file of the certificate it signs with.
+func (p *Proxy) CA() string { return p.ca.Path }
+
 // Passthrough are hosts never opened unless asked for: Google Play services, Firebase, analytics and crash
 // reports. A suffix matches the host and its subdomains.
 var Passthrough = []string{

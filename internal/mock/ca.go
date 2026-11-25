@@ -18,8 +18,9 @@ import (
 	"time"
 )
 
-// CA signs the certificates the proxy shows the app. It is made once per computer, and its key never
-// leaves it: only the certificate goes into the app, and only into its debug build.
+// CA signs the certificates the proxy shows the app. It is a project's, kept with its flows so that
+// every checkout signs alike, or else made once per computer. Only its certificate goes into the app,
+// and only into its debug build.
 type CA struct {
 	Path string // of the certificate; the key is next to it
 	cert *x509.Certificate
@@ -29,7 +30,7 @@ type CA struct {
 	hosts map[string]*tls.Certificate
 }
 
-// CAFolder is where it is kept: ~/.rayo.
+// CAFolder is where a computer's own CA is kept: ~/.rayo.
 func CAFolder() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -38,17 +39,50 @@ func CAFolder() (string, error) {
 	return filepath.Join(home, ".rayo"), nil
 }
 
-// LoadCA reads the CA of this computer, and makes it the first time.
-func LoadCA() (*CA, error) {
-	folder, err := CAFolder()
+// ProjectCA is the folder a project keeps its CA in, next to its suite or at its root.
+const ProjectCA = ".rayo/ca"
+
+// FindCA looks for a project's CA: .rayo/ca with a ca.pem, in from and the folders above it, up to
+// the root of the repository (the folder with .git). It is empty if there is none.
+func FindCA(from string) string {
+	dir, err := filepath.Abs(from)
 	if err != nil {
-		return nil, err
+		return ""
+	}
+	for {
+		folder := filepath.Join(dir, filepath.FromSlash(ProjectCA))
+		if _, err := os.Stat(filepath.Join(folder, "ca.pem")); err == nil {
+			return folder
+		}
+		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+			return ""
+		}
+		up := filepath.Dir(dir)
+		if up == dir {
+			return ""
+		}
+		dir = up
+	}
+}
+
+// LoadCA reads the CA in a folder, a project's, which must be there. An empty folder is the CA of
+// this computer, in ~/.rayo, made the first time.
+func LoadCA(folder string) (*CA, error) {
+	if folder == "" {
+		home, err := CAFolder()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := os.Stat(filepath.Join(home, "ca.pem")); errors.Is(err, os.ErrNotExist) {
+			if err := MakeCA(home); err != nil {
+				return nil, fmt.Errorf("couldn't make the CA in %s: %w", home, err)
+			}
+		}
+		folder = home
 	}
 	certFile, keyFile := filepath.Join(folder, "ca.pem"), filepath.Join(folder, "ca-key.pem")
 	if _, err := os.Stat(certFile); errors.Is(err, os.ErrNotExist) {
-		if err := makeCA(folder, certFile, keyFile); err != nil {
-			return nil, fmt.Errorf("couldn't make the CA in %s: %w", folder, err)
-		}
+		return nil, fmt.Errorf("there is no CA in %s: it takes ca.pem and ca-key.pem; rayo ca new %s makes one", filepath.ToSlash(folder), filepath.ToSlash(folder))
 	}
 	pair, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
@@ -63,6 +97,17 @@ func LoadCA() (*CA, error) {
 		return nil, fmt.Errorf("the CA in %s: not an ECDSA key", folder)
 	}
 	return &CA{Path: certFile, cert: cert, key: key, hosts: map[string]*tls.Certificate{}}, nil
+}
+
+// MakeCA makes a new CA in a folder, as ca.pem and ca-key.pem; it won't replace one that is there.
+func MakeCA(folder string) error {
+	certFile, keyFile := filepath.Join(folder, "ca.pem"), filepath.Join(folder, "ca-key.pem")
+	for _, f := range []string{certFile, keyFile} {
+		if _, err := os.Stat(f); err == nil {
+			return fmt.Errorf("%s is there already", filepath.ToSlash(f))
+		}
+	}
+	return makeCA(folder, certFile, keyFile)
 }
 
 func makeCA(folder, certFile, keyFile string) error {

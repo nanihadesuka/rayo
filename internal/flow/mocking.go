@@ -31,13 +31,15 @@ type backend struct {
 	proxy   bool     // the device's proxy, and not the app, sends calls to the mock
 	hosts   []string // those the proxy opens; empty for the default
 	proxied *mock.Proxy
+	ca      string // the folder of its CA; empty for the computer's
+	caNoted bool
 	unset   func() error // puts the device's proxy back
 
 	unmocked *mock.Unmocked // of the flow that runs
 }
 
 func newBackend(d *adb.Device, o Options) *backend {
-	return &backend{device: d, port: o.MockPort, capturing: o.Capture != "", real: o.Backend, secrets: o.Env, hosts: o.Hosts, matching: o.Matching}
+	return &backend{device: d, port: o.MockPort, capturing: o.Capture != "", real: o.Backend, secrets: o.Env, hosts: o.Hosts, matching: o.Matching, ca: o.CA}
 }
 
 // opens says which hosts the proxy opens: those asked for; else, capturing, all but the passthrough list;
@@ -87,7 +89,7 @@ func (b *backend) start() (*mock.Mock, error) {
 }
 
 func (b *backend) startProxy(m *mock.Mock) (*mock.Mock, error) {
-	ca, err := mock.LoadCA()
+	ca, err := mock.LoadCA(b.ca)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +127,10 @@ func (b *backend) close() error {
 func (r *Runner) noteProxy() {
 	if r.backend.proxied == nil {
 		return
+	}
+	if !r.backend.caNoted { // so that a CA the app doesn't trust is easy to see
+		r.backend.caNoted = true
+		r.reporter.Note(1, "the proxy signs with the CA in "+filepath.ToSlash(r.backend.proxied.CA()))
 	}
 	for _, n := range r.backend.proxied.Notes() {
 		r.reporter.Note(1, n)

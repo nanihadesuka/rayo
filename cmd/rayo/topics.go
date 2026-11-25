@@ -145,7 +145,8 @@ A suite's capture: says how to capture, so the commands need no options.
                          trusts rayo's certificate; sees every call, also of SDKs
 
   rayo test f.yaml                                       the interceptor, or the flow's network:
-  rayo ca export app/src/debug/res/raw/rayo_ca.pem       once, for the proxy
+  rayo ca new                                            once, for the proxy: .rayo/ca, to commit
+  rayo ca export app/src/debug/res/raw/rayo_ca.pem       and the certificate the app trusts
   rayo test --network proxy f.yaml                       the proxy
 
 Can change the app, one HTTP client: interceptor. Can't change it, or an SDK calls on its own: proxy.

@@ -15,7 +15,7 @@ import (
 func TestProxy(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("USERPROFILE", t.TempDir())
-	ca, err := LoadCA()
+	ca, err := LoadCA("")
 	if err != nil {
 		t.Fatal(err)
 	}

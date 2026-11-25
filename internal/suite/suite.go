@@ -74,6 +74,7 @@ type Suite struct {
 	Network         string            // for every flow that doesn't say; --network wins
 	Unmocked        *mock.Unmocked    // calls without a mock that don't fail any flow; nil for none
 	Capture         *Capture          // for every flow; nil if not said
+	CA              string            // the folder of the CA the proxy signs with, relative to the suite; --ca wins
 
 	Path string
 }
