@@ -25,3 +25,18 @@ func TestChanges(t *testing.T) {
 		}
 	}
 }
+
+func TestIgnoring(t *testing.T) {
+	kept, n := ignoring([]string{"12:04", "Pay", "12:05 left"}, `^\d+:\d+`)
+	if !slices.Equal(kept, []string{"Pay"}) || n != 2 {
+		t.Errorf("%q %d", kept, n)
+	}
+}
+
+func TestLastLine(t *testing.T) {
+	for data, want := range map[string]int{"a\n": 1, "a\nb\n\n": 2, "a\n- b\n- c": 3} {
+		if got := lastLine([]byte(data)); got != want {
+			t.Errorf("lastLine(%q) = %d, want %d", data, got, want)
+		}
+	}
+}

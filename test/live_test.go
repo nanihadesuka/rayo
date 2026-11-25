@@ -112,7 +112,12 @@ func TestLiveServed(t *testing.T) {
 	}
 	has(do(1, "- tapOm: x"), "unknown command")
 	has(do(0, ".screen"), "a screen")
-	has(do(0, ".save"), "saved 3 steps")
+	has(do(0, ".steps"), "1. [saved, step 1 of the file (line 5)]\n   - tapOn first", "4. [unsaved]\n   - back")
+	has(do(1, ".quit"), "3 steps not saved: .save them, or .quit --discard")
+	has(do(0, ".save"), "saved 3 steps in flow.yaml:6-8", "rayo check: the flow is fine")
+	has(do(0, ".steps"), "4. [saved, step 4 of the file (line 8)]")
+	has(do(2, "--timeout", "soon", ".steps"), `--timeout takes how long, such as 30s or 2m, not "soon"`)
+	has(do(0, "--timeout", "1m", ".steps"), "4. [saved")
 	has(do(0, "--screen=changes", "- back"), "screen: the same") // as the --screen before it
 	if out := do(0, "--screen=changes", "--format", "json", "- back"); !strings.Contains(out, `"screen": []`) {
 		t.Errorf("a screen that is the same isn't an empty list:\n%s", out)
@@ -121,6 +126,8 @@ func TestLiveServed(t *testing.T) {
 	has(do(2, "--screen=all", ".from 99"), `--screen takes nothing, or =changes, not "all"`)
 	has(do(0, ".undo"), "")
 	has(do(0, ".undo"), "")
+	has(do(0, "--screen", "--ignore-screen", "^a scr", "- back"), "screen: 1 ignored")
+	has(do(0, ".undo"), "now: 4 steps done, 0 unsaved")
 	second := d.command(dir, "live", "flow.yaml")
 	if out, err := second.CombinedOutput(); err == nil || !strings.Contains(string(out), "live already") {
 		t.Errorf("%v\n%s", err, out)

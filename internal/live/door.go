@@ -85,8 +85,9 @@ func listen(output string, requests chan<- Request) (func(), error) {
 	}, nil
 }
 
-// Ask sends a request to the session that is live in an output folder.
-func Ask(output string, q Request) (*Reply, error) {
+// Ask sends a request to the session that is live in an output folder, and waits for the answer up
+// to a timeout, if not 0; the session goes on with it all the same.
+func Ask(output string, q Request, timeout time.Duration) (*Reply, error) {
 	none := errors.New("no session is live here: start one with rayo live")
 	data, err := os.ReadFile(doorFile(output))
 	if err != nil {
@@ -105,7 +106,15 @@ func Ask(output string, q Request) (*Reply, error) {
 		return nil, err
 	}
 	out.Header.Set(tokenHeader, there.Token)
+	if timeout > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		out = out.WithContext(ctx)
+	}
 	res, err := http.DefaultClient.Do(out)
+	if err != nil && errors.Is(err, context.DeadlineExceeded) {
+		return nil, fmt.Errorf("no answer in %s: the session is still at it, and stays live; rayo do .steps says what got done", timeout)
+	}
 	if err != nil {
 		return nil, none
 	}

@@ -166,6 +166,9 @@ Options of mocks
 
 Options of do
   --screen[=changes]         also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave
+  --ignore-screen <regex>    with --screen, leave out the lines that match, such as a clock's; says how many
+  --timeout <duration>       how long to wait for the answer, such as 30s (default as long as it takes); the session goes on
+  --discard                  with .quit, end even if steps were not saved
 
 Options of test, check, explain, devices, hierarchy, do and mocks
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs
@@ -1948,7 +1951,8 @@ screen:
 - tapOn: { id: login }
   ✓ tapOn login  95 ms
 .save
-saved 2 steps in tests/new/flow.yaml
+saved 2 steps in tests/new/flow.yaml:4-5
+rayo check: the flow is fine
 ```
 
 If the flow is there already, its steps run first (`--no-run` to skip them) and `.save` adds to its
@@ -1962,13 +1966,13 @@ The mock, the variables and `output` last for the whole session. When it ends, a
 |---|---|
 | Any command, or a list of them | Runs them up to the first that fails. Those that pass are kept |
 | `.screen` | What is on screen, and how to refer to it |
-| `.steps` | What is kept and not saved yet |
-| `.undo` | Forgets the last one. **The device stays as it is** |
-| `.save` | Adds them to the file |
+| `.steps` | The steps done, numbered as `.rewind` counts them, each saved (with its step and line in the file) or unsaved |
+| `.undo` | Forgets the last one, and says how many are left. **The device stays as it is** |
+| `.save` | Adds them to the file, says on which lines, and runs `rayo check` on it |
 | `.retry` | Reads the file again and runs its steps from the one that failed, so a step can be fixed in the file and tried again |
 | `.from <n>` | The same, from its n-th step |
 | `.rewind [n]` | Forgets the last n steps done (1), typed or of the file, and the calls they made to a [capture](#capture). **The device stays as it is**: move the app back by hand, then `.retry` |
-| `.help`, `.quit` | `.quit` doesn't save, but prints what is lost |
+| `.help`, `.quit [--discard]` | With steps not saved, `.quit` is an error and the session goes on: `.save` them, or `.quit --discard` ends and prints what is lost. The end of what is typed discards |
 
 Typed, a command is a line; one that ends in `:` goes on until an empty line. The leading `- ` may
 be left out.
@@ -1990,7 +1994,11 @@ rayo do .quit
 | Option | |
 |---|---|
 | `--screen` | Also what is on screen afterwards. After a failure it always comes |
-| `--format json` | `schemaVersion`, `ok`, `output`, `error`, `failure` (as in the [results](#results), or `null`), `warnings`, `calls` to the mock meanwhile, `screen`, `unsaved` steps; `rayo schema do` |
+| `--screen=changes` | Only the lines that appeared (`+`) or went (`-`) since the screen the session last gave. The first has no screen before: it is all of it, said as `(whole screen: nothing before)`, and `baseline: true` |
+| `--ignore-screen <regex>` | With `--screen`, leaves out the lines that match, such as a clock's, and says how many (`ignored`) |
+| `--timeout <duration>` | Waits for the answer that long at most, then fails; the session goes on with the steps |
+| `--discard` | With `.quit`, ends though steps were not saved |
+| `--format json` | `schemaVersion`, `ok`, `output`, `error`, `failure` (as in the [results](#results), or `null`), `warnings`, `calls` to the mock meanwhile, `screen`, `baseline`, `ignored`, `unsaved` steps; `rayo schema do` |
 | `-` | Commands from standard input |
 
 Calls the app makes without a mock are warnings here: the session goes on. A run of the saved
