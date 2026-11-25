@@ -62,6 +62,7 @@ What it costs, roughly
 I want to...
   write a flow                         rayo help write-a-flow
   find why a flow failed               rayo explain, then rayo help debug-a-flow
+  go on from a failure, after a fix    rayo test --resume <suite>; rayo help resume
   record a video                       record: true in the header; rayo help recipes
   check the device log, reset the app  rayo help recipes
   mock the backend                     rayo help record-mocks, rayo help connect-mocks
@@ -88,9 +89,41 @@ screen.txt, logcat.txt and requests.txt, cut to the failure window.
   rayo test --results report.md all.suite.yaml       a short report, for a chat or a mail
   rayo test --emulator --timings f.yaml              how long each step took
   rayo test --emulator --rerun-failed all.suite.yaml  only what failed last time
+  rayo test --emulator --resume all.suite.yaml       after a fix, go on from the step that failed
   rayo live --emulator f.yaml                        run its steps, then try commands where it stopped
 
 The blame is app if the app crashed or hung, device if the device was lost, and else test.
+`},
+	{"resume", "go on from where a flow failed, after a fix, without running it all again", `A long flow failed near its end, and the fix is in the mocks or the flow, not the app. Fix the files,
+then go on from the step that failed. The app must still be where the failure left it: run nothing
+else on the device in between.
+
+  rayo explain                                    where it failed, and the mocks' scenarios then
+  rayo test --resume all.suite.yaml               each flow that failed, from the step that failed
+  rayo test --from book.yaml:42 --only book all.suite.yaml        one flow, from a step
+  rayo test --until book.yaml:42 --only book all.suite.yaml       stop after a step, leave the app there
+  rayo test --resume --mock-state booking=booked all.suite.yaml       the scenarios set by hand
+
+What happens
+  - Files are read again, so a fix to a mock or a flow counts. The step that failed runs again first.
+  - onFlowStart and the steps before the step don't run: the app is as the last run left it. Their
+    mock: steps and the mocks of the flows they runFlow are still loaded.
+  - The mocks' scenarios are set as they were when that step began in the last run (failed.json keeps
+    them), and --mock-state changes some. A step the last run didn't reach has none: say them.
+  - --until stops after the step; onFlowComplete doesn't run.
+  - No retries. A pass from the middle isn't a pass of the flow, so it stays in failed.json:
+    run the flow whole once it passes, rayo test --only <name> <suite>.
+
+--mock-state needs --resume or --from. A wrong scenario or state is an error before the device is used.
+A step is file:line, as the at: of rayo explain writes it; the file may be only its name, a line
+alone is of the flow's own file, and a text such as pickDate is the one step that has it. Steps of onFlowStart and onFlowComplete can't be begun from.
+
+Gotchas
+  - A step that isn't idempotent, such as a picker left half set, may need --from an earlier step
+    that puts the screen back, or a rayo live session to fix the app by hand first.
+  - --from goes back as well as forward: the scenarios of the last run are used if it reached that
+    step; the screen isn't moved back, so begin where the app is.
+  - In rayo live, .states lists the scenarios, and mockState: { booking: booked } sets one.
 `},
 	{"record-mocks", "record mocks from the real backend", `With mock: in the header, rayo answers as the backend. To make the mocks, capture what the real
 one answers, once, then keep them up to date:

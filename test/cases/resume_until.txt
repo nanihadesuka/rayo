@@ -1,0 +1,33 @@
+-- args --
+test --from 6 --until 7 flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: { id: a }
+- tapOn: { id: b }
+- tapOn: { id: c }
+- tapOn: { id: d }
+- tapOn: { id: e }
+==== out ====
+-- exit --
+0
+-- stdout --
+emulator-5554, ready in # ms
+
+[1/1] case
+from flow.yaml:6 tapOn d: skipped 3 steps before it, the app is as the last run left it
+  ✓ tapOn d  # ms
+  ✓ tapOn e  # ms
+stopped after 7 as --until says: onFlowComplete didn't run, and the app is left as it is
+ran only part of the flow, so its pass is not the whole flow's: it stays in failed.json; once the fix is right, run it whole with --only case
+[1/1] PASS case  # s
+
+TOTAL 1: 1 passed, 0 failed  # s
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+tap {"delay":100,"repeat":1,"sel":{"id":"d"},"timeout":15000}
+tap {"delay":100,"repeat":1,"sel":{"id":"e"},"timeout":15000}
+bye {"timeout":5000}

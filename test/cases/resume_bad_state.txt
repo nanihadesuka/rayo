@@ -1,0 +1,16 @@
+-- args --
+test --from 4 --mock-state ride=parked flow.yaml
+-- flow.yaml --
+appId: a.b
+mock: mock.json
+---
+- tapOn: { id: a }
+-- mock.json --
+{"mappings":[
+{"scenarioName":"ride","requiredScenarioState":"Started","newScenarioState":"riding","request":{"method":"POST","urlPath":"/ride"},"response":{"body":"unlocked"}}
+]}
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --mock-state: ride has no state "parked" (it has Started, riding)

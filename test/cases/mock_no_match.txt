@@ -121,7 +121,7 @@ the log
 <time> POST /a -> not mocked; nearest POST /a: body: not JSON
     not json
 <time> POST /a -> not mocked; nearest POST /a: body: not JSON
-<time> POST /a -> 200
+<time> POST /a -> 200  by POST /a (mock.json#1)
     {"x":0}
 <time> GET /a -> not mocked
 <time> GET /q?a=1 -> not mocked; nearest GET /q: query a: "1", expected "2"
@@ -166,6 +166,8 @@ a screen
           "uri": "/a",
           "outcome": "not mocked; nearest POST /a: body: nothing at $.x",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -174,6 +176,8 @@ a screen
           "uri": "/a",
           "outcome": "not mocked; nearest POST /a: body: nothing at $.x",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -182,6 +186,8 @@ a screen
           "uri": "/a",
           "outcome": "not mocked; nearest POST /a: body: nothing at $.x",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -190,6 +196,8 @@ a screen
           "uri": "/a",
           "outcome": "not mocked; nearest POST /a: body: not JSON",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -198,6 +206,8 @@ a screen
           "uri": "/a",
           "outcome": "not mocked; nearest POST /a: body: not JSON",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -206,6 +216,8 @@ a screen
           "uri": "/a",
           "outcome": "not mocked",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -214,6 +226,8 @@ a screen
           "uri": "/q?a=1",
           "outcome": "not mocked; nearest GET /q: query a: \"1\", expected \"2\"",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -222,6 +236,8 @@ a screen
           "uri": "/q",
           "outcome": "not mocked; nearest GET /q: query a: absent, expected \"2\"",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -230,6 +246,8 @@ a screen
           "uri": "/nothing",
           "outcome": "not mocked",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         },
         {
@@ -238,12 +256,16 @@ a screen
           "uri": "/nothing",
           "outcome": "not mocked",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/case_failure.png"
+      "saved": ".rayo/case_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

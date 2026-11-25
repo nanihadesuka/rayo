@@ -69,6 +69,10 @@
                         "description": "Only in a requests.json",
                         "type": "string"
                       },
+                      "mapping": {
+                        "description": "The one that answered: its name, or method and address, and file#n where it is written; empty if none",
+                        "type": "string"
+                      },
                       "method": {
                         "description": "",
                         "type": "string"
@@ -79,6 +83,10 @@
                       },
                       "outcome": {
                         "description": "The status, or what happened",
+                        "type": "string"
+                      },
+                      "scenario": {
+                        "description": "Of a mapping with a scenario, its state before and after, such as 'booking: 20 -> 21'; empty if none",
                         "type": "string"
                       },
                       "uri": {
@@ -92,6 +100,8 @@
                       "uri",
                       "outcome",
                       "mocked",
+                      "mapping",
+                      "scenario",
                       "body"
                     ],
                     "type": "object"
@@ -195,10 +205,72 @@
                   "description": "The first file of the rest, which are named alike",
                   "type": "string"
                 },
+                "scenarios": {
+                  "description": "Of the mocks, the state each was in as it failed; empty without scenarios",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "Its scenarioName",
+                        "type": "string"
+                      },
+                      "state": {
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "state"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
                 "screen": {
                   "description": "The elements on it",
                   "items": {
                     "type": "string"
+                  },
+                  "type": "array"
+                },
+                "trail": {
+                  "description": "The scenarios as each step began, the last 2000 steps: what --resume and --from set",
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "at": {
+                        "description": "The step, file:line",
+                        "type": "string"
+                      },
+                      "scenarios": {
+                        "description": "",
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "name": {
+                              "description": "Its scenarioName",
+                              "type": "string"
+                            },
+                            "state": {
+                              "description": "",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "state"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "at",
+                      "scenarios"
+                    ],
+                    "type": "object"
                   },
                   "type": "array"
                 },
@@ -224,7 +296,9 @@
                 "calls",
                 "screen",
                 "crash",
-                "saved"
+                "saved",
+                "scenarios",
+                "trail"
               ],
               "type": "object"
             },

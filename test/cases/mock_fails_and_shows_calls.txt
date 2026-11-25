@@ -39,10 +39,10 @@ emulator-5554, ready in # ms
     tapOn POST /a some body
     tapOn GET /b
   calls:
-    <time> GET /a?3 -> 200
-    <time> GET /a?4 -> 200
-    <time> GET /a?5 -> 200
-    <time> POST /a -> 200
+    <time> GET /a?3 -> 200  by ANY /a (mock.json)
+    <time> GET /a?4 -> 200  by ANY /a (mock.json)
+    <time> GET /a?5 -> 200  by ANY /a (mock.json)
+    <time> POST /a -> 200  by ANY /a (mock.json)
     <time> GET /b -> not mocked
   saved: .rayo/case_failure.png
 
@@ -81,12 +81,12 @@ PNG...
 -- file .rayo/case_logcat.txt --
 the log
 -- file .rayo/case_requests.txt --
-<time> GET /a?1 -> 200
-<time> GET /a?2 -> 200
-<time> GET /a?3 -> 200
-<time> GET /a?4 -> 200
-<time> GET /a?5 -> 200
-<time> POST /a -> 200
+<time> GET /a?1 -> 200  by ANY /a (mock.json)
+<time> GET /a?2 -> 200  by ANY /a (mock.json)
+<time> GET /a?3 -> 200  by ANY /a (mock.json)
+<time> GET /a?4 -> 200  by ANY /a (mock.json)
+<time> GET /a?5 -> 200  by ANY /a (mock.json)
+<time> POST /a -> 200  by ANY /a (mock.json)
     some body
 <time> GET /b -> not mocked
 -- file .rayo/case_screen.txt --
@@ -127,6 +127,8 @@ a screen
           "uri": "/a?3",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /a (mock.json)",
+          "scenario": "",
           "body": ""
         },
         {
@@ -135,6 +137,8 @@ a screen
           "uri": "/a?4",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /a (mock.json)",
+          "scenario": "",
           "body": ""
         },
         {
@@ -143,6 +147,8 @@ a screen
           "uri": "/a?5",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /a (mock.json)",
+          "scenario": "",
           "body": ""
         },
         {
@@ -151,6 +157,8 @@ a screen
           "uri": "/a",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /a (mock.json)",
+          "scenario": "",
           "body": ""
         },
         {
@@ -159,12 +167,16 @@ a screen
           "uri": "/b",
           "outcome": "not mocked",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/case_failure.png"
+      "saved": ".rayo/case_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

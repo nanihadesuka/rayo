@@ -50,19 +50,50 @@ type jsonFlow struct {
 
 // Failure is one, for a program.
 type Failure struct {
-	Try     int         `json:"try" about:"From 1"`
-	Verdict string      `json:"verdict" about:"In a line: '<flow> failed at <step>: <cause>'"`
-	Cause   string      `json:"cause" about:"What went wrong, see [Results](#results)" enum:"not on screen,timeout,app crashed,unmocked call,device error,step failed"`
-	Error   Problem     `json:"error" about:"What went wrong, at which step, see [Errors](#errors)"`
-	Blame   flow.Blame  `json:"blame" about:"Whose fault it is: 'test', 'app' or 'device', see [Blame](#blame)" enum:"test,app,device"`
-	Because string      `json:"because" about:"What shows that it isn't the test"`
-	From    []jsonStep  `json:"from" about:"The step that ran that flow, and so on outwards"`
-	Before  []string    `json:"before" about:"The last 3 steps that passed"`
-	Nearest []string    `json:"nearest" about:"Of 'not on screen', the elements on it most like what was looked for"`
-	Calls   []mock.Call `json:"calls" about:"The last 5 to the mock, and before them those that went wrong in the failure window"`
-	Screen  []string    `json:"screen" about:"The elements on it"`
-	Crash   string      `json:"crash" about:"The app crashed or hung during the flow: what the device log says"`
-	Saved   string      `json:"saved" about:"The first file of the rest, which are named alike, see [Failures](#failures)"`
+	Try       int          `json:"try" about:"From 1"`
+	Verdict   string       `json:"verdict" about:"In a line: '<flow> failed at <step>: <cause>'"`
+	Cause     string       `json:"cause" about:"What went wrong, see [Results](#results)" enum:"not on screen,timeout,app crashed,unmocked call,device error,step failed"`
+	Error     Problem      `json:"error" about:"What went wrong, at which step, see [Errors](#errors)"`
+	Blame     flow.Blame   `json:"blame" about:"Whose fault it is: 'test', 'app' or 'device', see [Blame](#blame)" enum:"test,app,device"`
+	Because   string       `json:"because" about:"What shows that it isn't the test"`
+	From      []jsonStep   `json:"from" about:"The step that ran that flow, and so on outwards"`
+	Before    []string     `json:"before" about:"The last 3 steps that passed"`
+	Nearest   []string     `json:"nearest" about:"Of 'not on screen', the elements on it most like what was looked for"`
+	Calls     []mock.Call  `json:"calls" about:"The last 5 to the mock, and before them those that went wrong in the failure window"`
+	Screen    []string     `json:"screen" about:"The elements on it"`
+	Crash     string       `json:"crash" about:"The app crashed or hung during the flow: what the device log says"`
+	Saved     string       `json:"saved" about:"The first file of the rest, which are named alike, see [Failures](#failures)"`
+	Scenarios []Scenario   `json:"scenarios" about:"Of the mocks, the state each was in as it failed; empty without scenarios"`
+	Trail     []StepStates `json:"trail" about:"The scenarios as each step began, the last 2000 steps: what --resume and --from set, see [Resume](#resume)"`
+}
+
+// Scenario is one of the mocks, and its state.
+type Scenario struct {
+	Name  string `json:"name" about:"Its scenarioName"`
+	State string `json:"state" about:""`
+}
+
+// StepStates is the scenarios as a step began.
+type StepStates struct {
+	At        string     `json:"at" about:"The step, file:line"`
+	Scenarios []Scenario `json:"scenarios" about:""`
+}
+
+func scenariosOf(list []flow.Scenario) []Scenario {
+	out := []Scenario{}
+	for _, s := range list {
+		out = append(out, Scenario{s.Name, s.State})
+	}
+	return out
+}
+
+// Flow is them as the runner takes them.
+func (l StepStates) Flow() flow.StepStates {
+	s := flow.StepStates{At: l.At}
+	for _, x := range l.Scenarios {
+		s.States = append(s.States, flow.Scenario{Name: x.Name, State: x.State})
+	}
+	return s
 }
 
 type jsonStep struct {
@@ -93,7 +124,8 @@ func Lines(text string) []string {
 
 // FailureOf describes a failure.
 func FailureOf(err error, e *flow.Failure) Failure {
-	x := Failure{Try: 1, Error: ProblemOf(err), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}, Nearest: []string{}, Cause: flow.StepFailed}
+	x := Failure{Try: 1, Error: ProblemOf(err), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}, Nearest: []string{}, Cause: flow.StepFailed,
+		Scenarios: []Scenario{}, Trail: []StepStates{}}
 	var step *flow.StepError
 	if errors.As(err, &step) {
 		for _, s := range step.From {
@@ -105,6 +137,10 @@ func FailureOf(err error, e *flow.Failure) Failure {
 		x.Before, x.Calls, x.Crash, x.Saved = List(e.Before), List(e.Calls), e.Crash, e.Saved
 		x.Screen = Lines(e.Screen)
 		x.Cause, x.Nearest = e.Cause, List(e.Nearest)
+		x.Scenarios = scenariosOf(e.Scenarios)
+		for _, t := range e.Trail {
+			x.Trail = append(x.Trail, StepStates{t.At, scenariosOf(t.States)})
+		}
 	}
 	return x
 }

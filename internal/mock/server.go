@@ -221,6 +221,18 @@ func (m *Mock) answer(q *http.Request, body string) (a answer) {
 		}
 		return a
 	}
+	call.Mapping = best.title()
+	if best.source != "" {
+		call.Mapping += " (" + best.source + ")"
+	}
+	if best.ScenarioName != "" {
+		before := m.state(best.ScenarioName)
+		after := cmp.Or(best.NewScenarioState, before)
+		call.Scenario = best.ScenarioName + ": " + before
+		if after != before {
+			call.Scenario += " -> " + after
+		}
+	}
 	if best.NewScenarioState != "" {
 		m.states[best.ScenarioName] = best.NewScenarioState
 	}
@@ -305,6 +317,19 @@ func (m *Mock) state(scenario string) string {
 		return s
 	}
 	return "Started"
+}
+
+// States is every scenario the mappings have, and the state it is in.
+func (m *Mock) States() map[string]string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	states := map[string]string{}
+	for _, r := range m.rules {
+		if r.ScenarioName != "" {
+			states[r.ScenarioName] = m.state(r.ScenarioName)
+		}
+	}
+	return states
 }
 
 // SetState moves a scenario.

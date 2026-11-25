@@ -233,6 +233,14 @@ func suggest(name string) string {
 // nearest is the command closest to a name that isn't one; empty if none is close.
 func nearest(name string) string {
 	best := ""
+	for k := range commands { // tap: tapOn
+		if strings.HasPrefix(strings.ToLower(k), strings.ToLower(name)) && len(name) >= 3 && (best == "" || len(k) < len(best)) {
+			best = k
+		}
+	}
+	if best != "" {
+		return best
+	}
 	for k := range commands {
 		near := strings.EqualFold(k, name) ||
 			(len(name) > 3 && strings.HasPrefix(strings.ToLower(k), strings.ToLower(name[:4])))

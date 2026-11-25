@@ -120,7 +120,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/a_failure.png"
+      "saved": ".rayo/a_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/b.yaml": {
@@ -149,7 +151,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/b_failure.png"
+      "saved": ".rayo/b_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/c.yaml": {
@@ -178,7 +182,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/c_failure.png"
+      "saved": ".rayo/c_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

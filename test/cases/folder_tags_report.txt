@@ -94,7 +94,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": "dbg/c_failure.png"
+      "saved": "dbg/c_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

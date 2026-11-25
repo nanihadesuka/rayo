@@ -151,6 +151,22 @@ func (s *Session) Screen(ctx context.Context) (string, error) {
 	return a.Out, err
 }
 
+// States is the mocks' scenarios, a line each with its state.
+func (s *Session) States() (string, error) {
+	if s.r.backend.mock == nil {
+		return "", errNoMock
+	}
+	list := s.r.backend.scenarios()
+	if len(list) == 0 {
+		return "no mock has a scenario\n", nil
+	}
+	var b strings.Builder
+	for _, sc := range list {
+		fmt.Fprintf(&b, "%s: %s\n", sc.Name, sc.State)
+	}
+	return b.String(), nil
+}
+
 // Dead is why the session can't go on; nil while it can.
 func (s *Session) Dead() error { return s.r.agent.Dead() }
 

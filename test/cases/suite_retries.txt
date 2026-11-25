@@ -125,7 +125,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/c_failure.png"
+      "saved": ".rayo/c_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }
@@ -211,7 +213,9 @@ a screen
             "a screen"
           ],
           "crash": "",
-          "saved": ".rayo/a_failure.png"
+          "saved": ".rayo/a_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     },
@@ -256,7 +260,9 @@ a screen
             "a screen"
           ],
           "crash": "",
-          "saved": ".rayo/b_failure.png"
+          "saved": ".rayo/b_failure.png",
+          "scenarios": [],
+          "trail": []
         },
         {
           "try": 2,
@@ -281,7 +287,9 @@ a screen
             "a screen"
           ],
           "crash": "",
-          "saved": ".rayo/b_retry1_failure.png"
+          "saved": ".rayo/b_retry1_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     },
@@ -326,7 +334,9 @@ a screen
             "a screen"
           ],
           "crash": "",
-          "saved": ".rayo/c_failure.png"
+          "saved": ".rayo/c_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     }

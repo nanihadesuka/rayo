@@ -187,7 +187,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-      "saved": ".rayo/a_retry1_failure.png"
+      "saved": ".rayo/a_retry1_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/b.yaml": {
@@ -216,7 +218,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-      "saved": ".rayo/b_retry1_failure.png"
+      "saved": ".rayo/b_retry1_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/c.yaml": {
@@ -245,7 +249,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-      "saved": ".rayo/c_failure.png"
+      "saved": ".rayo/c_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/d.yaml": {
@@ -338,7 +344,9 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": ".rayo/a_failure.png"
+          "saved": ".rayo/a_failure.png",
+          "scenarios": [],
+          "trail": []
         },
         {
           "try": 2,
@@ -363,7 +371,9 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": ".rayo/a_retry1_failure.png"
+          "saved": ".rayo/a_retry1_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     },
@@ -408,7 +418,9 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": ".rayo/b_failure.png"
+          "saved": ".rayo/b_failure.png",
+          "scenarios": [],
+          "trail": []
         },
         {
           "try": 2,
@@ -433,7 +445,9 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": ".rayo/b_retry1_failure.png"
+          "saved": ".rayo/b_retry1_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     },
@@ -478,7 +492,9 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": ".rayo/c_failure.png"
+          "saved": ".rayo/c_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     },

@@ -77,7 +77,9 @@ bye {"timeout":5000}
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/x_failure.png"
+      "saved": ".rayo/x_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/b/x.yaml": {
@@ -106,7 +108,9 @@ bye {"timeout":5000}
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/x_2_failure.png"
+      "saved": ".rayo/x_2_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

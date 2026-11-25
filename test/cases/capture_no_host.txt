@@ -90,12 +90,16 @@ a screen
           "uri": "/localhost/a",
           "outcome": "failed: the path doesn't begin with a host",
           "mocked": true,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/a_failure.png"
+      "saved": ".rayo/a_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

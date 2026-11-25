@@ -62,7 +62,13 @@ func explain(args []string) error {
 	slices.Sort(keys)
 	out := report.Explained{SchemaVersion: report.SchemaVersion, Flows: []report.Unpassed{}}
 	for _, k := range keys {
-		out.Flows = append(out.Flows, last[k])
+		u := last[k]
+		if u.Failure != nil { // what --resume reads, and long
+			f := *u.Failure
+			f.Trail = []report.StepStates{}
+			u.Failure = &f
+		}
+		out.Flows = append(out.Flows, u)
 	}
 	if printing != report.Human {
 		return emit(out)
@@ -119,7 +125,7 @@ func changedFiles(ref string) (map[string]bool, error) {
 	}
 	root, err := git("rev-parse", "--show-toplevel")
 	if err != nil {
-		return nil, errors.New("--since needs a git repository")
+		return nil, errors.New("--since and --changed-only need a git repository; outside one, name the flows with --only <name>, or give the flow files")
 	}
 	if len(root) == 0 {
 		return nil, errors.New("--since needs a git repository")

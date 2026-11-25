@@ -379,13 +379,22 @@ func test(ctx context.Context, args []string) (err error) {
 	if o.keep == suite.KeepNone {
 		o.runner.Artifacts = []string{}
 	}
+	if err := o.checkStarts(); err != nil {
+		return err
+	}
 	flows, err := o.choose(all)
 	if err != nil {
 		return err
 	}
 	if len(flows) == 0 { // only with --rerun-failed
+		if o.resume {
+			return o.nothingToResume()
+		}
 		fmt.Fprintln(human(), "nothing failed last time")
 		return nil
+	}
+	if err := o.settleStarts(flows); err != nil {
+		return err
 	}
 	if err := o.suiteCapture(flows); err != nil {
 		return err

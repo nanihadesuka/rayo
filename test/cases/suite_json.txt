@@ -48,7 +48,7 @@ appId: a.b
     tapOn GET /a
     camera none
   calls:
-    <time> GET /a -> 200
+    <time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
   saved: e2e/results/b_failure.png
   try: 2
   b failed at tapOn app crashes: app crashed
@@ -64,7 +64,7 @@ appId: a.b
     tapOn GET /a
     camera none
   calls:
-    <time> GET /a -> 200
+    <time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
   saved: e2e/results/b_retry1_failure.png
 [2/3] PASS a  # s
 [3/3] FLAKY c  # s  (failed once, then passed)
@@ -125,6 +125,8 @@ PNG...
     "uri": "/a",
     "outcome": "200",
     "mocked": true,
+    "mapping": "ANY /a (e2e/b/mock.json)",
+    "scenario": "",
     "body": ""
   }
 ]
@@ -142,6 +144,8 @@ PNG...
     "uri": "/a",
     "outcome": "200",
     "mocked": true,
+    "mapping": "ANY /a (e2e/b/mock.json)",
+    "scenario": "",
     "body": ""
   }
 ]
@@ -198,12 +202,16 @@ a screen
           "uri": "/a",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /a (e2e/b/mock.json)",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-      "saved": "e2e/results/b_retry1_failure.png"
+      "saved": "e2e/results/b_retry1_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }
@@ -299,6 +307,8 @@ a screen
               "uri": "/a",
               "outcome": "200",
               "mocked": true,
+              "mapping": "ANY /a (e2e/b/mock.json)",
+              "scenario": "",
               "body": ""
             }
           ],
@@ -306,7 +316,9 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": "e2e/results/b_failure.png"
+          "saved": "e2e/results/b_failure.png",
+          "scenarios": [],
+          "trail": []
         },
         {
           "try": 2,
@@ -342,6 +354,8 @@ a screen
               "uri": "/a",
               "outcome": "200",
               "mocked": true,
+              "mapping": "ANY /a (e2e/b/mock.json)",
+              "scenario": "",
               "body": ""
             }
           ],
@@ -349,7 +363,9 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": "e2e/results/b_retry1_failure.png"
+          "saved": "e2e/results/b_retry1_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     },
@@ -413,7 +429,9 @@ a screen
             "a screen"
           ],
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-          "saved": "e2e/results/c_failure.png"
+          "saved": "e2e/results/c_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     }

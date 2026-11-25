@@ -48,7 +48,7 @@ appId: a.b
     tapOn GET /a
     camera none
   calls:
-    <time> GET /a -> 200
+    <time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
   saved: e2e/results/b_failure.png
   try: 2
   b failed at tapOn app crashes: app crashed
@@ -64,7 +64,7 @@ appId: a.b
     tapOn GET /a
     camera none
   calls:
-    <time> GET /a -> 200
+    <time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
   saved: e2e/results/b_retry1_failure.png
 [2/3] PASS a  # s
 [3/3] FLAKY c  # s  (failed once, then passed)
@@ -118,7 +118,7 @@ PNG...
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
 -- file e2e/results/b_requests.txt --
-<time> GET /a -> 200
+<time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
 -- file e2e/results/b_retry1_failure.png --
 PNG...
 -- file e2e/results/b_retry1_logcat.txt --
@@ -126,7 +126,7 @@ PNG...
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
 -- file e2e/results/b_retry1_requests.txt --
-<time> GET /a -> 200
+<time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
 -- file e2e/results/b_retry1_screen.txt --
 a screen
 -- file e2e/results/b_screen.txt --
@@ -180,12 +180,16 @@ a screen
           "uri": "/a",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /a (e2e/b/mock.json)",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-      "saved": "e2e/results/b_retry1_failure.png"
+      "saved": "e2e/results/b_retry1_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }
@@ -193,7 +197,7 @@ a screen
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="rayo" tests="3" failures="1" errors="0" skipped="0" time="#">
   <testcase name="b" file="e2e/b/flow.yaml" time="#">
-    <failure>  try: 1&#xA;  b failed at tapOn app crashes: app crashed&#xA;  why: not on screen: home&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  saved: e2e/results/b_failure.png&#xA;  try: 2&#xA;  b failed at tapOn app crashes: app crashed&#xA;  why: not on screen: home&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200&#xA;  saved: e2e/results/b_retry1_failure.png&#xA;</failure>
+    <failure>  try: 1&#xA;  b failed at tapOn app crashes: app crashed&#xA;  why: not on screen: home&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200  by ANY /a (e2e/b/mock.json)&#xA;  saved: e2e/results/b_failure.png&#xA;  try: 2&#xA;  b failed at tapOn app crashes: app crashed&#xA;  why: not on screen: home&#xA;  blame: app, the app crashed: java.lang.IllegalStateException: oops&#xA;  step: tapOn app crashes&#xA;  at: e2e/shared/sub.yaml:3&#xA;  from: e2e/b/flow.yaml:6 runFlow ../shared/sub.yaml&#xA;  crash: FATAL EXCEPTION: main&#xA;    Process: a.b, PID: 1&#xA;    java.lang.IllegalStateException: oops&#xA;  before:&#xA;    tapOn GET /a&#xA;    camera none&#xA;  calls:&#xA;    <time> GET /a -&gt; 200  by ANY /a (e2e/b/mock.json)&#xA;  saved: e2e/results/b_retry1_failure.png&#xA;</failure>
   </testcase>
   <testcase name="a" file="e2e/a/flow.yaml" time="#"></testcase>
   <testcase name="c" file="e2e/c/flow.yaml" time="#">

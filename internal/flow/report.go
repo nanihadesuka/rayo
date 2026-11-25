@@ -67,16 +67,18 @@ type Result struct {
 
 // Failure is what helps to understand one.
 type Failure struct {
-	Before   []string    // the last steps that passed
-	Calls    []mock.Call // the last ones to the backend
-	Screen   string      // the elements on it
-	Crash    string      // of the app, from the device log
-	Blame    Blame
-	Because  string   // of a cause that isn't the test
-	Unusable bool     // nothing can run on the device
-	Saved    string   // the first file of the rest; the others are named alike
-	Cause    string   // what went wrong, one of Causes
-	Nearest  []string // of not on screen, the elements most like what was looked for
+	Before    []string    // the last steps that passed
+	Calls     []mock.Call // the last ones to the backend
+	Screen    string      // the elements on it
+	Crash     string      // of the app, from the device log
+	Blame     Blame
+	Because   string       // of a cause that isn't the test
+	Unusable  bool         // nothing can run on the device
+	Saved     string       // the first file of the rest; the others are named alike
+	Cause     string       // what went wrong, one of Causes
+	Nearest   []string     // of not on screen, the elements most like what was looked for
+	Scenarios []Scenario   // of the mocks, as it failed
+	Trail     []StepStates // the scenarios as each step began, the last ones
 }
 
 // crash is the app's, if it crashed or hung since the flow began.

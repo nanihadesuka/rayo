@@ -34,6 +34,7 @@ type Outcome struct {
 	Retries     int       // allowed
 	Why         string    // it didn't run
 	Began       time.Time // its first try; zero if it didn't run
+	Partial     bool      // it began or stopped at a step, so a pass isn't the whole flow's
 }
 
 // Judge takes a try into account.

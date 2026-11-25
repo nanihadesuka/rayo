@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/live"
 	"github.com/nanihadesuka/rayo/internal/mock"
 	"github.com/nanihadesuka/rayo/internal/report"
 	"github.com/nanihadesuka/rayo/internal/schema"
@@ -49,6 +50,10 @@ type options struct {
 	video                  bool   // --video
 	suite                  *suite.Suite
 	updateOwn              bool // --capture-update of the flow's own mock
+	resume                 bool
+	from, until            string          // steps, file:line
+	mockState              []flow.Scenario // nil if not said
+	starts                 map[*flow.Flow]*flow.Start
 
 	// Of live.
 	app          string
@@ -213,6 +218,27 @@ var sections = []section{
 			return nil
 		}},
 		flag("continuous", "run again whenever a file changes", func(o *options) *bool { return &o.continuous }).withShort("c"),
+	}},
+	{[]string{cmdTest}, "from where, after a fix; see rayo help resume", []option{
+		flag("resume", "each flow that failed last time, from the step that failed, with the app as it is and the mocks' scenarios as they were then", func(o *options) *bool { return &o.resume }),
+		{name: "from", value: "step", about: "begin one flow at a step: file:line as rayo explain's at: says, a line of its own file, or a text of one step such as pickDate; the app is as it is, onFlowStart doesn't run", set: func(o *options, v string) error {
+			o.from = v
+			return flow.CheckStepID(v)
+		}},
+		{name: "until", value: "step", about: "stop one flow after a step, given as --from takes it, leaving the app there; onFlowComplete doesn't run", set: func(o *options, v string) error {
+			o.until = v
+			return flow.CheckStepID(v)
+		}},
+		{name: "mock-state", value: "a=s,b=t", about: "with --resume or --from, the scenarios' states to begin with, over those of the last run", set: func(o *options, v string) error {
+			for _, part := range strings.Split(v, ",") {
+				name, state, ok := strings.Cut(part, "=")
+				if !ok || name == "" || state == "" {
+					return fmt.Errorf("--mock-state takes scenario=state, such as booking=booked, not %q", part)
+				}
+				o.mockState = append(o.mockState, flow.Scenario{Name: name, State: state})
+			}
+			return nil
+		}},
 	}},
 	{[]string{cmdTest, cmdCheck}, "what is written, as the suite's output", []option{
 		flag("video", "a video of each flow whose header doesn't say record, as output: { video: true }", func(o *options) *bool { return &o.video }),
@@ -428,10 +454,14 @@ func helpOf(command string) string {
 			}
 		}
 	}
-	if b.Len() == 0 {
-		return lines.String()
+	session := ""
+	if command == cmdLive || command == cmdDo {
+		session = "\nIn a session, typed or as rayo do <command>:\n" + live.Help
 	}
-	return lines.String() + "\nOptions of " + command + ":\n" + b.String()
+	if b.Len() == 0 {
+		return lines.String() + session
+	}
+	return lines.String() + "\nOptions of " + command + ":\n" + b.String() + session
 }
 
 func (p option) help() string {
@@ -466,10 +496,19 @@ func find(command, written string) (option, error) {
 		}
 	}
 	slices.Sort(takenBy)
-	if takenBy = slices.Compact(takenBy); len(takenBy) > 0 {
+	if takenBy = slices.Compact(takenBy); command == cmdCheck && slices.Contains(takenBy, cmdTest) {
+		return option{}, fmt.Errorf("%s only matters while flows run on a device; rayo check runs nothing, so drop it there and keep it for rayo test", written)
+	}
+	if len(takenBy) > 0 {
 		return option{}, fmt.Errorf("%s is not an option of %s, but of %s; see rayo help %s", written, command, strings.Join(takenBy, ", "), command)
 	}
-	if near := schema.Nearest(written, own); near != "" && strings.HasPrefix(written, "--") {
+	near := schema.Nearest(written, own)
+	for _, name := range own { // --from-step, --resume-failed: the option and a word more
+		if near == "" && len(name) > 4 && (strings.HasPrefix(written, name+"-") || strings.HasPrefix(name, written+"-")) {
+			near = name
+		}
+	}
+	if near != "" && strings.HasPrefix(written, "--") {
 		return option{}, fmt.Errorf("unknown option %s, did you mean %s? See rayo help %s", written, near, command)
 	}
 	return option{}, fmt.Errorf("unknown option %s; see rayo help %s", written, command)

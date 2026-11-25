@@ -33,4 +33,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: no flow is called z
+error: no flow is called z; there are: b, a, c

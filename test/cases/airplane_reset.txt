@@ -81,7 +81,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/a_failure.png"
+      "saved": ".rayo/a_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

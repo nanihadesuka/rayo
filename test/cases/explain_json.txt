@@ -64,12 +64,16 @@ explain .rayo --format json
             "uri": "/cart",
             "outcome": "not mocked",
             "mocked": false,
+            "mapping": "",
+            "scenario": "",
             "body": ""
           }
         ],
         "screen": [],
         "crash": "",
-        "saved": ".rayo/pay_retry1_failure.jpg"
+        "saved": ".rayo/pay_retry1_failure.jpg",
+        "scenarios": null,
+        "trail": []
       }
     },
     {

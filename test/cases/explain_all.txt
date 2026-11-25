@@ -30,5 +30,7 @@ pay failed at tapOn Pay: not on screen
   calls:
     <time> GET /cart -> not mocked
   saved: .rayo/pay_retry1_failure.jpg
+  rerun: unchanged it fails the same way: fix the flow or the mocks first
+  next: after a fix, rayo test --resume <the suite or flow you ran> goes on from shared/pay.yaml:4, mocks as then; rayo help resume
 
 scan didn't run: --fail-fast, after pay

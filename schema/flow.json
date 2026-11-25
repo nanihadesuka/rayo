@@ -3109,7 +3109,7 @@
                   "type": "object"
                 }
               ],
-              "description": "Moves scenarios to a state, such as { ride: docked }"
+              "description": "Moves scenarios to a state, such as { ride: docked }; in rayo live, .states lists them; rayo test --mock-state sets them where --resume or --from begins"
             },
             "network": {
               "anyOf": [

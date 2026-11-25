@@ -124,7 +124,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/c_retry1_failure.png"
+      "saved": ".rayo/c_retry1_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

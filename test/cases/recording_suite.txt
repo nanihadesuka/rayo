@@ -137,7 +137,9 @@ bye {"timeout":5000}
             "a screen"
           ],
           "crash": "",
-          "saved": "videos/a_failure.png"
+          "saved": "videos/a_failure.png",
+          "scenarios": [],
+          "trail": []
         }
       ]
     },

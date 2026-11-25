@@ -51,8 +51,10 @@ type Call struct {
 	URI, Body    string
 	Outcome      string
 	Unmocked     bool
-	Ignored      bool // not mocked, but answered as Unmocked says: it doesn't fail the flow
-	awaited      bool // already matched by an Await
+	Ignored      bool   // not mocked, but answered as Unmocked says: it doesn't fail the flow
+	Mapping      string // the one that answered: its name, and where it is written
+	Scenario     string // what it did to a scenario, such as "booking: 20 -> 21"
+	awaited      bool   // already matched by an Await
 }
 
 // MarshalJSON gives what is worth telling of it.
@@ -60,7 +62,7 @@ func (c Call) MarshalJSON() ([]byte, error) {
 	var b bytes.Buffer
 	e := json.NewEncoder(&b)
 	e.SetEscapeHTML(false)
-	err := e.Encode(jsonCall{c.At.UTC().Format(callTime), c.Method, c.URI, c.Outcome, !c.Unmocked, c.Body})
+	err := e.Encode(jsonCall{c.At.UTC().Format(callTime), c.Method, c.URI, c.Outcome, !c.Unmocked, c.Mapping, c.Scenario, c.Body})
 	return b.Bytes(), err
 }
 
@@ -71,7 +73,7 @@ func (c *Call) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	at, err := time.Parse(callTime, j.At)
-	*c = Call{At: at, Method: j.Method, URI: j.URI, Outcome: j.Outcome, Unmocked: !j.Mocked, Body: j.Body}
+	*c = Call{At: at, Method: j.Method, URI: j.URI, Outcome: j.Outcome, Unmocked: !j.Mocked, Mapping: j.Mapping, Scenario: j.Scenario, Body: j.Body}
 	return err
 }
 
@@ -81,16 +83,25 @@ const callTime = "2006-01-02T15:04:05.000Z"
 func (c Call) Shown() any { return jsonCall{} }
 
 type jsonCall struct {
-	At      string `json:"at" about:"In UTC"`
-	Method  string `json:"method" about:""`
-	URI     string `json:"uri" about:""`
-	Outcome string `json:"outcome" about:"The status, or what happened"`
-	Mocked  bool   `json:"mocked" about:"Whether a mock fitted"`
-	Body    string `json:"body" about:"Only in a requests.json"`
+	At       string `json:"at" about:"In UTC"`
+	Method   string `json:"method" about:""`
+	URI      string `json:"uri" about:""`
+	Outcome  string `json:"outcome" about:"The status, or what happened"`
+	Mocked   bool   `json:"mocked" about:"Whether a mock fitted"`
+	Mapping  string `json:"mapping" about:"The one that answered: its name, or method and address, and file#n where it is written; empty if none"`
+	Scenario string `json:"scenario" about:"Of a mapping with a scenario, its state before and after, such as 'booking: 20 -> 21'; empty if none"`
+	Body     string `json:"body" about:"Only in a requests.json"`
 }
 
 func (c Call) String() string {
-	return fmt.Sprintf("%s %s %s -> %s", c.At.Format("15:04:05.000"), c.Method, c.URI, c.Outcome)
+	s := fmt.Sprintf("%s %s %s -> %s", c.At.Format("15:04:05.000"), c.Method, c.URI, c.Outcome)
+	if c.Mapping != "" {
+		s += "  by " + c.Mapping
+	}
+	if c.Scenario != "" {
+		s += "  [" + c.Scenario + "]"
+	}
+	return s
 }
 
 func New() *Mock {
@@ -142,6 +153,10 @@ func (m *Mock) Load(path string) error {
 		for i, one := range list {
 			r, err := ParseRule(one)
 			if err == nil {
+				r.source = where
+				if len(list) > 1 {
+					r.source = fmt.Sprintf("%s#%d", where, i+1)
+				}
 				err = m.add(r)
 			}
 			if err != nil {

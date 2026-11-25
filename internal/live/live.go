@@ -20,9 +20,13 @@ import (
 	"github.com/nanihadesuka/rayo/internal/report"
 )
 
+// Help is what a session takes, as .help says it.
+const Help = liveHelp
+
 const liveHelp = `  - tapOn: { id: save }   any command, or a list; what passes is kept as a step
   .screen                 what is on screen, and how to refer to it
   .steps                  the steps kept
+  .states                 the mocks' scenarios and the state of each; mockState: { booking: booked } sets one
   .undo                   forget the last step; the device stays as it is
   .save                   add the steps to the flow's file
   .retry                  read the flow's file again, and run its steps from the one that failed
@@ -316,6 +320,8 @@ func (l *live) meta(ctx context.Context, name, arg string) (string, error) {
 		return l.session.Screen(ctx)
 	case ".steps":
 		return strings.Join(l.unsaved, ""), nil
+	case ".states":
+		return l.session.States()
 	case ".undo":
 		return l.undo()
 	case ".save":

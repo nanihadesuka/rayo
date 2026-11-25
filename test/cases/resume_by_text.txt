@@ -1,0 +1,14 @@
+-- args --
+test --until pickDate --from tapOn flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: { id: book }
+- tapOn: { id: pickDate }
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --from: 2 steps of case have "tapOn"; give file:line of one:
+  flow.yaml:3  tapOn book
+  flow.yaml:4  tapOn pickDate

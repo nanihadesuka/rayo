@@ -52,7 +52,11 @@ func (s *session) restart() error {
 func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 	for _, name := range o.only {
 		if !slices.ContainsFunc(flows, func(f *flow.Flow) bool { return f.Name == name }) {
-			return nil, fmt.Errorf("no flow is called %s", name)
+			var names []string
+			for _, f := range flows {
+				names = append(names, f.Name)
+			}
+			return nil, fmt.Errorf("no flow is called %s; there are: %s", name, strings.Join(names, ", "))
 		}
 	}
 	var last map[string]report.Unpassed
@@ -137,7 +141,7 @@ func (r *streak) after(o *report.Outcome, keepGoing bool) string {
 // retriesOf says how many times a flow may be tried again. A capture calls the real backend, so only once.
 func (o *options) retriesOf(f *flow.Flow) int {
 	switch {
-	case o.runner.Capture != "":
+	case o.runner.Capture != "", o.starts != nil: // a retry wouldn't begin where the app is
 		return 0
 	case o.retries >= 0:
 		return o.retries
@@ -171,7 +175,8 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	s.reporter.(*console).detail = o.detail
 	s.reporter.(*console).timings = o.runner.Timings
 	for i, f := range flows {
-		out := report.Outcome{Flow: f, Retries: o.retriesOf(f), Began: time.Now()}
+		out := report.Outcome{Flow: f, Retries: o.retriesOf(f), Began: time.Now(), Partial: o.starts[f] != nil}
+		s.runner.Start = o.starts[f]
 		if stop != "" {
 			out.Status, out.Why, out.Began = report.NotRun, stop, time.Time{}
 		} else {

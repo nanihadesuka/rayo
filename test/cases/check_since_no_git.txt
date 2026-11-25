@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: --since needs a git repository
+error: --since and --changed-only need a git repository; outside one, name the flows with --only <name>, or give the flow files

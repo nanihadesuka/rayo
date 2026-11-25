@@ -26,7 +26,7 @@ emulator-5554, ready in # ms
     tapOn GET /a
     tapOn GET /late
   calls:
-    <time> GET /a -> 200
+    <time> GET /a -> 200  by ANY /a (mock.json)
     <time> GET /late -> not mocked
   saved: .rayo/case_failure.png
 
@@ -54,7 +54,7 @@ PNG...
 -- file .rayo/case_logcat.txt --
 the log
 -- file .rayo/case_requests.txt --
-<time> GET /a -> 200
+<time> GET /a -> 200  by ANY /a (mock.json)
 <time> GET /late -> not mocked
 -- file .rayo/case_screen.txt --
 a screen
@@ -93,6 +93,8 @@ a screen
           "uri": "/a",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /a (mock.json)",
+          "scenario": "",
           "body": ""
         },
         {
@@ -101,12 +103,16 @@ a screen
           "uri": "/late",
           "outcome": "not mocked",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/case_failure.png"
+      "saved": ".rayo/case_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

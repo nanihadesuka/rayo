@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"errors"
 	"maps"
 	"math"
 	"slices"
@@ -32,7 +33,7 @@ func retry(c *call) error {
 		times := argOr(c, keyRetries, 1)
 		for i := 0; ; i++ {
 			err := c.inside(steps)
-			if err == nil || i >= times || c.r.agent.Dead() != nil || c.ctx.Err() != nil {
+			if err == nil || errors.Is(err, errUntil) || i >= times || c.r.agent.Dead() != nil || c.ctx.Err() != nil {
 				return err
 			}
 		}

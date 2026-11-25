@@ -27,6 +27,10 @@ Options of test:
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes
+  --resume                   each flow that failed last time, from the step that failed, with the app as it is and the mocks' scenarios as they were then
+  --from <step>              begin one flow at a step: file:line as rayo explain's at: says, a line of its own file, or a text of one step such as pickDate; the app is as it is, onFlowStart doesn't run
+  --until <step>             stop one flow after a step, given as --from takes it, leaving the app there; onFlowComplete doesn't run
+  --mock-state <a=s,b=t>     with --resume or --from, the scenarios' states to begin with, over those of the last run
   --video                    a video of each flow whose header doesn't say record, as output: { video: true }
   --keep <when>              the files of every try (all, default), only of the tries that failed, or none
   --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)

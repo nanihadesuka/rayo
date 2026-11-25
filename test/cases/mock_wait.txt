@@ -35,8 +35,8 @@ emulator-5554, ready in # ms
     waitForRequest method: post, path: /pa., body: "n":2
     waitForRequest /pay
   calls:
-    <time> POST /pay -> 200
-    <time> POST /pay -> 200
+    <time> POST /pay -> 200  by POST /pay (mock.json)
+    <time> POST /pay -> 200  by POST /pay (mock.json)
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
@@ -63,9 +63,9 @@ PNG...
 -- file .rayo/case_logcat.txt --
 the log
 -- file .rayo/case_requests.txt --
-<time> POST /pay -> 200
+<time> POST /pay -> 200  by POST /pay (mock.json)
     {"n":1}
-<time> POST /pay -> 200
+<time> POST /pay -> 200  by POST /pay (mock.json)
     {"n":2}
 -- file .rayo/case_screen.txt --
 a screen
@@ -105,6 +105,8 @@ a screen
           "uri": "/pay",
           "outcome": "200",
           "mocked": true,
+          "mapping": "POST /pay (mock.json)",
+          "scenario": "",
           "body": ""
         },
         {
@@ -113,12 +115,16 @@ a screen
           "uri": "/pay",
           "outcome": "200",
           "mocked": true,
+          "mapping": "POST /pay (mock.json)",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/case_failure.png"
+      "saved": ".rayo/case_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

@@ -1,0 +1,11 @@
+-- args --
+test --from 99 --mock-state ride flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: { id: a }
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --mock-state takes scenario=state, such as booking=booked, not "ride"

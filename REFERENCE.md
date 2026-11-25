@@ -25,7 +25,7 @@ The tables between `generated` marks come from the code, as do `rayo help` and t
 | [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [Capture](#capture) |
 | [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Blame](#blame) · [Outcomes](#outcomes) · [Results](#results) · [For a program](#for-a-program) · [Exit codes](#exit-codes) · [Errors](#errors) · [Events](#events) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
-| [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Failures](#failures) · [Timings](#timings) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
+| [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Resume](#resume) · [Failures](#failures) · [Timings](#timings) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
 | [Default times](#default-times) · [Limitations](#limitations) | |
 
 ---
@@ -59,6 +59,7 @@ Topics, rayo help <topic>
   agents                     start here: the fast, cheap way to use rayo
   write-a-flow               write a flow
   debug-a-flow               debug a failing flow
+  resume                     go on from where a flow failed, after a fix, without running it all again
   record-mocks               record mocks from the real backend
   connect-mocks              connect the app to the mocks: interceptor or proxy
   run-in-ci                  run in a CI
@@ -102,6 +103,12 @@ Options of test: how they run
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes
+
+Options of test: from where, after a fix; see rayo help resume
+  --resume                   each flow that failed last time, from the step that failed, with the app as it is and the mocks' scenarios as they were then
+  --from <step>              begin one flow at a step: file:line as rayo explain's at: says, a line of its own file, or a text of one step such as pickDate; the app is as it is, onFlowStart doesn't run
+  --until <step>             stop one flow after a step, given as --from takes it, leaving the app there; onFlowComplete doesn't run
+  --mock-state <a=s,b=t>     with --resume or --from, the scenarios' states to begin with, over those of the last run
 
 Options of test and check: what is written, as the suite's output
   --video                    a video of each flow whose header doesn't say record, as output: { video: true }
@@ -1728,6 +1735,8 @@ Each of `failures`:
 | `screen` | list | The elements on it |
 | `crash` | text | The app crashed or hung during the flow: what the device log says |
 | `saved` | text | The first file of the rest, which are named alike, see [Failures](#failures) |
+| `scenarios` | list | Of the mocks, the state each was in as it failed; empty without scenarios |
+| `trail` | list | The scenarios as each step began, the last 2000 steps: what --resume and --from set, see [Resume](#resume) |
 <!-- end -->
 
 ```
@@ -1973,6 +1982,20 @@ or, without a suite, `rayo test -e 'MAESTRO_FILENAME=${rayo.file}' flows/`.
 ### Continuous mode
 
 🧪 `rayo test -c` runs again when a flow, or a file it includes, is saved.
+
+### Resume
+
+After a fix to the mocks or a flow, go on from the step that failed instead of running the flow again:
+`rayo test --resume <suite>`. The files are read again; the step that failed runs first. `onFlowStart`
+and the steps before it don't run, so the app must be where the failure left it; their `mock:` steps
+and the mocks of the flows they `runFlow` are still loaded. The mocks' scenarios are set as they were
+as that step began: each failure in `failed.json` keeps them in `trail`, and `scenarios` as it failed.
+Each call says the `mapping` that answered it and what it did to its `scenario`.
+
+`--from <file:line>` begins one flow at any step, before or after the failure, and `--until <file:line>`
+stops it after one, leaving the app there, without `onFlowComplete`. `--mock-state booking=booked` sets
+scenarios over those of the last run. Such a run has no retries, and a pass leaves the flow in
+`failed.json`: run it whole to be sure. In a live session, `.states` lists the scenarios.
 
 ### Failures
 

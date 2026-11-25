@@ -8,4 +8,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: --emulator is not an option of check, but of hierarchy, live, test; see rayo help check
+error: --emulator only matters while flows run on a device; rayo check runs nothing, so drop it there and keep it for rayo test

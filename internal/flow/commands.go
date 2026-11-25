@@ -251,7 +251,7 @@ func init() {
 		"mock": {about: "Adds mocks: a path, or one written here",
 			keys:  []anyKey{keyFile, keyMockID, keyMockName, keyPriority, keyScenario, keyRequired, keyNewState, keyRequest, keyResponse},
 			plain: keyFile, check: checkMock, say: sayMock, run: addMock},
-		"mockState": {about: "Moves scenarios to a state, such as { ride: docked }",
+		"mockState": {about: "Moves scenarios to a state, such as { ride: docked }; in rayo live, .states lists them; rayo test --mock-state sets them where --resume or --from begins",
 			free: true, check: checkMockState, say: listing, run: setMockState},
 		"network": {about: "How the connection to the mock behaves",
 			keys: []anyKey{keyState, keyDelay, keyFail, keyCallPath}, plain: keyState, check: checkNetwork, run: setNetwork},

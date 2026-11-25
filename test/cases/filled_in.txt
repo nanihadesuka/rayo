@@ -224,7 +224,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/a_failure.png"
+      "saved": ".rayo/a_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/b.yaml": {
@@ -253,7 +255,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/b_failure.png"
+      "saved": ".rayo/b_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/c.yaml": {
@@ -282,7 +286,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/c_failure.png"
+      "saved": ".rayo/c_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/d.yaml": {
@@ -311,7 +317,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/d_failure.png"
+      "saved": ".rayo/d_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/e.yaml": {
@@ -340,7 +348,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/e_failure.png"
+      "saved": ".rayo/e_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/f.yaml": {
@@ -369,7 +379,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/f_failure.png"
+      "saved": ".rayo/f_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/g.yaml": {
@@ -398,7 +410,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/g_failure.png"
+      "saved": ".rayo/g_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/h.yaml": {
@@ -427,7 +441,9 @@ a screen
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/h_failure.png"
+      "saved": ".rayo/h_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

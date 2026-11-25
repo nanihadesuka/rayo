@@ -69,6 +69,7 @@ type Runner struct {
 	reporter Reporter
 	backend  *backend
 	room     *room
+	Start    *Start // of the next flows to run; nil to run them whole
 
 	// Of the flow running now.
 	flow       *Flow
@@ -86,6 +87,9 @@ type Runner struct {
 	airplane   string    // how airplane mode was before the flow changed it
 	skipped    bool      // the step running now said it was skipped
 	stepBegan  time.Time // of the last step that isn't a group's
+	from       string    // the step to begin from, until it is reached
+	passed     int       // steps gone by before it
+	trail      []StepStates
 }
 
 // NewRunner makes a Runner; what happens goes to the reporter.
@@ -143,6 +147,10 @@ func (r *Runner) prepare(ctx context.Context, f *Flow, a Attempt) {
 	r.flow, r.began, r.attempt = f, time.Now(), a
 	r.recent, r.failure, r.warnings, r.recordings, r.files = nil, nil, nil, nil, nil
 	r.log, r.located, r.airplane = "", false, ""
+	r.from, r.passed, r.trail = "", 0, nil
+	if r.Start != nil {
+		r.from = r.Start.From
+	}
 	for _, e := range evidence { // of an earlier run
 		_ = os.Remove(r.named(e.name, e.ext))
 	}
@@ -184,11 +192,18 @@ func (r *Runner) warn(depth int, text string) {
 
 func (r *Runner) run(ctx context.Context, f *Flow) error {
 	err := r.begin(f)
-	if err == nil {
+	if err == nil && r.from == "" {
 		err = r.steps(ctx, f.OnStart, 0)
 	}
 	if err == nil {
 		err = r.steps(ctx, f.Steps, 0)
+	}
+	if err == nil && r.from != "" {
+		err = fmt.Errorf("never reached the step %s to begin from: a runFlow's when or a repeat's while may have left it out", r.from)
+	}
+	until := errors.Is(err, errUntil)
+	if until {
+		err = nil
 	}
 	if err == nil {
 		err = r.backend.check()
@@ -198,6 +213,13 @@ func (r *Runner) run(ctx context.Context, f *Flow) error {
 	}
 	if err != nil {
 		r.evidence(ctx)
+	}
+	if err == nil && r.Start != nil {
+		defer r.reporter.Note(0, "ran only part of the flow, so its pass is not the whole flow's: it stays in failed.json; once the fix is right, run it whole with --only "+f.Name)
+	}
+	if until {
+		r.reporter.Note(0, "stopped after "+r.Start.Until+" as --until says: onFlowComplete didn't run, and the app is left as it is")
+		return err
 	}
 	if e := r.steps(ctx, f.OnComplete, 0); err == nil {
 		err = e
@@ -215,8 +237,24 @@ func (r *Runner) steps(ctx context.Context, steps []*Step, depth int) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
+		if r.from != "" {
+			if !s.Is(r.from, r.flow.Path) && !r.leadsTo(s, 0) {
+				if err := r.pass(ctx, s, depth); err != nil {
+					return &StepError{Step: s, Err: err}
+				}
+				continue
+			}
+			if s.Is(r.from, r.flow.Path) {
+				if err := r.reached(s); err != nil {
+					return &StepError{Step: s, Err: err}
+				}
+			}
+		}
 		if err := r.step(ctx, s, depth); err != nil {
 			return err
+		}
+		if r.stopsAfter(s) {
+			return errUntil
 		}
 	}
 	return nil
@@ -230,6 +268,10 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 	if !k.group {
 		r.backend.during(s)
 		r.stepBegan = start
+		if states := r.backend.scenarios(); len(states) > 0 {
+			r.trail = append(r.trail, StepStates{At: s.Place(), States: states})
+			r.trail = r.trail[max(0, len(r.trail)-trailMost):]
+		}
 	}
 	r.skipped = false
 	slow := func() {}
@@ -239,6 +281,10 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 	optional, err := r.optional(s)
 	if err == nil {
 		err = r.call(ctx, s, k, optional, depth)
+	}
+	stopping := errors.Is(err, errUntil) // after a step inside this one
+	if stopping {
+		err = nil
 	}
 	if err == nil && !k.group && r.backend.mock != nil {
 		err = r.backend.mock.Err() // such as a call that can't be mocked: at once, not after the flow
@@ -272,6 +318,9 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 		r.reporter.Step(total)
 	}
 	r.skipped = false
+	if stopping && err == nil {
+		return errUntil
+	}
 	var known *StepError
 	if errors.As(err, &known) {
 		known.From = append(known.From, s)
@@ -377,7 +426,7 @@ func filledIn(n *yaml.Node, check func(p *reader, n *yaml.Node) error) error {
 
 // evidence saves what can be known of a failure. What can't be saved is reported, as it isn't the failure.
 func (r *Runner) evidence(ctx context.Context) {
-	r.failure = &Failure{Before: r.recent}
+	r.failure = &Failure{Before: r.recent, Scenarios: r.backend.scenarios(), Trail: r.trail}
 	from := r.windowStart()
 	if r.backend.mock != nil {
 		r.failure.Calls = relevant(r.backend.mock.Calls(), from)

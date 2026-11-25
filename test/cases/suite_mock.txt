@@ -44,7 +44,7 @@ mock: ../mocks/b.json
     tapOn GET /b
     tapOn GET /a
   calls:
-    <time> GET /b -> 200
+    <time> GET /b -> 200  by ANY /b (mocks/b.json)
     <time> GET /a -> not mocked
   saved: .rayo/own_failure.png
 
@@ -116,6 +116,8 @@ bye {"timeout":5000}
           "uri": "/b",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /b (mocks/b.json)",
+          "scenario": "",
           "body": ""
         },
         {
@@ -124,12 +126,16 @@ bye {"timeout":5000}
           "uri": "/a",
           "outcome": "not mocked",
           "mocked": false,
+          "mapping": "",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/own_failure.png"
+      "saved": ".rayo/own_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   }
 }
@@ -138,7 +144,7 @@ PNG...
 -- file .rayo/own_logcat.txt --
 the log
 -- file .rayo/own_requests.txt --
-<time> GET /b -> 200
+<time> GET /b -> 200  by ANY /b (mocks/b.json)
 <time> GET /a -> not mocked
 -- file .rayo/own_screen.txt --
 a screen

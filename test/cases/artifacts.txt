@@ -75,7 +75,9 @@ a video ........................................................................
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ".rayo/c-logcat.txt"
+      "saved": ".rayo/c-logcat.txt",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

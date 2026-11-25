@@ -1,0 +1,12 @@
+-- args --
+test --from 99 flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: { id: a }
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --from: case has no step at 99 (not of onFlowStart or onFlowComplete); its steps:
+  flow.yaml:3  tapOn a

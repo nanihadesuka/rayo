@@ -88,7 +88,9 @@ bye {"timeout":5000}
       "calls": [],
       "screen": [],
       "crash": "",
-      "saved": ""
+      "saved": "",
+      "scenarios": [],
+      "trail": []
     }
   }
 }

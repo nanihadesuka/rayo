@@ -47,7 +47,7 @@ appId: a.b
     tapOn GET /a
     camera none
   calls:
-    <time> GET /a -> 200
+    <time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
   saved: e2e/results/b_failure.png
 [2/3] NOT_RUN a  (--fail-fast, after b)
 [3/3] NOT_RUN c  (--fail-fast, after b)
@@ -82,7 +82,7 @@ PNG...
 11-22 <time>  1  1 E AndroidRuntime: Process: a.b, PID: 1
 11-22 <time>  1  1 E AndroidRuntime: java.lang.IllegalStateException: oops
 -- file e2e/results/b_requests.txt --
-<time> GET /a -> 200
+<time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
 -- file e2e/results/b_screen.txt --
 a screen
 -- file e2e/results/failed.json --
@@ -133,12 +133,16 @@ a screen
           "uri": "/a",
           "outcome": "200",
           "mocked": true,
+          "mapping": "ANY /a (e2e/b/mock.json)",
+          "scenario": "",
           "body": ""
         }
       ],
       "screen": [],
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
-      "saved": "e2e/results/b_failure.png"
+      "saved": "e2e/results/b_failure.png",
+      "scenarios": [],
+      "trail": []
     }
   },
   "<dir>/e2e/c/flow.yaml": {
@@ -169,7 +173,7 @@ FAIL b  # s
     tapOn GET /a
     camera none
   calls:
-    <time> GET /a -> 200
+    <time> GET /a -> 200  by ANY /a (e2e/b/mock.json)
   saved: e2e/results/b_failure.png
 NOT_RUN a  (--fail-fast, after b)
   file: e2e/a/flow.yaml

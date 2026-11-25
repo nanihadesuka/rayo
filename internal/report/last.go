@@ -65,7 +65,9 @@ func (s *Summary) SaveLast(file string) error {
 	before := len(last)
 	for _, o := range s.Outcomes {
 		if o.Passed() {
-			delete(last, Identity(o.Flow))
+			if !o.Partial { // from a step on, it may still fail before it
+				delete(last, Identity(o.Flow))
+			}
 			continue
 		}
 		u := Unpassed{Status: o.Status, Name: o.Flow.Name, File: filepath.ToSlash(o.Flow.Path), Why: o.Why}
@@ -130,11 +132,22 @@ func (u Unpassed) Explain() string {
 	}
 	add("crash", f.Crash)
 	list("nearest", f.Nearest)
+	var states []string
+	for _, sc := range f.Scenarios {
+		states = append(states, sc.Name+": "+sc.State)
+	}
+	list("scenarios", states)
 	var calls []string
 	for _, c := range f.Calls {
 		calls = append(calls, c.String())
 	}
 	list("calls", calls)
 	add("saved", f.Saved)
+	if f.Blame == flow.Test && (f.Cause == flow.NotOnScreen || f.Cause == flow.UnmockedCall) {
+		add("rerun", "unchanged it fails the same way: fix the flow or the mocks first")
+	}
+	if f.Error.File != "" {
+		add("next", fmt.Sprintf("after a fix, rayo test --resume <the suite or flow you ran> goes on from %s:%d, mocks as then; rayo help resume", f.Error.File, f.Error.Line))
+	}
 	return b.String()
 }

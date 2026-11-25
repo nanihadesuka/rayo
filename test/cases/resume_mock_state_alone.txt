@@ -1,0 +1,11 @@
+-- args --
+test --mock-state ride=riding flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: { id: a }
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --mock-state sets the scenarios where a flow begins in the middle: add --resume or --from; see rayo help resume

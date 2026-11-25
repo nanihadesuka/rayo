@@ -38,7 +38,8 @@ type Rule struct {
 	PostServeActions    json.RawMessage `json:"postServeActions"`
 	ServeEventListeners json.RawMessage `json:"serveEventListeners"`
 
-	body *template
+	body   *template
+	source string // where it was written: file#n, or empty for a flow's step
 }
 
 type ruleRequest struct {
