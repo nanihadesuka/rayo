@@ -65,26 +65,27 @@ func TestProxy(t *testing.T) {
 	if got, err := get(direct, fmt.Sprintf("http://127.0.0.1:%d/api.example.com/hello?a=1", port)); err != nil || got != "200 hi" {
 		t.Fatalf("interceptor: %q %v", got, err)
 	}
-	// An app that doesn't trust the CA: told, not a failure of the run.
+	// An app that doesn't trust the CA: an error of the run at once, as its calls would reach the real
+	// backend; and its calls after are refused, never sent on.
 	if _, err := get(client(false), "https://api.example.com/hello?a=1"); err == nil {
 		t.Fatal("an untrusted CA was accepted")
 	}
-	notes := ""
+	var failed error
 	for limit := time.Now().Add(2 * time.Second); time.Now().Before(limit); time.Sleep(10 * time.Millisecond) {
 		// the proxy tells it once its side of the handshake ends, which may be after the app's
-		if notes = strings.Join(p.Notes(), "\n"); strings.Contains(notes, "pinned or untrusted CA") {
+		if failed = m.Err(); failed != nil {
 			break
 		}
 	}
-	if !strings.Contains(notes, "pinned or untrusted CA: api.example.com rejected rayo's CA") {
-		t.Fatalf("notes: %s", notes)
+	if failed == nil || !strings.Contains(failed.Error(), "pinned or untrusted CA: api.example.com rejected rayo's CA") {
+		t.Fatalf("err: %v", failed)
+	}
+	if _, err := get(client(false), "https://api.example.com/hello?a=1"); err == nil || strings.Count(m.Err().Error(), "pinned") != 1 {
+		t.Fatalf("a refused host was sent on, or told twice: %v, %v", err, m.Err())
 	}
 	calls := m.Calls()
 	if len(calls) != 3 || calls[0].URI != "/api.example.com/hello?a=1" {
 		t.Fatalf("calls: %v", calls)
-	}
-	if err := m.Err(); err != nil {
-		t.Fatal(err)
 	}
 }
 

@@ -240,6 +240,9 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 	if err == nil {
 		err = r.call(ctx, s, k, optional, depth)
 	}
+	if err == nil && !k.group && r.backend.mock != nil {
+		err = r.backend.mock.Err() // such as a call that can't be mocked: at once, not after the flow
+	}
 	slow()
 	report := StepReport{Depth: depth, Text: s.describe(), Took: time.Since(start)}
 	if r.Profile && !k.group {

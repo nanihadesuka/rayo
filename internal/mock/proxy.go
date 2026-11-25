@@ -29,7 +29,7 @@ type Proxy struct {
 
 	mu        sync.Mutex
 	passed    map[string]bool   // hosts tunnelled untouched
-	refused   map[string]string // hosts whose TLS the app refused: tunnelled from then on
+	refused   map[string]string // hosts whose TLS the app refused: their calls are refused, never sent on
 	plainSeen map[string]bool   // hosts called over plain http, passed untouched
 	browsers  map[string]bool   // hosts a browser called, such as a Custom Tab: tunnelled, as it trusts only the system CAs
 	conns     map[net.Conn]bool // hijacked, which the server doesn't close
@@ -109,15 +109,6 @@ func (p *Proxy) Notes() []string {
 	if list := sorted(p.plainSeen); list != "" {
 		notes = append(notes, "proxy, plain http passed untouched: "+list)
 	}
-	var hosts []string
-	for h := range p.refused {
-		hosts = append(hosts, h)
-	}
-	sort.Strings(hosts)
-	for _, h := range hosts {
-		notes = append(notes, fmt.Sprintf("pinned or untrusted CA: %s rejected rayo's CA (%s), so its calls were tunnelled, "+
-			"neither captured nor mocked; a debug build trusts it with the network_security_config of rayo ca export", h, p.refused[h]))
-	}
 	return notes
 }
 
@@ -179,6 +170,10 @@ func (p *Proxy) connect(w http.ResponseWriter, q *http.Request) {
 		p.passed[host] = true
 	}
 	p.mu.Unlock()
+	if refused { // to the real backend, it would be neither mocked nor captured
+		http.Error(w, "rayo: the app doesn't trust rayo's CA for "+host+", so its calls are refused", http.StatusBadGateway)
+		return
+	}
 	hj, ok := w.(http.Hijacker)
 	if !ok {
 		http.Error(w, "can't tunnel", http.StatusInternalServerError)
@@ -236,8 +231,14 @@ func (p *Proxy) connect(w http.ResponseWriter, q *http.Request) {
 	_ = conn.SetDeadline(time.Now().Add(15 * time.Second))
 	if err := conn.Handshake(); err != nil {
 		p.mu.Lock()
+		_, again := p.refused[host]
 		p.refused[host] = handshakeReason(err)
 		p.mu.Unlock()
+		if !again {
+			p.mock.fail(fmt.Errorf("pinned or untrusted CA: %s rejected rayo's CA (%s). Its calls would reach the real backend, "+
+				"neither mocked nor captured, so they are refused. A debug build trusts it with the network_security_config of "+
+				"rayo ca export, see rayo help connect-mocks; a host left out of --hosts passes untouched", host, handshakeReason(err)))
+		}
 		conn.Close()
 		return
 	}
