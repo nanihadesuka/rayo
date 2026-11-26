@@ -81,10 +81,10 @@ Options of hierarchy and do
   --find <text>              of the screen, only the elements most like it, instead of all
 
 Options of test, live, do and explain
-  --output <folder>          where failures and screenshots go (default .rayo)
+  --output <folder>          where failures and screenshots go (default .rayo) (suite: output.folder)
 
 Options of test and live
-  --timeout-scale <factor>   multiply the default waits, not a step's own timeout (default 1)
+  --timeout-scale <factor>   multiply the default waits, not a step's own timeout, from 0.1 to 10 (default 1) (suite: timeoutScale)
   --mock-port <port>         where the app finds the mock on the device (default 8080)
   --animations               leave the device's animations on
   --profile                  where the time of each step went
@@ -97,12 +97,12 @@ Options of test and check: which flows of them
   --shard <i/n>              only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order
 
 Options of test and check: as the suite says, for one run
-  -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own
-  --retries <n>              try again what fails, every flow, also one the suite gives its own retries (default 1, or the suite's)
+  -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own (suite: env)
+  --retries <n>              try again what fails, every flow, also one the suite gives its own retries (default 1, or the suite's) (suite: retries)
 
 Options of test: how they run
   --fail-fast                stop at the first failure
-  --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0)
+  --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0) (suite: flakyFailsBuild)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
   -c, --continuous           run again whenever a file changes
@@ -114,18 +114,18 @@ Options of test: from where, after a fix; see rayo help resume
   --mock-state <a=s,b=t>     with --resume or --from, the scenarios' states to begin with, over those of the last run
 
 Options of test and check: what is written, as the suite's output
-  --video                    a video of each flow whose header doesn't say record, as output: { video: true }
-  --keep <when>              the files of every try (all, default), only of the tries that failed, or none
-  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all)
-  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext})
+  --video                    a video of each flow whose header doesn't say record, as output: { video: true } (suite: output.video)
+  --keep <when>              the files of every try (all, default), only of the tries that failed, or none (suite: output.keep)
+  --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all) (suite: output.artifacts)
+  --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext}) (suite: output.nameTemplate)
 
 Options of test: what comes out
-  --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files
-  --failure-window <seconds> a failure's log and calls begin this long before the failing step (default 10)
-  --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated
-  --results-template <file>  write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end}
-  --show <a,b>               the flows the results list: failed, flaky, slow or all (default all)
-  --slowest <n>              how many flows the slow list has (default 5)
+  --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files (suite: detail)
+  --failure-window <seconds> a failure's log and calls begin this long before the failing step (default 10) (suite: failureWindow)
+  --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated (suite: results)
+  --results-template <file>  write the results with that extension as this file says, with {suite}, {passed}, {failed}, {flaky} and the like, and {flows}...{end} (suite: resultsTemplate)
+  --show <a,b>               the flows the results list: failed, flaky, slow or all (default all) (suite: show)
+  --slowest <n>              how many flows the slow list has (default 5) (suite: slowest)
   --timings                  while it runs: each step's time, each runFlow's total, the slowest steps and flows, and a note while a step hangs
 
 Options of test and live: mocks from the real backend
@@ -133,26 +133,26 @@ Options of test and live: mocks from the real backend
   --capture-update <folder>  capture into folder/.update, and say what changed from the mocks in folder; rayo mocks apply takes it. Given a suite instead, the folder is the flow's mock
   --check                    with --capture-update, fail if the mocks differ from the backend, and change nothing
   --capture-append           go on with the capture already in the folder, as if in one go
-  --redact-value <name=value> what a private field of a body becomes, such as phone=+4915100000000 (default one of the same form: a date stays a date); again for more
+  --redact-value <name=value> what a private field of a body becomes, such as phone=+4915100000000 (default one of the same form: a date stays a date); again for more (suite: capture.redactValue)
 
 Options of test, live and mocks: how a capture or an import becomes mocks
-  --capture-from <url>       the backend, if calls don't begin with /host/
-  --graphql <match>          tell GraphQL calls apart by operation+variables (default), by operation, or off, as any call
-  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql)
-  --rest <match>             match other calls by their body too (body, default), or by method and address alone (off)
-  --ignore-params <a,b>      names in the query not to match, such as session or depart_at
-  --ignore-body <a,b>        names, or paths such as trip.departAt, in JSON bodies and GraphQL variables, and names in forms, not to match
-  --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly
-  --capture-headers <a,b>    headers of the request to match too, such as Accept-Language
-  --ignore-host              match calls whose path begins with a host, whatever the host
-  --ignore-path-ids          match UUIDs and ULIDs in paths by their form, as they are new on each run
-  --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any)
+  --capture-from <url>       the backend, if calls don't begin with /host/ (suite: capture.from)
+  --graphql <match>          tell GraphQL calls apart by operation+variables (default), by operation, or off, as any call (suite: capture.graphql)
+  --graphql-path <regex>     paths of GraphQL calls, besides those whose body has query or operationName (default .*/graphql) (suite: capture.graphqlPath)
+  --rest <match>             match other calls by their body too (body, default), or by method and address alone (off) (suite: capture.rest)
+  --ignore-params <a,b>      names in the query not to match, such as session or depart_at (suite: capture.ignoreParams)
+  --ignore-body <a,b>        names, or paths such as trip.departAt, in JSON bodies and GraphQL variables, and names in forms, not to match (suite: capture.ignoreBody)
+  --timestamps <match>       match dates and times in the query and bodies by their form (format, default), or exactly (suite: capture.timestamps)
+  --capture-headers <a,b>    headers of the request to match too, such as Accept-Language (suite: capture.captureHeaders)
+  --ignore-host              match calls whose path begins with a host, whatever the host (suite: capture.ignoreHost)
+  --ignore-path-ids          match UUIDs and ULIDs in paths by their form, as they are new on each run (suite: capture.ignorePathIds)
+  --stateless <a,b>          paths such as api.shop.com/quotes/** whose calls only read, whatever the method: they don't change the state (* any text but /, ** any) (suite: capture.stateless)
 
 Options of test, live and ca: how calls reach the mock
-  --network <way>            interceptor, the app sends them, with code in its debug build (default, or the flow's); proxy, the device's proxy does, no code; see rayo help connect-mocks
-  --ignore-unmocked <a,b>    calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any)
-  --ca <folder>              with a proxy, the CA it signs with, its ca.pem and ca-key.pem (default .rayo/ca next to the suite or above it, else ~/.rayo); see rayo ca
-  --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks)
+  --network <way>            interceptor, the app sends them, with code in its debug build (default, or the flow's); proxy, the device's proxy does, no code; see rayo help connect-mocks (suite: network)
+  --ignore-unmocked <a,b>    calls without a mock that don't fail the flow, answered 404: graphql:Operation, host/path, host or /path (* any text but /, ** any) (suite: unmocked.ignore)
+  --ca <folder>              with a proxy, the CA it signs with, its ca.pem and ca-key.pem (default .rayo/ca next to the suite or above it, else ~/.rayo); see rayo ca (suite: ca)
+  --hosts <a,b>              with a proxy, the hosts to open, and their subdomains (default: capturing, all but Google's, Firebase's, analytics and crash reports; else those of the mocks) (suite: capture.hosts)
 
 Options of live
   --app <package>            of a flow that isn't there yet
@@ -168,7 +168,7 @@ Options of do
   --screen[=changes]         also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave
 
 Options of test, check, explain, devices, hierarchy, do and mocks
-  --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs
+  --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs (suite: format)
 ```
 
 ---
@@ -1835,6 +1835,12 @@ commit, also those not committed yet: the flow's own, one it runs with `runFlow`
 `--since <git ref>` does so since that ref, such as `--since origin/main`.
 
 `rayo check` says which flows would run, in that order, with their tags and mocks; with `--format json`, also the retries of each.
+Two flows with the same name are an error, as `--only` and the output folder can't tell them apart: give
+one a `name:` in its header. A name of `--only`, or a tag, that no flow has is an error that says the
+nearest one and those there are; a tag no flow has is let be when another of the list is there. A key
+written twice in a step, a `when` or `while` without a condition, an empty `text` or `id`, and an `id`
+with spaces around it are errors too. Most mistakes of a name, a key or a word end in `did you mean ...?`;
+`rayo help test` says the key of a suite that each option overrides, as `(suite: output.keep)`.
 
 ### For a program
 

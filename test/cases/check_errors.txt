@@ -239,7 +239,7 @@ appId: a.b
 -- stderr --
 error: flows/a01.yaml:3: unknown command "tapOm", did you mean tapOn?
        flows/a02.yaml:3: tapOn needs a value
-       flows/a03.yaml:3: tapOn doesn't take "idd" (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)
+       flows/a03.yaml:3: tapOn doesn't take "idd", did you mean id? (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)
        flows/a04.yaml:3: tapOn needs an element, such as a text or an id
        flows/a05.yaml:3: tapOn doesn't take a list
        flows/a06.yaml:3: a selector doesn't take "nope" (it takes above, below, checked, childOf, containsChild, containsDescendants, enabled, focused, id, index, leftOf, rightOf, selected, text)
@@ -247,13 +247,13 @@ error: flows/a01.yaml:3: unknown command "tapOm", did you mean tapOn?
        flows/a08.yaml:3: point: not a point: "3,4%" (use '35%, 30%' or '540, 1200')
        flows/a09.yaml:3: timeout: not a time: "soon" (use 500 or 10s)
        flows/a10.yaml:3: back doesn't take a plain value
-       flows/a11.yaml:3: a command is one action, such as '- tapOn: Login'
+       flows/a11.yaml:4: id belongs under tapOn: indent it, as '- tapOn: { ..., id: ... }'
        flows/a12.yaml:2: unknown key "bogus" (it takes appId, name, tags, env, mock, network, record, onFlowStart, onFlowComplete)
        flows/a13.yaml: expected 'appId: ...', then '---', then a list of commands
        flows/a14.yaml: yaml: line 1: did not find expected node content
-       flows/b01.yaml:3: no file flows/nope.yaml
+       flows/b01.yaml:3: no such file: nope.yaml
        flows/b02.yaml:3: runFlow needs either a file or commands
-       flows/b03.yaml:3: when doesn't take "visble" (it takes notVisible, platform, timeout, true, visible)
+       flows/b03.yaml:3: when doesn't take "visble", did you mean visible? (it takes notVisible, platform, timeout, true, visible)
        flows/b04.yaml:3: tapOn doesn't take "nope" (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)
        flows/b05.yaml: flows run each other in a circle
        flows/b06.yaml:3: no such file: nope.js
@@ -279,7 +279,7 @@ error: flows/a01.yaml:3: unknown command "tapOm", did you mean tapOn?
        flows/d04.yaml:3: id: takes a single value
        flows/d05.yaml:3: index: not a whole number: "first"
        flows/e00.yaml:3: label: takes a single value
-       flows/e01.yaml:3: permissions: camera: not one of allow, deny, unset: "alow"
+       flows/e01.yaml:3: permissions: camera: not one of allow, deny, unset: "alow", did you mean allow?
        flows/e02.yaml:3: permissions: takes a mapping
        flows/e03.yaml:3: arguments: takes a mapping
        flows/e04.yaml:3: when: takes visible, notVisible, platform, true, timeout

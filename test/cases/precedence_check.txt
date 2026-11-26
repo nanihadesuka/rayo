@@ -1,0 +1,32 @@
+-- args --
+check -e A=option s.suite.yaml
+-- s.suite.yaml --
+retries: 3
+env:
+  A: suite
+  B: suite
+flows:
+  - a.yaml
+  - { file: b.yaml, retries: 0 }
+-- a.yaml --
+appId: a.b
+env:
+  A: flow
+  B: flow
+  C: flow
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+0
+-- stdout --
+2 flows are fine
+  a  a.yaml  retries: 3  own env: C=flow
+  b  b.yaml  retries: 0
+a run writes to .rayo, keeps the files of every try, with a video only of flows whose header says record
+such as .rayo/a_failure.png, and of a retry .rayo/a_retry1_logcat.txt
+env, over each flow's own: A=option, B=suite

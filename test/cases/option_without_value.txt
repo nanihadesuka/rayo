@@ -4,4 +4,4 @@ test flow.yaml --device
 -- exit --
 2
 -- stderr --
-error: no file flow.yaml
+error: flow.yaml isn't there; give a flow file, a folder or a *.suite.yaml

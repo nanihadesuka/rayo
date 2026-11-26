@@ -14,6 +14,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/agent"
 	"github.com/nanihadesuka/rayo/internal/flow"
 	"github.com/nanihadesuka/rayo/internal/report"
+	"github.com/nanihadesuka/rayo/internal/schema"
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
@@ -50,13 +51,39 @@ func (s *session) restart() error {
 
 // choose is the flows asked for, in the order to run them.
 func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
+	var names, tags []string
+	for _, f := range flows {
+		names = append(names, f.Name)
+		for _, t := range f.Tags {
+			if !slices.Contains(tags, t) {
+				tags = append(tags, t)
+			}
+		}
+	}
+	slices.Sort(tags)
 	for _, name := range o.only {
-		if !slices.ContainsFunc(flows, func(f *flow.Flow) bool { return f.Name == name }) {
-			var names []string
-			for _, f := range flows {
-				names = append(names, f.Name)
+		if !slices.Contains(names, name) {
+			if near := schema.Nearest(name, names); near != "" {
+				return nil, fmt.Errorf("no flow is called %s, did you mean %s? There are: %s", name, near, strings.Join(names, ", "))
 			}
 			return nil, fmt.Errorf("no flow is called %s; there are: %s", name, strings.Join(names, ", "))
+		}
+	}
+	// A tag no flow has may be one of flows to come, unless it is all that is asked; one like a tag
+	// in use is a typo.
+	for i, tag := range slices.Concat(o.include, o.exclude) {
+		if slices.Contains(tags, tag) {
+			continue
+		}
+		inUse := "no flow has tags"
+		if len(tags) > 0 {
+			inUse = "the flows' tags are: " + strings.Join(tags, ", ")
+		}
+		if near := schema.Nearest(tag, tags); near != "" {
+			return nil, fmt.Errorf("no flow has the tag %s, did you mean %s? %s", tag, near, inUse)
+		}
+		if i < len(o.include) && !slices.ContainsFunc(o.include, func(t string) bool { return slices.Contains(tags, t) }) {
+			return nil, fmt.Errorf("no flow has the tag %s; %s", tag, inUse)
 		}
 	}
 	var last map[string]report.Unpassed
@@ -83,7 +110,17 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 		chosen = append(chosen, f)
 	}
 	if len(chosen) == 0 && !o.rerunFailed {
-		return nil, errors.New("no flows have those tags")
+		var asked []string
+		if len(o.only) > 0 {
+			asked = append(asked, "--only "+strings.Join(o.only, ","))
+		}
+		if len(o.include) > 0 {
+			asked = append(asked, "--include-tags "+strings.Join(o.include, ","))
+		}
+		if len(o.exclude) > 0 {
+			asked = append(asked, "--exclude-tags "+strings.Join(o.exclude, ","))
+		}
+		return nil, fmt.Errorf("none of the %d flows is left by %s", len(flows), strings.Join(asked, " with "))
 	}
 	if o.shards > 0 {
 		chosen = o.part(chosen)

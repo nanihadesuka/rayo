@@ -1,0 +1,15 @@
+-- args --
+check --only logn login.yaml home.yaml
+-- login.yaml --
+appId: a.b
+---
+- back
+-- home.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: no flow is called logn, did you mean login? There are: login, home

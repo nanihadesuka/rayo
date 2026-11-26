@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/nanihadesuka/rayo/internal/adb"
@@ -173,8 +174,12 @@ func read(path string) (*Suite, error) {
 	s := &Suite{Path: path}
 	if top := doc.Content[0]; top.Kind == yaml.MappingNode {
 		for i := 0; i < len(top.Content); i += 2 {
-			if to, ok := Moved[top.Content[i].Value]; ok {
-				return nil, &flow.Problem{Path: path, Line: top.Content[i].Line, What: fmt.Sprintf("%s is now %s (rayo 3.0 put what a run writes under output, and spells every key in camelCase)", top.Content[i].Value, to)}
+			key := top.Content[i]
+			if to, ok := Moved[key.Value]; ok {
+				return nil, &flow.Problem{Path: path, Line: key.Line, What: fmt.Sprintf("%s is now %s (rayo 3.0 put what a run writes under output, and spells every key in camelCase)", key.Value, to)}
+			}
+			if under := elsewhere(key.Value); under != "" {
+				return nil, &flow.Problem{Path: path, Line: key.Line, What: fmt.Sprintf("unknown key %q, did you mean %s? It belongs under %s: { %s: ... }", key.Value, under+"."+key.Value, under, key.Value)}
 			}
 		}
 	}
@@ -236,6 +241,9 @@ func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 	var files []string
 	for _, p := range paths {
 		info, err := os.Stat(p)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil, missing(p)
+		}
 		if err != nil {
 			return nil, nil, err
 		}
@@ -280,6 +288,17 @@ func Load(paths []string) ([]*flow.Flow, *Suite, error) {
 	if len(flows) == 0 {
 		return nil, nil, fmt.Errorf("no flows in %s", strings.Join(paths, ", "))
 	}
+	named := map[string]*flow.Flow{} // by the name of their files' folder, which a file system may not tell apart by case
+	for _, f := range flows {
+		key := strings.ToLower(flow.FolderName(f.Name))
+		if other, ok := named[key]; ok && other.Path != f.Path {
+			bad = append(bad, &flow.Problem{Path: f.Path, What: fmt.Sprintf("is named %s, as %s is: --only and the output folder can't tell them apart; give one a name: in its header", f.Name, filepath.ToSlash(other.Path))})
+		}
+		named[key] = f
+	}
+	if len(bad) > 0 {
+		return nil, nil, bad
+	}
 	if s != nil {
 		if err := s.fill(flows); err != nil {
 			return nil, nil, err
@@ -300,3 +319,42 @@ func (p Problems) Error() string {
 }
 
 func (p Problems) Unwrap() []error { return p }
+
+// elsewhere is the key of a suite that has a key of that name, when the suite itself has none;
+// empty if none has.
+func elsewhere(name string) string {
+	if slices.ContainsFunc(Fields, func(f schema.Field[Suite]) bool { return f.Name == name }) {
+		return ""
+	}
+	for _, in := range []struct {
+		key   string
+		names []string
+	}{{"output", fieldNames(OutputFields)}, {"capture", fieldNames(CaptureFields)}, {"device", fieldNames(DeviceFields)}, {"app", fieldNames(AppFields)}} {
+		if slices.Contains(in.names, name) {
+			return in.key
+		}
+	}
+	return ""
+}
+
+func fieldNames[T any](fields []schema.Field[T]) []string {
+	var list []string
+	for _, f := range fields {
+		list = append(list, f.Name)
+	}
+	return list
+}
+
+// missing is the error of a path that isn't there, and the nearest of what is next to it.
+func missing(path string) error {
+	err := fmt.Errorf("%s isn't there; give a flow file, a folder or a *%s", filepath.ToSlash(path), suiteEnd)
+	entries, _ := os.ReadDir(filepath.Dir(path))
+	var names []string
+	for _, d := range entries {
+		names = append(names, d.Name())
+	}
+	if near := schema.Nearest(filepath.Base(path), names); near != "" {
+		return fmt.Errorf("%w; did you mean %s?", err, filepath.ToSlash(filepath.Join(filepath.Dir(path), near)))
+	}
+	return err
+}

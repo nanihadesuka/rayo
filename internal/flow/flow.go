@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/nanihadesuka/rayo/internal/mock"
+	"github.com/nanihadesuka/rayo/internal/schema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -189,6 +190,16 @@ func (p *reader) step(n *yaml.Node) (*Step, error) {
 			s.Value = nil
 		}
 	default:
+		if n.Kind == yaml.MappingNode && len(n.Content) > 2 {
+			if k, ok := commands[n.Content[0].Value]; ok {
+				for i := 2; i < len(n.Content); i += 2 {
+					name := n.Content[i].Value
+					if _, other := commands[name]; !other && (find(k.accepts(), name) != nil || find(commonKeys, name) != nil) {
+						return nil, p.fail(n.Content[i], "%s belongs under %s: indent it, as '- %s: { ..., %s: ... }'", name, n.Content[0].Value, n.Content[0].Value, name)
+					}
+				}
+			}
+		}
 		return nil, p.fail(n, "a command is one action, such as '- tapOn: Login'")
 	}
 	k, ok := commands[s.Kind]
@@ -230,6 +241,9 @@ func suggest(name string) string {
 	return ""
 }
 
+// NearestCommand is the command closest to a name that isn't one; empty if none is close.
+func NearestCommand(name string) string { return nearest(name) }
+
 // nearest is the command closest to a name that isn't one; empty if none is close.
 func nearest(name string) string {
 	best := ""
@@ -256,7 +270,14 @@ func (p *reader) mapping(n *yaml.Node, what string, keys, also []anyKey) error {
 	if n.Kind != yaml.MappingNode {
 		return p.fail(n, "%s: takes %s", what, names(keys, ", "))
 	}
+	seen := map[string]int{}
 	return pairs(n, func(name, v *yaml.Node) error {
+		if line, twice := seen[name.Value]; twice && line == name.Line {
+			return p.fail(name, "%s appears twice; keep one", name.Value)
+		} else if twice {
+			return p.fail(name, "%s appears twice (lines %d and %d); keep one", name.Value, line, name.Line)
+		}
+		seen[name.Value] = name.Line
 		k := find(keys, name.Value)
 		if k == nil {
 			k = find(also, name.Value)
@@ -269,8 +290,20 @@ func (p *reader) mapping(n *yaml.Node, what string, keys, also []anyKey) error {
 			all = append(all, k.title())
 		}
 		sort.Strings(all)
-		e := p.fail(name, "%s doesn't take %q (it takes %s)", what, name.Value, strings.Join(all, ", ")).(*Problem)
-		e.Expected = strings.Join(all, ", ")
+		near := schema.Nearest(name.Value, all)
+		if near == "" {
+			for _, k := range also {
+				all = append(all, k.title())
+			}
+			near = schema.Nearest(name.Value, all)
+			all = all[:len(keys)]
+		}
+		hint := ""
+		if near != "" {
+			hint = ", did you mean " + near + "?"
+		}
+		e := p.fail(name, "%s doesn't take %q%s (it takes %s)", what, name.Value, hint, strings.Join(all, ", ")).(*Problem)
+		e.Expected, e.Nearest = strings.Join(all, ", "), near
 		return e
 	})
 }
@@ -280,9 +313,30 @@ func (p *reader) selector(n *yaml.Node) error {
 	case yaml.ScalarNode:
 		return nil
 	case yaml.MappingNode:
-		return p.mapping(n, "a selector", selectorKeys, commonKeys)
+		if err := p.mapping(n, "a selector", selectorKeys, commonKeys); err != nil {
+			return err
+		}
+		return p.matched(n)
 	}
 	return p.fail(n, "expected a text or a selector")
+}
+
+// matched refuses a text or an id that can't be what is meant: empty, which matches only what has
+// none, or an id with spaces around it, which no id has.
+func (p *reader) matched(n *yaml.Node) error {
+	for _, k := range []anyKey{keyText, keyID} {
+		v := get(n, k)
+		if v == nil || v.Kind != yaml.ScalarNode || v.Tag == "!!null" {
+			continue
+		}
+		switch {
+		case strings.TrimSpace(v.Value) == "":
+			return p.fail(v, "%s is empty; say what to look for, or leave %s out", k.title(), k.title())
+		case k == keyID && strings.TrimSpace(v.Value) != v.Value:
+			return p.fail(v, "id %q has spaces around it, and no id has; write %s", v.Value, strings.TrimSpace(v.Value))
+		}
+	}
+	return nil
 }
 
 func (p *reader) check(s *Step, c command) error {
@@ -301,6 +355,9 @@ func (p *reader) check(s *Step, c command) error {
 		if !found {
 			return p.fail(v, "%s needs an element, such as a text or an id", s.Kind)
 		}
+		if err := p.matched(v); err != nil {
+			return err
+		}
 	}
 	if n := get(v, keyCommands); n != nil {
 		sub, err := p.steps(n)
@@ -313,6 +370,19 @@ func (p *reader) check(s *Step, c command) error {
 		return c.check(p, s)
 	}
 	return nil
+}
+
+// nearFile is ", did you mean ...?" with the file next to a missing one most like it, as written; empty if none is.
+func nearFile(path, written string) string {
+	entries, _ := os.ReadDir(filepath.Dir(path))
+	var names []string
+	for _, d := range entries {
+		names = append(names, d.Name())
+	}
+	if near := schema.Nearest(filepath.Base(path), names); near != "" {
+		return fmt.Sprintf(", did you mean %s?", filepath.ToSlash(filepath.Join(filepath.Dir(filepath.FromSlash(written)), near)))
+	}
+	return ""
 }
 
 func relative(from, file string) string {

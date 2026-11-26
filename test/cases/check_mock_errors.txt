@@ -174,7 +174,7 @@ error: flows/a01.yaml:2: no file flows/nope
        flows/b14.yaml:3: a state needs a scenarioName
        flows/c01.yaml:3: mockState doesn't take a plain value
        flows/c02.yaml:3: mockState takes a scenario and its state, such as { ride: docked }
-       flows/c03.yaml:3: state: not one of offline, online: "ofline"
+       flows/c03.yaml:3: state: not one of offline, online: "ofline", did you mean offline?
        flows/c04.yaml:3: fail: not a status from 400 to 599: "200"
        flows/c05.yaml:3: delay: not a time: "soon" (use 500 or 10s)
        flows/c06.yaml:3: network takes online or offline, or else delay and fail

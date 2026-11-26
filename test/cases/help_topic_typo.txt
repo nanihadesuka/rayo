@@ -1,0 +1,7 @@
+-- args --
+help sute
+==== out ====
+-- exit --
+2
+-- stderr --
+error: no help on "sute", did you mean rayo help suite?

@@ -81,6 +81,7 @@ type option struct {
 	value       string // what it takes; empty if nothing
 	optional    bool   // the value, only as --name=value
 	about       string
+	key         string // of a suite, that it overrides, as output.keep; empty if none
 	set         func(o *options, value string) error
 }
 
@@ -160,7 +161,7 @@ var sections = []section{
 		text("output", "folder", "where failures and screenshots go (default .rayo)", func(o *options) *string { return &o.output }),
 	}},
 	{[]string{cmdTest, cmdLive}, "", []option{
-		{name: "timeout-scale", value: "factor", about: "multiply the default waits, not a step's own timeout (default 1)", set: func(o *options, v string) error {
+		{name: "timeout-scale", value: "factor", about: fmt.Sprintf("multiply the default waits, not a step's own timeout, from %v to %v (default 1)", suite.LowestScale, suite.HighestScale), set: func(o *options, v string) error {
 			f, err := strconv.ParseFloat(v, 64)
 			if err != nil || f < suite.LowestScale || f > suite.HighestScale {
 				return fmt.Errorf("--timeout-scale takes %v to %v, not %q", suite.LowestScale, suite.HighestScale, v)
@@ -203,7 +204,7 @@ var sections = []section{
 			o.runner.Env[k] = value
 			return nil
 		}},
-		{name: "retries", value: "n", about: "try again what fails, every flow, also one the suite gives its own retries (default 1, or the suite's)", set: func(o *options, v string) error {
+		{name: "retries", value: "n", about: fmt.Sprintf("try again what fails, every flow, also one the suite gives its own retries (default %d, or the suite's)", suite.DefaultRetries), set: func(o *options, v string) error {
 			n, err := strconv.Atoi(v)
 			if err != nil || n < 0 {
 				return fmt.Errorf("--retries takes a number, not %q", v)
@@ -271,7 +272,7 @@ var sections = []section{
 	}},
 	{[]string{cmdTest}, "what comes out", []option{
 		choice("detail", "how much", "printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files", func(o *options) *string { return &o.detail }, flow.Details...),
-		{name: "failure-window", value: "seconds", about: "a failure's log and calls begin this long before the failing step (default 10)", set: func(o *options, v string) error {
+		{name: "failure-window", value: "seconds", about: fmt.Sprintf("a failure's log and calls begin this long before the failing step (default %d)", int(flow.DefaultWindow.Seconds())), set: func(o *options, v string) error {
 			n, err := strconv.Atoi(v)
 			if err != nil || n < 1 {
 				return fmt.Errorf("--failure-window takes a number of seconds from 1, not %q", v)
@@ -301,7 +302,7 @@ var sections = []section{
 			o.show = list
 			return nil
 		}},
-		{name: "slowest", value: "n", about: "how many flows the slow list has (default 5)", set: func(o *options, v string) error {
+		{name: "slowest", value: "n", about: fmt.Sprintf("how many flows the slow list has (default %d)", report.DefaultSlowest), set: func(o *options, v string) error {
 			n, err := strconv.Atoi(v)
 			if err != nil || n < 1 {
 				return fmt.Errorf("--slowest takes a number from 1, not %q", v)
@@ -429,6 +430,31 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo version
 `
 
+// suiteKeys are the keys of a suite that options override, by the option's name. A test checks
+// that each is a suite's, and that every key of a suite has an option or a reason not to.
+var suiteKeys = map[string]string{
+	"output": "output.folder", "timeout-scale": "timeoutScale", "env": "env", "retries": "retries",
+	"video": "output.video", "keep": "output.keep", "artifacts": "output.artifacts", "name-template": "output.nameTemplate",
+	"detail": "detail", "failure-window": "failureWindow", "results": "results", "results-template": "resultsTemplate",
+	"show": "show", "slowest": "slowest", "flaky-fails-build": "flakyFailsBuild", "format": "format",
+	"capture-from": "capture.from", "graphql": "capture.graphql", "graphql-path": "capture.graphqlPath", "rest": "capture.rest",
+	"ignore-params": "capture.ignoreParams", "ignore-body": "capture.ignoreBody", "timestamps": "capture.timestamps",
+	"capture-headers": "capture.captureHeaders", "ignore-host": "capture.ignoreHost", "ignore-path-ids": "capture.ignorePathIds",
+	"stateless": "capture.stateless", "redact-value": "capture.redactValue", "hosts": "capture.hosts",
+	"network": "network", "ignore-unmocked": "unmocked.ignore", "ca": "ca",
+}
+
+func init() {
+	for i := range sections {
+		for j := range sections[i].options {
+			p := &sections[i].options[j]
+			if slices.Contains(sections[i].commands, cmdTest) || slices.Contains(sections[i].commands, cmdCheck) {
+				p.key = suiteKeys[p.name]
+			}
+		}
+	}
+}
+
 // help is made from the table.
 func help() string {
 	var b strings.Builder
@@ -494,7 +520,11 @@ func (p option) help() string {
 	if p.short != "" {
 		name = "-" + p.short + ", " + name
 	}
-	return fmt.Sprintf("  %-26s %s\n", name, p.about)
+	about := p.about
+	if p.key != "" {
+		about += " (suite: " + p.key + ")"
+	}
+	return fmt.Sprintf("  %-26s %s\n", name, about)
 }
 
 // find is the option with a name as written, if the command takes it.
