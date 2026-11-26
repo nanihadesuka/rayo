@@ -1,0 +1,17 @@
+-- args --
+check --include-tags smoek a.yaml b.yaml
+-- a.yaml --
+appId: a.b
+tags: [smoke]
+---
+- back
+-- b.yaml --
+appId: a.b
+tags: [slow]
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: no flow has the tag smoek, did you mean smoke? the flows' tags are: slow, smoke

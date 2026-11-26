@@ -19,6 +19,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/flow"
 	"github.com/nanihadesuka/rayo/internal/mock"
 	"github.com/nanihadesuka/rayo/internal/report"
+	"github.com/nanihadesuka/rayo/internal/schema"
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
@@ -354,6 +355,9 @@ func (l *live) meta(ctx context.Context, name, arg string) (string, error) {
 		return l.undo()
 	case ".save":
 		return l.save()
+	}
+	if near := schema.Nearest(name, []string{".help", ".quit", ".screen", ".steps", ".states", ".undo", ".save", ".rewind"}); near != "" {
+		return "", fmt.Errorf("unknown %s, did you mean %s? See .help", name, near)
 	}
 	return "", fmt.Errorf("unknown %s, see .help", name)
 }

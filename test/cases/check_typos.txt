@@ -1,0 +1,65 @@
+-- args --
+check flows
+-- flows/a01.yaml --
+appId: a.b
+---
+- tapOn: { txet: x }
+-- flows/a02.yaml --
+appId: a.b
+---
+- tapOn: { text: A, text: B }
+-- flows/a03.yaml --
+appId: a.b
+---
+- runFlow:
+    when: {}
+    commands: [ back ]
+-- flows/a04.yaml --
+appId: a.b
+---
+- repeat:
+    while: { timeout: 1s }
+    commands: [ back ]
+-- flows/a05.yaml --
+appId: a.b
+---
+- tapOn: { text: "" }
+-- flows/a06.yaml --
+appId: a.b
+---
+- tapOn: { id: " login " }
+-- flows/a07.yaml --
+appId: a.b
+---
+- swipe: { direction: DWON }
+-- flows/a08.yaml --
+appId: a.b
+---
+- pressKey: entr
+-- flows/a09.yaml --
+appId: a.b
+---
+- tapOn: x
+  optional: true
+-- flows/a10.yaml --
+appId: a.b
+---
+- runFlow: other.yml
+-- flows/other.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: flows/a01.yaml:3: tapOn doesn't take "txet", did you mean text? (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)
+       flows/a02.yaml:3: text appears twice; keep one
+       flows/a03.yaml:4: when needs a condition: visible, notVisible, platform or true
+       flows/a04.yaml:4: while needs a condition: visible, notVisible, platform or true
+       flows/a05.yaml:3: text is empty; say what to look for, or leave text out
+       flows/a06.yaml:3: id " login " has spaces around it, and no id has; write login
+       flows/a07.yaml:3: direction: not one of UP, DOWN, LEFT, RIGHT: "DWON", did you mean DOWN?
+       flows/a08.yaml:3: key: unknown key "entr", did you mean enter?
+       flows/a09.yaml:4: optional belongs under tapOn: indent it, as '- tapOn: { ..., optional: ... }'
+       flows/a10.yaml:3: no such file: other.yml, did you mean other.yaml?

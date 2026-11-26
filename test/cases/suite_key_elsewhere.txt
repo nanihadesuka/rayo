@@ -1,0 +1,15 @@
+-- args --
+check s.suite.yaml
+-- s.suite.yaml --
+video: true
+flows:
+  - a.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: s.suite.yaml:1: unknown key "video", did you mean output.video? It belongs under output: { video: ... }

@@ -43,3 +43,26 @@ func TestNearestCommand(t *testing.T) {
 		}
 	}
 }
+
+func TestNearestEdges(t *testing.T) {
+	for _, c := range []struct {
+		written string
+		names   []string
+		want    string
+	}{
+		{"", nil, ""},
+		{"x", nil, ""},
+		{"", []string{"a", "b"}, "a"}, // a name of one letter is one change away
+		{"tapOm", []string{"tapOn", "tapOff"}, "tapOn"},                     // the closest wins
+		{"ab", []string{"ac", "ad"}, "ac"},                                  // a tie: the first listed
+		{"failureWindow", []string{"--failure-window"}, "--failure-window"}, // a dash is one change
+		{"--failurewindow", []string{"--failure-window"}, "--failure-window"},
+		{"abcdefghij", []string{"abcdefxxxx"}, ""},                // too many changes for its length
+		{"retry", []string{"retries", "results"}, "retries"},      // a word of the same meaning
+		{"VISIBLE", []string{"visible", "notVisible"}, "visible"}, // case
+	} {
+		if got := Nearest(c.written, c.names); got != c.want {
+			t.Errorf("Nearest(%q, %q) = %q, want %q", c.written, c.names, got, c.want)
+		}
+	}
+}

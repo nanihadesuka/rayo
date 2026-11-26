@@ -22,7 +22,7 @@ func checkCamera(p *reader, s *Step) error {
 		return needs(keyImage)(p, s)
 	}
 	if _, err := os.Stat(relative(p.path, n.Value)); err != nil {
-		return p.fail(n, "no such file: %s", n.Value)
+		return p.fail(n, "no such file: %s%s", n.Value, nearFile(relative(p.path, n.Value), n.Value))
 	}
 	return nil
 }

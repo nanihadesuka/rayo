@@ -203,7 +203,7 @@ func init() {
 				file := get(s.Value, keyFile)
 				if file != nil && !dynamic(file) {
 					if _, err := os.Stat(relative(p.path, file.Value)); err != nil {
-						return p.fail(file, "no such file: %s", file.Value)
+						return p.fail(file, "no such file: %s%s", file.Value, nearFile(relative(p.path, file.Value), file.Value))
 					}
 				}
 				return needs(keyFile)(p, s)
@@ -283,6 +283,9 @@ func checkFileOrCommands(p *reader, s *Step) error {
 		_, err := load(relative(p.path, file.Value), p.depth+1)
 		if errors.Is(err, errCircle) {
 			return err
+		}
+		if errors.Is(err, os.ErrNotExist) {
+			return p.fail(file, "no such file: %s%s", file.Value, nearFile(relative(p.path, file.Value), file.Value))
 		}
 		if err != nil {
 			return &Problem{Path: p.path, Line: file.Line, What: err.Error(), Err: err}

@@ -89,8 +89,8 @@ appId: a.b
   at: f.yaml:3
   saved: .rayo/f_failure.png
 [8/9] FAIL g  # s
-  g failed at launchApp ${'alow'}: step failed: permissions: camera: not one of allow, deny, unset: "alow" (g.yaml:3)
-  why: permissions: camera: not one of allow, deny, unset: "alow"
+  g failed at launchApp ${'alow'}: step failed: permissions: camera: not one of allow, deny, unset: "alow", did you mean allow? (g.yaml:3)
+  why: permissions: camera: not one of allow, deny, unset: "alow", did you mean allow?
   blame: test
   step: launchApp ${'alow'}
   at: g.yaml:3
@@ -392,13 +392,13 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "g failed at launchApp ${'alow'}: step failed: permissions: camera: not one of allow, deny, unset: \"alow\" (g.yaml:3)",
+      "verdict": "g failed at launchApp ${'alow'}: step failed: permissions: camera: not one of allow, deny, unset: \"alow\", did you mean allow? (g.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "g.yaml",
         "line": 3,
         "step": "launchApp ${'alow'}",
-        "message": "permissions: camera: not one of allow, deny, unset: \"alow\"",
+        "message": "permissions: camera: not one of allow, deny, unset: \"alow\", did you mean allow?",
         "expected": "",
         "nearest": "",
         "fix": ""

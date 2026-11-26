@@ -58,6 +58,9 @@ func oneOf[T any](words []string, values []T) kind[T] {
 			}
 		}
 		var zero T
+		if near := schema.Nearest(text, words); near != "" {
+			return zero, fmt.Errorf("not one of %s: %q, did you mean %s?", strings.Join(words, ", "), text, near)
+		}
 		return zero, fmt.Errorf("not one of %s: %q", strings.Join(words, ", "), text)
 	})
 }
@@ -157,7 +160,13 @@ var (
 	conditions = kind[*yaml.Node]{name: "conditions", shape: shapeOf(schema.Ref("when")), read: raw("", nil).read, check: func(p *reader, key string, n *yaml.Node) error {
 		later := *p
 		later.filled = false // conditions are filled in when they are looked at
-		return later.mapping(n, key, whenKeys, nil)
+		if err := later.mapping(n, key, whenKeys, nil); err != nil {
+			return err
+		}
+		if get(n, keyVisible) == nil && get(n, keyNotVisible) == nil && get(n, keyPlatform) == nil && get(n, keyTrue) == nil {
+			return p.fail(n, "%s needs a condition: visible, notVisible, platform or true", key)
+		}
+		return nil
 	}}
 	variables = kind[map[string]string]{name: "values", shape: shapeOf(schema.Map(schema.Text())), read: variablesIn}
 	places    = kind[[]Place]{name: "locations", shape: shapeOf(schema.List(schema.Type("string"))), read: func(n *yaml.Node) (list []Place, err error) {

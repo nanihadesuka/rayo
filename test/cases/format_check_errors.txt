@@ -35,9 +35,9 @@ bogus: 1
       "file": "flows/b.yaml",
       "line": 3,
       "step": "",
-      "message": "tapOn doesn't take /"idd/" (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)",
+      "message": "tapOn doesn't take /"idd/", did you mean id? (it takes above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text)",
       "expected": "above, below, checked, childOf, containsChild, containsDescendants, delay, enabled, focused, id, index, leftOf, point, repeat, rightOf, selected, text",
-      "nearest": "",
+      "nearest": "id",
       "fix": ""
     },
     {

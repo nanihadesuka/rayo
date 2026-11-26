@@ -732,7 +732,17 @@ func helpOn(name string) (string, error) {
 	if text := helpOf(name); text != "" {
 		return text, nil
 	}
-	return flow.Help(name)
+	text, err := flow.Help(name)
+	if err != nil && flow.NearestCommand(name) == "" {
+		all := append(slices.Clone(commandNames), "json", "all", "flow", "suite", "search")
+		for _, t := range topics {
+			all = append(all, t.name)
+		}
+		if near := schema.Nearest(name, all); near != "" {
+			return "", fmt.Errorf("no help on %q, did you mean rayo help %s?", name, near)
+		}
+	}
+	return text, err
 }
 
 func printSchema(args []string) error {
@@ -802,6 +812,9 @@ func applyMocks(args []string) error {
 		}
 		notes, err = mock.ImportHAR(o.args[1], folder, o.runner.Backend, o.runner.Env, o.runner.Matching)
 	default:
+		if near := nearSub(o.args, "check", "apply", "import"); near != "" {
+			return fmt.Errorf("unknown rayo mocks %s, did you mean %s?", o.args[0], near)
+		}
 		return errors.New("rayo mocks apply [--only a,b] [--prune] <folder>, after rayo test --capture-update <folder>;\n" +
 			"or rayo mocks import [options] <file.har> <folder>;\nor rayo mocks check <folder>")
 	}
@@ -842,6 +855,14 @@ const caUsage = "rayo ca new [<folder>], a CA for the project, in .rayo/ca if no
 
 // commandCA makes a project's CA, or writes the certificate of the CA the proxy would sign with, for an
 // app to trust in its debug build.
+// nearSub is the subcommand most like the first argument, when that isn't one; empty if none is.
+func nearSub(args []string, subs ...string) string {
+	if len(args) == 0 || slices.Contains(subs, args[0]) {
+		return ""
+	}
+	return schema.Nearest(args[0], subs)
+}
+
 func commandCA(args []string) error {
 	o, err := parse(cmdCA, args)
 	if err != nil {
@@ -865,6 +886,9 @@ Then rayo ca export app/src/debug/res/raw/rayo_ca.pem, for the app to trust it.
 `, filepath.ToSlash(folder))
 		return nil
 	case len(o.args) != 2 || o.args[0] != "export":
+		if near := nearSub(o.args, "new", "export"); near != "" {
+			return fmt.Errorf("unknown rayo ca %s, did you mean %s?", o.args[0], near)
+		}
 		return errors.New(caUsage)
 	}
 	if err := o.findCA(nil, false); err != nil {

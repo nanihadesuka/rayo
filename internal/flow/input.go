@@ -2,11 +2,14 @@ package flow
 
 import (
 	"fmt"
+	"maps"
 	"math/rand"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/nanihadesuka/rayo/internal/agent"
+	"github.com/nanihadesuka/rayo/internal/schema"
 )
 
 func copyText(c *call) error {
@@ -58,6 +61,9 @@ func keyCode(name string) (int, error) {
 	}
 	if c, err := strconv.Atoi(name); err == nil {
 		return c, nil
+	}
+	if near := schema.Nearest(name, slices.Sorted(maps.Keys(keyCodes))); near != "" {
+		return 0, fmt.Errorf("unknown key %q, did you mean %s?", name, near)
 	}
 	return 0, fmt.Errorf("unknown key %q", name)
 }

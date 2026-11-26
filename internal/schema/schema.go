@@ -211,8 +211,15 @@ func Help[T any](fields []Field[T]) string {
 // --- Kinds of fields ---
 
 func scalar(n *yaml.Node, into any, what string) error {
-	if n.Kind != yaml.ScalarNode || n.Decode(into) != nil {
+	switch {
+	case n.Kind == yaml.SequenceNode:
+		return fmt.Errorf("takes %s, found a list", what)
+	case n.Kind == yaml.MappingNode:
+		return fmt.Errorf("takes %s, found a mapping", what)
+	case n.Kind != yaml.ScalarNode:
 		return fmt.Errorf("takes %s", what)
+	case n.Decode(into) != nil:
+		return fmt.Errorf("takes %s, not %q", what, n.Value)
 	}
 	return nil
 }

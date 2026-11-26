@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: s.suite.yaml:1: flows: retries: takes a number from 0
+error: s.suite.yaml:1: flows: retries: takes a number from 0, not "x"
