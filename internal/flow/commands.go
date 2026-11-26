@@ -105,14 +105,14 @@ func init() {
 				return tap(c, agent.Args{"hold": 1000})
 			}},
 		"swipe": {untested: true, about: "Moves a finger across the screen",
-			keys: []anyKey{keyDirection, keyStart, keyEnd, keyDuration, keyFrom}, check: checkSwipe, run: swipe},
+			keys: []anyKey{keyDirection, keyStart, keyEnd, keyDuration, keyFrom, keyFling}, check: checkSwipe, run: swipe},
 		"scroll": {untested: true, about: "Scrolls down once",
 			alone: true, run: func(c *call) error {
 				return c.do("swipe", agent.Args{"x": 50, "y": 70, "x2": 50, "y2": 30, "percent": true, "ms": 250})
 			}},
-		"scrollUntilVisible": {untested: true, about: "Scrolls until the element is on screen",
-			keys: []anyKey{keyElement, keyDirection}, limit: 20 * time.Second,
-			check: needs(keyElement), run: scrollUntil},
+		"scrollUntilVisible": {untested: true, about: "Scrolls until the whole element is on screen",
+			keys: []anyKey{keyElement, keyDirection, keyCenter, keyScrollSpeed}, limit: 20 * time.Second,
+			check: checkScrollUntil, run: scrollUntil},
 
 		// Text and keys
 		"type": {about: "Replaces the text of a field at once, without the keyboard",
@@ -293,6 +293,18 @@ func checkFileOrCommands(p *reader, s *Step) error {
 	}
 	if (file == nil) == (s.Sub == nil) {
 		return p.fail(s.Value, "%s needs either a file or commands", s.Kind)
+	}
+	return nil
+}
+
+func checkScrollUntil(p *reader, s *Step) error {
+	if err := needs(keyElement)(p, s); err != nil {
+		return err
+	}
+	if v := get(s.Value, keyScrollSpeed); v != nil {
+		if n, err := keyScrollSpeed.kind.read(v); err == nil && (n < 0 || n > 100) {
+			return p.fail(v, "speed is from 0 to 100")
+		}
 	}
 	return nil
 }

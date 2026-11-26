@@ -107,6 +107,11 @@ public final class Agent {
       case "wait": {
         Entry e = await(new Selector(r.getJSONObject("sel")), deadline);
         answer.put("text", e.label());
+        if (r.has("across")) {
+          Rect list = list(e);
+          answer.put("whole", whole(e, list, r.getBoolean("across")));
+          answer.put("past", past(e, list, r.getBoolean("across")));
+        }
         break;
       }
       case "gone":
@@ -125,7 +130,7 @@ public final class Agent {
         break;
       case "swipe": {
         Rect s = screen();
-        swipe(at(r, "x", s.width()), at(r, "y", s.height()), at(r, "x2", s.width()), at(r, "y2", s.height()), r.optLong("ms", 250));
+        swipe(at(r, "x", s.width()), at(r, "y", s.height()), at(r, "x2", s.width()), at(r, "y2", s.height()), r.optLong("ms", 250), r.optBoolean("hold"));
         break;
       }
       case "swipeOn": {
@@ -135,7 +140,7 @@ public final class Agent {
         float dy = (float) r.getDouble("dy") * s.height();
         float x = b.exactCenterX();
         float y = b.exactCenterY();
-        swipe(x, y, clamp(x + dx, s.width()), clamp(y + dy, s.height()), r.optLong("ms", 250));
+        swipe(x, y, clamp(x + dx, s.width()), clamp(y + dy, s.height()), r.optLong("ms", 250), r.optBoolean("hold"));
         break;
       }
       case "set":

@@ -30,6 +30,11 @@ final class Input {
   }
 
   static void swipe(float x, float y, float x2, float y2, long ms) throws Exception {
+    swipe(x, y, x2, y2, ms, false);
+  }
+
+  /** With hold, the finger stops before it lifts: the list moves just as far, and does not fling past (#39). */
+  static void swipe(float x, float y, float x2, float y2, long ms, boolean hold) throws Exception {
     long down = SystemClock.uptimeMillis();
     touch(down, MotionEvent.ACTION_DOWN, x, y);
     for (long t; (t = SystemClock.uptimeMillis() - down) < ms; SystemClock.sleep(8)) {
@@ -37,8 +42,12 @@ final class Input {
       touch(down, MotionEvent.ACTION_MOVE, x + (x2 - x) * f, y + (y2 - y) * f);
     }
     touch(down, MotionEvent.ACTION_MOVE, x2, y2);
+    for (long still = SystemClock.uptimeMillis(); hold && SystemClock.uptimeMillis() - still < 150; SystemClock.sleep(16)) {
+      touch(down, MotionEvent.ACTION_MOVE, x2, y2);
+    }
     touch(down, MotionEvent.ACTION_UP, x2, y2);
-    settle(80, 1500); // a fling
+    // Until a fling ends: Compose tells of a change at most every 100 ms, so less quiet is not the end (#39).
+    settle(160, 3000);
   }
 
   static void touch(long down, int action, float x, float y) throws Exception {

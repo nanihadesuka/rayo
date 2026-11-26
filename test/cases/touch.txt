@@ -60,10 +60,10 @@ tap {"delay":100,"repeat":1,"sel":{"id":"slow"},"timeout":20000}
 tap {"delay":100,"repeat":2,"sel":{"text":"Photo"},"timeout":15000}
 tap {"delay":10,"repeat":2,"sel":{"id":"photo"},"timeout":15000}
 tap {"hold":1000,"sel":{"id":"item"},"timeout":15000}
-swipe {"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":75,"y2":25}
-swipe {"ms":400,"percent":true,"timeout":15000,"x":80,"x2":20,"y":50,"y2":50}
-swipeOn {"dx":0,"dy":0.5,"ms":250,"sel":{"id":"list"},"timeout":15000}
-swipe {"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":80,"y2":20}
-swipe {"ms":100,"percent":false,"timeout":15000,"x":1,"x2":3,"y":2,"y2":4}
+swipe {"hold":false,"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":75,"y2":25}
+swipe {"hold":false,"ms":400,"percent":true,"timeout":15000,"x":80,"x2":20,"y":50,"y2":50}
+swipeOn {"dx":0,"dy":0.5,"hold":false,"ms":250,"sel":{"id":"list"},"timeout":15000}
+swipe {"hold":false,"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":80,"y2":20}
+swipe {"hold":false,"ms":100,"percent":false,"timeout":15000,"x":1,"x2":3,"y":2,"y2":4}
 swipe {"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":70,"y2":30}
 bye {"timeout":5000}

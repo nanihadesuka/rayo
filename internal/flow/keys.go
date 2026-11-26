@@ -141,15 +141,18 @@ var (
 
 // Touch.
 var (
-	keyPoint     = newKey("point", aPoint, "Alone, of the screen; with a selector, of the element in %")
-	keyRepeat    = newKey("repeat", aNumber, "Taps (1)")
-	keyTapDelay  = newKey("delay", aTime, "Between taps (100)")
-	keyDirection = newKey("direction", aDirection, "Where the finger or the search goes (DOWN when searching)")
-	keyStart     = newKey("start", aPoint, "Where the finger goes down, instead of direction")
-	keyEnd       = newKey("end", aPoint, "Where it goes up")
-	keyDuration  = newKey("duration", aTime, "Of the swipe (250)")
-	keyFrom      = newKey("from", anElement, "Start on this element; with direction")
-	keyElement   = newKey("element", anElement, "What to look for")
+	keyPoint       = newKey("point", aPoint, "Alone, of the screen; with a selector, of the element in %")
+	keyRepeat      = newKey("repeat", aNumber, "Taps (1)")
+	keyTapDelay    = newKey("delay", aTime, "Between taps (100)")
+	keyDirection   = newKey("direction", aDirection, "Where the finger or the search goes (DOWN when searching)")
+	keyStart       = newKey("start", aPoint, "Where the finger goes down, instead of direction")
+	keyEnd         = newKey("end", aPoint, "Where it goes up")
+	keyDuration    = newKey("duration", aTime, "Of the swipe (250)")
+	keyFling       = newKey("fling", aFlag, "Lift the finger still moving, so the list goes on by itself (true); false stops it where the finger does")
+	keyScrollSpeed = newKey("speed", aNumber, "0 to 100, as Maestro: each scroll takes (100 - speed) * 10 ms (40)")
+	keyCenter      = newKey("centerElement", aFlag, "Go on until it is in the middle of the list, or the list ends (false)")
+	keyFrom        = newKey("from", anElement, "Start on this element; with direction")
+	keyElement     = newKey("element", anElement, "What to look for")
 )
 
 // Text and keys.

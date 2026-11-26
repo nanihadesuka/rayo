@@ -6,6 +6,7 @@ import static rayo.Timing.*;
 import static rayo.Ui.*;
 
 import android.graphics.Rect;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.os.SystemClock;
 import java.util.regex.Pattern;
 
@@ -139,6 +140,39 @@ final class Waiting {
     }
     spend("check", began);
     return b;
+  }
+
+  /** The list the element scrolls in, as much of it as is on screen; the screen if none. */
+  static Rect list(Entry e) {
+    Rect c = new Rect(screen());
+    try {
+      for (AccessibilityNodeInfo p = e.node.getParent(); p != null; p = p.getParent()) {
+        if (p.isScrollable()) {
+          Rect r = new Rect();
+          p.getBoundsInScreen(r);
+          c.intersect(r);
+          break;
+        }
+      }
+    } catch (RuntimeException x) {
+      // its window was just replaced (#38): the screen will do
+    }
+    return c;
+  }
+
+  /**
+   * Not cut off by the list it scrolls in, along the way it scrolls: neither end of it is on an
+   * end of the list (#39). Unknown is not whole: one more scroll looks again.
+   */
+  static boolean whole(Entry e, Rect c, boolean across) {
+    Rect b = e.bounds;
+    return across ? b.left > c.left && b.right < c.right : b.top > c.top && b.bottom < c.bottom;
+  }
+
+  /** How far its middle is past the middle of the list, as a share of the list: negative before it. */
+  static double past(Entry e, Rect c, boolean across) {
+    Rect b = e.bounds;
+    return across ? (b.exactCenterX() - c.exactCenterX()) / c.width() : (b.exactCenterY() - c.exactCenterY()) / c.height();
   }
 
   /** Asks the system, not the app: one that is busy starting answers late. */

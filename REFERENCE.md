@@ -400,6 +400,7 @@ Waits until the element is on screen, enabled and not moving, then taps its cent
 | `end` | point | Where it goes up |
 | `duration` | time | Of the swipe (250) |
 | `from` | selector | Start on this element; with direction |
+| `fling` | true/false | Lift the finger still moving, so the list goes on by itself (true); false stops it where the finger does |
 <!-- end -->
 
 ### scroll
@@ -416,6 +417,8 @@ then, saying so, instead of waiting out the timeout.
 |---|---|---|
 | `element` | selector | What to look for |
 | `direction` | UP/DOWN/LEFT/RIGHT | Where the finger or the search goes (DOWN when searching) |
+| `centerElement` | true/false | Go on until it is in the middle of the list, or the list ends (false) |
+| `speed` | number | 0 to 100, as Maestro: each scroll takes (100 - speed) * 10 ms (40) |
 <!-- end -->
 
 ---

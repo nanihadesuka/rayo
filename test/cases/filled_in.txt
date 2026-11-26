@@ -123,7 +123,7 @@ adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process
 noAnimations {"timeout":10000}
 tap {"delay":2,"repeat":2,"sel":{"enabled":false,"id":"x","index":2},"timeout":3000}
 tapAt {"delay":100,"percent":true,"repeat":1,"timeout":15000,"x":10,"y":20}
-swipe {"ms":3000,"percent":true,"timeout":15000,"x":50,"x2":50,"y":25,"y2":75}
+swipe {"hold":false,"ms":3000,"percent":true,"timeout":15000,"x":50,"x2":50,"y":25,"y2":75}
 key {"code":66,"timeout":15000}
 key {"code":4,"timeout":15000}
 key {"code":4,"timeout":15000}

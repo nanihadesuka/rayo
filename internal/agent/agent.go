@@ -38,6 +38,8 @@ type Answer struct {
 	Out   string           `json:"out"`
 	Text  string           `json:"text"`
 	Ready bool             `json:"ready"`
+	Whole bool             `json:"whole"`
+	Past  float64          `json:"past"`
 	Spent map[string]int64 `json:"spent"`
 }
 

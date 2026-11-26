@@ -4190,6 +4190,21 @@
                 {
                   "additionalProperties": false,
                   "properties": {
+                    "centerElement": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            true,
+                            false
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Go on until it is in the middle of the list, or the list ends (false)"
+                    },
                     "direction": {
                       "anyOf": [
                         {
@@ -4254,6 +4269,18 @@
                       ],
                       "description": "A failure doesn't fail the flow"
                     },
+                    "speed": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "0 to 100, as Maestro: each scroll takes (100 - speed) * 10 ms (40)"
+                    },
                     "timeout": {
                       "anyOf": [
                         {
@@ -4279,7 +4306,7 @@
                   "type": "object"
                 }
               ],
-              "description": "Scrolls until the element is on screen"
+              "description": "Scrolls until the whole element is on screen"
             },
             "setAirplaneMode": {
               "anyOf": [
@@ -5087,6 +5114,21 @@
                         }
                       ],
                       "description": "Where it goes up"
+                    },
+                    "fling": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            true,
+                            false
+                          ]
+                        },
+                        {
+                          "pattern": "\\$\\{",
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Lift the finger still moving, so the list goes on by itself (true); false stops it where the finger does"
                     },
                     "from": {
                       "anyOf": [

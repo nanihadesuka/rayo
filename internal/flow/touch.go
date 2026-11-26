@@ -44,7 +44,7 @@ func tap(c *call, args agent.Args) error {
 }
 
 func swipe(c *call) error {
-	args := agent.Args{"ms": argOr(c, keyDuration, 250*time.Millisecond).Milliseconds()}
+	args := agent.Args{"ms": argOr(c, keyDuration, 250*time.Millisecond).Milliseconds(), "hold": !argOr(c, keyFling, true)}
 	if get(c.v, keyDirection) != nil {
 		d := arg(c, keyDirection)
 		if from := arg(c, keyFrom); from != nil {
@@ -63,29 +63,43 @@ func swipe(c *call) error {
 	return c.do("swipe", args)
 }
 
+// scrollUntil stops once the element is whole on screen, or the list can go no further with some of it
+// showing. It drags rather than flings, so the list moves just as far as the finger and never past it (#39).
 func scrollUntil(c *call) error {
 	d := argOr(c, keyDirection, Direction{0, 1})
 	sel := arg(c, keyElement)
-	last, same := "", 0
+	center := argOr(c, keyCenter, false)
+	ms := (100-argOr(c, keyScrollSpeed, 40))*10 + 1 // as Maestro's, also the default
+	last, same, seen := "", 0, false
 	for deadline, scrolls := time.Now().Add(c.limit), 0; ; scrolls++ {
-		_, err := c.r.agent.Do(c.ctx, "wait", agent.Args{"sel": sel}, 100*time.Millisecond)
-		if err == nil || c.r.agent.Dead() != nil || time.Now().After(deadline) {
+		a, err := c.r.agent.Do(c.ctx, "wait", agent.Args{"sel": sel, "across": d.y == 0}, 100*time.Millisecond)
+		// Scrolling down moves the element up: its middle reaches the list's from below.
+		there := err == nil && a.Whole && (!center || a.Past*float64(d.x+d.y) <= 0.05)
+		if there || c.r.agent.Dead() != nil || time.Now().After(deadline) {
 			return err
 		}
+		seen = err == nil
 		// A swipe that changed nothing, twice in a row, is the end of the list: going on would only wait.
-		if a, e := c.r.agent.Do(c.ctx, "tree", nil, 5*time.Second); e == nil {
-			if scrolls > 0 && a.Out == last {
+		if t, e := c.r.agent.Do(c.ctx, "tree", nil, 5*time.Second); e == nil {
+			if scrolls > 0 && t.Out == last {
 				if same++; same >= 2 {
+					if seen {
+						return nil // as much of it as there will ever be
+					}
 					return fmt.Errorf("%w (the end of the list after %d scrolls: the screen stopped changing)", err, scrolls)
 				}
 			} else {
 				same = 0
 			}
-			last = a.Out
+			last = t.Out
 		}
-		// Scrolling down is a swipe up.
-		if _, err := c.r.agent.Do(c.ctx, "swipe", agent.Args{"x": 50 + d.x*20, "y": 50 + d.y*20, "x2": 50 - d.x*20, "y2": 50 - d.y*20,
-			"percent": true, "ms": 250}, time.Second); err != nil {
+		// Scrolling down is a swipe up. Once some of it shows, a shorter one brings the rest.
+		step := 20.0
+		if seen {
+			step = 8
+		}
+		if _, err := c.r.agent.Do(c.ctx, "swipe", agent.Args{"x": 50 + d.x*step, "y": 50 + d.y*step, "x2": 50 - d.x*step, "y2": 50 - d.y*step,
+			"percent": true, "ms": ms, "hold": true}, 5*time.Second); err != nil {
 			return err
 		}
 	}
