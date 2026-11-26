@@ -14,8 +14,8 @@ import (
 // Emulator says whether the device is one.
 func (d *Device) Emulator() bool { return strings.HasPrefix(d.Serial, "emulator-") }
 
-// NotEmulator is what Console says on a real device.
-var NotEmulator = errors.New("only works on an emulator")
+// ErrNotEmulator is what Console says on a real device.
+var ErrNotEmulator = errors.New("only works on an emulator")
 
 // Refusal is what a console's "KO: ..." line says, without the KO.
 func Refusal(line string) string {
@@ -30,7 +30,7 @@ func Refusal(line string) string {
 func (d *Device) Console(commands ...string) error {
 	port, ok := strings.CutPrefix(d.Serial, "emulator-")
 	if !ok {
-		return NotEmulator
+		return ErrNotEmulator
 	}
 	c, err := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", port), time.Second)
 	if err != nil {

@@ -55,7 +55,7 @@ func TestConsole(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
-	if err := (&Device{Serial: "R5CX"}).Console("geo fix 1 2"); !errors.Is(err, NotEmulator) {
+	if err := (&Device{Serial: "R5CX"}).Console("geo fix 1 2"); !errors.Is(err, ErrNotEmulator) {
 		t.Errorf("real device: %v", err)
 	}
 	port := console(t, func(line string) string {

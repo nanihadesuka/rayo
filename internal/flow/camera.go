@@ -66,7 +66,7 @@ func (r *room) macro(name string) (string, error) {
 
 func (r *room) show(ctx context.Context, image string) error {
 	if !r.device.Emulator() {
-		return fmt.Errorf("%w, %s is not one", adb.NotEmulator, r.device.Serial)
+		return fmt.Errorf("%w, %s is not one", adb.ErrNotEmulator, r.device.Serial)
 	}
 	begin, err := r.macro("Reset_position")
 	if err != nil {
