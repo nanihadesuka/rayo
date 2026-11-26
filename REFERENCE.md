@@ -1506,9 +1506,9 @@ Not every failure is the test's. Each says whose fault it is, its `blame`:
 
 | Blame | When |
 |---|---|
-| `app` | The app crashed or hung during the flow, or isn't installed |
+| `app` | The app crashed or hung during the flow, or isn't installed, or an element wasn't found while the app was in front with nothing readable on it: still starting, stuck, or not readable by accessibility. That one's cause stays `not on screen` |
 | `device` | It doesn't answer, is starting, restarted, its interface hung, or the connection was lost |
-| `test` | Anything else. It is only `app` or `device` if there is proof of it, so something slow is `test` |
+| `test` | Anything else. It is only `app` or `device` if there is proof of it, so something slow to appear on a screen that shows other things is `test` |
 
 The run stops, so as not to waste time on flows that would fail the same, when:
 

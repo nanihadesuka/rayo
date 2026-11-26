@@ -126,8 +126,9 @@ looked most like what it wanted:
 
 Here `nearest` shows the button's id is `pay`, not `pay_button`: fix the test.
 
-`blame` says whose fault it is: the `test`, the `app` (it crashed or hung) or the `device`. If the
-app or the device keeps failing, rayo stops early, so you don't wait for every test to fail the same way.
+`blame` says whose fault it is: the `test`, the `app` (it crashed, hung, or showed nothing readable)
+or the `device`. If the app or the device keeps failing, rayo stops early, so you don't wait for
+every test to fail the same way.
 
 In `saved`, the screen, `pay_screen.txt`, `pay_logcat.txt` and `pay_requests.txt`: what was on
 screen, the device log and the calls to the backend. Those of every try are kept; `--keep failed` keeps only those of the tries that failed, see [What is kept](REFERENCE.md#what-is-kept).

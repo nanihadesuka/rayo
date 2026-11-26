@@ -51,6 +51,7 @@ final class Ui {
         | AccessibilityEvent.TYPE_WINDOWS_CHANGED | AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED
         | AccessibilityEvent.TYPE_VIEW_FOCUSED | AccessibilityEvent.TYPE_VIEW_SCROLLED;
     ui.setServiceInfo(info);
+    serviceInfo = info;
     ui.setOnAccessibilityEventListener(event -> {
       synchronized (changed) {
         changes++;
@@ -104,18 +105,25 @@ final class Ui {
     return roots;
   }
 
+  static AccessibilityServiceInfo serviceInfo;
   static Method clear;
   static boolean noClear;
 
-  // Otherwise elements can be read as they were a moment ago.
+  /**
+   * Otherwise elements can be read as they were a moment ago, or, from an app that doesn't say when
+   * it changes (Compose that thinks accessibility is off), as they were when first read.
+   */
   static void clearCache() {
-    if (noClear) return;
-    try {
-      if (clear == null) clear = UiAutomation.class.getMethod("clearCache"); // Android 14+
-      clear.invoke(ui);
-    } catch (Throwable e) {
-      noClear = true;
+    if (!noClear) {
+      try {
+        if (clear == null) clear = UiAutomation.class.getMethod("clearCache"); // Android 14+
+        clear.invoke(ui);
+        return;
+      } catch (Throwable e) {
+        noClear = true;
+      }
     }
+    ui.setServiceInfo(serviceInfo); // before 14: the same settings again, which empties the cache
   }
 
   static Rect cachedScreen;

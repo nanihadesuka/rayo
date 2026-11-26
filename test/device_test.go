@@ -47,6 +47,7 @@ type fakeDevice struct {
 	killed   chan bool
 	hung     bool // its interface
 	silent   bool // its recorder doesn't start
+	blank    bool // the app shows nothing readable
 }
 
 func startDevice(t *testing.T, devices string, empty bool) *fakeDevice {
@@ -285,6 +286,9 @@ func (d *fakeDevice) act(op string, q map[string]any) map[string]any {
 	switch op {
 	case "tree":
 		ok["out"] = "a screen\n"
+		if d.blank {
+			ok["out"] = "[a.b]\n  id: android:id/content  [0,106][540,1212]\n[com.android.systemui]\n  id: com.android.systemui:id/clock | text: 12:00  [0,0][40,20]\n"
+		}
 		if d.swipes > 0 && d.swipes < 5 { // a list that ends after 4 swipes
 			ok["out"] = fmt.Sprintf("a screen, swiped %d\n", d.swipes)
 		}
@@ -316,6 +320,9 @@ func (d *fakeDevice) act(op string, q map[string]any) map[string]any {
 		return ok
 	}
 	switch {
+	case id == "blank":
+		d.blank = true
+		return fail("not on screen: " + id)
 	case id == "missing" && op != "gone":
 		return fail("not on screen: missing")
 	case id == "hangs" && op == "tap":

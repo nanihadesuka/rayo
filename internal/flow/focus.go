@@ -43,7 +43,7 @@ func causeOf(err error, f *Failure) string {
 	switch {
 	case f.Blame == Dev:
 		return DeviceError
-	case f.Blame == App:
+	case f.Blame == App && !f.blank:
 		return AppCrashed
 	case strings.Contains(text, "isn't mocked"):
 		return UnmockedCall

@@ -80,6 +80,8 @@ type Failure struct {
 	Nearest   []string     // of not on screen, the elements most like what was looked for
 	Scenarios []Scenario   // of the mocks, as it failed
 	Trail     []StepStates // the scenarios as each step began, the last ones
+
+	blank bool // the app showed nothing: still not on screen, but not the test
 }
 
 // crash is the app's, if it crashed or hung since the flow began.

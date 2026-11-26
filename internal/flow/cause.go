@@ -33,8 +33,33 @@ func (r *Runner) diagnose(err error, log string) {
 		f.Blame, f.Because = Dev, r.systemTrouble(log)
 	case strings.Contains(err.Error(), "is not installed"):
 		f.Blame, f.Because = App, "the app is not installed"
+	case strings.Contains(err.Error(), NotOnScreen) && blank(f.Screen, r.flow.App):
+		f.Blame, f.Because, f.blank = App, "the app was in front but showed nothing that can be read", true
 	}
 }
+
+// blank is whether the app is in front, on top of the screen, and its content is empty: still
+// starting, stuck, or not readable by accessibility. Not the test's to fix. Only the content: the
+// window around it, such as an action bar with the app's name, is Android's.
+func blank(screen, app string) bool {
+	lines := strings.Split(screen, "\n")
+	if app == "" || lines[0] != "["+app+"]" {
+		return false
+	}
+	for i, line := range lines[1:] {
+		if strings.HasPrefix(line, "[") {
+			return false // the next window, and no content seen
+		}
+		if bounds.ReplaceAllString(strings.TrimSpace(line), "") != "id: android:id/content" {
+			continue
+		}
+		next := lines[min(i+2, len(lines)-1)]
+		return i+2 >= len(lines) || indent(next) <= indent(line)
+	}
+	return false
+}
+
+func indent(line string) int { return len(line) - len(strings.TrimLeft(line, " ")) }
 
 // health is what is wrong with the device, and whether nothing can run on it.
 func (r *Runner) health() (trouble string, unusable bool) {
