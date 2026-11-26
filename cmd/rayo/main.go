@@ -311,6 +311,7 @@ func hierarchy(ctx context.Context, args []string) error {
 	if o.find != "" {
 		r.Out = findOn(r.Out, o.find)
 	}
+	r.Out = flow.CapScreen(r.Out, flow.MostShown)
 	if printing != report.Human {
 		return emit(report.Hierarchy{SchemaVersion: report.SchemaVersion, Screen: report.Lines(r.Out)})
 	}
@@ -423,10 +424,12 @@ func test(ctx context.Context, args []string) (err error) {
 	if err := o.checkUseful(flows); err != nil {
 		return err
 	}
+	began := time.Now()
 	d, err := adb.Pick(o.device, o.emulator)
 	if err != nil {
 		return ofDevice(err)
 	}
+	picked := time.Since(began)
 	if group != nil {
 		if err := group.Install(d, o.steps(flows) && printing == report.Human); err != nil {
 			return ofDevice(err)
@@ -444,13 +447,18 @@ func test(ctx context.Context, args []string) (err error) {
 		}()
 	}
 	start := time.Now()
+	installed := start.Sub(began) - picked
 	s := &session{o: o, device: d, reporter: newConsole(human())}
 	if err := s.start(); err != nil {
 		return ofDevice(err)
 	}
 	defer func() { s.agent.Close() }() // the one there is by then
 	if o.steps(flows) {
-		fmt.Fprintf(human(), "%s, ready in %d ms\n", d.Serial, time.Since(start).Milliseconds())
+		fmt.Fprintf(human(), "%s (%s), ready in %d ms\n", d.Serial, d.Why, time.Since(start).Milliseconds())
+	}
+	if o.runner.Timings {
+		fmt.Fprintf(human(), "  setup: pick %d ms, install and device %d ms, agent and mocks %d ms; %d adb calls\n",
+			picked.Milliseconds(), installed.Milliseconds(), time.Since(start).Milliseconds(), adb.Calls())
 	}
 
 	watch := watcher{}

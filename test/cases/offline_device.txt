@@ -1,0 +1,9 @@
+-- devices --
+emulator-5554	offline
+-- args --
+hierarchy --device emulator-5554
+==== out ====
+-- exit --
+3
+-- stderr --
+error: emulator-5554 is offline: unplug it and plug it again, or run adb reconnect

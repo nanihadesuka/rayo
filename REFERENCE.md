@@ -70,7 +70,7 @@ Topics, rayo help <topic>
   exit-codes                 exit codes
 
 Options of test, live and hierarchy
-  --device <serial>          when several are connected
+  --device <serial>          when several are connected; else ANDROID_SERIAL, else the only one
   --emulator                 never a real device, even if it is the only one
 
 Options of test and check: which flows
@@ -287,7 +287,9 @@ Opens the app and waits until Android has it in front.
 
 Permission names: `all`, `location`, `camera`, `notifications`, `contacts`, `microphone`,
 `bluetooth`, `storage`, `phone`, `calendar`, `sms`, `medialibrary`, or Android's own, such as
-`READ_CONTACTS`. Only `all` has been tested.
+`READ_CONTACTS`. Only `all` has been tested. On an Android older than the permission, `notifications` and
+`medialibrary` before 13, `bluetooth` before 12, it is skipped with a note such as `notifications: not
+asked before Android 13, ignored`.
 
 ```yaml
 - launchApp: { clearState: true, permissions: { all: allow }, arguments: { mock: true } }
@@ -406,7 +408,8 @@ Waits until the element is on screen, enabled and not moving, then taps its cent
 
 ### scrollUntilVisible
 
-🧪 Scrolls until the element is on screen.
+🧪 Scrolls until the element is on screen. If the screen stops changing, the end of the list, it fails
+then, saying so, instead of waiting out the timeout.
 
 <!-- generated: keys scrollUntilVisible -->
 | Key | Takes | |
@@ -1452,13 +1455,16 @@ flows:
 `--retries <n>` wins over both. **Without any of them it is 1**, also for flows without a suite;
 `--retries 0` turns it off. With `-c` and no suite it is 0. It is retried at once, before the next flow. `NOT_RUN` and `INTERRUPTED` aren't, nor when capturing.
 
+`retries: 3` means up to 4 tries: the first and 3 more. The line says `passed on retry 2` when the
+third try passed, and `failed all 4 tries` when none did.
+
 If it passes at last it is `FLAKY`, not `PASS`, with a note of where each try failed, its
 [blame](#blame) and the folder with the rest. Each has its own video too.
 
 ```
-[2/3] FLAKY scan  31.0 s  (failed once, then passed)
+[2/3] FLAKY scan  31.0 s  (passed on retry 1)
   try 1: tests/scan/flow.yaml:12: tapOn scan: not on screen: scan  (test)  .results/scan
-[3/3] FAIL pay  27.2 s  (failed 3 times)
+[3/3] FAIL pay  27.2 s  (failed all 4 tries)
   try: 1
   ...
 
@@ -1635,7 +1641,7 @@ it writes the report, and you send it.
 which is also the length of the slow list of `.md` and of `summary.slowest` in `.json`. JUnit always has every flow,
 as what reads it counts them. Which files stay is [`keep`](#what-is-kept)'s.
 
-Each flow has its attempts (`passed on retry 2`, `failed 3 times`), its time, when it began, and the
+Each flow has its attempts (`passed on retry 2`, `failed all 3 tries`), its time, when it began, and the
 step that failed and why. `--timings` and `--profile` are only for the screen, while it runs.
 
 ```markdown
@@ -1645,7 +1651,7 @@ step that failed and why. `--timings` and `--profile` are only for the screen, w
 
 ## Failed
 
-- **pay** 27.2 s, failed 2 times: `tapOn Pay` at tests/pay/flow.yaml:12: not on screen: Pay (test)
+- **pay** 27.2 s, failed all 2 tries: `tapOn Pay` at tests/pay/flow.yaml:12: not on screen: Pay (test)
 
 ## Flaky
 
@@ -1794,7 +1800,7 @@ Each of `flows`:
 | `blame` | text | Of a flow that failed, whose fault it is, or empty, see [Blame](#blame) |
 | `began` | text | Its first try, in UTC; empty if it didn't run |
 | `seconds` | number | All its tries |
-| `attempts` | text | Such as 'passed on retry 2' or 'failed 3 times'; empty for one try |
+| `attempts` | text | Such as 'passed on retry 2' or 'failed all 3 tries'; empty for one try |
 | `step` | text | Of its last try that failed, the step that failed |
 | `at` | text | Where that step is written, file:line |
 | `why` | text | What went wrong in that try |
@@ -1951,7 +1957,7 @@ all its tries; and last `outcome`, with the results. If the run can't begin, the
 <!-- end -->
 
 ```
-rayo test --format ndjson all.rayo.yaml | jq -c 'select(.event == "stepFailed") | .error'
+rayo test --format ndjson all.suite.yaml | jq -c 'select(.event == "stepFailed") | .error'
 ```
 
 ---
@@ -2154,6 +2160,9 @@ rayo test --name-template '{flow}_{attempt}/{kind}.{ext}' all.suite.yaml   # a f
 
 `rayo test --timings` shows where a run is slow or stuck, without the internals of `--profile`:
 
+- before the flows, where the setup went: `setup: pick 3 ms, install and device 0 ms, agent and mocks
+  900 ms; 4 adb calls` (picking the device, installing the app and the suite's device settings,
+  starting the agent and the mocks, and how many times adb was asked so far)
 - every step with its time, and `◂` with the total of each `runFlow`, `repeat` and `retry`
 - `… still on <step> after 10 s` every 5 s while a step runs, so a hang shows where it is
 - after each flow, its 5 slowest steps; at the end, the 10 slowest flows

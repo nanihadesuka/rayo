@@ -1,0 +1,11 @@
+-- devices --
+R5CX	unauthorized
+-- flow.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+3
+-- stderr --
+error: R5CX is connected but unauthorized: unlock it and allow USB debugging on its screen

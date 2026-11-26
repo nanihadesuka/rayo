@@ -148,7 +148,22 @@ func (s *Session) Drop(mark int) int {
 // Screen is the elements on it.
 func (s *Session) Screen(ctx context.Context) (string, error) {
 	a, err := s.r.agent.Do(ctx, "tree", nil, 10*time.Second)
-	return a.Out, err
+	return CapScreen(a.Out, MostShown), err
+}
+
+// MostShown is how many elements of a screen are printed: a huge list would flood whoever reads it.
+const MostShown = 500
+
+// CapScreen keeps the first most lines of a screen, and says how many it left out.
+func CapScreen(screen string, most int) string {
+	lines := strings.SplitAfter(screen, "\n")
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+	if len(lines) <= most {
+		return screen
+	}
+	return strings.Join(lines[:most], "") + fmt.Sprintf("... %d more elements: --find, or a selector with an id, narrows it\n", len(lines)-most)
 }
 
 // States is the mocks' scenarios, a line each with its state.

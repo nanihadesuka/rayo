@@ -7,7 +7,7 @@ test --help
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
 
 Options of test:
-  --device <serial>          when several are connected
+  --device <serial>          when several are connected; else ANDROID_SERIAL, else the only one
   --emulator                 never a real device, even if it is the only one
   --changed-only             only the flows of which a file changed: their own, one they run, or a mock; as --since HEAD
   --since <git ref>          only the flows of which a file changed since then, also not committed

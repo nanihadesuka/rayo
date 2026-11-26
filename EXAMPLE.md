@@ -70,7 +70,7 @@ How it would look, if `pay` failed once and the app had a bug in `offline`:
 [2/4] PASS pay  31.4 s  (failed once, then passed)
   try 1: tests/pay/flow.yaml:13: tapOn refresh: not on screen: refresh  (test)  results/pay_failure.jpg
 [3/4] PASS declined  11.2 s
-[4/4] FAIL offline  41.9 s  (failed 2 times)
+[4/4] FAIL offline  41.9 s  (failed all 2 tries)
   try: 1
   why: not on screen: You are offline
   blame: app, the app crashed: java.net.ConnectException: unexpected end of stream

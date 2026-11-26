@@ -189,10 +189,16 @@ func (d *fakeDevice) exec(c net.Conn, in *bufio.Reader, command string) {
 		d.killed <- true
 	case strings.HasPrefix(command, "cat "):
 		io.WriteString(c, "a video "+strings.Repeat(".", 100))
+	case strings.HasPrefix(command, "getprop ro.product.model"):
+		io.WriteString(c, "Pixel 7\n14\n")
 	case strings.HasPrefix(command, "getprop sys.boot_completed"):
 		io.WriteString(c, d.health)
-	case strings.HasPrefix(command, "for i in"): // has the lost agent ended?
+	case strings.HasPrefix(command, "i=0; while pgrep"): // has the lost agent ended, and is its file there?
 		io.WriteString(c, "gone\n")
+		if !d.empty {
+			f := strings.Fields(command)
+			io.WriteString(c, f[len(f)-2]+"\n")
+		}
 	case command == "cmd connectivity airplane-mode":
 		io.WriteString(c, "disabled\n")
 	case strings.HasPrefix(command, "settings get system accelerometer_rotation"):
@@ -279,11 +285,16 @@ func (d *fakeDevice) act(op string, q map[string]any) map[string]any {
 	switch op {
 	case "tree":
 		ok["out"] = "a screen\n"
+		if d.swipes > 0 && d.swipes < 5 { // a list that ends after 4 swipes
+			ok["out"] = fmt.Sprintf("a screen, swiped %d\n", d.swipes)
+		}
 	case "shell":
 		command := q["command"].(string)
 		switch {
 		case strings.Contains(command, "not.installed"):
 			ok["out"] = "Error: not.installed is not installed"
+		case strings.Contains(command, "old.android"): // as Android 12 answers
+			ok["out"] = "Note: notifications: not asked before Android 13, ignored\n"
 		case strings.Contains(command, "NO_SUCH"):
 			ok["out"] = "Error: a.b has no permission NO_SUCH that can be changed\n"
 		case strings.Contains(command, "boom"):

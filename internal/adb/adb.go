@@ -14,11 +14,15 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
 // Device is one connected to the adb server.
-type Device struct{ Serial string }
+type Device struct {
+	Serial string
+	Why    string // why it is the one: --device, ANDROID_SERIAL, or the only one
+}
 
 func adbPath() string {
 	if p, err := exec.LookPath("adb"); err == nil {
@@ -34,7 +38,14 @@ func adbPath() string {
 	return name
 }
 
+// calls counts the connections to the adb server, for --timings.
+var calls atomic.Int64
+
+// Calls is how many times rayo has asked the adb server something so far.
+func Calls() int64 { return calls.Load() }
+
 func dialServer() (net.Conn, error) {
+	calls.Add(1)
 	port := os.Getenv("ANDROID_ADB_SERVER_PORT")
 	if port == "" {
 		port = "5037"
@@ -82,6 +93,20 @@ func readBlock(c net.Conn) (string, error) {
 
 // Devices lists the serials of those ready to use.
 func Devices() ([]string, error) {
+	all, err := states()
+	var serials []string
+	for _, s := range all {
+		if s.state == "device" {
+			serials = append(serials, s.serial)
+		}
+	}
+	return serials, err
+}
+
+type state struct{ serial, state string }
+
+// states lists every device adb knows, also those not ready, such as unauthorized or offline.
+func states() ([]state, error) {
 	c, err := dialServer()
 	if err != nil {
 		return nil, err
@@ -91,46 +116,95 @@ func Devices() ([]string, error) {
 		return nil, err
 	}
 	list, err := readBlock(c)
-	var serials []string
+	var all []state
 	for _, line := range strings.Split(list, "\n") {
-		if f := strings.Fields(line); len(f) == 2 && f[1] == "device" {
-			serials = append(serials, f[0])
+		if f := strings.Fields(line); len(f) == 2 {
+			all = append(all, state{f[0], f[1]})
 		}
 	}
-	return serials, err
+	return all, err
+}
+
+// notReady says why a device adb knows can't be used, and what to do.
+func notReady(s state) error {
+	switch s.state {
+	case "unauthorized":
+		return fmt.Errorf("%s is connected but unauthorized: unlock it and allow USB debugging on its screen", s.serial)
+	case "offline":
+		return fmt.Errorf("%s is offline: unplug it and plug it again, or run adb reconnect", s.serial)
+	}
+	return fmt.Errorf("%s is %s, not ready", s.serial, s.state)
+}
+
+// Describe is "serial (model, Android N)", or the serial alone if the device doesn't say.
+func Describe(serial string) string {
+	out, err := (&Device{Serial: serial}).ExecWithin("getprop ro.product.model; getprop ro.build.version.release", 2*time.Second)
+	lines := strings.Split(strings.TrimSpace(strings.ReplaceAll(string(out), "\r", "")), "\n")
+	if err != nil || len(lines) != 2 || strings.TrimSpace(lines[0]) == "" {
+		return serial
+	}
+	return fmt.Sprintf("%s (%s, Android %s)", serial, strings.TrimSpace(lines[0]), strings.TrimSpace(lines[1]))
 }
 
 // Pick is the device with a serial, or the only one; or only among emulators.
 func Pick(serial string, emulator bool) (*Device, error) {
-	all, err := Devices()
+	known, err := states()
 	if err != nil {
 		return nil, err
 	}
-	if serial == "" {
-		serial = os.Getenv("ANDROID_SERIAL")
+	var all []string
+	for _, s := range known {
+		if s.state == "device" {
+			all = append(all, s.serial)
+		}
 	}
+	why := "--device"
+	if serial == "" {
+		serial, why = os.Getenv("ANDROID_SERIAL"), "ANDROID_SERIAL"
+	}
+	real := func(s string) bool { return !(&Device{Serial: s}).Emulator() }
 	if emulator {
-		real := func(s string) bool { return !(&Device{Serial: s}).Emulator() }
 		if serial != "" && real(serial) {
 			return nil, fmt.Errorf("%s is not an emulator", serial)
 		}
-		if all = slices.DeleteFunc(all, real); len(all) == 0 {
-			return nil, fmt.Errorf("no emulator running")
-		}
+		all = slices.DeleteFunc(all, real)
 	}
 	if serial == "" {
 		switch len(all) {
 		case 0:
+			for _, s := range known {
+				if s.state != "device" && !(emulator && real(s.serial)) {
+					return nil, notReady(s)
+				}
+			}
+			if emulator {
+				return nil, fmt.Errorf("no emulator running")
+			}
 			return nil, fmt.Errorf("no device connected")
 		case 1:
-			return &Device{Serial: all[0]}, nil
+			only := "the only one"
+			if emulator {
+				only = "the only emulator"
+			}
+			return &Device{Serial: all[0], Why: only}, nil
 		}
-		return nil, fmt.Errorf("several devices, choose one with --device: %s", strings.Join(all, ", "))
+		described := make([]string, len(all))
+		for i, s := range all {
+			described[i] = Describe(s)
+		}
+		return nil, fmt.Errorf("several devices, choose one with --device or ANDROID_SERIAL: %s", strings.Join(described, ", "))
 	}
-	for _, s := range all {
-		if s == serial {
-			return &Device{Serial: s}, nil
+	for _, s := range known {
+		switch {
+		case s.serial != serial:
+		case s.state == "device":
+			return &Device{Serial: s.serial, Why: why}, nil
+		default:
+			return nil, notReady(s)
 		}
+	}
+	if why == "ANDROID_SERIAL" {
+		return nil, fmt.Errorf("ANDROID_SERIAL=%s is not connected; unset it to use the only device, or see rayo devices", serial)
 	}
 	return nil, fmt.Errorf("device %s is not connected", serial)
 }

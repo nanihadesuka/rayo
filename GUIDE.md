@@ -111,7 +111,7 @@ It says what went wrong first, then whose fault it is, where, what came before, 
 looked most like what it wanted:
 
 ```
-[2/3] FAIL pay  9.1 s  (failed 2 times)
+[2/3] FAIL pay  9.1 s  (failed all 2 tries)
   pay failed at tapOn pay_button: not on screen
   why: not on screen: pay_button
   blame: test
@@ -385,5 +385,6 @@ In a [live session](REFERENCE.md#live-sessions), `rayo do --screen --find "Pay n
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nanihadesuka/rayo/main/schema/flow.json
 ```
 
-It needs the repository to be public; until then, use the path of your copy. See
+For a suite, `schema/suite.json` the same way. Offline, or to pin your version, use the path of
+your copy instead, such as `# yaml-language-server: $schema=../rayo/schema/flow.json`. See
 [Schemas](REFERENCE.md#schemas).

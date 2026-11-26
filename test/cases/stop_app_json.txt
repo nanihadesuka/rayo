@@ -85,8 +85,7 @@ results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a, b, c, d (not run)
 -- device --
-adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
-adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:i=0; while pgrep -f 'rayo[.]Agent' >/dev/null; do i=$((i+1)); [ $i -gt 50 ] && exit; sleep 0.2; done; echo gone; ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
 adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
 noAnimations {"timeout":10000}
 tap {"delay":100,"repeat":1,"sel":{"id":"app crashes"},"timeout":15000}
@@ -316,7 +315,7 @@ a screen
       "blame": "app",
       "began": "<now>",
       "seconds": #,
-      "attempts": "failed 2 times",
+      "attempts": "failed all 2 tries",
       "step": "tapOn app crashes",
       "at": "a.yaml:3",
       "why": "not on screen: home",
@@ -390,7 +389,7 @@ a screen
       "blame": "app",
       "began": "<now>",
       "seconds": #,
-      "attempts": "failed 2 times",
+      "attempts": "failed all 2 tries",
       "step": "tapOn app crashes",
       "at": "b.yaml:3",
       "why": "not on screen: home",

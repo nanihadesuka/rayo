@@ -38,7 +38,7 @@ $ rayo test --emulator all.suite.yaml
 [1/3] PASS book  18.2 s
 [2/3] FLAKY scan  41.0 s  (failed once, then passed)
   try 1: scan.yaml:12: tapOn scan: not on screen: scan  (test)  .results/scan
-[3/3] FAIL pay  9.1 s  (failed 2 times)
+[3/3] FAIL pay  9.1 s  (failed all 2 tries)
   ...
 
 TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s

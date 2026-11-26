@@ -16,7 +16,7 @@
             "type": "string"
           },
           "attempts": {
-            "description": "Such as 'passed on retry 2' or 'failed 3 times'; empty for one try",
+            "description": "Such as 'passed on retry 2' or 'failed all 3 tries'; empty for one try",
             "type": "string"
           },
           "began": {

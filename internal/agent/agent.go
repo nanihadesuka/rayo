@@ -45,14 +45,11 @@ type Answer struct {
 func Start(d *adb.Device) (*Agent, error) {
 	hash := sha256.Sum256(agentJar)
 	path := fmt.Sprintf("/data/local/tmp/rayo-%x.jar", hash[:8])
-	if err := awaitGone(d); err != nil {
-		return nil, err
-	}
-	have, err := d.Exec("ls " + path + " 2>/dev/null")
+	there, err := awaitGone(d, path)
 	if err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(string(have)) != path {
+	if !there {
 		// Renamed into place, so an interrupted push is never mistaken for the agent.
 		if err := d.Push(agentJar, path+".part"); err != nil {
 			return nil, err
@@ -89,13 +86,22 @@ func (a *Agent) Close() {
 }
 
 // awaitGone waits until an agent whose connection was lost has undone its changes and ended.
-// Starting another before would take its changes as how the device was.
-func awaitGone(d *adb.Device) error {
-	out, err := d.Exec("for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done")
-	if err == nil && strings.TrimSpace(string(out)) != "gone" {
-		err = errors.New("another rayo is using the device")
+// Starting another before would take its changes as how the device was. In the same trip, it says
+// whether the agent's file is there already. It looks every 200 ms, for up to 10 s.
+func awaitGone(d *adb.Device, path string) (there bool, err error) {
+	out, err := d.Exec(awaitGoneCommand(path))
+	if err != nil {
+		return false, err
 	}
-	return err
+	lines := strings.Fields(string(out))
+	if len(lines) == 0 || lines[0] != "gone" {
+		return false, errors.New("another rayo is using the device")
+	}
+	return len(lines) > 1 && lines[1] == path, nil
+}
+
+func awaitGoneCommand(path string) string {
+	return "i=0; while pgrep -f 'rayo[.]Agent' >/dev/null; do i=$((i+1)); [ $i -gt 50 ] && exit; sleep 0.2; done; echo gone; ls " + path + " 2>/dev/null"
 }
 
 // lost gives up: the next answer would belong to this request.

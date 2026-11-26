@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -176,7 +177,8 @@ func (s *script) run(file string) error {
 	if err != nil {
 		return err
 	}
-	// In a function, so that two scripts can use the same names.
+	// In a function, so that two scripts can use the same names. A file saved on Windows reads the same.
+	code = bytes.ReplaceAll(code, []byte("\r\n"), []byte("\n"))
 	_, err = s.eval(file, "(function(){"+string(code)+"\n})()")
 	return err
 }
