@@ -29,7 +29,8 @@ type StepReport struct {
 	Status  Status
 	Text    string
 	Took    time.Duration
-	Profile string // where the time went, if asked for
+	Limit   time.Duration // how long it could wait; 0 for a group
+	Profile string        // where the time went, if asked for
 }
 
 var marks = map[Status]string{Passed: "✓", Failed: "✗", Optional: "–", Skipped: "–", Started: "▸", Finished: "◂"}

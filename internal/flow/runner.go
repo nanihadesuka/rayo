@@ -65,6 +65,7 @@ func (o *Options) scaled(d time.Duration) time.Duration {
 // Runner runs flows on a device, one at a time.
 type Runner struct {
 	Options
+	limit    time.Duration // of the last command run, for --timings to tell a tight wait
 	device   *adb.Device
 	agent    *agent.Agent
 	reporter Reporter
@@ -212,6 +213,10 @@ func (r *Runner) run(ctx context.Context, f *Flow) error {
 		err = r.backend.check()
 	}
 	if ctx.Err() != nil {
+		var at *StepError
+		if errors.As(err, &at) { // where it was, for the results
+			return &StepError{Step: at.Step, From: at.From, Err: ctx.Err()}
+		}
 		return ctx.Err()
 	}
 	if err != nil {
@@ -294,6 +299,9 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 	}
 	slow()
 	report := StepReport{Depth: depth, Text: s.describe(), Took: time.Since(start)}
+	if !k.group {
+		report.Limit = r.limit
+	}
 	if r.Profile && !k.group {
 		report.Profile = r.agent.Explain(report.Took)
 	}
@@ -405,6 +413,7 @@ func (r *Runner) call(ctx context.Context, s *Step, k command, optional bool, de
 		c.limit = k.limit
 	}
 	c.limit = keyTimeout.or(v, r.scaled(c.limit))
+	r.limit = c.limit
 	return k.run(c)
 }
 

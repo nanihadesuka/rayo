@@ -94,7 +94,8 @@ Options of test and check: which flows of them
   --include-tags <a,b>       only flows with one of these tags
   --exclude-tags <a,b>       not flows with one of these tags
   --rerun-failed             only those that haven't passed since they last failed
-  --shard <i/n>              only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order
+  --min-flows <n>            fail (exit 2) if fewer flows than this are chosen, as a typo in a tag or a name would; of all the parts with --shard, and not with --rerun-failed or --resume (default: the suite's minFlows, else none)
+  --shard <i/n>              only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order; it writes to .rayo/shard-i-of-n unless --output or the suite says
 
 Options of test and check: as the suite says, for one run
   -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own
@@ -612,7 +613,7 @@ longer `timeout`:
 | Key | Takes | |
 |---|---|---|
 | `times` | number | At most |
-| `while` | conditions | As long as these hold |
+| `while` | conditions | As long as these hold; without times, it fails after 1000 rounds that it still holds |
 | `commands` | commands | What to run |
 <!-- end -->
 
@@ -1233,6 +1234,7 @@ flows:
 | `show` | a name or a list | `--show` overrides it: the flows the results list, of `failed`, `flaky`, `slow`, `all`, see [Results](#results) (default: `all`) |
 | `slowest` | a number from 1 | `--slowest` overrides it: how many flows the slow list has (default: 5) |
 | `format` | `human`, `json` or `ndjson` | What is printed; `--format` overrides it, see [For a program](#for-a-program) (default: `human`) |
+| `minFlows` | a number from 1 | `--min-flows` overrides it: fewer flows chosen, by tags, names or what changed, is an error (exit `2`), not a green run of nothing (default: none) |
 | `flakyFailsBuild` | `true` or `false` | `--flaky-fails-build` too: a run where every flow passed, some only on a retry, exits `4`, see [Flaky flows](#flaky-flows) (default: `false`: it exits `0`) |
 <!-- end -->
 
@@ -1738,6 +1740,7 @@ The run:
 | `run` | text | The suite's name, or what was run |
 | `device` | text | Its serial |
 | `order` | text | `--shuffle=<seed>`, if shuffled |
+| `shard` | mapping or null | The part of --shard i/n this run was; null if all |
 | `stopped` | text | Why, if it stopped before the end, see [Blame](#blame) |
 | `ok` | true or false | Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code |
 | `summary` | mapping | The run at a glance, see below |
@@ -1793,7 +1796,7 @@ Each of `failures`:
 | Key | | |
 |---|---|---|
 | `try` | number | From 1 |
-| `verdict` | text | In a line: '<flow> failed at <step>: <cause>' |
+| `verdict` | text | In a line: '<flow> failed at <step>: <cause>'; of an interrupted flow, '<flow> interrupted at <step> (<file:line>)' |
 | `cause` | text | What went wrong, see [Results](#results) |
 | `error` | mapping | What went wrong, at which step, see [Errors](#errors) |
 | `blame` | text | Whose fault it is: `test`, `app` or `device`, see [Blame](#blame) |
@@ -1876,7 +1879,7 @@ The same whatever `--format` says:
 | `2` | configuration | Something written is wrong: an option, a flow, a suite or a mock; nothing ran |
 | `3` | device | No device to run on, or it was lost or unusable, so the flows couldn't run or didn't all run |
 | `4` | flaky | Every flow passed, some only on a retry, and `flaky-fails-build` is `true`; else such a run exits `0` |
-| `130` | interrupted | Ctrl-C |
+| `130` | interrupted | Ctrl-C, or SIGTERM as CI sends when it cancels a job: what ran is in the results, each interrupted flow with the step it was at |
 <!-- end -->
 
 ### Errors

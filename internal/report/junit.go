@@ -51,7 +51,11 @@ func plain(text string) string {
 }
 
 func (sum *Summary) junit() ([]byte, error) {
-	s := junitSuite{Name: "rayo", Tests: len(sum.Outcomes), Failures: sum.count(Failed), Errors: sum.count(Interrupted), Skipped: sum.count(NotRun)}
+	name := "rayo"
+	if sum.Shards > 0 { // each part's file, told apart where CI gathers them
+		name = fmt.Sprintf("rayo-shard-%d-of-%d", sum.Shard, sum.Shards)
+	}
+	s := junitSuite{Name: name, Tests: len(sum.Outcomes), Failures: sum.count(Failed), Errors: sum.count(Interrupted), Skipped: sum.count(NotRun)}
 	var total time.Duration
 	for _, o := range sum.Outcomes {
 		took := o.took()
@@ -62,7 +66,7 @@ func (sum *Summary) junit() ([]byte, error) {
 		case Failed:
 			c.Failure = &text
 		case Interrupted:
-			text = "interrupted"
+			text = plain(o.Interruption())
 			c.Error = &text
 		case NotRun:
 			c.Skipped = &junitSkipped{o.Why}

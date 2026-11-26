@@ -63,7 +63,8 @@ Options of test and check: which flows of them
   --include-tags <a,b>       only flows with one of these tags
   --exclude-tags <a,b>       not flows with one of these tags
   --rerun-failed             only those that haven't passed since they last failed
-  --shard <i/n>              only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order
+  --min-flows <n>            fail (exit 2) if fewer flows than this are chosen, as a typo in a tag or a name would; of all the parts with --shard, and not with --rerun-failed or --resume (default: the suite's minFlows, else none)
+  --shard <i/n>              only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order; it writes to .rayo/shard-i-of-n unless --output or the suite says
 
 Options of test and check: as the suite says, for one run
   -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own

@@ -1,0 +1,14 @@
+-- args --
+check s.suite.yaml
+-- s.suite.yaml --
+flows: [a.yaml]
+minFlows: 2
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: 1 flows chosen, fewer than the 2 of the suite's minFlows: a tag, a name or --since may be wrong

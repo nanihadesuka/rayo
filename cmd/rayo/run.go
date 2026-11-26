@@ -85,7 +85,11 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 	if len(chosen) == 0 && !o.rerunFailed {
 		return nil, errors.New("no flows have those tags")
 	}
+	if err := o.enough(len(chosen)); err != nil {
+		return nil, err
+	}
 	if o.shards > 0 {
+		o.ofAll = len(chosen)
 		chosen = o.part(chosen)
 	}
 	if o.shuffle {
@@ -94,6 +98,33 @@ func (o *options) choose(flows []*flow.Flow) ([]*flow.Flow, error) {
 		rand.New(rand.NewPCG(o.seed, 0)).Shuffle(len(chosen), func(i, j int) { chosen[i], chosen[j] = chosen[j], chosen[i] })
 	}
 	return chosen, nil
+}
+
+// enough is an error if fewer flows were chosen than --min-flows, or the suite's minFlows, says.
+func (o *options) enough(chosen int) error {
+	least := o.minFlows
+	if least == 0 && o.suite != nil {
+		least = o.suite.MinFlows
+	}
+	if chosen >= least || o.rerunFailed || o.resume {
+		return nil
+	}
+	what := "--min-flows"
+	if o.minFlows == 0 {
+		what = "the suite's minFlows"
+	}
+	return fmt.Errorf("%d flows chosen, fewer than the %d of %s: a tag, a name or --since may be wrong", chosen, least, what)
+}
+
+// noneChosen says why no flow runs, and writes the results all the same, with none, so that CI doesn't read those of an earlier run.
+func (o *options) noneChosen(title, why string) error {
+	fmt.Fprintln(human(), why)
+	sum := &report.Summary{Title: title, Began: time.Now(), Stopped: why, Shard: o.shard, Shards: o.shards, Template: o.resultsTemplate}
+	var err error
+	for _, file := range o.results {
+		err = errors.Join(err, sum.Write(file))
+	}
+	return err
 }
 
 // part is those of --shard: each flow's place among all by path settles its part, so that every
@@ -174,8 +205,11 @@ func (o *options) retriesOf(f *flow.Flow) int {
 func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) error {
 	o := s.o
 	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), FlakyFails: o.flakyFails,
-		Detail: o.detail, Show: o.show, Slowest: o.slowest, Template: o.resultsTemplate}
+		Detail: o.detail, Show: o.show, Slowest: o.slowest, Template: o.resultsTemplate, Shard: o.shard, Shards: o.shards}
 	say := human()
+	if o.shards > 0 {
+		fmt.Fprintf(say, "%s: %d of %d flows\n", sum.Part(), len(flows), o.ofAll)
+	}
 	if o.shuffle {
 		sum.Order = fmt.Sprintf("--shuffle=%d", o.seed)
 		fmt.Fprintln(say, "order:", sum.Order)

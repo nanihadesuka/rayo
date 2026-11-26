@@ -141,7 +141,8 @@ rayo explain
 Then `rayo test --rerun-failed` runs only what failed.
 
 A test that fails and then passes on a retry is `FLAKY`. It doesn't fail the run unless you add
-`--flaky-fails-build`, but it is shown, so you can fix it. See [Flaky flows](REFERENCE.md#flaky-flows).
+`--flaky-fails-build`, but it is shown, so you can fix it. See [Flaky flows](REFERENCE.md#flaky-flows),
+and [Fix a flaky test](#fix-a-flaky-test).
 
 # How do I...
 
@@ -255,7 +256,10 @@ Or let a step fail without failing the test:
 rayo test --shard 1/4 all.suite.yaml   # on the first of 4 machines; 2/4 on the second…
 ```
 
-Each test is in one part, by its path, so all machines agree whatever the order.
+Each test is in one part, by its path, so all machines agree whatever the order. Each part writes to
+`.rayo/shard-1-of-4` unless `--output` says, and its results say which part they are: `part 1 of 4` in the text
+and `.md`, `rayo-shard-1-of-4` as the JUnit suite's name, and `shard` in the JSON. A part with no tests still
+writes its results, with none.
 
 ## Refuse a permission
 
@@ -318,6 +322,17 @@ To see which tests would run, without a device:
 rayo check --changed-only all.suite.yaml
 ```
 
+Add `--min-flows 20` (or `minFlows: 20` in the suite) so that a typo in a tag runs fewer tests and fails,
+with exit `2`, instead of a green run of nothing.
+
+## Fix a flaky test
+
+A `FLAKY` test comes with a `next:` line, by how its first try failed. Most often the screen wasn't there in
+time: wait for what comes before it, with `assertVisible` or `waitForRequest`, rather than a longer timeout.
+`rayo test --timings` lists as `tight` the steps that passed using more than 70% of their timeout: those
+fail on a slower day. To see where it fails, run it alone a few times with `--only name --retries 0`.
+A `retry:` step says in its output which round it is and what failed before.
+
 ## Run in a CI
 
 Any CI with an emulator. `.xml` results are JUnit, and `.md` a short summary for a pull request:
@@ -336,6 +351,7 @@ The exit code says what happened, so the CI can tell a broken test from a broken
 | `2` | Something written is wrong: a flow, a suite, a mock or an option. Nothing ran |
 | `3` | No device, or it stopped working |
 | `4` | Everything passed, some only on a retry, with `--flaky-fails-build` |
+| `130` | Cancelled: Ctrl-C, or SIGTERM as a CI sends. The device is put back, and the results say where each test was |
 
 ## Use rayo from a script or an AI agent
 

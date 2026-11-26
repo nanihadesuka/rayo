@@ -19,6 +19,7 @@ emulator-5554, ready in # ms
   ▸ runFlow sub.yaml
     ▸ retry retries: 1
       ✗ Open it  # ms
+      retry: 1 of 1, after: sub.yaml:3: Open it: not on screen: missing
       ✗ Open it  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
   ✓ tapOn cleanup  # ms

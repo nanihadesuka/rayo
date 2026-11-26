@@ -97,6 +97,12 @@ func (c *console) slowestSteps() {
 	for _, s := range steps[:min(5, len(steps))] {
 		fmt.Fprintf(c.out, "    %6d ms  %s\n", s.Took.Milliseconds(), s.Text)
 	}
+	for _, s := range c.steps {
+		// It passed, but close to its limit: a slower day and it fails.
+		if s.Status == flow.Passed && s.Limit > time.Second && s.Took*10 > s.Limit*7 {
+			fmt.Fprintf(c.out, "  tight: %s took %d ms of its %d ms timeout\n", s.Text, s.Took.Milliseconds(), s.Limit.Milliseconds())
+		}
+	}
 	c.steps = nil
 }
 

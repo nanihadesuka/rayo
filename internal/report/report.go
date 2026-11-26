@@ -87,11 +87,23 @@ func (o *Outcome) Line() string {
 		return fmt.Sprintf("%s %s  (%s)", o.Status, o.Flow.Name, o.Why)
 	}
 	line := fmt.Sprintf("%s %s  %.1f s", o.Status, o.Flow.Name, o.took().Seconds())
+	if o.Status == Interrupted {
+		return line + "  (" + o.Interruption() + ")"
+	}
 	if n := o.TimesFailed(); len(o.Tries) > 1 {
 		times := map[bool]string{true: "once", false: fmt.Sprintf("%d times", n)}[n == 1]
 		line += "  (failed " + times + map[bool]string{true: ", then passed"}[o.Passed()] + ")"
 	}
 	return line
+}
+
+// Interruption is where an interrupted flow was: "interrupted at <step> (file:line)", or "interrupted".
+func (o *Outcome) Interruption() string {
+	var step *flow.StepError
+	if errors.As(o.Err, &step) {
+		return fmt.Sprintf("interrupted at %s (%s)", step.Step.Text(), step.Step.Place())
+	}
+	return "interrupted"
 }
 
 // Verdict is a failed try in a line: "<flow> failed at <step>: <cause>", the cause one of flow.Causes.
@@ -237,7 +249,31 @@ func (o *Outcome) Notes() string {
 		}
 		b.WriteString("\n")
 	}
+	if o.Status == Flaky {
+		b.WriteString("  next: " + o.next() + "\n")
+	}
 	return b.String()
+}
+
+// next is what to do about a flaky flow, by how its first failed try went.
+func (o *Outcome) next() string {
+	for _, t := range o.Tries {
+		if t.Err == nil || t.Failure == nil {
+			continue
+		}
+		switch {
+		case t.Failure.Blame == flow.Dev:
+			return "the device failed, not the flow: check it with rayo devices; if it happens often, a cold boot of the emulator helps"
+		case t.Failure.Blame == flow.App || t.Failure.Cause == flow.AppCrashed:
+			return "the app crashed or hung: the crash is in the try's logcat; it is a bug of the app, not of the flow"
+		case t.Failure.Cause == flow.UnmockedCall:
+			return "a call had no mock only sometimes: mock it, or ignore it with ignoreUnmocked"
+		case t.Failure.Cause == flow.NotOnScreen, t.Failure.Cause == flow.Timeout:
+			return "the screen wasn't there in time: wait for what comes before it (assertVisible, waitForRequest) instead of a longer timeout; rayo test --timings lists the waits near their limit"
+		}
+		break
+	}
+	return "run it alone a few times (--only " + o.Flow.Name + " --retries 0) to see where it fails; see Fix a flaky test in the guide"
 }
 
 // videos are those of every try.
@@ -263,6 +299,7 @@ type Summary struct {
 	Slowest              int      // how many the slow list has
 	Template             string   // results-template: a file, for results with its extension
 	Detail               string   // how much a failure says: full in the files too, else normal
+	Shard, Shards        int      // the part of --shard i/n; 0 if all
 }
 
 func (s *Summary) count(is Status) int {
@@ -312,6 +349,9 @@ func (s *Summary) Text(brief bool) string {
 		if s.Order != "" {
 			fmt.Fprintf(&b, "order: %s\n", s.Order)
 		}
+		if s.Shards > 0 {
+			fmt.Fprintf(&b, "part: %d of %d\n", s.Shard, s.Shards)
+		}
 		b.WriteString("\n")
 	}
 	if !brief || len(s.Outcomes) > 1 && s.count(Passed) < len(s.Outcomes) { // or it would only repeat
@@ -353,9 +393,16 @@ func (s *Summary) Text(brief bool) string {
 	if n := s.retried(); n > 0 {
 		parts = append(parts, fmt.Sprintf("%d retried", n))
 	}
-	fmt.Fprintf(&b, "TOTAL %d: %s  %.1f s\n", len(s.Outcomes), strings.Join(parts, ", "), s.Took.Seconds())
+	total := fmt.Sprint(len(s.Outcomes))
+	if s.Shards > 0 {
+		total += " in " + s.Part()
+	}
+	fmt.Fprintf(&b, "TOTAL %s: %s  %.1f s\n", total, strings.Join(parts, ", "), s.Took.Seconds())
 	return b.String()
 }
+
+// Part is "part 2 of 4", of --shard.
+func (s *Summary) Part() string { return fmt.Sprintf("part %d of %d", s.Shard, s.Shards) }
 
 // Formats of the results.
 const (

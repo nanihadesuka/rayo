@@ -27,9 +27,11 @@ appId: a.b
 -- stdout --
 [1/3] FLAKY a  # s  (failed once, then passed)
   try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a_failure.png
+  next: run it alone a few times (--only a --retries 0) to see where it fails; see Fix a flaky test in the guide
 [2/3] FLAKY b  # s  (failed 2 times, then passed)
   try 1: b.yaml:3: tapOn flaky 2: flaked  (test)  .rayo/b_failure.png
   try 2: b.yaml:3: tapOn flaky 2: flaked  (test)  .rayo/b_retry1_failure.png
+  next: run it alone a few times (--only b --retries 0) to see where it fails; see Fix a flaky test in the guide
 [3/3] FAIL c  # s
   c failed at tapOn missing: not on screen
   why: not on screen: missing
@@ -137,6 +139,7 @@ a screen
   "run": "s.suite.yaml",
   "device": "emulator-5554",
   "order": "",
+  "shard": null,
   "stopped": "",
   "ok": false,
   "summary": {

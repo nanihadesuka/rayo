@@ -279,7 +279,7 @@
                   "type": "integer"
                 },
                 "verdict": {
-                  "description": "In a line: '<flow> failed at <step>: <cause>'",
+                  "description": "In a line: '<flow> failed at <step>: <cause>'; of an interrupted flow, '<flow> interrupted at <step> (<file:line>)'",
                   "type": "string"
                 }
               },
@@ -404,6 +404,32 @@
       "description": "Changes if the meaning of a key does",
       "type": "integer"
     },
+    "shard": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "index": {
+              "description": "i, from 1",
+              "type": "integer"
+            },
+            "of": {
+              "description": "n",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "index",
+            "of"
+          ],
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The part of --shard i/n this run was; null if all"
+    },
     "stopped": {
       "description": "Why, if it stopped before the end",
       "type": "string"
@@ -507,6 +533,7 @@
     "run",
     "device",
     "order",
+    "shard",
     "stopped",
     "ok",
     "summary",

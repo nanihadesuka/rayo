@@ -67,6 +67,7 @@ type Suite struct {
 	FailureWindow   int      // seconds; 0 if not said
 	Show            []string // nil if not said
 	Slowest         int      // 0 if not said
+	MinFlows        int      // 0 if not said
 	ResultsTemplate string   // empty if not said
 	FlakyFailsBuild bool
 	TimeoutScale    float64           // 0 if not said

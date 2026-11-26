@@ -3,9 +3,10 @@ package flow
 import (
 	"context"
 	"errors"
+	"fmt"
 	"maps"
-	"math"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/nanihadesuka/rayo/internal/agent"
@@ -36,26 +37,47 @@ func retry(c *call) error {
 			if err == nil || errors.Is(err, errUntil) || i >= times || c.r.agent.Dead() != nil || c.ctx.Err() != nil {
 				return err
 			}
+			first, _, _ := strings.Cut(strings.TrimSpace(err.Error()), "\n")
+			c.r.reporter.Note(c.depth+2, fmt.Sprintf("retry: %d of %d, after: %s", i+1, times, first))
 		}
 	})
 }
 
+// WhileLimit is how many times a repeat with a while and no times runs at most: a while that never
+// turns false would run until the job is killed.
+const WhileLimit = 1000
+
 func repeat(c *call) error {
 	return c.group(func(steps []*Step) error {
-		for i := argOr(c, keyTimes, math.MaxInt); i > 0; i-- {
+		counted := get(c.v, keyTimes) != nil
+		times := argOr(c, keyTimes, WhileLimit)
+		for i := 0; ; i++ {
 			if err := c.ctx.Err(); err != nil {
 				return err
 			}
-			if while := arg(c, keyWhile); while != nil {
+			while := arg(c, keyWhile)
+			if i == times && (counted || while == nil) {
+				return nil
+			}
+			if while != nil {
 				if ok, err := c.r.holds(c.ctx, while); err != nil || !ok {
 					return err
 				}
+			}
+			if i == times {
+				return fmt.Errorf("repeat ran %d times and its while still holds: give it times: to repeat more, or a while that turns false", WhileLimit)
+			}
+			if i > 0 {
+				round := fmt.Sprintf("repeat: %d", i+1)
+				if counted {
+					round += fmt.Sprintf(" of %d", times)
+				}
+				c.r.reporter.Note(c.depth+2, round)
 			}
 			if err := c.inside(steps); err != nil {
 				return err
 			}
 		}
-		return nil
 	})
 }
 

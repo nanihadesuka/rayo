@@ -36,6 +36,8 @@ type options struct {
 	only, include, exclude []string
 	rerunFailed            bool
 	shard, shards          int // --shard shard/shards; 0 if not said
+	ofAll                  int // with --shard, the flows of all the parts
+	minFlows               int // 0 if not said
 	shuffle                bool
 	seed                   uint64
 	retries                int // negative if not said
@@ -184,11 +186,21 @@ var sections = []section{
 		list("include-tags", "only flows with one of these tags", func(o *options) *[]string { return &o.include }),
 		list("exclude-tags", "not flows with one of these tags", func(o *options) *[]string { return &o.exclude }),
 		flag("rerun-failed", "only those that haven't passed since they last failed", func(o *options) *bool { return &o.rerunFailed }),
-		{name: "shard", value: "i/n", about: "only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order", set: func(o *options, v string) error {
+		{name: "min-flows", value: "n", about: "fail (exit 2) if fewer flows than this are chosen, as a typo in a tag or a name would; of all the parts with --shard, and not with --rerun-failed or --resume (default: the suite's minFlows, else none)", set: func(o *options, v string) error {
+			n, err := strconv.Atoi(v)
+			if err != nil || n < 1 {
+				return fmt.Errorf("--min-flows takes a number from 1, not %q", v)
+			}
+			o.minFlows = n
+			return nil
+		}},
+		{name: "shard", value: "i/n", about: "only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order; it writes to .rayo/shard-i-of-n unless --output or the suite says", set: func(o *options, v string) error {
 			i, n, ok := strings.Cut(v, "/")
-			o.shard, _ = strconv.Atoi(i)
-			o.shards, _ = strconv.Atoi(n)
-			if !ok || o.shards < 1 || o.shard < 1 || o.shard > o.shards {
+			var bad1, bad2 error
+			o.shard, bad1 = strconv.Atoi(i)
+			o.shards, bad2 = strconv.Atoi(n)
+			if !ok || bad1 != nil || bad2 != nil || o.shards < 1 || o.shard < 1 || o.shard > o.shards {
+				o.shard, o.shards = 0, 0
 				return fmt.Errorf("--shard takes i/n, a part of how many, such as 2/4, not %q", v)
 			}
 			return nil
@@ -615,6 +627,9 @@ func (o *options) steps(flows []*flow.Flow) bool {
 func (o *options) into(folder string) {
 	if o.output == "" {
 		o.output = folder
+	}
+	if o.output == "" && o.shards > 0 { // two parts on one machine don't write over each other
+		o.output = filepath.Join(".rayo", fmt.Sprintf("shard-%d-of-%d", o.shard, o.shards))
 	}
 	if o.output == "" {
 		o.output = ".rayo"

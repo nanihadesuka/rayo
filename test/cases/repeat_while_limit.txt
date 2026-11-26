@@ -1,0 +1,74 @@
+-- args --
+test --detail brief flow.yaml
+-- flow.yaml --
+appId: a.b
+---
+- repeat:
+    while: { true: "${true}" }
+    commands:
+      - evalScript: ${output.n = 1}
+==== out ====
+-- exit --
+1
+-- stdout --
+[1/1] FAIL case  # s
+  case failed at repeat ${true}: step failed
+  saved: .rayo/case_failure.png
+
+TOTAL 1: 0 passed, 1 failed  # s
+-- stderr --
+error: failed: case
+-- device --
+adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
+adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+adb exec:screencap -p
+tree {"timeout":5000}
+adb exec:logcat -d -t 2000
+adb exec:getprop sys.boot_completed; ps -o ETIME= -p $(pidof system_server)
+bye {"timeout":5000}
+-- file .rayo/case_failure.png --
+PNG...
+-- file .rayo/case_logcat.txt --
+the log
+-- file .rayo/case_screen.txt --
+a screen
+-- file .rayo/failed.json --
+{
+  "<dir>/flow.yaml": {
+    "status": "FAIL",
+    "name": "case",
+    "file": "flow.yaml",
+    "why": "",
+    "failure": {
+      "try": 1,
+      "verdict": "case failed at repeat ${true}: step failed",
+      "cause": "step failed",
+      "error": {
+        "file": "flow.yaml",
+        "line": 3,
+        "step": "repeat ${true}",
+        "message": "repeat ran 1000 times and its while still holds: give it times: to repeat more, or a while that turns false",
+        "expected": "",
+        "nearest": "",
+        "fix": ""
+      },
+      "blame": "test",
+      "because": "",
+      "from": [],
+      "before": [
+        "evalScript ${output.n = 1}",
+        "evalScript ${output.n = 1}",
+        "evalScript ${output.n = 1}"
+      ],
+      "nearest": [],
+      "calls": [],
+      "screen": [],
+      "crash": "",
+      "saved": ".rayo/case_failure.png",
+      "scenarios": [],
+      "trail": []
+    }
+  }
+}

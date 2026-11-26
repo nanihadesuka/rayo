@@ -22,10 +22,16 @@ type jsonRun struct {
 	Run           string      `json:"run" about:"The suite's name, or what was run"`
 	Device        string      `json:"device" about:"Its serial"`
 	Order         string      `json:"order" about:"'--shuffle=<seed>', if shuffled"`
+	Shard         *jsonShard  `json:"shard" about:"The part of --shard i/n this run was; null if all"`
 	Stopped       string      `json:"stopped" about:"Why, if it stopped before the end, see [Blame](#blame)"`
 	OK            bool        `json:"ok" about:"Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code"`
 	Summary       jsonSummary `json:"summary" about:"The run at a glance, see below"`
 	Flows         []jsonFlow  `json:"flows" about:"Those that show says, see below"`
+}
+
+type jsonShard struct {
+	Index int `json:"index" about:"i, from 1"`
+	Of    int `json:"of" about:"n"`
 }
 
 type jsonFlow struct {
@@ -51,7 +57,7 @@ type jsonFlow struct {
 // Failure is one, for a program.
 type Failure struct {
 	Try       int          `json:"try" about:"From 1"`
-	Verdict   string       `json:"verdict" about:"In a line: '<flow> failed at <step>: <cause>'"`
+	Verdict   string       `json:"verdict" about:"In a line: '<flow> failed at <step>: <cause>'; of an interrupted flow, '<flow> interrupted at <step> (<file:line>)'"`
 	Cause     string       `json:"cause" about:"What went wrong, see [Results](#results)" enum:"not on screen,timeout,app crashed,unmocked call,device error,step failed"`
 	Error     Problem      `json:"error" about:"What went wrong, at which step, see [Errors](#errors)"`
 	Blame     flow.Blame   `json:"blame" about:"Whose fault it is: 'test', 'app' or 'device', see [Blame](#blame)" enum:"test,app,device"`
@@ -150,11 +156,14 @@ func (o *Outcome) json() jsonFlow {
 		Began: stamp(o.Began), Attempts: o.Attempts(), Tries: len(o.Tries), TimesFailed: o.TimesFailed(), Retries: o.Retries, NotRunReason: o.Why, Warnings: List(o.Warnings), Recordings: []string{}, Failures: []Failure{}}
 	for i, t := range o.Tries {
 		f.Recordings = append(f.Recordings, t.Recordings...)
-		if t.Err == nil || o.Status == Interrupted {
+		if t.Err == nil {
 			continue
 		}
 		x := FailureOf(t.Err, t.Failure)
 		x.Try, x.Verdict = i+1, o.Verdict(t)
+		if o.Status == Interrupted && i == len(o.Tries)-1 {
+			x.Verdict = o.Flow.Name + " " + o.Interruption()
+		}
 		f.Failures = append(f.Failures, x)
 	}
 	f.Step, f.At, f.Why, _, _ = o.failing()
@@ -167,12 +176,19 @@ func (s *Summary) json() ([]byte, error) {
 
 // run is the results, as written.
 func (s *Summary) run() jsonRun {
-	r := jsonRun{SchemaVersion: SchemaVersion, Run: s.Title, Device: s.Device, Order: s.Order, Stopped: s.Stopped, OK: s.Err() == nil,
+	r := jsonRun{SchemaVersion: SchemaVersion, Run: s.Title, Device: s.Device, Order: s.Order, Shard: s.shard(), Stopped: s.Stopped, OK: s.Err() == nil,
 		Summary: s.summary(), Flows: []jsonFlow{}}
 	for _, o := range s.Shown() {
 		r.Flows = append(r.Flows, o.json())
 	}
 	return r
+}
+
+func (s *Summary) shard() *jsonShard {
+	if s.Shards == 0 {
+		return nil
+	}
+	return &jsonShard{s.Shard, s.Shards}
 }
 
 // Encode is JSON for a program: indented, or else on one line.

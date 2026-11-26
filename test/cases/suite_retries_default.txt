@@ -17,6 +17,7 @@ appId: a.b
 -- stdout --
 [1/2] FLAKY a  # s  (failed once, then passed)
   try 1: a.yaml:3: tapOn flaky 1: flaked  (test)  .rayo/a_failure.png
+  next: run it alone a few times (--only a --retries 0) to see where it fails; see Fix a flaky test in the guide
 [2/2] FAIL b  # s
   b failed at tapOn missing: not on screen
   why: not on screen: missing

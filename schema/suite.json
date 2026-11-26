@@ -491,6 +491,11 @@
         "ndjson"
       ]
     },
+    "minFlows": {
+      "description": "--min-flows overrides it: fewer flows chosen, by tags, names or what changed, is an error (exit 2), not a green run of nothing (default: none)",
+      "minimum": 1,
+      "type": "integer"
+    },
     "name": {
       "description": "Shown in the results (default: the file)",
       "type": [

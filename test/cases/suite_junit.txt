@@ -69,6 +69,7 @@ appId: a.b
 [2/3] PASS a  # s
 [3/3] FLAKY c  # s  (failed once, then passed)
   try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (app)  e2e/results/c_failure.png
+  next: the app crashed or hung: the crash is in the try's logcat; it is a bug of the app, not of the flow
 
 FAIL b  # s  (failed 2 times)
 PASS a  # s

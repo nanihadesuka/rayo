@@ -182,6 +182,9 @@ func (s *Summary) counts() string {
 func (s *Summary) markdown() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# %s\n\n**%s** · %s · %.1f s · %s · %s\n", s.Title, s.verdict(), s.counts(), s.Took.Seconds(), stamp(s.Began), s.Device)
+	if s.Shards > 0 {
+		fmt.Fprintf(&b, "\nOnly %s, of --shard\n", s.Part())
+	}
 	if s.Stopped != "" {
 		fmt.Fprintf(&b, "\nStopped: %s\n", s.Stopped)
 	}
@@ -226,7 +229,7 @@ func (o *Outcome) mdLine() string {
 		line += ", " + a
 	}
 	if o.Status == Interrupted {
-		return line + ", interrupted"
+		return line + ", " + o.Interruption()
 	}
 	if step, at, why, _, blame := o.failing(); why != "" {
 		if step != "" {

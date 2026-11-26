@@ -10,4 +10,4 @@ appId: a.b
 -- exit --
 2
 -- stderr --
-error: s.suite.yaml:1: unknown key "flow", did you mean flows? (it takes name, flows, retries, app, device, env, timeoutScale, network, unmocked, capture, ca, output, results, detail, failureWindow, resultsTemplate, show, slowest, format, flakyFailsBuild)
+error: s.suite.yaml:1: unknown key "flow", did you mean flows? (it takes name, flows, retries, app, device, env, timeoutScale, network, unmocked, capture, ca, output, results, detail, failureWindow, resultsTemplate, show, slowest, format, minFlows, flakyFailsBuild)
