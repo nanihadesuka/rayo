@@ -36,7 +36,7 @@ mock: ../mocks/b.json
 [1/3] PASS a  # s
 [2/3] PASS b  # s
 [3/3] FAIL own  # s
-  own failed at the end: unmocked call
+  own failed outside a step: unmocked call
   why: the app called what isn't mocked:
         GET /a
       mocks loaded: mocks/b.json (1)
@@ -54,6 +54,7 @@ PASS b  # s
 FAIL own  # s
 
 TOTAL 3: 2 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: own
 -- device --
@@ -91,7 +92,7 @@ bye {"timeout":5000}
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "own failed at the end: unmocked call",
+      "verdict": "own failed outside a step: unmocked call",
       "cause": "unmocked call",
       "error": {
         "file": "",

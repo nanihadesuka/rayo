@@ -83,6 +83,18 @@ func TestReferenceTables(t *testing.T) {
 		return "<!-- generated: " + name + " -->\n" + tables[name] + "<!-- end -->"
 	})
 	generated(t, "../REFERENCE.md", text)
+	guide, err := os.ReadFile("../GUIDE.md") // its exit codes, so it can't miss one
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated(t, "../GUIDE.md", block.ReplaceAllStringFunc(unix(guide), func(old string) string {
+		name := block.FindStringSubmatch(old)[1]
+		if tables[name] == "" {
+			t.Errorf("there is no %q to generate", name)
+			return old
+		}
+		return "<!-- generated: " + name + " -->\n" + tables[name] + "<!-- end -->"
+	}))
 	same := map[string]string{"killApp": "stopApp", "inputRandomNumber": "", "inputRandomText": ""} // told together
 	for name := range tables {
 		if command, ok := strings.CutPrefix(name, "keys "); ok {

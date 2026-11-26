@@ -47,6 +47,7 @@ PASS First one  # s
 FAIL c  # s
 
 TOTAL 2: 1 passed, 1 failed  # s
+results: dbg  (rayo explain)
 -- stderr --
 error: failed: c
 -- device --
@@ -103,8 +104,8 @@ a screen
 -- file out.xml --
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="rayo" tests="2" failures="1" errors="0" skipped="0" time="#">
-  <testcase name="First one" file="flows/a.yaml" time="#"></testcase>
-  <testcase name="c" file="flows/c.yaml" time="#">
-    <failure>  c failed at this &amp; that: not on screen&#xA;  why: not on screen: missing&#xA;  blame: test&#xA;  step: this &amp; that&#xA;  at: flows/c.yaml:4&#xA;  saved: dbg/c_failure.png&#xA;</failure>
+  <testcase name="First one" classname="flows" file="flows/a.yaml" time="#"></testcase>
+  <testcase name="c" classname="flows" file="flows/c.yaml" time="#">
+    <failure message="c failed at this &amp; that: not on screen" type="not on screen">  c failed at this &amp; that: not on screen&#xA;  why: not on screen: missing&#xA;  blame: test&#xA;  step: this &amp; that&#xA;  at: flows/c.yaml:4&#xA;  saved: dbg/c_failure.png&#xA;</failure>
   </testcase>
 </testsuite>

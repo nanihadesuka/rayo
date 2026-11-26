@@ -25,6 +25,7 @@ emulator-5554, ready in # ms
   saved: .rayo/a_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a
 -- device --

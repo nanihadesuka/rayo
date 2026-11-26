@@ -12,7 +12,7 @@ emulator-5554, ready in # ms
   ✗ setLocation latitude: 141, longitude: 2  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
-  case failed at setLocation latitude: 141, longitude: 2: step failed
+  case failed at setLocation latitude: 141, longitude: 2: step failed: not a location: 141.0000000,2.0000000 (flow.yaml:3)
   why: not a location: 141.0000000,2.0000000
   blame: test
   step: setLocation latitude: 141, longitude: 2
@@ -20,6 +20,7 @@ emulator-5554, ready in # ms
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -47,7 +48,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at setLocation latitude: 141, longitude: 2: step failed",
+      "verdict": "case failed at setLocation latitude: 141, longitude: 2: step failed: not a location: 141.0000000,2.0000000 (flow.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "flow.yaml",

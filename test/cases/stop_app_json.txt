@@ -81,6 +81,7 @@ NOT_RUN d  (app: 3 flows in a row, the app crashed: java.lang.IllegalStateExcept
 
 STOPPED app: 3 flows in a row, the app crashed: java.lang.IllegalStateException: oops
 TOTAL 4: 0 passed, 3 failed, 1 not run, of those failed 3 app, 2 retried  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a, b, c, d (not run)
 -- device --
@@ -300,7 +301,11 @@ a screen
         "name": "c",
         "seconds": #
       }
-    ]
+    ],
+    "exit": {
+      "code": 1,
+      "name": "failed"
+    }
   },
   "flows": [
     {

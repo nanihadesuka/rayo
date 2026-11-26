@@ -57,6 +57,7 @@ NOT_RUN a  (--fail-fast, after b)
 NOT_RUN c  (--fail-fast, after b)
 
 TOTAL 3: 0 passed, 1 failed, 2 not run, of those failed 1 app  # s
+results: e2e/results  (rayo explain)
 -- stderr --
 error: failed: b, a (not run), c (not run)
 -- device --

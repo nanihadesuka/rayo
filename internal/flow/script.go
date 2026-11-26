@@ -277,6 +277,42 @@ func (s *script) truthy(text string) (bool, error) {
 	return v.ToBoolean(), nil
 }
 
+var comparison = regexp.MustCompile(`^(.+?)\s*(===|!==|==|!=|<=|>=|<|>)\s*(.+)$`)
+var literal = regexp.MustCompile(`^(-?\d+(\.\d+)?|'[^']*'|"[^"]*"|true|false|null|undefined)$`)
+
+// operands says what each side of a comparison that is false was, such as `: output.total was "5,00"`;
+// empty if it isn't one, or both sides are written as they are.
+func (s *script) operands(text string) string {
+	text = code(text)
+	m := comparison.FindStringSubmatch(text)
+	if m == nil || strings.ContainsAny(text, "&|?;,") || strings.Count(text, "=")+strings.Count(text, "<")+strings.Count(text, ">") > len(m[2]) {
+		return ""
+	}
+	var said []string
+	for _, side := range []string{strings.TrimSpace(m[1]), strings.TrimSpace(m[3])} {
+		if literal.MatchString(side) {
+			continue
+		}
+		v, err := s.expression("operand", side)
+		if err != nil {
+			continue
+		}
+		shown := "undefined"
+		if !goja.IsUndefined(v) {
+			data, err := json.Marshal(v.Export())
+			if err != nil {
+				data = []byte(v.String())
+			}
+			shown = string(data)
+		}
+		said = append(said, side+" was "+shown)
+	}
+	if len(said) == 0 {
+		return ""
+	}
+	return ": " + strings.Join(said, ", ")
+}
+
 func runScript(c *call) error {
 	if when := arg(c, keyWhen); when != nil {
 		if ok, err := c.r.holds(c.ctx, when); err != nil || !ok {

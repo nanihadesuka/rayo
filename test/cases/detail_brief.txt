@@ -22,6 +22,7 @@ PASS a  # s
 FAIL b  # s
 
 TOTAL 2: 1 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: b
 -- device --

@@ -1475,12 +1475,16 @@ A run whose flows all passed, some of them `FLAKY`, exits `0`; with `--flaky-fai
 `flakyFailsBuild: true` in the suite, it exits `4`, see [Exit codes](#exit-codes).
 
 In JUnit, as Maven Surefire writes it, which Jenkins, GitLab and most CI read: the `testcase` passes, and
-has a `flakyFailure` for each try that failed, its `message` the error, its `type` the [blame](#blame) and its
-`stackTrace` all there is to know, as in a `.txt`. It isn't counted in `failures`.
+has a `flakyFailure` for each try that failed, its `message` the error and the [blame](#blame), its `type` the
+cause and its `stackTrace` all there is to know, as in a `.txt`. It isn't counted in `failures`. A `failure`
+has the verdict as its `message` and the cause as its `type`; an `error` (interrupted) has `interrupted`. The
+`classname` of each `testcase` is its folder from the one all flows are in, with dots, so CI pages group
+them; `file` is from where rayo runs, with slashes. What XML can't hold is left out, and a text over 256 KiB
+keeps its beginning and its end.
 
 ```xml
-<testcase name="scan" file="tests/scan/flow.yaml" time="31.000">
-  <flakyFailure message="try 1: tests/scan/flow.yaml:12: tapOn scan: not on screen: scan" type="test">
+<testcase name="scan" classname="scan" file="tests/scan/flow.yaml" time="31.000">
+  <flakyFailure message="try 1: tests/scan/flow.yaml:12: tapOn scan: not on screen: scan (test)" type="not on screen">
     <stackTrace>  why: not on screen: scan ...</stackTrace>
   </flakyFailure>
 </testcase>
@@ -1539,7 +1543,11 @@ failed, was interrupted or didn't run, until it passes.
 ### Results
 
 With several flows, one line each, and for a failure what helps to know why: first the verdict,
-`<flow> failed at <step>: <cause>`, then the rest. A single flow shows every step.
+`<flow> failed at <step>: <cause>`, then the rest. Of `step failed`, the verdict goes on with the first line
+of why and where the step is written, such as `login failed at assertTrue ${ok}: step failed: it is false (login.yaml:12)`,
+so the line is enough on its own; a failure that isn't of a step says `failed before its first step` or
+`failed outside a step`. A single flow shows every step. The last line says where the results went:
+`results: .rayo  (rayo explain)`, when a flow didn't pass.
 
 How much is printed is `--detail`, or `detail:` in a suite:
 
@@ -1769,6 +1777,7 @@ The run:
 | `failedFlows` | list | The names of those that failed, were interrupted or didn't run |
 | `flakyFlows` | list | The names of those that were flaky |
 | `slowest` | list | The flows that took longest, as many as slowest says |
+| `exit` | mapping | The exit code of the run, see [Exit codes](#exit-codes) |
 <!-- end -->
 
 Each of `flows`:
@@ -1801,7 +1810,7 @@ Each of `failures`:
 | Key | | |
 |---|---|---|
 | `try` | number | From 1 |
-| `verdict` | text | In a line: '<flow> failed at <step>: <cause>' |
+| `verdict` | text | In a line: '<flow> failed at <step>: <cause>'; of 'step failed', then the first line of why and `(<file>:<line>)`; 'failed before its first step' or 'failed outside a step' if it isn't of a step |
 | `cause` | text | What went wrong, see [Results](#results) |
 | `error` | mapping | What went wrong, at which step, see [Errors](#errors) |
 | `blame` | text | Whose fault it is: `test`, `app` or `device`, see [Blame](#blame) |

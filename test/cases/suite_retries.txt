@@ -43,6 +43,7 @@ FLAKY b  # s  (failed 2 times, then passed)
 FAIL c  # s
 
 TOTAL 3: 0 passed, 2 flaky, 1 failed, 2 retried  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: c
 -- device --
@@ -169,7 +170,11 @@ a screen
         "name": "c",
         "seconds": #
       }
-    ]
+    ],
+    "exit": {
+      "code": 1,
+      "name": "failed"
+    }
   },
   "flows": [
     {
@@ -192,7 +197,7 @@ a screen
       "failures": [
         {
           "try": 1,
-          "verdict": "a failed at tapOn flaky 1: step failed",
+          "verdict": "a failed at tapOn flaky 1: step failed: flaked (a.yaml:3)",
           "cause": "step failed",
           "error": {
             "file": "a.yaml",
@@ -239,7 +244,7 @@ a screen
       "failures": [
         {
           "try": 1,
-          "verdict": "b failed at tapOn flaky 2: step failed",
+          "verdict": "b failed at tapOn flaky 2: step failed: flaked (b.yaml:3)",
           "cause": "step failed",
           "error": {
             "file": "b.yaml",
@@ -266,7 +271,7 @@ a screen
         },
         {
           "try": 2,
-          "verdict": "b failed at tapOn flaky 2: step failed",
+          "verdict": "b failed at tapOn flaky 2: step failed: flaked (b.yaml:3)",
           "cause": "step failed",
           "error": {
             "file": "b.yaml",

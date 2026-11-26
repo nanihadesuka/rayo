@@ -24,7 +24,7 @@ emulator-5554, ready in # ms
   ✗ startRecording  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
-  case failed at startRecording: step failed
+  case failed at startRecording: step failed: a recording to .rayo/case_three.mp4 is going on (flow.yaml:9)
   why: a recording to .rayo/case_three.mp4 is going on
   blame: test
   step: startRecording
@@ -39,6 +39,7 @@ emulator-5554, ready in # ms
   recording: .rayo/case_three.mp4
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -82,7 +83,7 @@ a video ........................................................................
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at startRecording: step failed",
+      "verdict": "case failed at startRecording: step failed: a recording to .rayo/case_three.mp4 is going on (flow.yaml:9)",
       "cause": "step failed",
       "error": {
         "file": "flow.yaml",

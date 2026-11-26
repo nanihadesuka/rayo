@@ -279,7 +279,7 @@
                   "type": "integer"
                 },
                 "verdict": {
-                  "description": "In a line: '<flow> failed at <step>: <cause>'",
+                  "description": "In a line: '<flow> failed at <step>: <cause>'; of 'step failed', then the first line of why and (<file>:<line>); 'failed before its first step' or 'failed outside a step' if it isn't of a step",
                   "type": "string"
                 }
               },
@@ -416,6 +416,25 @@
           "description": "In UTC",
           "type": "string"
         },
+        "exit": {
+          "additionalProperties": false,
+          "description": "The exit code of the run",
+          "properties": {
+            "code": {
+              "description": "",
+              "type": "integer"
+            },
+            "name": {
+              "description": "Such as failed",
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "name"
+          ],
+          "type": "object"
+        },
         "failed": {
           "description": "",
           "type": "integer"
@@ -497,7 +516,8 @@
         "retried",
         "failedFlows",
         "flakyFlows",
-        "slowest"
+        "slowest",
+        "exit"
       ],
       "type": "object"
     }

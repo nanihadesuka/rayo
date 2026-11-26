@@ -51,7 +51,7 @@ type jsonFlow struct {
 // Failure is one, for a program.
 type Failure struct {
 	Try       int          `json:"try" about:"From 1"`
-	Verdict   string       `json:"verdict" about:"In a line: '<flow> failed at <step>: <cause>'"`
+	Verdict   string       `json:"verdict" about:"In a line: '<flow> failed at <step>: <cause>'; of 'step failed', then the first line of why and '(<file>:<line>)'; 'failed before its first step' or 'failed outside a step' if it isn't of a step"`
 	Cause     string       `json:"cause" about:"What went wrong, see [Results](#results)" enum:"not on screen,timeout,app crashed,unmocked call,device error,step failed"`
 	Error     Problem      `json:"error" about:"What went wrong, at which step, see [Errors](#errors)"`
 	Blame     flow.Blame   `json:"blame" about:"Whose fault it is: 'test', 'app' or 'device', see [Blame](#blame)" enum:"test,app,device"`

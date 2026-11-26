@@ -329,13 +329,19 @@ rayo test --emulator --results junit.xml --results summary.md all.suite.yaml
 
 The exit code says what happened, so the CI can tell a broken test from a broken emulator:
 
-| Code | |
-|---|---|
-| `0` | Everything passed |
-| `1` | A test failed |
-| `2` | Something written is wrong: a flow, a suite, a mock or an option. Nothing ran |
-| `3` | No device, or it stopped working |
-| `4` | Everything passed, some only on a retry, with `--flaky-fails-build` |
+<!-- generated: exit codes -->
+| Code | | |
+|---|---|---|
+| `0` | passed | Every flow passed, or the command did what it was asked |
+| `1` | failed | A flow failed, was interrupted or didn't run; or a step sent with `rayo do` failed |
+| `2` | configuration | Something written is wrong: an option, a flow, a suite or a mock; nothing ran |
+| `3` | device | No device to run on, or it was lost or unusable, so the flows couldn't run or didn't all run |
+| `4` | flaky | Every flow passed, some only on a retry, and `flaky-fails-build` is `true`; else such a run exits `0` |
+| `130` | interrupted | Ctrl-C |
+<!-- end -->
+
+The JSON results say it too, as `summary.exit`, and JUnit gives each failure the verdict as its `message`
+and the cause as its `type`, so CI pages show the headline.
 
 ## Use rayo from a script or an AI agent
 

@@ -94,18 +94,62 @@ func (o *Outcome) Line() string {
 	return line
 }
 
-// Verdict is a failed try in a line: "<flow> failed at <step>: <cause>", the cause one of flow.Causes.
+// Verdict is a failed try in a line: "<flow> failed at <step>: <cause>", the cause one of flow.Causes. Of
+// step failed, it goes on with the first line of why and where the step is written, so the line is enough
+// on its own. A failure that isn't of a step says so.
 func (o *Outcome) Verdict(t flow.Result) string {
-	at := "the end"
+	at := "outside a step"
+	if t.Failure == nil || len(t.Failure.Before) == 0 {
+		at = "before its first step"
+	}
 	var step *flow.StepError
 	if errors.As(t.Err, &step) {
-		at = step.Step.Text()
+		at = "at " + step.Step.Text()
 	}
-	kind := flow.StepFailed
+	kind := causeOf(t)
+	line := fmt.Sprintf("%s failed %s: %s", o.Flow.Name, at, kind)
+	if kind == flow.StepFailed && t.Err != nil {
+		why := t.Err
+		if step != nil {
+			why = step.Err
+		}
+		first, _, _ := strings.Cut(strings.TrimSpace(why.Error()), "\n")
+		line += ": " + strings.TrimSpace(first)
+		if step != nil {
+			line += fmt.Sprintf(" (%s:%d)", filepath.Base(step.Step.Path), step.Step.Line)
+		}
+	}
+	return line
+}
+
+// causeOf is what went wrong in a failed try, one of flow.Causes.
+func causeOf(t flow.Result) string {
 	if t.Failure != nil && t.Failure.Cause != "" {
-		kind = t.Failure.Cause
+		return t.Failure.Cause
 	}
-	return fmt.Sprintf("%s failed at %s: %s", o.Flow.Name, at, kind)
+	return flow.StepFailed
+}
+
+// lastFailed is its last try that failed; nil if none did.
+func (o *Outcome) lastFailed() *flow.Result {
+	for i := len(o.Tries) - 1; i >= 0; i-- {
+		if o.Tries[i].Err != nil {
+			return &o.Tries[i]
+		}
+	}
+	return nil
+}
+
+// blameOf is whose fault a failed try is, and what shows it; empty if nothing says.
+func blameOf(t flow.Result) string {
+	f := t.Failure
+	if f == nil || f.Blame == "" {
+		return ""
+	}
+	if f.Because != "" {
+		return string(f.Blame) + ", " + f.Because
+	}
+	return string(f.Blame)
 }
 
 // Details is what helps to know why it failed, as much as detail says: the verdict, then "  key: value"
@@ -184,13 +228,7 @@ func (o *Outcome) Details(detail string) string {
 }
 
 func (o *Outcome) addBlame(add func(key, value string), t flow.Result) {
-	if f := t.Failure; f != nil && f.Blame != "" {
-		because := string(f.Blame)
-		if f.Because != "" {
-			because += ", " + f.Because
-		}
-		add("blame", because)
-	}
+	add("blame", blameOf(t))
 }
 
 type flakyFailure struct{ message, cause, text string }
@@ -204,8 +242,9 @@ func (o *Outcome) flakyFailures(detail string) []flakyFailure {
 		}
 		one := Outcome{Flow: o.Flow, Status: Failed, Tries: []flow.Result{t}}
 		f := flakyFailure{message: fmt.Sprintf("try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " ")), text: one.Details(detail)}
-		if t.Failure != nil {
-			f.cause = string(t.Failure.Blame)
+		f.cause = causeOf(t)
+		if blame := blameOf(t); blame != "" {
+			f.message += " (" + blame + ")"
 		}
 		list = append(list, f)
 	}
@@ -230,7 +269,9 @@ func (o *Outcome) Notes() string {
 		}
 		fmt.Fprintf(&b, "  try %d: %s", i+1, strings.Join(strings.Fields(t.Err.Error()), " "))
 		if f := t.Failure; f != nil {
-			fmt.Fprintf(&b, "  (%s)", f.Blame)
+			if f.Blame != "" {
+				fmt.Fprintf(&b, "  (%s)", f.Blame)
+			}
 			if f.Saved != "" {
 				fmt.Fprintf(&b, "  %s", f.Saved)
 			}
@@ -263,6 +304,7 @@ type Summary struct {
 	Slowest              int      // how many the slow list has
 	Template             string   // results-template: a file, for results with its extension
 	Detail               string   // how much a failure says: full in the files too, else normal
+	Exit                 int      // the exit code of the run, one of Exits
 }
 
 func (s *Summary) count(is Status) int {
@@ -273,6 +315,16 @@ func (s *Summary) count(is Status) int {
 		}
 	}
 	return n
+}
+
+// AllPassed says whether every flow passed, at once or on a retry: else failed.json says which didn't.
+func (s *Summary) AllPassed() bool {
+	for _, o := range s.Outcomes {
+		if !o.Passed() {
+			return false
+		}
+	}
+	return true
 }
 
 // blame is of the last try of a flow that failed.

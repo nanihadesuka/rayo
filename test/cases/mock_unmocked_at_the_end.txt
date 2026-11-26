@@ -18,7 +18,7 @@ emulator-5554, ready in # ms
   ✓ tapOn GET /late  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt, .rayo/case_requests.txt
 [1/1] FAIL case  # s
-  case failed at the end: unmocked call
+  case failed outside a step: unmocked call
   why: the app called what isn't mocked:
         GET /late
       mocks loaded: mock.json (1)
@@ -32,6 +32,7 @@ emulator-5554, ready in # ms
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -68,7 +69,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at the end: unmocked call",
+      "verdict": "case failed outside a step: unmocked call",
       "cause": "unmocked call",
       "error": {
         "file": "",

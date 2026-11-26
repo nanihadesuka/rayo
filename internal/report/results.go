@@ -125,6 +125,22 @@ type jsonSummary struct {
 	FailedFlows []string      `json:"failedFlows" about:"The names of those that failed, were interrupted or didn't run"`
 	FlakyFlows  []string      `json:"flakyFlows" about:"The names of those that were flaky"`
 	Slowest     []jsonSlowest `json:"slowest" about:"The flows that took longest, as many as slowest says"`
+	Exit        jsonExit      `json:"exit" about:"The exit code of the run, see [Exit codes](#exit-codes)"`
+}
+
+type jsonExit struct {
+	Code int    `json:"code" about:""`
+	Name string `json:"name" about:"Such as 'failed', see [Exit codes](#exit-codes)"`
+}
+
+// exitOf is a code with its name.
+func exitOf(code int) jsonExit {
+	for _, e := range Exits {
+		if e.Code == code {
+			return jsonExit{e.Code, e.Name}
+		}
+	}
+	return jsonExit{Code: code}
 }
 
 type jsonSlowest struct {
@@ -135,7 +151,7 @@ type jsonSlowest struct {
 func (s *Summary) summary() jsonSummary {
 	j := jsonSummary{Began: stamp(s.Began), Seconds: seconds(s.Took), Total: len(s.Outcomes), Passed: s.count(Passed), Flaky: s.count(Flaky),
 		Failed: s.count(Failed), Interrupted: s.count(Interrupted), NotRun: s.count(NotRun), Retried: s.retried(),
-		FailedFlows: []string{}, FlakyFlows: []string{}, Slowest: []jsonSlowest{}}
+		FailedFlows: []string{}, FlakyFlows: []string{}, Slowest: []jsonSlowest{}, Exit: exitOf(s.Exit)}
 	for _, o := range s.Outcomes {
 		switch {
 		case o.Status == Flaky:

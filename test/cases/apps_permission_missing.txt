@@ -12,7 +12,7 @@ emulator-5554, ready in # ms
   ✗ setPermissions allow  # ms
   saved .rayo/case_failure.png, .rayo/case_screen.txt, .rayo/case_logcat.txt
 [1/1] FAIL case  # s
-  case failed at setPermissions allow: step failed
+  case failed at setPermissions allow: step failed: Error: a.b has no permission NO_SUCH that can be changed (flow.yaml:3)
   why: Error: a.b has no permission NO_SUCH that can be changed
   blame: test
   step: setPermissions allow
@@ -20,6 +20,7 @@ emulator-5554, ready in # ms
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --
@@ -48,7 +49,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "case failed at setPermissions allow: step failed",
+      "verdict": "case failed at setPermissions allow: step failed: Error: a.b has no permission NO_SUCH that can be changed (flow.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "flow.yaml",

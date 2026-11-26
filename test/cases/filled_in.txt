@@ -54,49 +54,49 @@ appId: a.b
   at: a.yaml:3
   saved: .rayo/a_failure.png
 [3/9] FAIL b  # s
-  b failed at repeat times: ${'many'}: step failed
+  b failed at repeat times: ${'many'}: step failed: times: not a whole number: "many" (b.yaml:3)
   why: times: not a whole number: "many"
   blame: test
   step: repeat times: ${'many'}
   at: b.yaml:3
   saved: .rayo/b_failure.png
 [4/9] FAIL c  # s
-  c failed at swipe ${'nowhere'}: step failed
+  c failed at swipe ${'nowhere'}: step failed: direction: not one of UP, DOWN, LEFT, RIGHT: "nowhere" (c.yaml:3)
   why: direction: not one of UP, DOWN, LEFT, RIGHT: "nowhere"
   blame: test
   step: swipe ${'nowhere'}
   at: c.yaml:3
   saved: .rayo/c_failure.png
 [5/9] FAIL d  # s
-  d failed at travel [2]: step failed
+  d failed at travel [2]: step failed: points: not a location: "x" (d.yaml:3)
   why: points: not a location: "x"
   blame: test
   step: travel [2]
   at: d.yaml:3
   saved: .rayo/d_failure.png
 [6/9] FAIL e  # s
-  e failed at waitForAnimationToEnd: step failed
+  e failed at waitForAnimationToEnd: step failed: optional: not one of true, false: "maybe" (e.yaml:3)
   why: optional: not one of true, false: "maybe"
   blame: test
   step: waitForAnimationToEnd
   at: e.yaml:3
   saved: .rayo/e_failure.png
 [7/9] FAIL f  # s
-  f failed at runFlow ${'Windows'}: step failed
+  f failed at runFlow ${'Windows'}: step failed: platform: not one of Android, iOS, Web: "Windows" (f.yaml:3)
   why: platform: not one of Android, iOS, Web: "Windows"
   blame: test
   step: runFlow ${'Windows'}
   at: f.yaml:3
   saved: .rayo/f_failure.png
 [8/9] FAIL g  # s
-  g failed at launchApp ${'alow'}: step failed
+  g failed at launchApp ${'alow'}: step failed: permissions: camera: not one of allow, deny, unset: "alow" (g.yaml:3)
   why: permissions: camera: not one of allow, deny, unset: "alow"
   blame: test
   step: launchApp ${'alow'}
   at: g.yaml:3
   saved: .rayo/g_failure.png
 [9/9] FAIL h  # s
-  h failed at runFlow x, index: ${'one'}: step failed
+  h failed at runFlow x, index: ${'one'}: step failed: index: not a whole number: "one" (h.yaml:3)
   why: index: not a whole number: "one"
   blame: test
   step: runFlow x, index: ${'one'}
@@ -114,6 +114,7 @@ FAIL g  # s
 FAIL h  # s
 
 TOTAL 9: 1 passed, 8 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a, b, c, d, e, f, g, h
 -- device --
@@ -236,7 +237,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "b failed at repeat times: ${'many'}: step failed",
+      "verdict": "b failed at repeat times: ${'many'}: step failed: times: not a whole number: \"many\" (b.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "b.yaml",
@@ -267,7 +268,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "c failed at swipe ${'nowhere'}: step failed",
+      "verdict": "c failed at swipe ${'nowhere'}: step failed: direction: not one of UP, DOWN, LEFT, RIGHT: \"nowhere\" (c.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "c.yaml",
@@ -298,7 +299,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "d failed at travel [2]: step failed",
+      "verdict": "d failed at travel [2]: step failed: points: not a location: \"x\" (d.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "d.yaml",
@@ -329,7 +330,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "e failed at waitForAnimationToEnd: step failed",
+      "verdict": "e failed at waitForAnimationToEnd: step failed: optional: not one of true, false: \"maybe\" (e.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "e.yaml",
@@ -360,7 +361,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "f failed at runFlow ${'Windows'}: step failed",
+      "verdict": "f failed at runFlow ${'Windows'}: step failed: platform: not one of Android, iOS, Web: \"Windows\" (f.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "f.yaml",
@@ -391,7 +392,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "g failed at launchApp ${'alow'}: step failed",
+      "verdict": "g failed at launchApp ${'alow'}: step failed: permissions: camera: not one of allow, deny, unset: \"alow\" (g.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "g.yaml",
@@ -422,7 +423,7 @@ a screen
     "why": "",
     "failure": {
       "try": 1,
-      "verdict": "h failed at runFlow x, index: ${'one'}: step failed",
+      "verdict": "h failed at runFlow x, index: ${'one'}: step failed: index: not a whole number: \"one\" (h.yaml:3)",
       "cause": "step failed",
       "error": {
         "file": "h.yaml",

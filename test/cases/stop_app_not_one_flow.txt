@@ -49,6 +49,7 @@ FAIL a  # s  (failed 3 times)
 PASS b  # s
 
 TOTAL 2: 1 passed, 1 failed, of those failed 1 app, 1 retried  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: a
 -- device --
@@ -165,7 +166,11 @@ a screen
         "name": "b",
         "seconds": #
       }
-    ]
+    ],
+    "exit": {
+      "code": 1,
+      "name": "failed"
+    }
   },
   "flows": [
     {

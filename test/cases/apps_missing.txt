@@ -20,6 +20,7 @@ emulator-5554, ready in # ms
   saved: .rayo/case_failure.png
 
 TOTAL 1: 0 passed, 1 failed, of those failed 1 app  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: case
 -- device --

@@ -31,6 +31,7 @@ FAIL x  # s
 FAIL x  # s
 
 TOTAL 2: 0 passed, 2 failed  # s
+results: .rayo  (rayo explain)
 -- stderr --
 error: failed: x, x
 -- device --

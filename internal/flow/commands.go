@@ -175,7 +175,7 @@ func init() {
 			keys: []anyKey{keyCondition}, plain: keyCondition, run: func(c *call) error {
 				ok, err := c.r.script.truthy(arg(c, keyCondition))
 				if err == nil && !ok {
-					err = errors.New("it is false")
+					err = errors.New("it is false" + c.r.script.operands(arg(c, keyCondition)))
 				}
 				return err
 			}},
