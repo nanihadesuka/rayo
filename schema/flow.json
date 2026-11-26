@@ -3727,7 +3727,7 @@
                           "type": "string"
                         }
                       ],
-                      "description": "As long as these hold"
+                      "description": "As long as these hold; without times, it fails after 1000 rounds that it still holds"
                     }
                   },
                   "type": "object"

@@ -330,6 +330,7 @@ var Fields = []schema.Field[Suite]{
 			s.Format = n.Value
 			return nil
 		}},
+	schema.NumberField("minFlows", "a number from 1", "`--min-flows` overrides it: fewer flows chosen, by tags, names or what changed, is an error (exit `2`), not a green run of nothing", 1, 0, func(s *Suite, v int) { s.MinFlows = v }).Optional("none"),
 	schema.FlagField("flakyFailsBuild", "`--flaky-fails-build` too: a run where every flow passed, some only on a retry, exits `4`, see [Flaky flows](#flaky-flows)", func(s *Suite) *bool { return &s.FlakyFailsBuild }).Optional("`false`: it exits `0`"),
 }
 

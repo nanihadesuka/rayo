@@ -46,6 +46,7 @@ emulator-5554, ready in # ms
   ✓ tapOn flaky 1  # ms
 [2/2] FLAKY c  # s  (failed once, then passed)
   try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (test)  e2e/results/c_failure.png
+  next: run it alone a few times (--only c --retries 0) to see where it fails; see Fix a flaky test in the guide
 
 PASS a  # s
 FLAKY c  # s  (failed once, then passed)
@@ -80,5 +81,6 @@ PASS a  # s
 FLAKY c  # s  (failed once, then passed)
   file: e2e/c/flow.yaml
   try 1: e2e/c/flow.yaml:3: tapOn flaky 1: flaked  (test)  e2e/results/c_failure.png
+  next: run it alone a few times (--only c --retries 0) to see where it fails; see Fix a flaky test in the guide
 
 TOTAL 2: 1 passed, 1 flaky, 0 failed, 1 retried  # s

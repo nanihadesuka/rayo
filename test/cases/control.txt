@@ -59,15 +59,20 @@ emulator-5554, ready in # ms
   – runFlow ${false}, file: sub/sub.yaml  skipped
   ▸ repeat times: 2
     ✓ tapOn again  # ms
+    repeat: 2 of 2
     ✓ tapOn again  # ms
   ✓ evalScript ${output.n = 0}  # ms
   ▸ repeat ${output.n < 3}
     ✓ evalScript ${output.n++}  # ms
+    repeat: 2
     ✓ evalScript ${output.n++}  # ms
+    repeat: 3
     ✓ evalScript ${output.n++}  # ms
   ▸ retry retries: 2
     ✗ tapOn flaky 2  # ms
+    retry: 1 of 2, after: flow.yaml:23: tapOn flaky 2: flaked
     ✗ tapOn flaky 2  # ms
+    retry: 2 of 2, after: flow.yaml:23: tapOn flaky 2: flaked
     ✓ tapOn flaky 2  # ms
   ▸ retry sub/sub.yaml
     ✓ tapOn sub start  # ms

@@ -48,7 +48,7 @@ var Exits = []Exit{
 	{ExitConfig, "configuration", "Something written is wrong: an option, a flow, a suite or a mock; nothing ran"},
 	{ExitDevice, "device", "No device to run on, or it was lost or unusable, so the flows couldn't run or didn't all run"},
 	{ExitFlaky, "flaky", "Every flow passed, some only on a retry, and `flaky-fails-build` is `true`; else such a run exits `0`"},
-	{ExitInterrupted, "interrupted", "Ctrl-C"},
+	{ExitInterrupted, "interrupted", "Ctrl-C, or SIGTERM as CI sends when it cancels a job: what ran is in the results, each interrupted flow with the step it was at"},
 }
 
 func exitTable() string {

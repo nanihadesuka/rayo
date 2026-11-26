@@ -28,6 +28,7 @@ bye {"timeout":5000}
   "run": "a.yaml",
   "device": "emulator-5554",
   "order": "",
+  "shard": null,
   "stopped": "",
   "ok": true,
   "summary": {

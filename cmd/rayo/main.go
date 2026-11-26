@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/nanihadesuka/rayo/internal/adb"
@@ -34,8 +35,9 @@ func main() {
 		fmt.Print(help())
 		os.Exit(report.ExitConfig)
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	context.AfterFunc(ctx, stop) // a second Ctrl-C doesn't wait
+	// SIGTERM is how CI cancels a job, and docker stop a container: as Ctrl-C, the device is put back and the results written.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	context.AfterFunc(ctx, stop) // a second one doesn't wait
 	err := run(ctx, os.Args[1], os.Args[2:])
 	code := exitOf(err)
 	switch {
@@ -191,6 +193,7 @@ func check(args []string) error {
 		return err
 	}
 	o.written(group)
+	o.suite = group
 	if flows, err = o.choose(flows); err != nil { // those rayo test would run
 		return err
 	}
@@ -328,10 +331,6 @@ func test(ctx context.Context, args []string) (err error) {
 	if all, err = o.changed(all); err != nil {
 		return err
 	}
-	if len(all) == 0 {
-		fmt.Fprintln(human(), "no flow changed since", o.since)
-		return nil
-	}
 	title := strings.Join(o.args, " ")
 	if group != nil {
 		if group.Name != "" {
@@ -371,6 +370,12 @@ func test(ctx context.Context, args []string) (err error) {
 			}
 		}
 	}
+	if len(all) == 0 {
+		if err := o.enough(0); err != nil {
+			return err
+		}
+		return o.noneChosen(title, "no flow changed since "+o.since)
+	}
 	for _, file := range o.results {
 		if format, _ := report.FormatOf(file); format == report.JSON { // it has been checked
 			o.runner.JSON = true
@@ -396,15 +401,15 @@ func test(ctx context.Context, args []string) (err error) {
 		return err
 	}
 	if len(flows) == 0 { // only with --rerun-failed or --shard
-		if o.shards > 0 && !o.rerunFailed {
-			fmt.Fprintf(human(), "no flows in part %d of %d\n", o.shard, o.shards)
-			return nil
-		}
-		if o.resume {
+		switch {
+		case o.shards > 0 && !o.rerunFailed:
+			return o.noneChosen(title, fmt.Sprintf("no flows in part %d of %d", o.shard, o.shards))
+		case o.resume:
 			return o.nothingToResume()
+		case o.shards > 0:
+			return o.noneChosen(title, fmt.Sprintf("nothing failed last time in part %d of %d", o.shard, o.shards))
 		}
-		fmt.Fprintln(human(), "nothing failed last time")
-		return nil
+		return o.noneChosen(title, "nothing failed last time")
 	}
 	if err := o.settleStarts(flows); err != nil {
 		return err

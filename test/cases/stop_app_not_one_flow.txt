@@ -141,6 +141,7 @@ a screen
   "run": "a.yaml b.yaml",
   "device": "emulator-5554",
   "order": "",
+  "shard": null,
   "stopped": "",
   "ok": false,
   "summary": {

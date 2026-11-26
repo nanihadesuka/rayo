@@ -18,5 +18,5 @@ appId: a.b
 -- stdout --
 1 flow is fine
   b  b.yaml  retries: 1
-a run writes to .rayo, keeps the files of every try, with a video only of flows whose header says record
-such as .rayo/b_failure.png, and of a retry .rayo/b_retry1_logcat.txt
+a run writes to .rayo/shard-2-of-2, keeps the files of every try, with a video only of flows whose header says record
+such as .rayo/shard-2-of-2/b_failure.png, and of a retry .rayo/shard-2-of-2/b_retry1_logcat.txt

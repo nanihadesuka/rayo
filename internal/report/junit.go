@@ -127,7 +127,11 @@ func relative(path string) string {
 }
 
 func (sum *Summary) junit() ([]byte, error) {
-	s := junitSuite{Name: "rayo", Tests: len(sum.Outcomes), Failures: sum.count(Failed), Errors: sum.count(Interrupted), Skipped: sum.count(NotRun)}
+	name := "rayo"
+	if sum.Shards > 0 { // each part's file, told apart where CI gathers them
+		name = fmt.Sprintf("rayo-shard-%d-of-%d", sum.Shard, sum.Shards)
+	}
+	s := junitSuite{Name: name, Tests: len(sum.Outcomes), Failures: sum.count(Failed), Errors: sum.count(Interrupted), Skipped: sum.count(NotRun)}
 	classes := sum.classes()
 	var total time.Duration
 	for _, o := range sum.Outcomes {
@@ -142,7 +146,8 @@ func (sum *Summary) junit() ([]byte, error) {
 				c.Failure.Type = string(causeOf(*t))
 			}
 		case Interrupted:
-			c.Error = &junitProblem{Message: "interrupted", Type: "interrupted", Text: "interrupted"}
+			where := plain(o.Interruption())
+			c.Error = &junitProblem{Message: where, Type: "interrupted", Text: where}
 		case NotRun:
 			c.Skipped = &junitSkipped{plain(o.Why)}
 		case Flaky:

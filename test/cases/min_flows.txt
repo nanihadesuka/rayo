@@ -1,0 +1,16 @@
+-- args --
+test --min-flows 3 --include-tags smoke a.yaml b.yaml
+-- a.yaml --
+appId: a.b
+tags: [smoke]
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: 1 flows chosen, fewer than the 3 of --min-flows: a tag, a name or --since may be wrong

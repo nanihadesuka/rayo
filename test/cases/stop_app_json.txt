@@ -269,6 +269,7 @@ a screen
   "run": "a.yaml b.yaml c.yaml d.yaml",
   "device": "emulator-5554",
   "order": "",
+  "shard": null,
   "stopped": "app: 3 flows in a row, the app crashed: java.lang.IllegalStateException: oops",
   "ok": false,
   "summary": {

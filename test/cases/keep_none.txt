@@ -18,6 +18,7 @@ appId: a.b
 -- stdout --
 [1/2] FLAKY a  # s  (failed once, then passed)
   try 1: a.yaml:3: tapOn flaky 1: flaked  (test)
+  next: run it alone a few times (--only a --retries 0) to see where it fails; see Fix a flaky test in the guide
 [2/2] FAIL c  # s  (failed 2 times)
   try: 1
   c failed at tapOn missing: not on screen

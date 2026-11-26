@@ -1,0 +1,50 @@
+-- args --
+test --shard 3/3 --results r.xml --results r.json a.yaml b.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+0
+-- stdout --
+no flows in part 3 of 3
+-- file r.json --
+{
+  "schemaVersion": 3,
+  "run": "a.yaml b.yaml",
+  "device": "",
+  "order": "",
+  "shard": {
+    "index": 3,
+    "of": 3
+  },
+  "stopped": "no flows in part 3 of 3",
+  "ok": true,
+  "summary": {
+    "began": "<now>",
+    "seconds": #,
+    "total": 0,
+    "passed": 0,
+    "flaky": 0,
+    "failed": 0,
+    "interrupted": 0,
+    "notRun": 0,
+    "retried": 0,
+    "failedFlows": [],
+    "flakyFlows": [],
+    "slowest": [],
+    "exit": {
+      "code": 0,
+      "name": "passed"
+    }
+  },
+  "flows": []
+}
+-- file r.xml --
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="rayo-shard-3-of-3" tests="0" failures="0" errors="0" skipped="0" time="#"></testsuite>

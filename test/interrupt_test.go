@@ -3,6 +3,7 @@ package test
 import (
 	"bufio"
 	"bytes"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ func TestInterrupt(t *testing.T) {
 		"a wait for a request":  `waitForRequest: /never`,
 		"a trip":                `travel: { points: ["0,0", "1,1"], speed: 1 }`,
 		"a script":              `evalScript: "${while (true) {}}"`,
-		"an endless repetition": `repeat: { while: { true: "${true}" }, commands: [ back ] }`,
+		"an endless repetition": `repeat: { times: 1000000000, while: { true: "${true}" }, commands: [ back ] }`,
 	}
 	for name, step := range steps {
 		t.Run(name, func(t *testing.T) {
@@ -25,7 +26,7 @@ func TestInterrupt(t *testing.T) {
 			write(t, filepath.Join(dir, "flow.yaml"), "appId: a.b\nmock: mock.json\n---\n- back\n- "+step+"\n")
 			write(t, filepath.Join(dir, "mock.json"), `{"request":{"urlPath":"/a"},"response":{}}`)
 			d := startDevice(t, "emulator-5554\tdevice\n", false)
-			cmd := d.command(dir, "test", "flow.yaml")
+			cmd := d.command(dir, "test", "--results", "r.xml", "flow.yaml")
 			var errs bytes.Buffer
 			cmd.Stderr = &errs
 			interruptible(cmd)
@@ -62,6 +63,9 @@ func TestInterrupt(t *testing.T) {
 			}
 			if code := cmd.ProcessState.ExitCode(); code != 130 || strings.TrimSpace(errs.String()) != "interrupted" {
 				t.Errorf("exit %d: %s", code, errs.String())
+			}
+			if xml, err := os.ReadFile(filepath.Join(dir, "r.xml")); err != nil || !strings.Contains(string(xml), "interrupted at ") {
+				t.Errorf("the results don't say where it was: %v\n%s", err, xml)
 			}
 			d.mu.Lock()
 			defer d.mu.Unlock()

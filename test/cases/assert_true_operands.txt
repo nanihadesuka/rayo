@@ -14,6 +14,7 @@ appId: a.b
   "run": "flow.yaml",
   "device": "emulator-5554",
   "order": "",
+  "shard": null,
   "stopped": "",
   "ok": false,
   "summary": {

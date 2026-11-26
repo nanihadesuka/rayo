@@ -167,7 +167,7 @@ var (
 	keyFile      = newKey("file", aText, "A path relative to this flow")
 	keyEnv       = newKey("env", variables, "Variables for it")
 	keyWhen      = newKey("when", conditions, "Only if these hold")
-	keyWhile     = newKey("while", conditions, "As long as these hold")
+	keyWhile     = newKey("while", conditions, "As long as these hold; without times, it fails after 1000 rounds that it still holds")
 	keyCommands  = newKey("commands", raw("commands", schema.Ref("commands")), "What to run")
 	keyTimes     = newKey("times", aNumber, "At most")
 	keyRetries   = newKey("retries", aNumber, "How many more times (1)")
