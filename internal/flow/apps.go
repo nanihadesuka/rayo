@@ -53,6 +53,14 @@ var permissionGroups = map[string][]string{
 	"medialibrary":  {"READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO", "READ_MEDIA_AUDIO"},
 }
 
+// permissionsSince are the groups an older Android doesn't have, with the API level and the version that
+// brought them: there, an app is never asked, so setting them is skipped with a note.
+var permissionsSince = map[string]struct{ api, version int }{
+	"notifications": {33, 13},
+	"medialibrary":  {33, 13},
+	"bluetooth":     {31, 12},
+}
+
 // permissionNames are Android's for one written in a flow.
 func permissionNames(name string) []string {
 	group := permissionGroups[strings.ToLower(name)]
@@ -78,7 +86,7 @@ func runtimePermissions(app string) string {
 // changePermissions is the shell for it, in order, so a later one wins. They are listed while whatever
 // is running in the background ends, and changed after.
 func changePermissions(app string, permissions *yaml.Node) ([]string, error) {
-	lines := []string{"ps=" + runtimePermissions(app), "wait"}
+	lines := []string{"ps=" + runtimePermissions(app), "sdk=$(getprop ro.build.version.sdk)", "wait"}
 	err := pairs(permissions, func(k, p *yaml.Node) error {
 		allow, err := aPermission.read(p)
 		if err != nil {
@@ -91,10 +99,18 @@ func changePermissions(app string, permissions *yaml.Node) ([]string, error) {
 		}
 		// Of a group, an app may have only some. Asking pm wouldn't tell: it accepts any.
 		lines = append(lines, "wait", "ok=")
+		since, newer := permissionsSince[strings.ToLower(k.Value)]
+		if newer {
+			lines = append(lines, fmt.Sprintf("if [ \"${sdk:-99}\" -lt %d ]; then echo %s; else", since.api,
+				quote(fmt.Sprintf("Note: %s: not asked before Android %d, ignored", k.Value, since.version))))
+		}
 		for _, name := range permissionNames(k.Value) {
 			lines = append(lines, "echo \"$ps\" | grep -qxF "+quote(name)+" && "+change+quote(name)+" && ok=1")
 		}
 		lines = append(lines, "[ $ok ] || echo "+quote("Error: "+app+" has no permission "+k.Value+" that can be changed"))
+		if newer {
+			lines = append(lines, "fi")
+		}
 		return nil
 	})
 	return lines, err
@@ -115,7 +131,17 @@ func setPermissions(c *call) error {
 	if err != nil {
 		return err
 	}
+	c.notePermissions(out)
 	return complaint(out)
+}
+
+// notePermissions says which permissions were skipped, as that Android doesn't have them.
+func (c *call) notePermissions(out string) {
+	for line := range strings.Lines(out) {
+		if note, ok := strings.CutPrefix(strings.TrimSpace(line), "Note: "); ok {
+			c.r.reporter.Note(2, note)
+		}
+	}
 }
 
 // complaint is the first line of an answer that says something went wrong: Android's tools don't always fail.
@@ -157,6 +183,7 @@ func launch(c *call) error {
 	if err != nil {
 		return err
 	}
+	c.notePermissions(a.Out)
 	if err := complaint(a.Out); err != nil {
 		return err
 	}

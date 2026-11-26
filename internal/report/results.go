@@ -81,7 +81,7 @@ func (o *Outcome) Attempts() string {
 	case o.Passed():
 		return fmt.Sprintf("passed on retry %d", len(o.Tries)-1)
 	}
-	return fmt.Sprintf("failed %d times", o.TimesFailed())
+	return fmt.Sprintf("failed all %d tries", len(o.Tries))
 }
 
 // failing is the step that failed, where it is written and what went wrong, of its last try that failed.

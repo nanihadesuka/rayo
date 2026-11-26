@@ -1,0 +1,11 @@
+-- env --
+ANDROID_SERIAL=gone
+-- flow.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+3
+-- stderr --
+error: ANDROID_SERIAL=gone is not connected; unset it to use the only device, or see rayo devices

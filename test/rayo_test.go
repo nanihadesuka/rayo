@@ -88,7 +88,7 @@ var masks = []struct {
 	{regexp.MustCompile(`\d\d:\d\d:\d\d\.\d\d\d`), "<time>"},
 	{regexp.MustCompile(`20\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ`), "<now>"},
 	{regexp.MustCompile(`;tcp:\d+`), ";tcp:<free>"},
-	{regexp.MustCompile(`emulator-\d+, ready`), "emulator-5554, ready"},
+	{regexp.MustCompile(`emulator-\d+ \(`), "emulator-5554 ("},
 	{regexp.MustCompile(`rayo-[0-9a-f]{16}`), "rayo-<hash>"},
 	{regexp.MustCompile(`http://127\.0\.0\.1:\d+`), "http://backend"},
 	{regexp.MustCompile(`"value":"[1-9]{8}"`), `"value":"<8 digits>"`},
@@ -150,6 +150,7 @@ func run(t *testing.T, input string) string {
 	os.Mkdir(dir, 0o755)
 	args, devices, empty, silent, retries, console, health := "test flow.yaml", "emulator-5554\tdevice\n", false, false, false, "", ""
 	inputs := map[string]string{}
+	var env []string
 	for _, f := range split(input) {
 		switch f.name {
 		case "args":
@@ -162,6 +163,8 @@ func run(t *testing.T, input string) string {
 			silent = true
 		case "with retries":
 			retries = true
+		case "env": // NAME=value lines for rayo
+			env = strings.Fields(f.text)
 		case "health":
 			health = f.text
 		case "device without agent":
@@ -188,6 +191,7 @@ func run(t *testing.T, input string) string {
 		words = append(words, "--retries", "0")
 	}
 	cmd := d.command(dir, words...)
+	cmd.Env = append(cmd.Env, env...)
 	var out, errs bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errs
 	err := cmd.Run()

@@ -2,6 +2,7 @@ package flow
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/nanihadesuka/rayo/internal/agent"
@@ -65,10 +66,22 @@ func swipe(c *call) error {
 func scrollUntil(c *call) error {
 	d := argOr(c, keyDirection, Direction{0, 1})
 	sel := arg(c, keyElement)
-	for deadline := time.Now().Add(c.limit); ; {
+	last, same := "", 0
+	for deadline, scrolls := time.Now().Add(c.limit), 0; ; scrolls++ {
 		_, err := c.r.agent.Do(c.ctx, "wait", agent.Args{"sel": sel}, 100*time.Millisecond)
 		if err == nil || c.r.agent.Dead() != nil || time.Now().After(deadline) {
 			return err
+		}
+		// A swipe that changed nothing, twice in a row, is the end of the list: going on would only wait.
+		if a, e := c.r.agent.Do(c.ctx, "tree", nil, 5*time.Second); e == nil {
+			if scrolls > 0 && a.Out == last {
+				if same++; same >= 2 {
+					return fmt.Errorf("%w (the end of the list after %d scrolls: the screen stopped changing)", err, scrolls)
+				}
+			} else {
+				same = 0
+			}
+			last = a.Out
 		}
 		// Scrolling down is a swipe up.
 		if _, err := c.r.agent.Do(c.ctx, "swipe", agent.Args{"x": 50 + d.x*20, "y": 50 + d.y*20, "x2": 50 - d.x*20, "y2": 50 - d.y*20,

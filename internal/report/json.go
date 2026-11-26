@@ -35,7 +35,7 @@ type jsonFlow struct {
 	Blame        flow.Blame `json:"blame" about:"Of a flow that failed, whose fault it is, or empty, see [Blame](#blame)" enum:"test,app,device,"`
 	Began        string     `json:"began" about:"Its first try, in UTC; empty if it didn't run"`
 	Seconds      float64    `json:"seconds" about:"All its tries"`
-	Attempts     string     `json:"attempts" about:"Such as 'passed on retry 2' or 'failed 3 times'; empty for one try"`
+	Attempts     string     `json:"attempts" about:"Such as 'passed on retry 2' or 'failed all 3 tries'; empty for one try"`
 	Step         string     `json:"step" about:"Of its last try that failed, the step that failed"`
 	At           string     `json:"at" about:"Where that step is written, file:line"`
 	Why          string     `json:"why" about:"What went wrong in that try"`

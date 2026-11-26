@@ -233,3 +233,18 @@ func TestReferenceHasEveryCommand(t *testing.T) {
 		}
 	}
 }
+
+// The docs' examples don't name a suite the old way, which is no longer read.
+func TestDocsUseSuiteFiles(t *testing.T) {
+	for _, name := range []string{"README.md", "GUIDE.md", "REFERENCE.md", "MOCKING.md", "EXAMPLE.md"} {
+		data, err := os.ReadFile("../" + name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, block := range regexp.MustCompile("(?s)```[a-z]*\n.*?```").FindAllString(unix(data), -1) {
+			if strings.Contains(block, ".rayo.yaml") {
+				t.Errorf("%s: an example names a .rayo.yaml, which is no longer read: %q", name, block)
+			}
+		}
+	}
+}

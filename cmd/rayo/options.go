@@ -141,7 +141,7 @@ func (p option) withShort(short string) option { p.short = short; return p }
 
 var sections = []section{
 	{[]string{cmdTest, cmdLive, cmdHierarchy}, "", []option{
-		text("device", "serial", "when several are connected", func(o *options) *string { return &o.device }),
+		text("device", "serial", "when several are connected; else ANDROID_SERIAL, else the only one", func(o *options) *string { return &o.device }),
 		flag("emulator", "never a real device, even if it is the only one", func(o *options) *bool { return &o.emulator }),
 	}},
 	{[]string{cmdTest, cmdCheck}, "which flows", []option{

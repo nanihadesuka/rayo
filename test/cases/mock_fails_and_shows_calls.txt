@@ -16,7 +16,7 @@ mock: mock.json
 -- exit --
 1
 -- stdout --
-emulator-5554, ready in # ms
+emulator-5554 (the only one), ready in # ms
 
 [1/1] case
   ✓ tapOn GET /a?1  # ms
@@ -50,8 +50,7 @@ TOTAL 1: 0 passed, 1 failed  # s
 -- stderr --
 error: failed: case
 -- device --
-adb exec:for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -f 'rayo[.]Agent' >/dev/null || { echo gone; exit; }; sleep 1; done
-adb exec:ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:i=0; while pgrep -f 'rayo[.]Agent' >/dev/null; do i=$((i+1)); [ $i -gt 50 ] && exit; sleep 0.2; done; echo gone; ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
 adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
 noAnimations {"timeout":10000}
 adb reverse:forward:tcp:8080;tcp:<free>
