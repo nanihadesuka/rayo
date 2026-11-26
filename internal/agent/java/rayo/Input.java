@@ -66,11 +66,12 @@ final class Input {
   static boolean put(AccessibilityNodeInfo field, String value) {
     Bundle args = new Bundle();
     args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value);
-    return field.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args);
+    return act(field, AccessibilityNodeInfo.ACTION_SET_TEXT, args);
   }
 
   static boolean editable(AccessibilityNodeInfo n) {
-    return n.isEnabled() && n.getActionList().contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_TEXT);
+    java.util.List<AccessibilityNodeInfo.AccessibilityAction> actions = n.getActionList();
+    return n.isEnabled() && actions != null && actions.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_TEXT);
   }
 
   /** Replaces the text of a field, without focus or keyboard. */
@@ -86,8 +87,8 @@ final class Input {
 
   static AccessibilityNodeInfo inside(AccessibilityNodeInfo n) {
     if (editable(n)) return n;
-    for (int i = 0; i < n.getChildCount(); i++) {
-      AccessibilityNodeInfo child = n.getChild(i);
+    for (int i = 0, count = childCount(n); i < count; i++) {
+      AccessibilityNodeInfo child = child(n, i, 0);
       AccessibilityNodeInfo found = child == null ? null : inside(child);
       if (found != null) return found;
     }
@@ -105,7 +106,13 @@ final class Input {
       long since = seen();
       clearCache();
       String[] why = {"no input focus"};
-      AccessibilityNodeInfo n = findField(why);
+      AccessibilityNodeInfo n;
+      try {
+        n = findField(why);
+      } catch (RuntimeException e) { // a window being replaced (#38): look again
+        n = null;
+        why[0] = "the screen was changing: " + e;
+      }
       if (n != null) return n;
       if (SystemClock.uptimeMillis() >= deadline) throw new Failure("no text field is focused: " + why[0]);
       awaitChange(since, deadline);
@@ -114,26 +121,26 @@ final class Input {
 
   /** The field: where the last tap was, then where accessibility says, then in every window (a sheet or dialog is its own). */
   static AccessibilityNodeInfo findField(String[] why) {
-    java.util.List<AccessibilityWindowInfo> windows = ui.getWindows();
+    java.util.List<AccessibilityWindowInfo> windows = windows();
     AccessibilityNodeInfo f;
     if (tapped != null) {
       for (AccessibilityWindowInfo w : windows) { // the top one first
-        AccessibilityNodeInfo root = w.getRoot();
+        AccessibilityNodeInfo root = root(w, 0);
         if (root != null && (f = at(root, tapped.x, tapped.y)) != null) {
           // Keys typed go where the input focus is: move it here if it isn't.
-          if (!f.isFocused()) f.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+          if (!f.isFocused()) act(f, AccessibilityNodeInfo.ACTION_FOCUS, null);
           return f;
         }
       }
     }
-    AccessibilityNodeInfo n = ui.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+    AccessibilityNodeInfo n = inputFocus(null);
     f = n == null ? null : inside(n);
     if (f != null) return f;
     if (n != null) why[0] = "focused node " + n.getClassName() + " has no SET_TEXT";
     for (AccessibilityWindowInfo w : windows) {
-      AccessibilityNodeInfo root = w.getRoot();
+      AccessibilityNodeInfo root = root(w, 0);
       if (root == null) continue;
-      AccessibilityNodeInfo m = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+      AccessibilityNodeInfo m = inputFocus(root);
       if (m != null && (f = inside(m)) != null) return f;
       if ((f = focusedIn(root)) != null) return f;
     }
@@ -142,8 +149,8 @@ final class Input {
 
   static AccessibilityNodeInfo focusedIn(AccessibilityNodeInfo n) {
     if (n.isFocused() && editable(n)) return n;
-    for (int i = 0; i < n.getChildCount(); i++) {
-      AccessibilityNodeInfo child = n.getChild(i);
+    for (int i = 0, count = childCount(n); i < count; i++) {
+      AccessibilityNodeInfo child = child(n, i, 0);
       AccessibilityNodeInfo found = child == null ? null : focusedIn(child);
       if (found != null) return found;
     }
@@ -154,8 +161,8 @@ final class Input {
     android.graphics.Rect b = new android.graphics.Rect();
     n.getBoundsInScreen(b);
     if (!b.contains(x, y)) return null;
-    for (int i = 0; i < n.getChildCount(); i++) {
-      AccessibilityNodeInfo child = n.getChild(i);
+    for (int i = 0, count = childCount(n); i < count; i++) {
+      AccessibilityNodeInfo child = child(n, i, 0);
       AccessibilityNodeInfo found = child == null ? null : at(child, x, y);
       if (found != null) return found;
     }
@@ -199,7 +206,7 @@ final class Input {
   static boolean keyboardShown() {
     android.graphics.Rect b = new android.graphics.Rect();
     int tall = Math.max(screen().height() / 8, 1);
-    for (AccessibilityWindowInfo w : ui.getWindows()) {
+    for (AccessibilityWindowInfo w : windows()) {
       if (w.getType() != AccessibilityWindowInfo.TYPE_INPUT_METHOD) continue;
       w.getBoundsInScreen(b);
       if (b.height() >= tall) return true;

@@ -16,6 +16,8 @@ final class Animations {
 
   /** In the background; launching waits for it. */
   static void noAnimations() {
+    // A second call would save the zeros the first one set, and the device would never get its own back.
+    if (quieting != null || savedScales != null) return;
     quieting = new Thread(() -> {
       try {
         StringBuilder get = new StringBuilder();

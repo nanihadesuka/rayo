@@ -46,8 +46,8 @@ final class Screen {
     if (!b.intersect(screen)) b.setEmpty();
     int me = all.size();
     all.add(new Entry(n, b, parent));
-    for (int i = 0; i < n.getChildCount(); i++) {
-      AccessibilityNodeInfo child = PREFETCH == 0 ? n.getChild(i) : n.getChild(i, PREFETCH);
+    for (int i = 0, count = childCount(n); i < count; i++) {
+      AccessibilityNodeInfo child = child(n, i, PREFETCH);
       if (child != null) collect(child, me, screen, all);
     }
   }

@@ -29,6 +29,7 @@ public final class Agent {
 
   public static void main(String[] args) {
     out = new PrintStream(System.out, true);
+    owner = Thread.currentThread();
     int code = 0;
     try {
       connect();
@@ -48,7 +49,8 @@ public final class Agent {
         } catch (Failure e) {
           answer = new JSONObject().put("error", e.getMessage());
         } catch (Throwable e) {
-          answer = new JSONObject().put("error", "agent: " + e);
+          android.util.Log.e("rayo", "agent", e);
+          answer = new JSONObject().put("error", "agent: " + e + where(e));
         }
         spend("device", began);
         reply(answer.put("spent", new JSONObject(spent)));
@@ -196,5 +198,13 @@ public final class Agent {
 
   static float clamp(float v, int size) {
     return Math.max(1, Math.min(v, size - 2));
+  }
+
+  /** The first frames, so a failure inside Android can be traced from the report alone. */
+  static String where(Throwable e) {
+    StringBuilder at = new StringBuilder();
+    StackTraceElement[] frames = e.getStackTrace();
+    for (int i = 0; i < Math.min(frames.length, 8); i++) at.append("\n  at ").append(frames[i]);
+    return at.toString();
   }
 }

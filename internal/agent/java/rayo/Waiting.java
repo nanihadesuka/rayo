@@ -85,7 +85,12 @@ final class Waiting {
    * so takes one.
    */
   static Entry confirmed(Selector s) throws Exception {
-    Entry e = s.first(remembered());
+    Entry e;
+    try {
+      e = s.first(remembered());
+    } catch (RuntimeException x) {
+      return null; // only a shortcut: the fresh read decides (#38)
+    }
     if (e == null) return null;
     Rect b = again(e, s);
     return b == null ? null : new Entry(e.node, b, -1);
@@ -123,10 +128,14 @@ final class Waiting {
   static Rect again(Entry e, Selector s) {
     long began = System.nanoTime();
     Rect b = null;
-    if (e.node.refresh() && e.node.isVisibleToUser() && s.self(e.node)) {
-      b = new Rect();
-      e.node.getBoundsInScreen(b);
-      if (!b.intersect(screen())) b = null;
+    try {
+      if (refresh(e.node) && e.node.isVisibleToUser() && s.self(e.node)) {
+        b = new Rect();
+        e.node.getBoundsInScreen(b);
+        if (!b.intersect(screen())) b = null;
+      }
+    } catch (RuntimeException x) {
+      b = null; // its window was just replaced (#38): not there
     }
     spend("check", began);
     return b;

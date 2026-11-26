@@ -96,13 +96,94 @@ final class Ui {
   /** The topmost window first: the apps' windows, or the system's, such as the status bar. */
   static List<AccessibilityNodeInfo> roots(boolean apps) {
     List<AccessibilityNodeInfo> roots = new ArrayList<>();
-    for (AccessibilityWindowInfo w : ui.getWindows()) {
+    for (AccessibilityWindowInfo w : windows()) {
       if (w.getType() == AccessibilityWindowInfo.TYPE_INPUT_METHOD) continue;
       if ((w.getType() == AccessibilityWindowInfo.TYPE_APPLICATION) != apps) continue;
-      AccessibilityNodeInfo root = PREFETCH == 0 ? w.getRoot() : w.getRoot(PREFETCH);
+      AccessibilityNodeInfo root = root(w, PREFETCH);
       if (root != null) roots.add(root);
     }
     return roots;
+  }
+
+  // Android's accessibility answers from other processes, any of which may be starting, dying or
+  // being replaced, and its own code has bugs there (#38). Every call into it goes through these:
+  // a throw, a null list or a null item is "nothing there", and the waits look again.
+
+  /** The windows, the topmost first; empty when Android can't say. */
+  static List<AccessibilityWindowInfo> windows() {
+    List<AccessibilityWindowInfo> all = new ArrayList<>();
+    try {
+      List<AccessibilityWindowInfo> listed = ui.getWindows();
+      if (listed != null) {
+        for (AccessibilityWindowInfo w : listed) if (w != null) all.add(w);
+      }
+    } catch (RuntimeException e) {
+      // nothing to read yet
+    }
+    return all;
+  }
+
+  static int childCount(AccessibilityNodeInfo n) {
+    try {
+      return n.getChildCount();
+    } catch (RuntimeException e) {
+      return 0;
+    }
+  }
+
+  /** The node with input focus, or null. */
+  static AccessibilityNodeInfo inputFocus(AccessibilityNodeInfo in) {
+    try {
+      return in == null ? ui.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) : in.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+    } catch (RuntimeException e) {
+      return null;
+    }
+  }
+
+  static AccessibilityNodeInfo activeRoot() {
+    try {
+      return ui.getRootInActiveWindow();
+    } catch (RuntimeException e) {
+      return null;
+    }
+  }
+
+  /** False also when its window went before it could act. */
+  static boolean act(AccessibilityNodeInfo n, int action, android.os.Bundle args) {
+    try {
+      return n.performAction(action, args);
+    } catch (RuntimeException e) {
+      return false;
+    }
+  }
+
+  /** Read anew; false when it is gone, however Android says so. */
+  static boolean refresh(AccessibilityNodeInfo n) {
+    try {
+      return n.refresh();
+    } catch (RuntimeException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Android 13 can throw, instead of answering null, for a node whose window or process has just
+   * been replaced (#38): to a reader, that node is simply not there.
+   */
+  static AccessibilityNodeInfo child(AccessibilityNodeInfo n, int i, int prefetch) {
+    try {
+      return prefetch == 0 ? n.getChild(i) : n.getChild(i, prefetch);
+    } catch (RuntimeException e) {
+      return null;
+    }
+  }
+
+  static AccessibilityNodeInfo root(AccessibilityWindowInfo w, int prefetch) {
+    try {
+      return prefetch == 0 ? w.getRoot() : w.getRoot(prefetch);
+    } catch (RuntimeException e) {
+      return null;
+    }
   }
 
   static AccessibilityServiceInfo serviceInfo;
@@ -133,7 +214,7 @@ final class Ui {
     long now = SystemClock.uptimeMillis();
     if (cachedScreen == null || cachedScreen.isEmpty() || now - screenAt > 1000) {
       Rect all = new Rect();
-      for (AccessibilityWindowInfo w : ui.getWindows()) {
+      for (AccessibilityWindowInfo w : windows()) {
         Rect b = new Rect();
         w.getBoundsInScreen(b);
         all.union(b);
@@ -146,7 +227,7 @@ final class Ui {
 
   static String front() {
     clearCache();
-    AccessibilityNodeInfo root = ui.getRootInActiveWindow();
+    AccessibilityNodeInfo root = activeRoot();
     return root == null ? "" : String.valueOf(root.getPackageName());
   }
 
