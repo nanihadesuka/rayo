@@ -337,6 +337,7 @@ var Fields = []schema.Field[Suite]{
 // OutputFields are those of output, when a mapping. Each has an option of the same name that overrides it.
 var OutputFields = []schema.Field[Output]{
 	schema.TextField("folder", "folder", "Where everything goes; `--output` overrides it", func(o *Output) *string { return &o.Folder }).Optional("`.rayo` where rayo runs"),
+	schema.NumberField("screensBefore", "0 to 20", "The screen after each of the last steps that passed, saved with a failure as `screens-before.txt`: how the app got there, such as a dialog that came and went; each costs a read of the screen. `--screens-before` overrides it", 0, 20, func(o *Output, v int) { o.ScreensBefore = v }).Optional("0"),
 	choiceField("keep", "The files of every try (`all`), only of the tries that failed (`failed`), or none; `--keep` overrides it", func(o *Output) *string { return &o.Keep }, KeepAll, KeepFailed, KeepNone).Optional("`all`"),
 	{Name: "video", Takes: "`true` or `false`", About: "A video of each flow whose header doesn't say `record`; `--video` overrides it", Default: "`false`", Schema: schema.Type("boolean"), Read: func(o *Output, n *yaml.Node) error {
 		o.Video = new(bool)

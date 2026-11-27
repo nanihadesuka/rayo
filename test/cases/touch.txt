@@ -67,3 +67,5 @@ swipe {"hold":false,"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":8
 swipe {"hold":false,"ms":100,"percent":false,"timeout":15000,"x":1,"x2":3,"y":2,"y2":4}
 swipe {"ms":250,"percent":true,"timeout":15000,"x":50,"x2":50,"y":70,"y2":30}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

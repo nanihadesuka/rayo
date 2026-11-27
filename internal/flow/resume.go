@@ -189,6 +189,29 @@ func (r *Runner) included(s *Step) *Flow {
 	return f
 }
 
+// setUp runs what of onFlowStart a flow begun in the middle needs all the same: the recordings it
+// starts, so that what stops them finds them; and its mocks. The rest leaves the app as it is.
+func (r *Runner) setUp(ctx context.Context, steps []*Step) error {
+	for _, s := range steps {
+		if s.Kind == "startRecording" || s.Kind == "mock" {
+			if err := r.step(ctx, s, 0); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// seeking says whether a step is run only to reach the step to begin from, which is in it: its
+// condition is taken as holding, as it did when the flow got there.
+func (r *Runner) seeking(s *Step) bool {
+	if r.from == "" || !r.leadsTo(s, 0) {
+		return false
+	}
+	r.reporter.Note(0, fmt.Sprintf("%s: its condition is taken as holding, to reach %s", s.Place(), r.from))
+	return true
+}
+
 // pass goes by a step before the one to begin from. Mocks are still added, as later steps need them;
 // all else is left as the last run left it.
 func (r *Runner) pass(ctx context.Context, s *Step, depth int) error {

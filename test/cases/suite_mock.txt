@@ -89,6 +89,9 @@ bye {"timeout":5000}
     "name": "own",
     "file": "tests/own.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "own failed outside a step: unmocked call",
@@ -136,10 +139,17 @@ bye {"timeout":5000}
       "crash": "",
       "saved": ".rayo/own_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the app called what has no mock: add one, or leave it out with unmocked: ignore"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/tests/a.yaml","name":"a","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/tests/b.yaml","name":"b","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/tests/own.yaml","name":"own","status":"FAIL","at":""}
 -- file .rayo/own_failure.png --
 PNG...
 -- file .rayo/own_logcat.txt --

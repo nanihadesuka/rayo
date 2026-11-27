@@ -1,14 +1,18 @@
 package main
 
 import (
+	"archive/zip"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/nanihadesuka/rayo/internal/flow"
 	"github.com/nanihadesuka/rayo/internal/report"
@@ -21,30 +25,53 @@ func explain(args []string) error {
 	if err != nil {
 		return err
 	}
-	if len(o.args) > 1 {
-		return errors.New("rayo explain takes a run's folder, or a flow")
+	if len(o.args) > 2 {
+		return errors.New("rayo explain takes a run's folder, a .zip of one, or a suite; and a flow")
 	}
-	folder, which := o.output, ""
-	if len(o.args) == 1 {
-		if info, err := os.Stat(o.args[0]); err == nil && info.IsDir() {
-			folder = o.args[0]
-		} else {
-			which = o.args[0]
+	folder, which, from := o.output, "", ""
+	for _, arg := range o.args {
+		info, err := os.Stat(arg)
+		switch {
+		case err == nil && info.IsDir() && folder == "":
+			folder = arg
+		case err == nil && strings.EqualFold(filepath.Ext(arg), ".zip") && folder == "":
+			folder = arg
+		case err == nil && strings.HasSuffix(strings.ToLower(arg), suite.Ext) && folder == "":
+			_, group, err := suite.Load([]string{arg})
+			if err != nil {
+				return err
+			}
+			folder = ".rayo"
+			if group.Output.Folder != "" {
+				folder = group.Relative(group.Output.Folder)
+			}
+		case which == "":
+			which = arg
+		default:
+			return fmt.Errorf("rayo explain takes one flow, and %s is another", arg)
 		}
 	}
 	if folder == "" {
-		folder = ".rayo"
+		folder, from = folderWith("failed.json")
 	}
-	file := report.LastFile(folder)
-	if _, err := os.Stat(file); err != nil {
-		if which != "" {
-			return fmt.Errorf("%s hasn't failed: %s has nothing of it", which, filepath.ToSlash(file))
-		}
-		return fmt.Errorf("nothing failed: there is no %s", filepath.ToSlash(file))
-	}
-	last, err := report.Last(file)
+	read := readFolder(folder)
+	data, err := read("failed.json")
 	if err != nil {
-		return err
+		if which != "" {
+			return fmt.Errorf("%s hasn't failed: %s has nothing of it", which, filepath.ToSlash(report.LastFile(folder)))
+		}
+		return fmt.Errorf("nothing failed: there is no %s%s", filepath.ToSlash(report.LastFile(folder)), from)
+	}
+	last, err := report.ParseLast(data)
+	if err != nil {
+		return fmt.Errorf("%s: %w", filepath.ToSlash(report.LastFile(folder)), err)
+	}
+	if o.latest {
+		last = report.Latest(last)
+	}
+	var history []report.Ran
+	if data, err := read("history.jsonl"); err == nil {
+		history = report.ParseHistory(data)
 	}
 	id := ""
 	if which != "" {
@@ -68,10 +95,14 @@ func explain(args []string) error {
 			f.Trail = []report.StepStates{}
 			u.Failure = &f
 		}
+		u.History = report.Told(history, k)
 		out.Flows = append(out.Flows, u)
 	}
 	if printing != report.Human {
 		return emit(out)
+	}
+	if from != "" {
+		fmt.Printf("(%s)\n", strings.TrimPrefix(from, ": "))
 	}
 	for i, u := range out.Flows {
 		if i > 0 {
@@ -80,6 +111,56 @@ func explain(args []string) error {
 		fmt.Print(u.Explain())
 	}
 	return nil
+}
+
+// folderWith is the output folder that has a file, when none is said: .rayo, or else that of a suite
+// here, or a folder down, whose file is newest. It also says which, if not .rayo.
+func folderWith(name string) (folder, from string) {
+	folder = ".rayo"
+	if _, err := os.Stat(filepath.Join(folder, name)); err == nil {
+		return folder, ""
+	}
+	suites, _ := filepath.Glob("*" + suite.Ext)
+	more, _ := filepath.Glob(filepath.Join("*", "*"+suite.Ext))
+	var newest time.Time
+	for _, path := range append(suites, more...) {
+		_, group, err := suite.Load([]string{path})
+		if err != nil || group.Output.Folder == "" {
+			continue
+		}
+		there := group.Relative(group.Output.Folder)
+		if info, err := os.Stat(filepath.Join(there, name)); err == nil && info.ModTime().After(newest) {
+			newest, folder, from = info.ModTime(), there, fmt.Sprintf(": from %s, the output of %s", filepath.ToSlash(there), filepath.ToSlash(path))
+		}
+	}
+	return folder, from
+}
+
+// readFolder reads the files of a run's folder, or of a .zip of one, such as CI keeps: there, the
+// first file of that name, in whatever folder.
+func readFolder(folder string) func(name string) ([]byte, error) {
+	if !strings.EqualFold(filepath.Ext(folder), ".zip") {
+		return func(name string) ([]byte, error) { return os.ReadFile(filepath.Join(folder, name)) }
+	}
+	return func(name string) ([]byte, error) {
+		z, err := zip.OpenReader(folder)
+		if err != nil {
+			return nil, err
+		}
+		defer z.Close()
+		for _, f := range z.File {
+			if path.Base(f.Name) != name {
+				continue
+			}
+			r, err := f.Open()
+			if err != nil {
+				return nil, err
+			}
+			defer r.Close()
+			return io.ReadAll(io.LimitReader(r, 256<<20))
+		}
+		return nil, os.ErrNotExist
+	}
 }
 
 // changed keeps the flows of which a file changed since a git ref: their own, those they run, or their mocks.

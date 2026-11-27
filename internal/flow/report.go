@@ -64,6 +64,7 @@ type Result struct {
 	Warnings   []string
 	Recordings []string // files
 	Files      []string // all it wrote, recordings too
+	Fixed      bool     // it failed, and passed once fixed while held: only part of it ran after the fix
 }
 
 // Failure is what helps to understand one.

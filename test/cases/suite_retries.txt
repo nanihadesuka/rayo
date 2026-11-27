@@ -106,6 +106,9 @@ a screen
     "name": "c",
     "file": "c.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "c failed at tapOn missing: not on screen",
@@ -129,14 +132,24 @@ a screen
       "crash": "",
       "saved": ".rayo/c_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from c.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FLAKY","at":""}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"FLAKY","at":""}
+{"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"FAIL","at":"c.yaml:3"}
 -- file out.json --
 {
   "schemaVersion": 3,
   "run": "s.suite.yaml",
+  "id": "<run>",
   "device": "emulator-5554",
   "order": "",
   "shard": null,
@@ -148,6 +161,7 @@ a screen
     "total": 3,
     "passed": 0,
     "flaky": 2,
+    "partial": 0,
     "failed": 1,
     "interrupted": 0,
     "notRun": 0,
@@ -196,6 +210,7 @@ a screen
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
+      "mark": null,
       "failures": [
         {
           "try": 1,
@@ -222,7 +237,11 @@ a screen
           "crash": "",
           "saved": ".rayo/a_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume",
+            "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+          ]
         }
       ]
     },
@@ -243,6 +262,7 @@ a screen
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
+      "mark": null,
       "failures": [
         {
           "try": 1,
@@ -269,7 +289,11 @@ a screen
           "crash": "",
           "saved": ".rayo/b_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from b.yaml:3, mocks as then; rayo help resume",
+            "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+          ]
         },
         {
           "try": 2,
@@ -296,7 +320,11 @@ a screen
           "crash": "",
           "saved": ".rayo/b_retry1_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from b.yaml:3, mocks as then; rayo help resume",
+            "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+          ]
         }
       ]
     },
@@ -317,6 +345,7 @@ a screen
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
+      "mark": null,
       "failures": [
         {
           "try": 1,
@@ -343,7 +372,12 @@ a screen
           "crash": "",
           "saved": ".rayo/c_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another",
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from c.yaml:3, mocks as then; rayo help resume",
+            "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+          ]
         }
       ]
     }

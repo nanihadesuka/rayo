@@ -87,6 +87,9 @@ a screen
     "name": "a",
     "file": "a.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn missing: not on screen",
@@ -110,7 +113,12 @@ a screen
       "crash": "",
       "saved": ".rayo/a_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:4, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   },
   "<dir>/c.yaml": {
@@ -118,6 +126,9 @@ a screen
     "name": "c",
     "file": "c.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "c failed at stopRecording: step failed: nothing is being recorded (c.yaml:3)",
@@ -141,10 +152,18 @@ a screen
       "crash": "",
       "saved": ".rayo/c_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from c.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FAIL","at":"a.yaml:4"}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"FAIL","at":"c.yaml:3"}
 -- file out.txt --
 run: a.yaml b.yaml c.yaml
 device: emulator-5554

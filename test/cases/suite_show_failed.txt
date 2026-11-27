@@ -92,6 +92,9 @@ a screen
     "name": "a",
     "file": "e2e/a/flow.yaml",
     "why": "--fail-fast, after b",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": null
   },
   "<dir>/e2e/b/flow.yaml": {
@@ -99,6 +102,9 @@ a screen
     "name": "b",
     "file": "e2e/b/flow.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "b failed at tapOn app crashes: app crashed",
@@ -142,7 +148,11 @@ a screen
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
       "saved": "e2e/results/b_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from e2e/shared/sub.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   },
   "<dir>/e2e/c/flow.yaml": {
@@ -150,9 +160,14 @@ a screen
     "name": "c",
     "file": "e2e/c/flow.yaml",
     "why": "--fail-fast, after b",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": null
   }
 }
+-- file e2e/results/history.jsonl --
+{"run":"<run>","flow":"<dir>/e2e/b/flow.yaml","name":"b","status":"FAIL","at":"e2e/shared/sub.yaml:3"}
 -- file e2e/results/results.txt --
 run: Everything
 device: emulator-5554

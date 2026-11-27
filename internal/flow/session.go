@@ -92,7 +92,9 @@ type Done struct {
 // Do runs steps until one fails.
 func (s *Session) Do(ctx context.Context, steps []*Step) Done {
 	r := s.r
+	kept := r.warnings // of a held flow, its own
 	r.began, r.failure, r.warnings = time.Now(), nil, nil
+	defer func() { r.warnings = append(kept, r.warnings...) }()
 	before := 0
 	if r.backend.mock != nil {
 		before = len(r.backend.mock.Calls())

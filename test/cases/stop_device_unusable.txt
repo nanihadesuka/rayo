@@ -55,6 +55,9 @@ a screen
     "name": "a",
     "file": "a.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn missing: device error",
@@ -78,7 +81,11 @@ a screen
       "crash": "",
       "saved": ".rayo/a_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the device failed, not the flow: rayo devices says if it is there and ready; then rayo test --rerun-failed",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   },
   "<dir>/b.yaml": {
@@ -86,6 +93,11 @@ a screen
     "name": "b",
     "file": "b.yaml",
     "why": "device: the device is starting",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": null
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FAIL","at":"a.yaml:3"}

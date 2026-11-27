@@ -150,18 +150,19 @@ type Notes struct {
 // Event is a line of rayo test --format ndjson, as it happens.
 type Event struct {
 	SchemaVersion int       `json:"schemaVersion" about:"Changes if the meaning of a key does"`
-	Event         string    `json:"event" about:"What happened, see [Events](#events)" enum:"flowStarted,stepFailed,attempt,flowFinished,outcome,error"`
+	Event         string    `json:"event" about:"What happened, see [Events](#events)" enum:"flowStarted,stepFailed,attempt,held,flowFinished,outcome,error"`
 	Flow          string    `json:"flow" about:"Its name; empty in outcome and error"`
 	File          string    `json:"file" about:"The flow's"`
 	Index         int       `json:"index" about:"Of the flow, from 1"`
 	Of            int       `json:"of" about:"Flows to run"`
 	Try           int       `json:"try" about:"Of stepFailed and attempt, from 1"`
-	Status        Status    `json:"status" about:"Of attempt, PASS or FAIL; of flowFinished, the flow's [outcome](#outcomes)" enum:"PASS,FLAKY,FAIL,INTERRUPTED,NOT_RUN,"`
+	Status        Status    `json:"status" about:"Of attempt, PASS or FAIL; of flowFinished, the flow's [outcome](#outcomes)" enum:"PASS,PARTIAL,FLAKY,FAIL,INTERRUPTED,NOT_RUN,"`
 	Error         *Problem  `json:"error" about:"Of stepFailed and of an attempt that failed, see [Errors](#errors)"`
 	Result        *jsonFlow `json:"result" about:"Of flowFinished, the flow as in the [results](#results)"`
 	Results       *jsonRun  `json:"results" about:"Of outcome, the [results](#results), as --format json"`
 	Exit          int       `json:"exit" about:"Of outcome and error, the exit code, see [Exit codes](#exit-codes)"`
 	Errors        []Problem `json:"errors" about:"Of error, as rayo prints them with --format json"`
+	Session       string    `json:"session" about:"Of held, the output folder of the session that holds the flow: rayo do --output <it> .help, or rayo do .help there"`
 }
 
 func event(kind string, f *flow.Flow, i, of int) Event {
@@ -195,6 +196,14 @@ func Tried(o *Outcome, i, of int) []Event {
 	failed := event("stepFailed", o.Flow, i, of)
 	failed.Try, failed.Error = try.Try, &p
 	return []Event{failed, try}
+}
+
+// Held is the event of a flow held where it failed, with --on-fail hold, until rayo do says how to go on.
+func Held(f *flow.Flow, i, of int, err error, folder string) Event {
+	e := event("held", f, i, of)
+	p := ProblemOf(err)
+	e.Error, e.Session = &p, filepath.ToSlash(folder)
+	return e
 }
 
 // Finished is the event of a flow after all its tries, or that didn't run.

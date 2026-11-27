@@ -83,6 +83,7 @@ func (o *options) written(group *suite.Suite) {
 		}
 		o.keep = cmp.Or(o.keep, g.Keep)
 		o.runner.NameTemplate = cmp.Or(o.runner.NameTemplate, g.NameTemplate)
+		o.runner.ScreensBefore = cmp.Or(o.runner.ScreensBefore, g.ScreensBefore)
 		if o.runner.Artifacts == nil {
 			o.runner.Artifacts = g.Artifacts
 		}
@@ -415,6 +416,9 @@ func test(ctx context.Context, args []string) (err error) {
 	if err := o.settleStarts(flows); err != nil {
 		return err
 	}
+	if len(o.leftOut) > 0 {
+		flows = slices.DeleteFunc(flows, func(f *flow.Flow) bool { return slices.Contains(o.leftOut, f.Name) })
+	}
 	if err := o.suiteCapture(flows); err != nil {
 		return err
 	}
@@ -595,8 +599,15 @@ func runLive(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+	if len(o.args) == 2 && strings.HasSuffix(strings.ToLower(o.args[0]), suite.Ext) {
+		path, err := o.ofSuite(o.args[0], o.args[1])
+		if err != nil {
+			return err
+		}
+		o.args = []string{path}
+	}
 	if len(o.args) != 1 {
-		return errors.New("which flow? give a file, there already or not")
+		return errors.New("which flow? give a file, there already or not; or a suite and the name of one of its flows")
 	}
 	o.into("")
 	if err := o.checkCaptureFolder(); err != nil {
@@ -617,6 +628,47 @@ func runLive(ctx context.Context, args []string) error {
 		}
 		return s.runner, func() { s.agent.Close() }, nil
 	})
+}
+
+// ofSuite settles what a live session of a suite's flow takes from the suite, and is the flow's file.
+func (o *options) ofSuite(file, name string) (string, error) {
+	flows, group, err := suite.Load([]string{file})
+	if err != nil {
+		return "", err
+	}
+	var names []string
+	var chosen *flow.Flow
+	for _, f := range flows {
+		names = append(names, f.Name)
+		if f.Name == name || report.Identity(f) == report.Identity(&flow.Flow{Path: name}) {
+			chosen = f
+		}
+	}
+	if chosen == nil {
+		if near := schema.Nearest(name, names); near != "" {
+			return "", fmt.Errorf("%s has no flow called %s, did you mean %s?", filepath.ToSlash(file), name, near)
+		}
+		return "", fmt.Errorf("%s has no flow called %s; it has: %s", filepath.ToSlash(file), name, strings.Join(names, ", "))
+	}
+	if o.app != "" || o.mocks != nil {
+		return "", fmt.Errorf("%s says its app and mocks", chosen.Name)
+	}
+	for k, v := range group.Env {
+		if _, set := o.runner.Env[k]; !set {
+			o.runner.Env[k] = v
+		}
+	}
+	if o.output == "" && group.Output.Folder != "" {
+		o.output = group.Relative(group.Output.Folder)
+	}
+	if o.runner.Scale == 0 {
+		o.runner.Scale = group.TimeoutScale
+	}
+	if o.runner.CA == "" && group.CA != "" {
+		o.runner.CA = group.Relative(group.CA)
+	}
+	o.runner.Unmocked = o.runner.Unmocked.Merge(chosen.Unmocked)
+	return chosen.Path, nil
 }
 
 // findCA settles the CA the proxy signs with: --ca, else the suite's, else .rayo/ca where the suite or
@@ -650,6 +702,9 @@ func runDo(args []string) error {
 	o, err := parse(cmdDo, args)
 	if err != nil {
 		return err
+	}
+	if o.output == "" { // a suite's run may hold its flows in its own output folder
+		o.output, _ = folderWith("live.json")
 	}
 	o.into("")
 	for i, text := range o.args {

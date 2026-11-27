@@ -46,6 +46,8 @@ type Options struct {
 	Artifacts     []string       // the kinds of file written; nil for all
 	Window        time.Duration  // of a failure's files, before the failing step began; 0 for DefaultWindow
 	Detail        string         // Full keeps a failure's files whole
+	Hold          Hold           // given a flow that failed, before onFlowComplete; nil to go on at once
+	ScreensBefore int            // the screens after the last steps that passed, kept for a failure; 0 for none
 }
 
 // Networks are the ways calls reach the mock.
@@ -93,6 +95,9 @@ type Runner struct {
 	from       string    // the step to begin from, until it is reached
 	passed     int       // steps gone by before it
 	trail      []StepStates
+	ran        []string // the places of the last steps that passed, for a hold's .rewind
+	fixed      bool     // it failed, and was fixed while held: its pass is only part of it
+	screens    []string // after each of the last steps that passed, of ScreensBefore
 }
 
 // NewRunner makes a Runner; what happens goes to the reporter.
@@ -115,16 +120,21 @@ func (r *Runner) Run(ctx context.Context, f *Flow, a Attempt) Result {
 	r.noteUnreached(err)
 	r.reset()
 	if err != nil && ctx.Err() == nil {
-		if r.failure == nil {
-			r.failure = &Failure{}
-		}
-		r.diagnose(err, r.log)
-		r.failure.Cause = causeOf(err, r.failure)
-		if r.failure.Cause == NotOnScreen {
-			r.failure.Nearest = Nearest(r.failure.Screen, wanted(err), 5)
-		}
+		r.judge(err)
 	}
-	return Result{Flow: f, Err: err, Elapsed: time.Since(start), Failure: r.failure, Warnings: r.warnings, Recordings: r.recordings, Files: r.files}
+	return Result{Flow: f, Err: err, Elapsed: time.Since(start), Failure: r.failure, Warnings: r.warnings, Recordings: r.recordings, Files: r.files, Fixed: r.fixed}
+}
+
+// judge says what went wrong, and whose it is.
+func (r *Runner) judge(err error) {
+	if r.failure == nil {
+		r.failure = &Failure{}
+	}
+	r.diagnose(err, r.log)
+	r.failure.Cause = causeOf(err, r.failure)
+	if r.failure.Cause == NotOnScreen {
+		r.failure.Nearest = Nearest(r.failure.Screen, wanted(err), 5)
+	}
 }
 
 // withEnv sets -e, and then the flow's header for what -e doesn't set.
@@ -151,7 +161,7 @@ func (r *Runner) prepare(ctx context.Context, f *Flow, a Attempt) {
 	r.flow, r.began, r.attempt = f, time.Now(), a
 	r.recent, r.failure, r.warnings, r.recordings, r.files = nil, nil, nil, nil, nil
 	r.log, r.located, r.airplane, r.turned = "", false, "", ""
-	r.from, r.passed, r.trail = "", 0, nil
+	r.from, r.passed, r.trail, r.ran, r.fixed, r.screens = "", 0, nil, nil, false, nil
 	if r.Start != nil {
 		r.from = r.Start.From
 	}
@@ -199,6 +209,8 @@ func (r *Runner) run(ctx context.Context, f *Flow) error {
 	err := r.begin(f)
 	if err == nil && r.from == "" {
 		err = r.steps(ctx, f.OnStart, 0)
+	} else if err == nil {
+		err = r.setUp(ctx, f.OnStart)
 	}
 	if err == nil {
 		err = r.steps(ctx, f.Steps, 0)
@@ -223,7 +235,15 @@ func (r *Runner) run(ctx context.Context, f *Flow) error {
 	if err != nil {
 		r.evidence(ctx)
 	}
-	if err == nil && r.Start != nil {
+	if err != nil && !until && r.Hold != nil && ctx.Err() == nil && r.agent.Dead() == nil {
+		r.judge(err)
+		if err = r.Hold(ctx, &Session{r}, f, err); err == nil {
+			r.fixed, r.failure = true, nil
+		}
+	}
+	if err == nil && r.fixed {
+		defer r.reporter.Note(0, "fixed while held, so its pass is not the whole flow's: it stays in failed.json; rayo test --rerun-failed runs it whole")
+	} else if err == nil && r.Start != nil {
 		defer r.reporter.Note(0, "ran only part of the flow, so its pass is not the whole flow's: it stays in failed.json; once the fix is right, run it whole with --only "+f.Name)
 	}
 	if until {
@@ -318,6 +338,9 @@ func (r *Runner) step(ctx context.Context, s *Step, depth int) error {
 	if report.Status == Passed && !k.group {
 		r.recent = append(r.recent, report.Text)
 		r.recent = r.recent[max(0, len(r.recent)-3):]
+		r.ran = append(r.ran, s.Place())
+		r.ran = r.ran[max(0, len(r.ran)-ranMost):]
+		r.keepScreen(ctx, s, report.Text)
 	}
 	if !k.group || report.Status == Optional {
 		r.reporter.Step(report)
@@ -477,6 +500,9 @@ func (r *Runner) evidence(ctx context.Context) {
 		save(Screen, "screen", "txt", []byte(a.Out), err)
 		r.failure.Screen = a.Out
 	}
+	if len(r.screens) > 0 {
+		save(Screen, "screens-before", "txt", []byte(strings.Join(r.screens, "\n")), nil)
+	}
 	log, err := r.device.Exec("logcat -d -t 2000")
 	cut := log
 	if r.Detail != Full && err == nil {
@@ -503,6 +529,20 @@ func (r *Runner) evidence(ctx context.Context) {
 	}
 }
 
+// keepScreen keeps the screen after a step that passed, the last ScreensBefore of them: what a failure
+// then shows of how the app got there, such as a dialog that came and went.
+func (r *Runner) keepScreen(ctx context.Context, s *Step, text string) {
+	if r.ScreensBefore <= 0 || r.agent.Dead() != nil || ctx.Err() != nil {
+		return
+	}
+	a, err := r.agent.Do(ctx, "tree", nil, 5*time.Second)
+	if err != nil {
+		return
+	}
+	r.screens = append(r.screens, fmt.Sprintf("== after %s  %s\n%s", s.Place(), text, a.Out))
+	r.screens = r.screens[max(0, len(r.screens)-r.ScreensBefore):]
+}
+
 // windowStart is when the files of a failure begin: a while before the failing step began.
 func (r *Runner) windowStart() time.Time {
 	w := r.Window
@@ -517,7 +557,7 @@ func (r *Runner) windowStart() time.Time {
 }
 
 // evidence is what a failure may save, by the name and the extension of each.
-var evidence = []struct{ name, ext string }{{"failure", "jpg"}, {"failure", "png"}, {"screen", "txt"}, {"logcat", "txt"}, {"requests", "txt"}, {"requests", "json"}}
+var evidence = []struct{ name, ext string }{{"failure", "jpg"}, {"failure", "png"}, {"screen", "txt"}, {"screens-before", "txt"}, {"logcat", "txt"}, {"requests", "txt"}, {"requests", "json"}}
 
 // FolderName is a flow's, for what is saved of it.
 func FolderName(name string) string { return unsafe.ReplaceAllString(name, "_") }

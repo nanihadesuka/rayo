@@ -47,3 +47,6 @@ PNG...
 the log
 -- file .rayo/a_screen.txt --
 a screen
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FLAKY","at":""}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}

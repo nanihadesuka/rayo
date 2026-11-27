@@ -78,3 +78,7 @@ tap {"delay":100,"repeat":1,"sel":{"id":"GET /a"},"timeout":15000}
   app: GET /a -> 200  a
 adb reverse:killforward:tcp:8080
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/proxy.yaml","name":"proxy","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/interceptor.yaml","name":"interceptor","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/own.yaml","name":"own","status":"PASS","at":""}

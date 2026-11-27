@@ -39,3 +39,5 @@ gone {"sel":{"text":"gone"},"timeout":2500}
 wait {"sel":{"id":"missing"},"timeout":350}
 wait {"sel":{"id":"missing"},"timeout":0}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"PASS","at":""}

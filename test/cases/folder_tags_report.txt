@@ -73,6 +73,9 @@ a screen
     "name": "c",
     "file": "flows/c.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "c failed at this & that: not on screen",
@@ -96,10 +99,18 @@ a screen
       "crash": "",
       "saved": "dbg/c_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from flows/c.yaml:4, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file dbg/history.jsonl --
+{"run":"<run>","flow":"<dir>/flows/a.yaml","name":"First one","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/flows/c.yaml","name":"c","status":"FAIL","at":"flows/c.yaml:4"}
 -- file out.xml --
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuite name="rayo" tests="2" failures="1" errors="0" skipped="0" time="#">

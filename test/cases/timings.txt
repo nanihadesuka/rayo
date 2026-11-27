@@ -29,3 +29,5 @@ noAnimations {"timeout":10000}
 tap {"delay":100,"repeat":1,"sel":{"text":"inner"},"timeout":15000}
 wait {"sel":{"id":"missing"},"timeout":0}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"PASS","at":""}

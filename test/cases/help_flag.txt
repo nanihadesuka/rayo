@@ -28,7 +28,10 @@ Options of test:
   --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0) (suite: flakyFailsBuild)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
+  --screens-before <n>       keep the screen after each of the last n steps that passed, and save them with a failure as screens-before.txt: how the app got there; each costs a read of the screen (default 0) (suite: output.screensBefore)
   -c, --continuous           run again whenever a file changes
+  --on-fail <what>           go-on (default): retry it as allowed, then the next flow; hold: keep the flow where it failed, the app as it is, until rayo do says how to go on, so that it is fixed in its files and run again from there; see rayo help hold
+  --hold-timeout <duration>  with --on-fail hold, leave a flow failed if no command comes for this long, such as 20m (default 1h)
   --resume                   each flow that failed last time, from the step that failed, with the app as it is and the mocks' scenarios as they were then
   --from <step>              begin one flow at a step: file:line as rayo explain's at: says, a line of its own file, or a text of one step such as pickDate; the app is as it is, onFlowStart doesn't run
   --until <step>             stop one flow after a step, given as --from takes it, leaving the app there; onFlowComplete doesn't run

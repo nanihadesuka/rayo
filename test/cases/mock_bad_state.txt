@@ -96,6 +96,9 @@ a screen
     "name": "a",
     "file": "a.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "a failed at mockState ride: dockd: step failed: ride has no state \"dockd\" (it has Started, docked) (a.yaml:4)",
@@ -134,6 +137,10 @@ a screen
             }
           ]
         }
+      ],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:4, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
       ]
     }
   },
@@ -142,6 +149,9 @@ a screen
     "name": "b",
     "file": "b.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "b failed at mockState ryde: docked: step failed: no mock has a scenario \"ryde\" (b.yaml:4)",
@@ -180,6 +190,10 @@ a screen
             }
           ]
         }
+      ],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from b.yaml:4, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
       ]
     }
   },
@@ -188,6 +202,9 @@ a screen
     "name": "c",
     "file": "c.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "c failed at mockState ride: docked: step failed: this flow has no mock (c.yaml:3)",
@@ -211,7 +228,15 @@ a screen
       "crash": "",
       "saved": ".rayo/c_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from c.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FAIL","at":"a.yaml:4"}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"FAIL","at":"b.yaml:4"}
+{"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"FAIL","at":"c.yaml:3"}

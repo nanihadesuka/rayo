@@ -50,3 +50,5 @@ settle {"quiet":1000,"timeout":5000}
 wait {"sel":{"id":"missing"},"timeout":3000}
 gone {"sel":{"id":"stays"},"timeout":5000}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

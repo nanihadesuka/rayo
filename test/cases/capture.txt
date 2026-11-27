@@ -44,6 +44,8 @@ tap {"delay":100,"repeat":1,"sel":{"id":"GET /status/404"},"timeout":15000}
   app: GET /status/404 -> 404 text/plain; charset=utf-8 {"method":"GET","body":"","type":""}
 adb reverse:killforward:tcp:8080
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}
 -- file got/__files/001_get_a.txt --
 {
   "body": "",

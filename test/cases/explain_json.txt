@@ -29,6 +29,9 @@ explain .rayo --format json
       "name": "pay",
       "file": "pay.yaml",
       "why": "",
+      "run": "",
+      "mark": null,
+      "history": "",
       "failure": {
         "try": 2,
         "verdict": "pay failed at tapOn Pay: not on screen",
@@ -73,7 +76,8 @@ explain .rayo --format json
         "crash": "",
         "saved": ".rayo/pay_retry1_failure.jpg",
         "scenarios": null,
-        "trail": []
+        "trail": [],
+        "next": null
       }
     },
     {
@@ -81,6 +85,9 @@ explain .rayo --format json
       "name": "scan",
       "file": "scan.yaml",
       "why": "--fail-fast, after pay",
+      "run": "",
+      "mark": null,
+      "history": "",
       "failure": null
     }
   ]

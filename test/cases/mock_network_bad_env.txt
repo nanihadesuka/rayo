@@ -48,6 +48,9 @@ a screen
     "name": "case",
     "file": "flow.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "case failed before its first step: step failed: flow.yaml:5: network: takes interceptor or proxy, not \"wifi\"",
@@ -71,7 +74,13 @@ a screen
       "crash": "",
       "saved": ".rayo/case_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from flow.yaml:5, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"FAIL","at":""}

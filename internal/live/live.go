@@ -53,6 +53,15 @@ type Reply struct {
 	Baseline      bool            `json:"baseline" about:"With --screen=changes, there was no screen before: all its lines are there, as appeared"`
 	Ignored       int             `json:"ignored" about:"With --ignore-screen, the lines of the screen left out"`
 	Unsaved       int             `json:"unsaved" about:"Steps not saved to the flow yet"`
+	Held          *Held           `json:"held" about:"Of a flow rayo test --on-fail hold holds, where it is; null in a live session"`
+}
+
+// Held is where a held flow is.
+type Held struct {
+	Flow  string `json:"flow" about:"Its name"`
+	File  string `json:"file" about:"Its file"`
+	At    string `json:"at" about:"The step that failed, file:line; once fixed, the one .retry began from"`
+	Fixed bool   `json:"fixed" about:"Its steps passed from there to their end: .continue goes on"`
 }
 
 // Request is what is asked of a session.

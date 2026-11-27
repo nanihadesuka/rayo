@@ -123,6 +123,9 @@ a screen
     "name": "a",
     "file": "a.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn app crashes: app crashed",
@@ -146,7 +149,11 @@ a screen
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
       "saved": ".rayo/a_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   },
   "<dir>/b.yaml": {
@@ -154,6 +161,9 @@ a screen
     "name": "b",
     "file": "b.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "b failed at tapOn app crashes: app crashed",
@@ -177,7 +187,11 @@ a screen
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
       "saved": ".rayo/b_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from b.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   },
   "<dir>/d.yaml": {
@@ -185,6 +199,9 @@ a screen
     "name": "d",
     "file": "d.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "d failed at tapOn app crashes: app crashed",
@@ -208,7 +225,17 @@ a screen
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
       "saved": ".rayo/d_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from d.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FAIL","at":"a.yaml:3"}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"FAIL","at":"b.yaml:3"}
+{"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/d.yaml","name":"d","status":"FAIL","at":"d.yaml:3"}
+{"run":"<run>","flow":"<dir>/e.yaml","name":"e","status":"PASS","at":""}

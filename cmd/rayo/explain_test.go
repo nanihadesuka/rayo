@@ -1,6 +1,8 @@
 package main
 
 import (
+	"archive/zip"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -63,5 +65,27 @@ func TestChanged(t *testing.T) {
 	}
 	if len(names) != 2 || names[0] != "a" || names[1] != "b" {
 		t.Errorf("changed: %v, want [a b]", names)
+	}
+}
+
+// A run's folder, as CI keeps it in a .zip, is read without being unpacked.
+func TestReadZip(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "run.zip")
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	z := zip.NewWriter(f)
+	w, _ := z.Create("results/failed.json")
+	_, _ = w.Write([]byte(`{"a": {"status": "FAIL"}}`))
+	if err := errors.Join(z.Close(), f.Close()); err != nil {
+		t.Fatal(err)
+	}
+	read := readFolder(path)
+	if data, err := read("failed.json"); err != nil || string(data) != `{"a": {"status": "FAIL"}}` {
+		t.Errorf("%q %v", data, err)
+	}
+	if _, err := read("history.jsonl"); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("%v", err)
 	}
 }

@@ -203,6 +203,9 @@ a screen, swiped 1
     "name": "a",
     "file": "a.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn x: timeout",
@@ -226,7 +229,12 @@ a screen, swiped 1
       "crash": "",
       "saved": ".rayo/a_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "it took longer than the step waits: held, .probe 5 says whether it passes at times; a timeout: on the step waits longer",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   },
   "<dir>/b.yaml": {
@@ -234,6 +242,9 @@ a screen, swiped 1
     "name": "b",
     "file": "b.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "b failed at repeat times: ${'many'}: step failed: times: not a whole number: \"many\" (b.yaml:3)",
@@ -257,7 +268,11 @@ a screen, swiped 1
       "crash": "",
       "saved": ".rayo/b_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from b.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   },
   "<dir>/c.yaml": {
@@ -265,6 +280,9 @@ a screen, swiped 1
     "name": "c",
     "file": "c.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "c failed at swipe ${'nowhere'}: step failed: direction: not one of UP, DOWN, LEFT, RIGHT: \"nowhere\" (c.yaml:3)",
@@ -288,7 +306,11 @@ a screen, swiped 1
       "crash": "",
       "saved": ".rayo/c_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from c.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   },
   "<dir>/d.yaml": {
@@ -296,6 +318,9 @@ a screen, swiped 1
     "name": "d",
     "file": "d.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "d failed at travel [2]: step failed: points: not a location: \"x\" (d.yaml:3)",
@@ -319,7 +344,11 @@ a screen, swiped 1
       "crash": "",
       "saved": ".rayo/d_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from d.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   },
   "<dir>/e.yaml": {
@@ -327,6 +356,9 @@ a screen, swiped 1
     "name": "e",
     "file": "e.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "e failed at waitForAnimationToEnd: step failed: optional: not one of true, false: \"maybe\" (e.yaml:3)",
@@ -350,7 +382,11 @@ a screen, swiped 1
       "crash": "",
       "saved": ".rayo/e_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from e.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   },
   "<dir>/f.yaml": {
@@ -358,6 +394,9 @@ a screen, swiped 1
     "name": "f",
     "file": "f.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "f failed at runFlow ${'Windows'}: step failed: platform: not one of Android, iOS, Web: \"Windows\" (f.yaml:3)",
@@ -381,7 +420,11 @@ a screen, swiped 1
       "crash": "",
       "saved": ".rayo/f_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from f.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   },
   "<dir>/g.yaml": {
@@ -389,6 +432,9 @@ a screen, swiped 1
     "name": "g",
     "file": "g.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "g failed at launchApp ${'alow'}: step failed: permissions: camera: not one of allow, deny, unset: \"alow\", did you mean allow? (g.yaml:3)",
@@ -412,7 +458,11 @@ a screen, swiped 1
       "crash": "",
       "saved": ".rayo/g_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from g.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   },
   "<dir>/h.yaml": {
@@ -420,6 +470,9 @@ a screen, swiped 1
     "name": "h",
     "file": "h.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "h failed at runFlow x, index: ${'one'}: step failed: index: not a whole number: \"one\" (h.yaml:3)",
@@ -443,7 +496,11 @@ a screen, swiped 1
       "crash": "",
       "saved": ".rayo/h_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from h.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
@@ -459,3 +516,13 @@ PNG...
 the log
 -- file .rayo/h_screen.txt --
 a screen, swiped 1
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/good.yaml","name":"good","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FAIL","at":"a.yaml:3"}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"FAIL","at":"b.yaml:3"}
+{"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"FAIL","at":"c.yaml:3"}
+{"run":"<run>","flow":"<dir>/d.yaml","name":"d","status":"FAIL","at":"d.yaml:3"}
+{"run":"<run>","flow":"<dir>/e.yaml","name":"e","status":"FAIL","at":"e.yaml:3"}
+{"run":"<run>","flow":"<dir>/f.yaml","name":"f","status":"FAIL","at":"f.yaml:3"}
+{"run":"<run>","flow":"<dir>/g.yaml","name":"g","status":"FAIL","at":"g.yaml:3"}
+{"run":"<run>","flow":"<dir>/h.yaml","name":"h","status":"FAIL","at":"h.yaml:3"}

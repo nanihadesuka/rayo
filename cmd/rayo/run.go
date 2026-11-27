@@ -14,6 +14,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/adb"
 	"github.com/nanihadesuka/rayo/internal/agent"
 	"github.com/nanihadesuka/rayo/internal/flow"
+	"github.com/nanihadesuka/rayo/internal/live"
 	"github.com/nanihadesuka/rayo/internal/report"
 	"github.com/nanihadesuka/rayo/internal/schema"
 	"github.com/nanihadesuka/rayo/internal/suite"
@@ -26,6 +27,11 @@ type session struct {
 	agent    *agent.Agent
 	runner   *flow.Runner
 	reporter flow.Reporter
+
+	// Of the flow running now, with --on-fail hold.
+	index, of int
+	mark      *report.Mark // what was said of it while held
+	abort     bool         // .abort: no more flows
 }
 
 func (s *session) start() error {
@@ -41,7 +47,20 @@ func (s *session) start() error {
 		}
 	}
 	s.runner = flow.NewRunner(s.device, a, s.reporter, s.o.runner)
+	if s.o.onFail == onFailHold {
+		s.runner.Hold = s.hold
+	}
 	return nil
+}
+
+// hold keeps a flow where it failed until rayo do says how to go on.
+func (s *session) hold(ctx context.Context, held *flow.Session, f *flow.Flow, failed error) error {
+	p := live.HoldParams{Output: s.o.output, Say: human(), Typed: printing == report.Human, Timeout: s.o.holdTimeout,
+		Held: func() { stream(report.Held(f, s.index, s.of, failed, s.o.output)) }}
+	end, err := live.Hold(ctx, p, held, f, failed)
+	s.mark = end.Mark
+	s.abort = s.abort || end.Abort
+	return err
 }
 
 // restart replaces an agent that was lost.
@@ -227,7 +246,7 @@ func (r *streak) after(o *report.Outcome, keepGoing bool) string {
 // retriesOf says how many times a flow may be tried again. A capture calls the real backend, so only once.
 func (o *options) retriesOf(f *flow.Flow) int {
 	switch {
-	case o.runner.Capture != "", o.starts != nil: // a retry wouldn't begin where the app is
+	case o.runner.Capture != "", o.starts != nil, o.onFail == onFailHold: // a retry wouldn't begin where the app is
 		return 0
 	case o.retries >= 0:
 		return o.retries
@@ -242,7 +261,7 @@ func (o *options) retriesOf(f *flow.Flow) int {
 // runAll runs flows and says how each went, also those that didn't run.
 func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) error {
 	o := s.o
-	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), FlakyFails: o.flakyFails,
+	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), Run: runID(), FlakyFails: o.flakyFails,
 		Detail: o.detail, Show: o.show, Slowest: o.slowest, Template: o.resultsTemplate, Shard: o.shard, Shards: o.shards}
 	say := human()
 	if o.shards > 0 {
@@ -273,6 +292,7 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 			if folders[strings.ToLower(name)]++; folders[strings.ToLower(name)] > 1 { // two flows with one name
 				name = fmt.Sprintf("%s_%d", name, folders[strings.ToLower(name)])
 			}
+			s.index, s.of, s.mark = i+1, len(flows), nil
 			s.reporter.(*console).begin(i+1, len(flows), f.Name)
 			stream(report.Started(f, i+1, len(flows)))
 			for try := 0; ; try++ {
@@ -284,6 +304,7 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 					result.Recordings = nil
 				}
 				out.Judge(ctx, result)
+				out.Mark = s.mark
 				for _, e := range report.Tried(&out, i+1, len(flows)) {
 					stream(e)
 				}
@@ -295,6 +316,10 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 							stop, lost = fmt.Sprintf("the device was lost: %v", err), true
 						}
 					}
+					sum.Stopped = stop
+				}
+				if s.abort && stop == "" {
+					stop = "aborted while " + f.Name + " was held"
 					sum.Stopped = stop
 				}
 				if out.Status != report.Failed || try >= out.Retries || stop != "" {
@@ -335,7 +360,7 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	if ctx.Err() != nil {
 		sum.Exit = report.ExitInterrupted
 	}
-	err := sum.SaveLast(report.LastFile(o.output))
+	err := errors.Join(sum.SaveLast(report.LastFile(o.output)), sum.SaveHistory(report.HistoryFile(o.output)))
 	for _, file := range o.results {
 		err = errors.Join(err, sum.Write(file))
 	}
@@ -363,4 +388,10 @@ func stream(e report.Event) {
 	if printing == report.NDJSON {
 		_ = emit(e)
 	}
+}
+
+// runID tells a run apart from the others: when it began, then some of the process, so that ids sort by time.
+func runID() string {
+	now := time.Now().UTC()
+	return fmt.Sprintf("%s-%04x", now.Format("20060102T150405"), uint16(os.Getpid()^now.Nanosecond()))
 }

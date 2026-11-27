@@ -12,6 +12,7 @@ appId: a.b
 {
   "schemaVersion": 3,
   "run": "flow.yaml",
+  "id": "<run>",
   "device": "emulator-5554",
   "order": "",
   "shard": null,
@@ -23,6 +24,7 @@ appId: a.b
     "total": 1,
     "passed": 0,
     "flaky": 0,
+    "partial": 0,
     "failed": 1,
     "interrupted": 0,
     "notRun": 0,
@@ -60,6 +62,7 @@ appId: a.b
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
+      "mark": null,
       "failures": [
         {
           "try": 1,
@@ -88,7 +91,11 @@ appId: a.b
           "crash": "",
           "saved": ".rayo/case_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from flow.yaml:4, mocks as then; rayo help resume",
+            "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+          ]
         }
       ]
     }
@@ -116,6 +123,9 @@ a screen
     "name": "case",
     "file": "flow.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "case failed at assertTrue ${output.total == \"5.00\"}: step failed: it is false: output.total was \"5,00\" (flow.yaml:4)",
@@ -141,7 +151,13 @@ a screen
       "crash": "",
       "saved": ".rayo/case_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from flow.yaml:4, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"FAIL","at":"flow.yaml:4"}

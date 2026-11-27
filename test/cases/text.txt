@@ -67,3 +67,5 @@ key {"code":24,"timeout":15000}
 key {"code":99,"timeout":15000}
 key {"code":4,"timeout":15000}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

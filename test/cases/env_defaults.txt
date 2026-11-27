@@ -43,3 +43,5 @@ tap {"delay":100,"repeat":1,"sel":{"text":"Shelbyville Evergreen 49007"},"timeou
 tap {"delay":100,"repeat":1,"sel":{"text":"Shelbyville Main 49007"},"timeout":15000}
 wait {"sel":{"id":"missing"},"timeout":0}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

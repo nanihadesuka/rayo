@@ -565,6 +565,12 @@
               "description": "How the files are named in the folder; --name-template overrides it (default: {flow}_{attempt}_{kind}.{ext})",
               "type": "string"
             },
+            "screensBefore": {
+              "description": "The screen after each of the last steps that passed, saved with a failure as screens-before.txt: how the app got there, such as a dialog that came and went; each costs a read of the screen. --screens-before overrides it (default: 0)",
+              "maximum": 20,
+              "minimum": 0,
+              "type": "integer"
+            },
             "video": {
               "description": "A video of each flow whose header doesn't say record; --video overrides it (default: false)",
               "type": "boolean"

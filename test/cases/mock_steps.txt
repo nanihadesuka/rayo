@@ -58,3 +58,5 @@ tap {"delay":100,"repeat":1,"sel":{"id":"GET /sub"},"timeout":15000}
   app: GET /sub -> 200  sub
 adb reverse:killforward:tcp:8080
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

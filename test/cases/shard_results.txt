@@ -28,6 +28,9 @@ noAnimations {"timeout":10000}
 key {"code":4,"timeout":15000}
 key {"code":4,"timeout":15000}
 bye {"timeout":5000}
+-- file .rayo/shard-1-of-2/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"PASS","at":""}
 -- file r.md --
 # a.yaml b.yaml c.yaml
 

@@ -29,9 +29,10 @@ scenarios ride=riding, as the last run had them as that step began
   ✓ tapOn GET /ride  # ms
   ✓ tapOn last  # ms
 ran only part of the flow, so its pass is not the whole flow's: it stays in failed.json; once the fix is right, run it whole with --only case
-[1/1] PASS case  # s
+[1/1] PARTIAL case  # s
 
-TOTAL 1: 1 passed, 0 failed  # s
+TOTAL 1: 0 passed, 1 partial, 0 failed  # s
+NOT WHOLE: 1 flow ran only in part, so a pass isn't the flow's; rayo test --rerun-failed runs them whole
 -- device --
 adb exec:i=0; while pgrep -f 'rayo[.]Agent' >/dev/null; do i=$((i+1)); [ $i -gt 50 ] && exit; sleep 0.2; done; echo gone; ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
 adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
@@ -42,3 +43,5 @@ tap {"delay":100,"repeat":1,"sel":{"id":"GET /ride"},"timeout":15000}
 tap {"delay":100,"repeat":1,"sel":{"id":"last"},"timeout":15000}
 adb reverse:killforward:tcp:8080
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PARTIAL","at":""}

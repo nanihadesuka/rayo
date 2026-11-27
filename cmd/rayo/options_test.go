@@ -37,7 +37,7 @@ var optionOnly = map[string]string{
 	"fail-fast": "of one run", "keep-going": "of one run", "shuffle": "of one run", "continuous": "of one run",
 	"resume": "of one run", "from": "of one run", "until": "of one run", "mock-state": "of one run",
 	"timings": "of one run", "capture": "of one run", "capture-update": "of one run", "check": "of one run",
-	"capture-append": "of one run",
+	"capture-append": "of one run", "on-fail": "someone is there to fix it: of one run", "hold-timeout": "of one run",
 }
 
 func TestOptionsAndSuiteKeys(t *testing.T) {

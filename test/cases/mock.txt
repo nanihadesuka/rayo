@@ -132,3 +132,5 @@ tap {"delay":100,"repeat":1,"sel":{"id":"GET /late"},"timeout":15000}
   app: GET /late -> 200  late
 adb reverse:killforward:tcp:8080
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

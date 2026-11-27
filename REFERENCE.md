@@ -41,8 +41,9 @@ New here, or driving rayo from a program? Start with: rayo help agents
 
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
-  rayo explain [<run folder or flow>]              why the flows of the last run failed, in a few lines
+  rayo explain [<run folder, .zip or suite>] [<flow>]  why the flows of the last run failed, in a few lines
   rayo live [options] <flow>                       write a flow as it runs, command by command
+  rayo live [options] <suite> <flow>               the same, with the suite's env, output and CA
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
@@ -62,6 +63,7 @@ Topics, rayo help <topic>
   write-a-flow               write a flow
   debug-a-flow               debug a failing flow
   resume                     go on from where a flow failed, after a fix, without running it all again
+  hold                       fix failing flows as they fail: hold the run at a failure, fix the files, run again from there, go on
   record-mocks               record mocks from the real backend
   connect-mocks              connect the app to the mocks: interceptor or proxy
   run-in-ci                  run in a CI
@@ -97,8 +99,10 @@ Options of test and check: which flows of them
   --min-flows <n>            fail (exit 2) if fewer flows than this are chosen, as a typo in a tag or a name would; of all the parts with --shard, and not with --rerun-failed or --resume (default: the suite's minFlows, else none) (suite: minFlows)
   --shard <i/n>              only part i of n, for n machines that run the same flows: each flow is in one part, by its path, whatever the order; it writes to .rayo/shard-i-of-n unless --output or the suite says
 
-Options of test and check: as the suite says, for one run
+Options of test, check and live
   -e, --env <KEY=VALUE>      a variable for the flows; over the suite's env, which is over a flow's own (suite: env)
+
+Options of test and check: as the suite says, for one run
   --retries <n>              try again what fails, every flow, also one the suite gives its own retries (default 1, or the suite's) (suite: retries)
 
 Options of test: how they run
@@ -106,7 +110,10 @@ Options of test: how they run
   --flaky-fails-build        exit 4 if every flow passed but some only on a retry (default: exit 0) (suite: flakyFailsBuild)
   --keep-going               don't stop when the device or the app fails over and over
   --shuffle[=seed]           in a random order, or in that of an earlier run
+  --screens-before <n>       keep the screen after each of the last n steps that passed, and save them with a failure as screens-before.txt: how the app got there; each costs a read of the screen (default 0) (suite: output.screensBefore)
   -c, --continuous           run again whenever a file changes
+  --on-fail <what>           go-on (default): retry it as allowed, then the next flow; hold: keep the flow where it failed, the app as it is, until rayo do says how to go on, so that it is fixed in its files and run again from there; see rayo help hold
+  --hold-timeout <duration>  with --on-fail hold, leave a flow failed if no command comes for this long, such as 20m (default 1h)
 
 Options of test: from where, after a fix; see rayo help resume
   --resume                   each flow that failed last time, from the step that failed, with the app as it is and the mocks' scenarios as they were then
@@ -160,6 +167,9 @@ Options of live
   --mock <a,b>               its mocks, relative to it
   --no-run                   don't begin by running the steps it has
   --serve                    only take commands from rayo do, until .quit
+
+Options of explain
+  --latest                   only the flows of the newest run in failed.json, not those still there from earlier ones
 
 Options of mocks
   --only <a,b>               the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)
@@ -1543,13 +1553,14 @@ Every flow asked for has one; none is left out of the count.
 | | | Exit code |
 |---|---|---|
 | `PASS` | At the first try | 0 |
+| `PARTIAL` | It passed, but only part of it ran: it began or stopped at a step ([`--resume`, `--from`, `--until`](#resume)), or was fixed [while held](#hold). It stays in `failed.json`, and the summary says `NOT WHOLE` | 0 |
 | `FLAKY` | It failed, and passed when [retried](#retries) | 0, or 4 with [`flakyFailsBuild`](#flaky-flows) |
 | `FAIL` | | 1 |
 | `INTERRUPTED` | Ctrl-C while it ran | 130 |
 | `NOT_RUN` | With the reason: interrupted, `--fail-fast`, or the run [stopped](#blame) | 1 |
 
 If the connection is lost, the flow fails and the next goes on with a new one. `--rerun-failed` runs what is in `<output>/failed.json`: what
-failed, was interrupted or didn't run, until it passes.
+failed, was interrupted or didn't run, until it passes; and what passed only in part, until it passes whole.
 
 ### Results
 
@@ -1763,6 +1774,7 @@ The run:
 |---|---|---|
 | `schemaVersion` | number | Changes if the meaning of a key does |
 | `run` | text | The suite's name, or what was run |
+| `id` | text | The run's own, as failed.json and history.jsonl give it: when it began, in UTC, then 4 hex digits |
 | `device` | text | Its serial |
 | `order` | text | `--shuffle=<seed>`, if shuffled |
 | `shard` | mapping or null | The part of --shard i/n this run was; null if all |
@@ -1782,6 +1794,7 @@ The run:
 | `total` | number | Flows |
 | `passed` | number | At the first try |
 | `flaky` | number | Failed, then passed on a retry |
+| `partial` | number | Passed, but began or stopped at a step (--resume, --from, --until, or fixed while held): not a pass of the whole flow |
 | `failed` | number |  |
 | `interrupted` | number |  |
 | `notRun` | number |  |
@@ -1813,6 +1826,7 @@ Each of `flows`:
 | `notRunReason` | text | If it is `NOT_RUN` |
 | `warnings` | list | What may explain this, or the next flow |
 | `recordings` | list | Videos |
+| `mark` | mapping or null | What was said of it while held, with .mark; null if nothing |
 | `failures` | list | One for each try that failed, also of a flow that passed at last |
 <!-- end -->
 
@@ -1836,6 +1850,7 @@ Each of `failures`:
 | `saved` | text | The first file of the rest, which are named alike, see [Failures](#failures) |
 | `scenarios` | list | Of the mocks, the state each was in as it failed; empty without scenarios |
 | `trail` | list | The scenarios as each step began, the last 2000 steps: what --resume and --from set, see [Resume](#resume) |
+| `next` | list | What to do about it, a line each, by its cause and blame: the same for the same failure, for a program to follow |
 <!-- end -->
 
 ```
@@ -1847,14 +1862,24 @@ jq -r '.flows[] | select(.status == "FAIL") | "\(.name): \(.failures[-1].verdict
 
 `rayo explain` prints, for each flow of the last run that hasn't passed since, only what tells why:
 the verdict, `why`, `at`, `from`, the `nearest` elements, the `calls` and `saved`, as a failure does. It
-reads `<output>/failed.json`, which keeps the last failure of each. Give it a run's folder (default `.rayo`), or a
-flow's file or name:
+reads `<output>/failed.json`, which keeps the last failure of each. Give it a run's folder, a `.zip` of one as
+CI keeps it, or a suite, whose `output` it reads; and a flow's file or name. With none, it is `.rayo`, or else
+the output folder of a suite here, or a folder down, whose `failed.json` is newest, and it says which:
 
 ```
 rayo explain
 rayo explain pay
-rayo explain ci/.rayo --format json
+rayo explain all.suite.yaml pay
+rayo explain rayo-results.zip --format json
+rayo explain --latest
 ```
+
+`failed.json` keeps a flow until it passes, so after a few runs it has flows of more than one; each says
+its `run`, and `--latest` keeps those of the newest. Each run adds a line for each flow to
+`<output>/history.jsonl`, the last 5000: `history:` says how a flow's last runs went, such as
+`failed 3 of its last 10 runs, at the same step each time: it passes at times, so it may be flaky`.
+`next:` says what to do about the failure, by its cause and whose it is, the same each time, also in
+the results as `next`.
 
 `--find <text>`, on `rayo hierarchy` and `rayo do --screen`, prints only the elements of the screen most
 like the text, the closest first, instead of all of them.
@@ -1938,8 +1963,9 @@ Mistakes in what is written and flows that failed are told the same way, as data
 ### Events
 
 `rayo test --format ndjson` prints a line as each thing happens, so a program needn't wait for the
-end: `flowStarted`; for each try, `stepFailed` if a step failed, then `attempt`; `flowFinished`, after
-all its tries; and last `outcome`, with the results. If the run can't begin, the only line is `error`.
+end: `flowStarted`; for each try, `stepFailed` if a step failed, then `attempt`; with `--on-fail hold`,
+`held` as a flow is [held](#hold), with the `session`'s folder; `flowFinished`, after all its tries; and last
+`outcome`, with the results. If the run can't begin, the only line is `error`.
 
 <!-- generated: event -->
 | Key | | |
@@ -1957,6 +1983,7 @@ all its tries; and last `outcome`, with the results. If the run can't begin, the
 | `results` | mapping or null | Of outcome, the [results](#results), as --format json |
 | `exit` | number | Of outcome and error, the exit code, see [Exit codes](#exit-codes) |
 | `errors` | list | Of error, as rayo prints them with --format json |
+| `session` | text | Of held, the output folder of the session that holds the flow: rayo do --output <it> .help, or rayo do .help there |
 <!-- end -->
 
 ```
@@ -1989,6 +2016,8 @@ rayo check: the flow is fine
 
 If the flow is there already, its steps run first (`--no-run` to skip them) and `.save` adds to its
 end, leaving the rest as it is. A new one needs `--app`, and `--mock` takes paths relative to it.
+`rayo live all.suite.yaml login` is the suite's flow with the suite's `env`, `output`, `timeoutScale`, `ca`
+and `unmocked`; `-e KEY=VALUE` sets a variable over them, as for `rayo test`.
 The mock, the variables and `output` last for the whole session. When it ends, all is
 [put back](#clean-state).
 
@@ -2104,14 +2133,51 @@ Each call says the `mapping` that answered it and what it did to its `scenario`.
 
 `--from <file:line>` begins one flow at any step, before or after the failure, and `--until <file:line>`
 stops it after one, leaving the app there, without `onFlowComplete`. `--mock-state booking=booked` sets
-scenarios over those of the last run. Such a run has no retries, and a pass leaves the flow in
+scenarios over those of the last run. Such a run has no retries, and a pass is `PARTIAL`, which leaves the flow in
 `failed.json`: run it whole to be sure. In a live session, `.states` lists the scenarios.
+
+A step inside a `runFlow` with `when`, or a `repeat` with `while`, can be begun from: the condition is
+taken as holding to reach it, and says so. The `startRecording` steps of `onFlowStart` still run, so
+that a `stopRecording` finds its recording; a `stopRecording` of a recording the flow began before the step
+only says so. `--resume` leaves out a flow that failed in `onFlowStart` or `onFlowComplete`, and says
+so, and goes on with the others.
+
+### Hold
+
+`rayo test --on-fail hold <suite>` stops at the first failure, before `onFlowComplete` and without
+retries, with the device, the app and the mocks as they are, and says `HELD <flow>` with the verdict,
+`why`, `at`, `from` and `nearest`. The flow is fixed in its own files, run again from where it failed,
+and the run goes on: nothing is copied and no flow is written for it. `rayo do` reaches it, in the
+suite's output folder by itself; typed commands work too.
+
+| | |
+|---|---|
+| `.why` | The failure again |
+| `.screen`, `.find <text>` | What is on screen now; or only what is most like a text |
+| `.diff` | What of the screen changed since it failed: `+` appeared, `-` went |
+| `.retry` | Reads the flow and the flows it runs again, and runs from the step that failed to the end of its steps. A step that moved, as lines were added above it, is found by its text, or else by its place among the file's steps |
+| `.from <step>` | The same from another step: `file:line`, a text of one, or n of `.steps`; also inside a `when` or a `repeat` |
+| `.rewind [n]` | The same from the n-th step before the one that failed (1). The app stays as it is: move it back first if those steps changed it |
+| `.steps` | The last steps that passed, numbered as `.from` and `.rewind` count them |
+| `.probe [n]` | Runs the step that failed n times (5), as it is now, and says how often it passes and how long each took: a flake, or always |
+| `.states` | The mocks' scenarios and the state of each |
+| Any command, or a list | Runs as it is, to move the app; it isn't added to the flow |
+| `.mark <as> [why]` | `app-bug`, `test-bug` or `flaky`, kept in the results and `failed.json` as `mark` |
+| `.continue` | Once its steps passed: `onFlowComplete`, then the next flows |
+| `.skip`, `.abort` | Leave it failed and go on; or run no more flows |
+
+A flow fixed while held is `PARTIAL`, not `PASS`: it stays in `failed.json` and `rayo test --rerun-failed`
+runs it whole. If it checks less than when it failed, fewer asserts or more `optional` steps, its warnings
+say `WEAKENED`. With no command for an hour, or `--hold-timeout`, the flow is left failed and the run goes on.
+`rayo do --format json` answers with `held`: the flow, `at`, and `fixed` once its steps passed.
 
 ### Failures
 
 Saved in `<output>`, next to `failed.json`, named after the flow and the try: `<flow>_failure.jpg`,
 and `<flow>_retry1_failure.jpg` for the second try; `<flow>_2_...` for a second flow with that name.
 Those of an earlier run are removed when the flow runs again. `saved` is the first of them.
+With `--screens-before n`, or the suite's `output.screensBefore`, the screen after each of the last n steps that
+passed is in `<flow>_screens-before.txt`: how the app got there, such as a dialog that came and went.
 
 | File | Kind | |
 |---|---|---|

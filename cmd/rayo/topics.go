@@ -42,6 +42,13 @@ Batch edits, then verify once
   rayo test --rerun-failed.
   Don't rerun flows that passed to be sure.
 
+Fix as it fails, not run by run
+  rayo test --on-fail hold <suite> stops at a failure with the app there. rayo do --format json
+  .why, fix the flow's own file, rayo do .retry: seconds, not a run. .probe 5 tells a flake from a
+  bug before an edit; .mark app-bug <why> when it isn't the flow's, and .skip. A fixed flow is
+  PARTIAL until rayo test --rerun-failed runs it whole: only that is a pass. Never make it pass
+  by checking less: the results say WEAKENED.
+
 Author forward
   rayo live <flow>, then rayo do --screen --find <text> <command>: one command, see only the
   elements that matter, go on from it. rayo do --screen=changes gives only the lines that
@@ -64,7 +71,8 @@ What it costs, roughly
 
 I want to...
   write a flow                         rayo help write-a-flow
-  find why a flow failed               rayo explain, then rayo help debug-a-flow
+  find why a flow failed               rayo explain (it finds the suite's output), then rayo help debug-a-flow
+  fix failing flows as they fail       rayo test --on-fail hold <suite>; rayo help hold
   go on from a failure, after a fix    rayo test --resume <suite>; rayo help resume
   record a video                       record: true in the header; rayo help recipes
   check the device log, reset the app  rayo help recipes
@@ -110,12 +118,17 @@ else on the device in between.
 What happens
   - Files are read again, so a fix to a mock or a flow counts. The step that failed runs again first.
   - onFlowStart and the steps before the step don't run: the app is as the last run left it. Their
-    mock: steps and the mocks of the flows they runFlow are still loaded.
+    mock: steps and the mocks of the flows they runFlow are still loaded, and so are the
+    startRecording steps of onFlowStart, so that a stopRecording finds its recording.
+  - A step inside a runFlow with when, or a repeat with while, is reached as if the condition held.
   - The mocks' scenarios are set as they were when that step began in the last run (failed.json keeps
     them), and --mock-state changes some. A step the last run didn't reach has none: say them.
   - --until stops after the step; onFlowComplete doesn't run.
-  - No retries. A pass from the middle isn't a pass of the flow, so it stays in failed.json:
+  - No retries. A pass from the middle is PARTIAL, not PASS, so it stays in failed.json:
     run the flow whole once it passes, rayo test --only <name> <suite>.
+  - --resume leaves out, and says so, a flow that failed in onFlowStart or onFlowComplete, and goes
+    on with the others; with --only, only that flow.
+  - Fixing as it fails, without a run for each try: rayo help hold.
 
 --mock-state needs --resume or --from. A wrong scenario or state is an error before the device is used.
 A step is file:line, as the at: of rayo explain writes it; the file may be only its name, a line
@@ -127,6 +140,46 @@ Gotchas
   - --from goes back as well as forward: the scenarios of the last run are used if it reached that
     step; the screen isn't moved back, so begin where the app is.
   - In rayo live, .states lists the scenarios, and mockState: { booking: booked } sets one.
+`},
+	{"hold", "fix failing flows as they fail: hold the run at a failure, fix the files, run again from there, go on", `The suite and the flows are the ones in the repository: nothing is copied, and no temporary flow
+is needed. A run that holds stops at the first failure with the app as it is, until it is told how to
+go on; meanwhile the flow's files are fixed where they are.
+
+  rayo test --on-fail hold all.suite.yaml        run; at a failure, hold the flow there
+  rayo do .why                                   why, where (and from where), the elements most like it
+  rayo do .screen          rayo do .find Pay      what is on screen now, or what is most like a text
+  rayo do .diff                                  what of the screen changed since it failed
+  (fix the flow, a flow it runs, or a mock, in its file)
+  rayo do .retry                                 read the files again, run from the step that failed
+  rayo do .from book.yaml:42                     or from another step, also one inside a when or a repeat
+  rayo do .rewind 2                              or from 2 steps before the one that failed
+  rayo do .probe 5                               the step that failed, 5 times: a flake, or always?
+  rayo do .mark app-bug search answers 500       what it is, if it isn't the flow's to fix
+  rayo do .continue                              once .retry passed: onFlowComplete, then the next flows
+  rayo do .skip            rayo do .abort         leave it failed and go on; or run no more
+  rayo test --rerun-failed all.suite.yaml        at the end: the fixed flows whole, so that a pass is honest
+
+What happens
+  - No retries: the first failure holds, before onFlowComplete, with the device, the app and the mocks
+    as they are, and says so: HELD <flow>, the verdict, why, at, from, nearest, next.
+  - rayo do finds the session in the suite's output folder by itself; --output says another. Typed
+    commands work too. rayo do --format json answers with held: { flow, at, fixed }.
+  - .retry and .from read the flow and the flows it runs again. If lines were added above the step
+    that failed, it is found again by its text. Steps before it don't run; mocks are still loaded,
+    and the env and variables are the run's.
+  - A step inside a runFlow with when, or a repeat with while, is reached as if the condition held.
+  - A flow fixed while held is PARTIAL, not PASS: it stays in failed.json, the summary says NOT WHOLE,
+    and rayo test --rerun-failed runs it whole. A pass is only a whole flow's.
+  - If the flow checks less after the fix than when it failed (fewer asserts, more optional), the
+    results say WEAKENED: a fix that checks less isn't one.
+  - .mark keeps app-bug, test-bug or flaky in the results and in failed.json, with why.
+  - With no command for an hour (--hold-timeout), the flow is left failed and the run goes on.
+  - --format ndjson has a held event, with the session's folder.
+
+Gotchas
+  - Steps run again from the middle start from the app as it is: if the steps before changed it,
+    move it back first, with a command such as rayo do '- back', or .from an earlier step.
+  - What is typed with rayo do '- tapOn: OK' only moves the app; the flow has what its file has.
 `},
 	{"record-mocks", "record mocks from the real backend", `With mock: in the header, rayo answers as the backend. To make the mocks, capture what the real
 one answers, once, then keep them up to date:

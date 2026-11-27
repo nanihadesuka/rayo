@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,7 @@ import (
 type jsonRun struct {
 	SchemaVersion int         `json:"schemaVersion" about:"Changes if the meaning of a key does"`
 	Run           string      `json:"run" about:"The suite's name, or what was run"`
+	ID            string      `json:"id" about:"The run's own, as failed.json and history.jsonl give it: when it began, in UTC, then 4 hex digits"`
 	Device        string      `json:"device" about:"Its serial"`
 	Order         string      `json:"order" about:"'--shuffle=<seed>', if shuffled"`
 	Shard         *jsonShard  `json:"shard" about:"The part of --shard i/n this run was; null if all"`
@@ -37,7 +39,7 @@ type jsonShard struct {
 type jsonFlow struct {
 	Name         string     `json:"name" about:"The flow's"`
 	File         string     `json:"file" about:"The flow's"`
-	Status       Status     `json:"status" about:"One of the [outcomes](#outcomes)" enum:"PASS,FLAKY,FAIL,INTERRUPTED,NOT_RUN"`
+	Status       Status     `json:"status" about:"One of the [outcomes](#outcomes)" enum:"PASS,PARTIAL,FLAKY,FAIL,INTERRUPTED,NOT_RUN"`
 	Blame        flow.Blame `json:"blame" about:"Of a flow that failed, whose fault it is, or empty, see [Blame](#blame)" enum:"test,app,device,"`
 	Began        string     `json:"began" about:"Its first try, in UTC; empty if it didn't run"`
 	Seconds      float64    `json:"seconds" about:"All its tries"`
@@ -51,6 +53,7 @@ type jsonFlow struct {
 	NotRunReason string     `json:"notRunReason" about:"If it is 'NOT_RUN'"`
 	Warnings     []string   `json:"warnings" about:"What may explain this, or the next flow"`
 	Recordings   []string   `json:"recordings" about:"Videos"`
+	Mark         *Mark      `json:"mark" about:"What was said of it while held, with .mark; null if nothing"`
 	Failures     []Failure  `json:"failures" about:"One for each try that failed, also of a flow that passed at last"`
 }
 
@@ -71,6 +74,7 @@ type Failure struct {
 	Saved     string       `json:"saved" about:"The first file of the rest, which are named alike, see [Failures](#failures)"`
 	Scenarios []Scenario   `json:"scenarios" about:"Of the mocks, the state each was in as it failed; empty without scenarios"`
 	Trail     []StepStates `json:"trail" about:"The scenarios as each step began, the last 2000 steps: what --resume and --from set, see [Resume](#resume)"`
+	Next      []string     `json:"next" about:"What to do about it, a line each, by its cause and blame: the same for the same failure, for a program to follow"`
 }
 
 // Scenario is one of the mocks, and its state.
@@ -131,7 +135,7 @@ func Lines(text string) []string {
 // FailureOf describes a failure.
 func FailureOf(err error, e *flow.Failure) Failure {
 	x := Failure{Try: 1, Error: ProblemOf(err), From: []jsonStep{}, Before: []string{}, Calls: []mock.Call{}, Screen: []string{}, Nearest: []string{}, Cause: flow.StepFailed,
-		Scenarios: []Scenario{}, Trail: []StepStates{}}
+		Scenarios: []Scenario{}, Trail: []StepStates{}, Next: []string{}}
 	var step *flow.StepError
 	if errors.As(err, &step) {
 		for _, s := range step.From {
@@ -148,12 +152,37 @@ func FailureOf(err error, e *flow.Failure) Failure {
 			x.Trail = append(x.Trail, StepStates{t.At, scenariosOf(t.States)})
 		}
 	}
+	x.Next = List(x.next())
 	return x
+}
+
+// next is what to do about a failure, by its cause and whose it is.
+func (x Failure) next() []string {
+	var list []string
+	switch {
+	case x.Blame == flow.Dev:
+		list = append(list, "the device failed, not the flow: rayo devices says if it is there and ready; then rayo test --rerun-failed")
+	case x.Blame == flow.App || x.Cause == flow.AppCrashed:
+		list = append(list, "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where")
+	case x.Cause == flow.NotOnScreen:
+		list = append(list, "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another")
+	case x.Cause == flow.UnmockedCall:
+		list = append(list, "the app called what has no mock: add one, or leave it out with unmocked: ignore")
+	case x.Cause == flow.Timeout:
+		list = append(list, "it took longer than the step waits: held, .probe 5 says whether it passes at times; a timeout: on the step waits longer")
+	}
+	if x.Error.File != "" {
+		list = append(list, fmt.Sprintf("after a fix, rayo test --resume <the suite or flow you ran> goes on from %s:%d, mocks as then; rayo help resume", x.Error.File, x.Error.Line))
+		if x.Blame == flow.Test {
+			list = append(list, "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold")
+		}
+	}
+	return list
 }
 
 func (o *Outcome) json() jsonFlow {
 	f := jsonFlow{Name: o.Flow.Name, File: filepath.ToSlash(o.Flow.Path), Status: o.Status, Blame: o.blame(), Seconds: seconds(o.took()),
-		Began: stamp(o.Began), Attempts: o.Attempts(), Tries: len(o.Tries), TimesFailed: o.TimesFailed(), Retries: o.Retries, NotRunReason: o.Why, Warnings: List(o.Warnings), Recordings: []string{}, Failures: []Failure{}}
+		Began: stamp(o.Began), Attempts: o.Attempts(), Tries: len(o.Tries), TimesFailed: o.TimesFailed(), Retries: o.Retries, NotRunReason: o.Why, Warnings: List(o.Warnings), Recordings: []string{}, Mark: o.Mark, Failures: []Failure{}}
 	for i, t := range o.Tries {
 		f.Recordings = append(f.Recordings, t.Recordings...)
 		if t.Err == nil {
@@ -176,7 +205,7 @@ func (s *Summary) json() ([]byte, error) {
 
 // run is the results, as written.
 func (s *Summary) run() jsonRun {
-	r := jsonRun{SchemaVersion: SchemaVersion, Run: s.Title, Device: s.Device, Order: s.Order, Shard: s.shard(), Stopped: s.Stopped, OK: s.Err() == nil,
+	r := jsonRun{SchemaVersion: SchemaVersion, Run: s.Title, ID: s.Run, Device: s.Device, Order: s.Order, Shard: s.shard(), Stopped: s.Stopped, OK: s.Err() == nil,
 		Summary: s.summary(), Flows: []jsonFlow{}}
 	for _, o := range s.Shown() {
 		r.Flows = append(r.Flows, o.json())

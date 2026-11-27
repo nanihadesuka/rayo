@@ -91,6 +91,10 @@ func (r *Runner) startRecording(to string) error {
 // stopRecording saves the video. It doesn't need the agent, which may be lost.
 func (r *Runner) stopRecording() error {
 	v := r.video
+	if v == nil && r.Start != nil && r.Start.From != "" {
+		r.reporter.Note(1, "nothing is being recorded: the flow began at "+r.Start.From+", after the recording would have")
+		return nil
+	}
 	if v == nil {
 		return errors.New("nothing is being recorded")
 	}

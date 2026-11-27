@@ -23,3 +23,5 @@ noAnimations {"timeout":10000}
 shell {"command":"pm path old.android \u003e/dev/null || { echo 'Error: old.android is not installed'; exit; }\nps=$(dumpsys package old.android | sed -n '/runtime permissions:/,$p' | sed -n 's/^ *\\([A-Za-z0-9_.]*\\): granted=.*/\\1/p' | sort -u)\nsdk=$(getprop ro.build.version.sdk)\nwait\nwait\nok=\nif [ \"${sdk:-99}\" -lt 33 ]; then echo 'Note: notifications: not asked before Android 13, ignored'; else\necho \"$ps\" | grep -qxF 'android.permission.POST_NOTIFICATIONS' \u0026\u0026 pm grant old.android 'android.permission.POST_NOTIFICATIONS' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: old.android has no permission notifications that can be changed'\nfi\nwait\nok=\necho \"$ps\" | grep -qxF 'android.permission.CAMERA' \u0026\u0026 pm grant old.android 'android.permission.CAMERA' \u0026\u0026 ok=1\n[ $ok ] || echo 'Error: old.android has no permission camera that can be changed'\nwait","timeout":60000}
 key {"code":4,"timeout":15000}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

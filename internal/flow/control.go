@@ -16,7 +16,7 @@ import (
 // The commands made of other commands.
 
 func runFlow(c *call) error {
-	if when := arg(c, keyWhen); when != nil {
+	if when := arg(c, keyWhen); when != nil && !c.r.seeking(c.s) {
 		ok, err := c.r.holds(c.ctx, when)
 		if err != nil {
 			return err
@@ -59,7 +59,7 @@ func repeat(c *call) error {
 			if i == times && (counted || while == nil) {
 				return nil
 			}
-			if while != nil {
+			if while != nil && !c.r.seeking(c.s) {
 				if ok, err := c.r.holds(c.ctx, while); err != nil || !ok {
 					return err
 				}

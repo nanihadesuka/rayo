@@ -60,3 +60,6 @@ a screen
 a video ....................................................................................................
 -- file .rayo/b_home.png --
 PNG...
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FLAKY","at":""}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}

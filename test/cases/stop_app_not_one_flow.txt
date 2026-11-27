@@ -107,6 +107,9 @@ a screen
     "name": "a",
     "file": "a.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 3,
       "verdict": "a failed at tapOn app crashes: app crashed",
@@ -130,14 +133,22 @@ a screen
       "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
       "saved": ".rayo/a_retry2_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FAIL","at":"a.yaml:3"}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}
 -- file out.json --
 {
   "schemaVersion": 3,
   "run": "a.yaml b.yaml",
+  "id": "<run>",
   "device": "emulator-5554",
   "order": "",
   "shard": null,
@@ -149,6 +160,7 @@ a screen
     "total": 2,
     "passed": 1,
     "flaky": 0,
+    "partial": 0,
     "failed": 1,
     "interrupted": 0,
     "notRun": 0,
@@ -190,6 +202,7 @@ a screen
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
+      "mark": null,
       "failures": [
         {
           "try": 1,
@@ -216,7 +229,11 @@ a screen
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
           "saved": ".rayo/a_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume"
+          ]
         },
         {
           "try": 2,
@@ -243,7 +260,11 @@ a screen
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
           "saved": ".rayo/a_retry1_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume"
+          ]
         },
         {
           "try": 3,
@@ -270,7 +291,11 @@ a screen
           "crash": "FATAL EXCEPTION: main\nProcess: a.b, PID: 1\njava.lang.IllegalStateException: oops",
           "saved": ".rayo/a_retry2_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume"
+          ]
         }
       ]
     },
@@ -291,6 +316,7 @@ a screen
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
+      "mark": null,
       "failures": []
     }
   ]

@@ -81,6 +81,9 @@ PNG...
     "name": "case",
     "file": "flow.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "case failed at shell boom: step failed: exit code 1 (flow.yaml:10)",
@@ -108,7 +111,13 @@ PNG...
       "crash": "",
       "saved": ".rayo/case_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from flow.yaml:10, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"FAIL","at":"flow.yaml:10"}

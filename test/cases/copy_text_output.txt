@@ -29,3 +29,5 @@ wait {"sel":{"id":"order"},"timeout":15000}
 wait {"sel":{"text":"total"},"timeout":15000}
 input {"timeout":15000,"value":"text of order"}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

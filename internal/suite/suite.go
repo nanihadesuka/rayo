@@ -18,7 +18,10 @@ import (
 )
 
 // suiteEnd is how the name of a suite ends.
-const suiteEnd = ".suite.yaml"
+const suiteEnd = Ext
+
+// Ext is how the name of a suite's file ends.
+const Ext = ".suite.yaml"
 
 // oldEnd is how it ended before; such a file is no longer read, but said how to rename.
 const oldEnd = ".rayo.yaml"
@@ -83,11 +86,12 @@ type Suite struct {
 
 // Output is what a run writes, and where.
 type Output struct {
-	Folder       string   // empty if not said
-	Keep         string   // empty if not said
-	Video        *bool    // nil if not said
-	Artifacts    []string // nil if not said
-	NameTemplate string   // empty if not said
+	Folder        string   // empty if not said
+	Keep          string   // empty if not said
+	Video         *bool    // nil if not said
+	Artifacts     []string // nil if not said
+	NameTemplate  string   // empty if not said
+	ScreensBefore int      // 0 if not said
 }
 
 // LowestScale and HighestScale bound timeoutScale and --timeout-scale.

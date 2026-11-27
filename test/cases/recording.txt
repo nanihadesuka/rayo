@@ -80,6 +80,9 @@ a video ........................................................................
     "name": "case",
     "file": "flow.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "case failed at startRecording: step failed: a recording to .rayo/case_three.mp4 is going on (flow.yaml:9)",
@@ -107,7 +110,13 @@ a video ........................................................................
       "crash": "",
       "saved": ".rayo/case_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from flow.yaml:9, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"FAIL","at":"flow.yaml:9"}

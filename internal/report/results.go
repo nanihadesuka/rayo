@@ -118,6 +118,7 @@ type jsonSummary struct {
 	Total       int           `json:"total" about:"Flows"`
 	Passed      int           `json:"passed" about:"At the first try"`
 	Flaky       int           `json:"flaky" about:"Failed, then passed on a retry"`
+	Partial     int           `json:"partial" about:"Passed, but began or stopped at a step (--resume, --from, --until, or fixed while held): not a pass of the whole flow"`
 	Failed      int           `json:"failed" about:""`
 	Interrupted int           `json:"interrupted" about:""`
 	NotRun      int           `json:"notRun" about:""`
@@ -149,7 +150,7 @@ type jsonSlowest struct {
 }
 
 func (s *Summary) summary() jsonSummary {
-	j := jsonSummary{Began: stamp(s.Began), Seconds: seconds(s.Took), Total: len(s.Outcomes), Passed: s.count(Passed), Flaky: s.count(Flaky),
+	j := jsonSummary{Began: stamp(s.Began), Seconds: seconds(s.Took), Total: len(s.Outcomes), Passed: s.count(Passed), Flaky: s.count(Flaky), Partial: s.count(Partial),
 		Failed: s.count(Failed), Interrupted: s.count(Interrupted), NotRun: s.count(NotRun), Retried: s.retried(),
 		FailedFlows: []string{}, FlakyFlows: []string{}, Slowest: []jsonSlowest{}, Exit: exitOf(s.Exit)}
 	for _, o := range s.Outcomes {
@@ -174,6 +175,8 @@ func (s *Summary) verdict() string {
 		return "FLAKY"
 	case err != nil:
 		return "FAIL"
+	case s.count(Partial) > 0:
+		return "PARTIAL"
 	case s.count(Flaky) > 0:
 		return "PASS, with flaky flows"
 	}
@@ -186,7 +189,7 @@ func (s *Summary) counts() string {
 	for _, c := range []struct {
 		status Status
 		name   string
-	}{{Passed, "passed"}, {Flaky, "flaky"}, {Failed, "failed"}, {Interrupted, "interrupted"}, {NotRun, "not run"}} {
+	}{{Passed, "passed"}, {Partial, "partial"}, {Flaky, "flaky"}, {Failed, "failed"}, {Interrupted, "interrupted"}, {NotRun, "not run"}} {
 		if n := s.count(c.status); n > 0 || c.status == Passed || c.status == Failed {
 			parts = append(parts, fmt.Sprintf("%d %s", n, c.name))
 		}

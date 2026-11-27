@@ -78,6 +78,7 @@ var masks = []struct {
 	pattern *regexp.Regexp
 	with    string
 }{
+	{regexp.MustCompile(`20\d{6}T\d{6}-[0-9a-f]{4}`), "<run>"},
 	{regexp.MustCompile(`\d+ ms`), "# ms"},
 	{regexp.MustCompile(`\d+\.\d+ s\b`), "# s"},
 	{regexp.MustCompile(`\[adb\+host -?\d+`), "[adb+host #"},

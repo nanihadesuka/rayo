@@ -48,3 +48,5 @@ console automation stop-play
 console virtualscene-image wall
 console automation play <dir>/sdk/emulator/resources/macros/Reset_position
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

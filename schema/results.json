@@ -201,6 +201,13 @@
                   },
                   "type": "array"
                 },
+                "next": {
+                  "description": "What to do about it, a line each, by its cause and blame: the same for the same failure, for a program to follow",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
                 "saved": {
                   "description": "The first file of the rest, which are named alike",
                   "type": "string"
@@ -298,7 +305,8 @@
                 "crash",
                 "saved",
                 "scenarios",
-                "trail"
+                "trail",
+                "next"
               ],
               "type": "object"
             },
@@ -307,6 +315,36 @@
           "file": {
             "description": "The flow's",
             "type": "string"
+          },
+          "mark": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "as": {
+                    "description": "app-bug, test-bug or flaky",
+                    "enum": [
+                      "app-bug",
+                      "test-bug",
+                      "flaky"
+                    ]
+                  },
+                  "note": {
+                    "description": "Why, as given",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "as",
+                  "note"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What was said of it while held, with .mark; null if nothing"
           },
           "name": {
             "description": "The flow's",
@@ -335,6 +373,7 @@
             "description": "One of the outcomes",
             "enum": [
               "PASS",
+              "PARTIAL",
               "FLAKY",
               "FAIL",
               "INTERRUPTED",
@@ -382,11 +421,16 @@
           "notRunReason",
           "warnings",
           "recordings",
+          "mark",
           "failures"
         ],
         "type": "object"
       },
       "type": "array"
+    },
+    "id": {
+      "description": "The run's own, as failed.json and history.jsonl give it: when it began, in UTC, then 4 hex digits",
+      "type": "string"
     },
     "ok": {
       "description": "Nothing failed, was interrupted or didn't run, nor was flaky with flaky-fails-build: as the exit code",
@@ -491,6 +535,10 @@
           "description": "",
           "type": "integer"
         },
+        "partial": {
+          "description": "Passed, but began or stopped at a step (--resume, --from, --until, or fixed while held): not a pass of the whole flow",
+          "type": "integer"
+        },
         "passed": {
           "description": "At the first try",
           "type": "integer"
@@ -536,6 +584,7 @@
         "total",
         "passed",
         "flaky",
+        "partial",
         "failed",
         "interrupted",
         "notRun",
@@ -551,6 +600,7 @@
   "required": [
     "schemaVersion",
     "run",
+    "id",
     "device",
     "order",
     "shard",

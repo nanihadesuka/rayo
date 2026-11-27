@@ -48,6 +48,9 @@ a screen
     "name": "case",
     "file": "flow.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "case failed before its first step: step failed: adb reverse: denied",
@@ -71,7 +74,10 @@ a screen
       "crash": "",
       "saved": ".rayo/case_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": []
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"FAIL","at":""}

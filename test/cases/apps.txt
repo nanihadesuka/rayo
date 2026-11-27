@@ -54,3 +54,5 @@ shell {"command":"(am force-stop c.d\n); echo \"rayo:$?\"","timeout":60000}
 shell {"command":"(pm clear a.b\n); echo \"rayo:$?\"","timeout":60000}
 shell {"command":"(am start -a android.intent.action.VIEW -d 'https://example.com/a?b=it'\\''s'\n); echo \"rayo:$?\"","timeout":60000}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

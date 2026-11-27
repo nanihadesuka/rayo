@@ -46,6 +46,9 @@ a screen
     "name": "case",
     "file": "flow.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "case failed at launchApp: app crashed",
@@ -69,7 +72,13 @@ a screen
       "crash": "",
       "saved": ".rayo/case_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from flow.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"FAIL","at":"flow.yaml:3"}

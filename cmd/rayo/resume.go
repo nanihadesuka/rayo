@@ -16,6 +16,14 @@ import (
 // Before the flows are chosen, as --resume chooses those that failed.
 func (o *options) checkStarts() error {
 	switch {
+	case o.holdTimeout > 0 && o.onFail != onFailHold:
+		return errors.New("--hold-timeout is of --on-fail hold")
+	case o.onFail == onFailHold && o.continuous:
+		return errors.New("--on-fail hold waits at a failure for a fix, and --continuous runs again on each change: use one")
+	case o.onFail == onFailHold && o.runner.Capture != "":
+		return errors.New("a capture calls the real backend, once, so --on-fail hold doesn't go with it")
+	}
+	switch {
 	case !o.resume && o.from == "" && o.until == "":
 		if o.mockState != nil {
 			return errors.New("--mock-state sets the scenarios where a flow begins in the middle: add --resume or --from; see rayo help resume")
@@ -47,6 +55,7 @@ func (o *options) settleStarts(flows []*flow.Flow) error {
 		return err
 	}
 	o.starts = map[*flow.Flow]*flow.Start{}
+	var skipped []string // of --resume, those that can't go on from where they failed
 	for _, f := range flows {
 		start := &flow.Start{}
 		var err error
@@ -65,12 +74,19 @@ func (o *options) settleStarts(flows []*flow.Flow) error {
 		}
 		failure := last[report.Identity(f)].Failure
 		if o.resume {
+			why := ""
 			if failure == nil || failure.Error.File == "" {
-				return fmt.Errorf("--resume: the last run of %s says no step failed, so there is nowhere to go on from: run it whole", f.Name)
+				why = fmt.Sprintf("the last run of %s says no step failed, so there is nowhere to go on from: run it whole", f.Name)
+			} else if start.From = fmt.Sprintf("%s:%d", failure.Error.File, failure.Error.Line); !f.Find(start.From) {
+				why = fmt.Sprintf("%s failed at %s, in onFlowStart or onFlowComplete, which a flow can't begin from: run it whole", f.Name, start.From)
 			}
-			start.From = fmt.Sprintf("%s:%d", failure.Error.File, failure.Error.Line)
-			if !f.Find(start.From) {
-				return fmt.Errorf("--resume: %s failed at %s, in onFlowStart or onFlowComplete, which a flow can't begin from: run it whole", f.Name, start.From)
+			if why != "" && len(flows) == 1 {
+				return errors.New("--resume: " + why)
+			}
+			if why != "" { // the others go on; this one waits for a whole run
+				skipped = append(skipped, f.Name)
+				fmt.Fprintf(human(), "--resume leaves out %s: %s, with --only %s\n", f.Name, why, f.Name)
+				continue
 			}
 		}
 		var trail []flow.StepStates
@@ -105,6 +121,9 @@ func (o *options) settleStarts(flows []*flow.Flow) error {
 			}
 		}
 		o.starts[f] = start
+	}
+	if len(skipped) > 0 {
+		o.leftOut = skipped
 	}
 	return nil
 }

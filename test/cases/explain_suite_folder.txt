@@ -1,0 +1,31 @@
+-- args --
+explain
+-- all.suite.yaml --
+flows: [flow.yaml]
+output: results
+-- flow.yaml --
+appId: a.b
+---
+- tapOn: { id: a }
+-- results/failed.json --
+{"$DIR/flow.yaml": {"status": "FAIL", "name": "case", "file": "flow.yaml", "why": "", "run": "20261126T101010-aaaa", "failure": {"verdict": "case failed at tapOn a: not on screen", "cause": "not on screen", "blame": "test", "error": {"file": "flow.yaml", "line": 3, "message": "not on screen: a"}, "nearest": ["text: A"], "scenarios": [], "trail": []}}}
+-- results/history.jsonl --
+{"run":"20261125T101010-aaaa","flow":"$DIR/flow.yaml","name":"case","status":"PASS","at":""}
+{"run":"20261125T111010-aaaa","flow":"$DIR/flow.yaml","name":"case","status":"PASS","at":""}
+{"run":"20261126T101010-aaaa","flow":"$DIR/flow.yaml","name":"case","status":"FAIL","at":"flow.yaml:3"}
+==== out ====
+-- exit --
+0
+-- stdout --
+(from results, the output of all.suite.yaml)
+case failed at tapOn a: not on screen
+  why: not on screen: a
+  at: flow.yaml:3
+  nearest:
+    text: A
+  rerun: unchanged it fails the same way: fix the flow or the mocks first
+  history: failed 1 of its last 3 runs: only the last, so something changed since it passed
+  next:
+    the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another
+    after a fix, rayo test --resume <the suite or flow you ran> goes on from flow.yaml:3, mocks as then; rayo help resume
+    or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold

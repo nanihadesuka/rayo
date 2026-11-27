@@ -58,6 +58,9 @@ type options struct {
 	from, until            string          // steps, file:line
 	mockState              []flow.Scenario // nil if not said
 	starts                 map[*flow.Flow]*flow.Start
+	leftOut                []string // by --resume, as they can't go on from where they failed
+	onFail                 string   // what a failure does: empty to go on, else hold
+	holdTimeout            time.Duration
 
 	// Of live.
 	app          string
@@ -69,6 +72,9 @@ type options struct {
 	ignoreScreen          string        // a regular expression
 	doTimeout             time.Duration // 0 to wait as long as it takes
 	discard               bool
+
+	// Of explain.
+	latest bool
 
 	// Of hierarchy and do.
 	find string
@@ -97,6 +103,12 @@ type section struct {
 	title    string // of a part of them
 	options  []option
 }
+
+// What --on-fail takes.
+const (
+	onFailGoOn = "go-on"
+	onFailHold = "hold"
+)
 
 const (
 	cmdTest      = "test"
@@ -211,7 +223,7 @@ var sections = []section{
 			return nil
 		}},
 	}},
-	{[]string{cmdTest, cmdCheck}, "as the suite says, for one run", []option{
+	{[]string{cmdTest, cmdCheck, cmdLive}, "", []option{
 		{short: "e", name: "env", value: "KEY=VALUE", about: "a variable for the flows; over the suite's env, which is over a flow's own", set: func(o *options, v string) error {
 			k, value, ok := strings.Cut(v, "=")
 			if !ok {
@@ -220,6 +232,8 @@ var sections = []section{
 			o.runner.Env[k] = value
 			return nil
 		}},
+	}},
+	{[]string{cmdTest, cmdCheck}, "as the suite says, for one run", []option{
 		{name: "retries", value: "n", about: fmt.Sprintf("try again what fails, every flow, also one the suite gives its own retries (default %d, or the suite's)", suite.DefaultRetries), set: func(o *options, v string) error {
 			n, err := strconv.Atoi(v)
 			if err != nil || n < 0 {
@@ -244,7 +258,24 @@ var sections = []section{
 			}
 			return nil
 		}},
+		{name: "screens-before", value: "n", about: "keep the screen after each of the last n steps that passed, and save them with a failure as screens-before.txt: how the app got there; each costs a read of the screen (default 0)", set: func(o *options, v string) error {
+			n, err := strconv.Atoi(v)
+			if err != nil || n < 0 || n > 20 {
+				return fmt.Errorf("--screens-before takes 0 to 20, not %q", v)
+			}
+			o.runner.ScreensBefore = n
+			return nil
+		}},
 		flag("continuous", "run again whenever a file changes", func(o *options) *bool { return &o.continuous }).withShort("c"),
+		choice("on-fail", "what", "go-on (default): retry it as allowed, then the next flow; hold: keep the flow where it failed, the app as it is, until rayo do says how to go on, so that it is fixed in its files and run again from there; see rayo help hold", func(o *options) *string { return &o.onFail }, onFailGoOn, onFailHold),
+		{name: "hold-timeout", value: "duration", about: "with --on-fail hold, leave a flow failed if no command comes for this long, such as 20m (default 1h)", set: func(o *options, v string) error {
+			d, err := time.ParseDuration(v)
+			if err != nil || d <= 0 {
+				return fmt.Errorf("--hold-timeout takes how long, such as 20m, not %q", v)
+			}
+			o.holdTimeout = d
+			return nil
+		}},
 	}},
 	{[]string{cmdTest}, "from where, after a fix; see rayo help resume", []option{
 		flag("resume", "each flow that failed last time, from the step that failed, with the app as it is and the mocks' scenarios as they were then", func(o *options) *bool { return &o.resume }),
@@ -404,6 +435,9 @@ var sections = []section{
 		flag("no-run", "don't begin by running the steps it has", func(o *options) *bool { return &o.noRun }),
 		flag("serve", "only take commands from rayo do, until .quit", func(o *options) *bool { return &o.serve }),
 	}},
+	{[]string{cmdExplain}, "", []option{
+		flag("latest", "only the flows of the newest run in failed.json, not those still there from earlier ones", func(o *options) *bool { return &o.latest }),
+	}},
 	{[]string{cmdMocks}, "", []option{
 		list("only", "the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)", func(o *options) *[]string { return &o.take }),
 		flag("prune", "also take out the mocks that weren't called", func(o *options) *bool { return &o.prune }),
@@ -445,8 +479,9 @@ New here, or driving rayo from a program? Start with: rayo help agents
 
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
-  rayo explain [<run folder or flow>]              why the flows of the last run failed, in a few lines
+  rayo explain [<run folder, .zip or suite>] [<flow>]  why the flows of the last run failed, in a few lines
   rayo live [options] <flow>                       write a flow as it runs, command by command
+  rayo live [options] <suite> <flow>               the same, with the suite's env, output and CA
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
   rayo hierarchy [options]                         what is on screen, and how to refer to it
   rayo devices                                     connected devices
@@ -473,7 +508,7 @@ var suiteKeys = map[string]string{
 	"ignore-params": "capture.ignoreParams", "ignore-body": "capture.ignoreBody", "timestamps": "capture.timestamps",
 	"capture-headers": "capture.captureHeaders", "ignore-host": "capture.ignoreHost", "ignore-path-ids": "capture.ignorePathIds",
 	"stateless": "capture.stateless", "redact-value": "capture.redactValue", "hosts": "capture.hosts",
-	"network": "network", "ignore-unmocked": "unmocked.ignore", "ca": "ca",
+	"network": "network", "ignore-unmocked": "unmocked.ignore", "ca": "ca", "screens-before": "output.screensBefore",
 }
 
 func init() {

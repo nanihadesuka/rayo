@@ -74,6 +74,9 @@ the log
     "name": "a",
     "file": "a.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "a failed at tapOn crash: device error",
@@ -97,7 +100,11 @@ the log
       "crash": "",
       "saved": ".rayo/a_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the device failed, not the flow: rayo devices says if it is there and ready; then rayo test --rerun-failed",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   },
   "<dir>/b.yaml": {
@@ -105,6 +112,9 @@ the log
     "name": "b",
     "file": "b.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "b failed at tapOn crash: device error",
@@ -128,7 +138,11 @@ the log
       "crash": "",
       "saved": ".rayo/b_failure.png",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the device failed, not the flow: rayo devices says if it is there and ready; then rayo test --rerun-failed",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from b.yaml:3, mocks as then; rayo help resume"
+      ]
     }
   },
   "<dir>/c.yaml": {
@@ -136,6 +150,12 @@ the log
     "name": "c",
     "file": "c.yaml",
     "why": "device: 2 failures in a row, the last: the connection to the device was lost",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": null
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FAIL","at":"a.yaml:3"}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"FAIL","at":"b.yaml:3"}

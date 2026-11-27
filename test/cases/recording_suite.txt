@@ -59,6 +59,7 @@ bye {"timeout":5000}
 {
   "schemaVersion": 3,
   "run": "s.suite.yaml",
+  "id": "<run>",
   "device": "emulator-5554",
   "order": "",
   "shard": null,
@@ -70,6 +71,7 @@ bye {"timeout":5000}
     "total": 3,
     "passed": 2,
     "flaky": 1,
+    "partial": 0,
     "failed": 0,
     "interrupted": 0,
     "notRun": 0,
@@ -118,6 +120,7 @@ bye {"timeout":5000}
         "videos/a.mp4",
         "videos/a_retry1.mp4"
       ],
+      "mark": null,
       "failures": [
         {
           "try": 1,
@@ -144,7 +147,11 @@ bye {"timeout":5000}
           "crash": "",
           "saved": "videos/a_failure.png",
           "scenarios": [],
-          "trail": []
+          "trail": [],
+          "next": [
+            "after a fix, rayo test --resume <the suite or flow you ran> goes on from a.yaml:3, mocks as then; rayo help resume",
+            "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+          ]
         }
       ]
     },
@@ -165,6 +172,7 @@ bye {"timeout":5000}
       "notRunReason": "",
       "warnings": [],
       "recordings": [],
+      "mark": null,
       "failures": []
     },
     {
@@ -186,6 +194,7 @@ bye {"timeout":5000}
       "recordings": [
         "videos/c_own.mp4"
       ],
+      "mark": null,
       "failures": []
     }
   ]
@@ -202,3 +211,7 @@ a video ........................................................................
 a screen
 -- file videos/c_own.mp4 --
 a video ....................................................................................................
+-- file videos/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FLAKY","at":""}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"PASS","at":""}

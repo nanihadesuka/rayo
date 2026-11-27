@@ -46,3 +46,5 @@ tap {"delay":100,"repeat":1,"sel":{"id":"flaky 2"},"timeout":15000}
 tap {"delay":100,"repeat":1,"sel":{"id":"flaky 2"},"timeout":15000}
 tap {"delay":100,"repeat":1,"sel":{"id":"flaky 2"},"timeout":15000}
 bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PASS","at":""}

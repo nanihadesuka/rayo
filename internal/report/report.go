@@ -19,7 +19,8 @@ type Status string
 // How a flow can go.
 const (
 	Passed      Status = "PASS"
-	Flaky       Status = "FLAKY" // failed, then passed on a retry
+	Flaky       Status = "FLAKY"   // failed, then passed on a retry
+	Partial     Status = "PARTIAL" // passed, but only part of it ran: not the whole flow's pass
 	Failed      Status = "FAIL"
 	Interrupted Status = "INTERRUPTED"
 	NotRun      Status = "NOT_RUN"
@@ -35,20 +36,35 @@ type Outcome struct {
 	Why         string    // it didn't run
 	Began       time.Time // its first try; zero if it didn't run
 	Partial     bool      // it began or stopped at a step, so a pass isn't the whole flow's
+	Mark        *Mark     // what was said of it while held; nil if nothing
 }
+
+// Mark is what someone said of a failure while the run was held: whose it is, and why.
+type Mark struct {
+	As   string `json:"as" about:"app-bug, test-bug or flaky" enum:"app-bug,test-bug,flaky"`
+	Note string `json:"note" about:"Why, as given"`
+}
+
+// Marks are what .mark takes.
+var Marks = []string{"app-bug", "test-bug", "flaky"}
 
 // Judge takes a try into account.
 func (o *Outcome) Judge(ctx context.Context, try flow.Result) {
 	o.Result = try
 	o.Tries = append(o.Tries, try)
 	o.Status = judge(ctx, try)
-	if o.Status == Passed && o.TimesFailed() > 0 {
+	switch {
+	case o.Status == Passed && (o.Partial || try.Fixed):
+		o.Status = Partial
+	case o.Status == Passed && o.TimesFailed() > 0:
 		o.Status = Flaky
 	}
 }
 
 // Passed says whether it passed at last, at once or on a retry.
-func (o *Outcome) Passed() bool { return o.Status == Passed || o.Status == Flaky }
+func (o *Outcome) Passed() bool {
+	return o.Status == Passed || o.Status == Flaky || o.Status == Partial
+}
 
 func judge(ctx context.Context, o flow.Result) Status {
 	switch {
@@ -331,6 +347,7 @@ func (o *Outcome) videos() string {
 // Summary is how a run went.
 type Summary struct {
 	Title, Device, Order string
+	Run                  string // its id, which failed.json and history.jsonl give each flow
 	Stopped              string // why, if the rest didn't run for it
 	Began                time.Time
 	Took                 time.Duration
@@ -425,7 +442,7 @@ func (s *Summary) Text(brief bool) string {
 	for _, c := range []struct {
 		status Status
 		name   string
-	}{{Passed, "passed"}, {Flaky, "flaky"}, {Failed, "failed"}, {Interrupted, "interrupted"}, {NotRun, "not run"}} {
+	}{{Passed, "passed"}, {Partial, "partial"}, {Flaky, "flaky"}, {Failed, "failed"}, {Interrupted, "interrupted"}, {NotRun, "not run"}} {
 		if n := s.count(c.status); n > 0 || c.status == Passed || c.status == Failed {
 			parts = append(parts, fmt.Sprintf("%d %s", n, c.name))
 		}
@@ -450,6 +467,9 @@ func (s *Summary) Text(brief bool) string {
 		total += " in " + s.Part()
 	}
 	fmt.Fprintf(&b, "TOTAL %s: %s  %.1f s\n", total, strings.Join(parts, ", "), s.Took.Seconds())
+	if n := s.count(Partial); n > 0 {
+		fmt.Fprintf(&b, "NOT WHOLE: %s ran only in part, so a pass isn't the flow's; rayo test --rerun-failed runs them whole\n", flowsWord(n))
+	}
 	return b.String()
 }
 
@@ -550,4 +570,12 @@ func (s *Summary) fileDetail() string {
 		return flow.Full
 	}
 	return flow.Normal
+}
+
+// flowsWord is "1 flow" or "3 flows".
+func flowsWord(n int) string {
+	if n == 1 {
+		return "1 flow"
+	}
+	return fmt.Sprintf("%d flows", n)
 }

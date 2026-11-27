@@ -17,6 +17,7 @@ no flows in part 3 of 3
 {
   "schemaVersion": 3,
   "run": "a.yaml b.yaml",
+  "id": "",
   "device": "",
   "order": "",
   "shard": {
@@ -31,6 +32,7 @@ no flows in part 3 of 3
     "total": 0,
     "passed": 0,
     "flaky": 0,
+    "partial": 0,
     "failed": 0,
     "interrupted": 0,
     "notRun": 0,

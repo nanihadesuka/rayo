@@ -70,6 +70,9 @@ PNG...
 the log
 -- file e2e/results/c_screen.txt --
 a screen
+-- file e2e/results/history.jsonl --
+{"run":"<run>","flow":"<dir>/e2e/a/flow.yaml","name":"a","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/e2e/c/flow.yaml","name":"c","status":"FLAKY","at":""}
 -- file e2e/results/results.txt --
 run: Everything
 device: emulator-5554

@@ -54,6 +54,9 @@ a video ........................................................................
     "name": "c",
     "file": "c.yaml",
     "why": "",
+    "run": "<run>",
+    "mark": null,
+    "history": "",
     "failure": {
       "try": 1,
       "verdict": "c failed at tapOn missing: not on screen",
@@ -77,7 +80,14 @@ a video ........................................................................
       "crash": "",
       "saved": ".rayo/c-logcat.txt",
       "scenarios": [],
-      "trail": []
+      "trail": [],
+      "next": [
+        "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another",
+        "after a fix, rayo test --resume <the suite or flow you ran> goes on from c.yaml:3, mocks as then; rayo help resume",
+        "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
+      ]
     }
   }
 }
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"FAIL","at":"c.yaml:3"}
