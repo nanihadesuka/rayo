@@ -23,7 +23,7 @@ The tables between `generated` marks come from the code, as do `rayo help` and t
 | [Device](#device) | [setLocation](#setlocation) · [travel](#travel) · [setAirplaneMode](#setairplanemode) · [setOrientation](#setorientation) · [takeScreenshot](#takescreenshot) · [startRecording](#startrecording-stoprecording) · [stopRecording](#startrecording-stoprecording) · [camera](#camera) · [shell](#shell) |
 | [Server](#server) | [http](#http) |
 | [Mock](#mock) | [Files](#mock-files) · [mock](#mock-step) · [mockState](#mockstate) · [network](#network) · [waitForRequest](#waitforrequest) · [assertRequest](#assertrequest) · [Capture](#capture) |
-| [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Blame](#blame) · [Outcomes](#outcomes) · [Results](#results) · [For a program](#for-a-program) · [Exit codes](#exit-codes) · [Errors](#errors) · [Events](#events) |
+| [Running several](#running-several) | [Suites](#suites) · [Clean state](#clean-state) · [Retries](#retries) · [Blame](#blame) · [Outcomes](#outcomes) · [Results](#results) · [For a program](#for-a-program) · [AI agents](#ai-agents) · [Exit codes](#exit-codes) · [Errors](#errors) · [Events](#events) |
 | [Live sessions](#live-sessions) | [Commands](#live-commands) · [From other programs](#from-other-programs) |
 | [Features](#features) | [Schemas](#schemas) · [Variables](#variables) · [Tags](#tags) · [Continuous mode](#continuous-mode) · [Resume](#resume) · [Failures](#failures) · [Timings](#timings) · [Profile](#profile) · [Report](#report) · [Environment](#environment) |
 | [Default times](#default-times) · [Limitations](#limitations) | |
@@ -1937,6 +1937,24 @@ If a command can't do what it was asked, it prints instead:
 <!-- end -->
 
 `schemaVersion` changes if the meaning of a key does; every key is always there.
+
+### AI agents
+
+`rayo skills add` installs the rayo skill, so that Claude Code and Codex know how to write, run, mock
+and fix flows without being told.
+
+```
+rayo skills add                                  for every agent found: ~/.claude, ~/.codex
+rayo skills add --agent claude --project .       only Claude Code, in this project's .claude
+rayo skills list                                 where it is, and whether it is of this version
+rayo skills remove                               take it out
+```
+
+It goes in `skills/rayo` of each agent's folder: `SKILL.md`, the cheapest way to use rayo, as
+`rayo help agents` says it, and a file for each task, made from the help topics. An agent reads
+`SKILL.md` only when a task is about rayo, and the other files only when it needs them, so it costs
+little context. After rayo is updated, `rayo skills add` writes it again; `rayo skills list` says
+if it is out of date. A `skills/rayo` folder that isn't rayo's is left as it is.
 
 ### Exit codes
 

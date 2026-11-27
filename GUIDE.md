@@ -363,7 +363,8 @@ and the cause as its `type`, so CI pages show the headline.
 
 Add `--format json` to any command, and read its [schema](REFERENCE.md#for-a-program) with
 `rayo schema`. `rayo help agents` explains the cheapest way to work: check first, run one flow,
-read the cause.
+read the cause. `rayo skills add` gives Claude Code and Codex the same, as a
+[skill](REFERENCE.md#ai-agents).
 
 ```
 rayo check --format json all.suite.yaml
