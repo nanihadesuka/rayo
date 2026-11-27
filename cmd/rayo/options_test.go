@@ -30,7 +30,7 @@ var suiteOnly = map[string]string{
 
 // optionOnly are options of test and check that a suite can't say, and why.
 var optionOnly = map[string]string{
-	"device": "which device is the machine's", "emulator": "which device is the machine's",
+	"ignore-lock": "of one run", "device": "which device is the machine's", "emulator": "which device is the machine's",
 	"changed-only": "of one run", "since": "of one run", "only": "of one run", "include-tags": "of one run",
 	"exclude-tags": "of one run", "rerun-failed": "of one run", "shard": "of one machine of several",
 	"mock-port": "the app's own, as built", "animations": "of one run", "profile": "of one run",

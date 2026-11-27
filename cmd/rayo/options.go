@@ -51,6 +51,9 @@ type options struct {
 	slowest                int      // 0 if not said
 	resultsTemplate        string
 	keep                   string // empty if not said
+	clean                  string // empty if not said
+	ignoreLock             bool
+	runID                  string // of the next run, as the lock says it; empty for a new one
 	video                  bool   // --video
 	suite                  *suite.Suite
 	updateOwn              bool // --capture-update of the flow's own mock
@@ -121,10 +124,11 @@ const (
 	cmdCA        = "ca"
 	cmdMocks     = "mocks"
 	cmdExplain   = "explain"
+	cmdStatus    = "status"
 )
 
 // commandNames are rayo's own, as rayo help <command> takes them.
-var commandNames = []string{cmdTest, cmdCheck, cmdExplain, cmdLive, cmdDo, cmdHierarchy, cmdDevices, cmdCA, cmdMocks, "schema"}
+var commandNames = []string{cmdTest, cmdCheck, cmdExplain, cmdStatus, cmdLive, cmdDo, cmdHierarchy, cmdDevices, cmdCA, cmdMocks, "schema"}
 
 func flag(name, about string, at func(o *options) *bool) option {
 	return option{name: name, about: about, set: func(o *options, _ string) error { *at(o) = true; return nil }}
@@ -176,7 +180,7 @@ var sections = []section{
 	{[]string{cmdHierarchy, cmdDo}, "", []option{
 		text("find", "text", "of the screen, only the elements most like it, instead of all", func(o *options) *string { return &o.find }),
 	}},
-	{[]string{cmdTest, cmdLive, cmdDo, cmdExplain}, "", []option{
+	{[]string{cmdTest, cmdLive, cmdDo, cmdExplain, cmdStatus}, "", []option{
 		text("output", "folder", "where failures and screenshots go (default .rayo)", func(o *options) *string { return &o.output }),
 	}},
 	{[]string{cmdTest, cmdLive}, "", []option{
@@ -302,6 +306,7 @@ var sections = []section{
 	{[]string{cmdTest, cmdCheck}, "what is written, as the suite's output", []option{
 		flag("video", "a video of each flow whose header doesn't say record, as output: { video: true }", func(o *options) *bool { return &o.video }),
 		choice("keep", "when", "the files of every try (all, default), only of the tries that failed, or none", func(o *options) *string { return &o.keep }, suite.KeepAll, suite.KeepFailed, suite.KeepNone),
+		choice("clean", "when", "remove the files of earlier runs: none (default), keeps them; auto, a whole run begins with none, a partial one removes a flow's as it starts; all, every run begins with none", func(o *options) *string { return &o.clean }, report.Cleans...),
 		{name: "artifacts", value: "a,b", about: "the kinds of file written: video, screenshot, logcat, screen, requests (default all)", set: func(o *options, v string) error {
 			kinds := strings.Split(v, ",")
 			if err := flow.CheckArtifacts(kinds); err != nil {
@@ -319,6 +324,7 @@ var sections = []section{
 		}},
 	}},
 	{[]string{cmdTest}, "what comes out", []option{
+		flag("ignore-lock", "run even if another rayo seems to write to the output folder, as when its running.json was left by one that is gone", func(o *options) *bool { return &o.ignoreLock }),
 		choice("detail", "how much", "printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files", func(o *options) *string { return &o.detail }, flow.Details...),
 		{name: "failure-window", value: "seconds", about: fmt.Sprintf("a failure's log and calls begin this long before the failing step (default %d)", int(flow.DefaultWindow.Seconds())), set: func(o *options, v string) error {
 			n, err := strconv.Atoi(v)
@@ -476,7 +482,7 @@ var sections = []section{
 		}},
 		flag("discard", "with .quit, end even if steps were not saved", func(o *options) *bool { return &o.discard }),
 	}},
-	{[]string{cmdTest, cmdCheck, cmdExplain, cmdDevices, cmdHierarchy, cmdDo, cmdMocks}, "", []option{
+	{[]string{cmdTest, cmdCheck, cmdExplain, cmdStatus, cmdDevices, cmdHierarchy, cmdDo, cmdMocks}, "", []option{
 		choice("format", "how", "human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs",
 			func(o *options) *string { return &o.format }, report.Formats...),
 	}},
@@ -489,6 +495,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
   rayo explain [<run folder, .zip or suite>] [<flow>]  why the flows of the last run failed, in a few lines
+  rayo status [options] <flow, folder or suite>... whether each flow passed the last time it ran, in any run
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo live [options] <suite> <flow>               the same, with the suite's env, output and CA
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
@@ -510,7 +517,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
 // that each is a suite's, and that every key of a suite has an option or a reason not to.
 var suiteKeys = map[string]string{
 	"output": "output.folder", "timeout-scale": "timeoutScale", "env": "env", "retries": "retries", "min-flows": "minFlows",
-	"video": "output.video", "keep": "output.keep", "artifacts": "output.artifacts", "name-template": "output.nameTemplate",
+	"video": "output.video", "keep": "output.keep", "artifacts": "output.artifacts", "name-template": "output.nameTemplate", "clean": "output.clean",
 	"detail": "detail", "failure-window": "failureWindow", "results": "results", "results-template": "resultsTemplate",
 	"show": "show", "slowest": "slowest", "flaky-fails-build": "flakyFailsBuild", "format": "format",
 	"capture-from": "capture.from", "graphql": "capture.graphql", "graphql-path": "capture.graphqlPath", "rest": "capture.rest",

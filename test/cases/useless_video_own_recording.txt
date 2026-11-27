@@ -1,0 +1,21 @@
+-- a whole video of each flow, and a flow that records to a file of its own, clash: refused before the device --
+-- args --
+check s.suite.yaml
+-- s.suite.yaml --
+output: { video: true }
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- runFlow: seed.yaml
+-- seed.yaml --
+appId: a.b
+---
+- startRecording: seeding
+- back
+- stopRecording
+==== out ====
+-- exit --
+2
+-- stderr --
+error: --video (or the suite's output: { video: true }) records each flow whole, and a starts a recording of its own, startRecording with a path: only one can go on at a time, so every try would fail. Leave out --video, give the flow record: false in its header, or use startRecording without a path

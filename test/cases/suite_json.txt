@@ -223,6 +223,34 @@ a screen
     }
   }
 }
+-- file e2e/results/files.json --
+{
+  "<dir>/e2e/b/flow.yaml": {
+    "name": "b",
+    "file": "e2e/b/flow.yaml",
+    "run": "<run>",
+    "files": [
+      "b_failure.png",
+      "b_screen.txt",
+      "b_logcat.txt",
+      "b_requests.json",
+      "b_retry1_failure.png",
+      "b_retry1_screen.txt",
+      "b_retry1_logcat.txt",
+      "b_retry1_requests.json"
+    ]
+  },
+  "<dir>/e2e/c/flow.yaml": {
+    "name": "c",
+    "file": "e2e/c/flow.yaml",
+    "run": "<run>",
+    "files": [
+      "c_failure.png",
+      "c_screen.txt",
+      "c_logcat.txt"
+    ]
+  }
+}
 -- file e2e/results/history.jsonl --
 {"run":"<run>","flow":"<dir>/e2e/b/flow.yaml","name":"b","status":"FAIL","at":"e2e/shared/sub.yaml:3"}
 {"run":"<run>","flow":"<dir>/e2e/a/flow.yaml","name":"a","status":"PASS","at":""}

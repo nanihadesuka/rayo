@@ -138,5 +138,19 @@ a screen
     }
   }
 }
+-- file .rayo/files.json --
+{
+  "<dir>/flow.yaml": {
+    "name": "case",
+    "file": "flow.yaml",
+    "run": "<run>",
+    "files": [
+      "case_failure.png",
+      "case_screen.txt",
+      "case_logcat.txt",
+      "case_requests.txt"
+    ]
+  }
+}
 -- file .rayo/history.jsonl --
 {"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"FAIL","at":"flow.yaml:9"}

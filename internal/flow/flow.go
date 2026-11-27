@@ -434,14 +434,22 @@ func short(n *yaml.Node) string {
 	return strings.Join(parts, ", ")
 }
 
+// RecordsElsewhere says whether the flow, or one it runs, starts a recording to a file of its own:
+// startRecording with a path. A recording of the whole flow, which goes to the flow's name, can't go on with it.
+func (f *Flow) RecordsElsewhere() bool { return f.walkFlows(false) }
+
 // Records says whether the flow, or one it runs, makes a video: with record in its header, or startRecording.
-func (f *Flow) Records() bool {
+func (f *Flow) Records() bool { return f.walkFlows(true) }
+
+// walkFlows looks for startRecording in the flow and those it runs, and for record in their headers if
+// header says so; else only for a startRecording with a path.
+func (f *Flow) walkFlows(header bool) bool {
 	seen := map[string]bool{}
 	var of func(f *Flow) bool
 	var walk func(steps []*Step) bool
 	walk = func(steps []*Step) bool {
 		for _, s := range steps {
-			if s.Kind == "startRecording" || walk(s.Sub) {
+			if s.Kind == "startRecording" && (header || keyVideo.of(s.Value) != "") || walk(s.Sub) {
 				return true
 			}
 			if file := keyFile.of(s.Value); file != "" {
@@ -457,7 +465,7 @@ func (f *Flow) Records() bool {
 		return false
 	}
 	of = func(f *Flow) bool {
-		if f.Recording != nil && f.Recording.On {
+		if header && f.Recording != nil && f.Recording.On {
 			return true
 		}
 		return walk(f.OnStart) || walk(f.Steps) || walk(f.OnComplete)

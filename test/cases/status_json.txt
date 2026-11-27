@@ -1,0 +1,67 @@
+-- status, for a program --
+-- args --
+status s.suite.yaml --format json
+-- s.suite.yaml --
+flows: [a.yaml, b.yaml, c.yaml]
+-- a.yaml --
+appId: a.b
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+-- c.yaml --
+appId: a.b
+---
+- back
+-- .rayo/history.jsonl --
+{"run":"20260101T000000-0001","flow":"$DIR/a.yaml","name":"a","status":"FAIL","at":"a.yaml:3"}
+{"run":"20260101T000000-0001","flow":"$DIR/b.yaml","name":"b","status":"PASS","at":""}
+{"run":"20260101T010000-0002","flow":"$DIR/a.yaml","name":"a","status":"PASS","at":""}
+-- .rayo/files.json --
+{"$DIR/a.yaml": {"name": "a", "file": "a.yaml", "run": "20260101T010000-0002", "files": ["a.mp4"]}}
+==== out ====
+-- exit --
+1
+-- stdout --
+{
+  "schemaVersion": 3,
+  "output": ".rayo",
+  "green": false,
+  "passed": 2,
+  "total": 3,
+  "runs": [
+    "<run>",
+    "<run>"
+  ],
+  "running": null,
+  "flows": [
+    {
+      "name": "a",
+      "file": "a.yaml",
+      "status": "PASS",
+      "run": "<run>",
+      "at": "",
+      "files": [
+        "a.mp4"
+      ]
+    },
+    {
+      "name": "b",
+      "file": "b.yaml",
+      "status": "PASS",
+      "run": "<run>",
+      "at": "",
+      "files": []
+    },
+    {
+      "name": "c",
+      "file": "c.yaml",
+      "status": "NEVER",
+      "run": "",
+      "at": "",
+      "files": []
+    }
+  ]
+}

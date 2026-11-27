@@ -108,6 +108,19 @@ a screen
     }
   }
 }
+-- file dbg/files.json --
+{
+  "<dir>/flows/c.yaml": {
+    "name": "c",
+    "file": "flows/c.yaml",
+    "run": "<run>",
+    "files": [
+      "c_failure.png",
+      "c_screen.txt",
+      "c_logcat.txt"
+    ]
+  }
+}
 -- file dbg/history.jsonl --
 {"run":"<run>","flow":"<dir>/flows/a.yaml","name":"First one","status":"PASS","at":""}
 {"run":"<run>","flow":"<dir>/flows/c.yaml","name":"c","status":"FAIL","at":"flows/c.yaml:4"}

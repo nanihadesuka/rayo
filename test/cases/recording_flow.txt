@@ -160,6 +160,38 @@ a screen
     }
   }
 }
+-- file .rayo/files.json --
+{
+  "<dir>/a.yaml": {
+    "name": "a",
+    "file": "a.yaml",
+    "run": "<run>",
+    "files": [
+      "a_failure.png",
+      "a_screen.txt",
+      "a_logcat.txt",
+      "a.mp4"
+    ]
+  },
+  "<dir>/b.yaml": {
+    "name": "b",
+    "file": "b.yaml",
+    "run": "<run>",
+    "files": [
+      "b_named.mp4"
+    ]
+  },
+  "<dir>/c.yaml": {
+    "name": "c",
+    "file": "c.yaml",
+    "run": "<run>",
+    "files": [
+      "c_failure.png",
+      "c_screen.txt",
+      "c_logcat.txt"
+    ]
+  }
+}
 -- file .rayo/history.jsonl --
 {"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FAIL","at":"a.yaml:4"}
 {"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}

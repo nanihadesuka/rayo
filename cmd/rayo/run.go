@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -261,7 +262,9 @@ func (o *options) retriesOf(f *flow.Flow) int {
 // runAll runs flows and says how each went, also those that didn't run.
 func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) error {
 	o := s.o
-	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), Run: runID(), FlakyFails: o.flakyFails,
+	run := cmp.Or(o.runID, runID())
+	o.runID = "" // a run again, with --continuous, is another
+	sum := &report.Summary{Title: title, Device: s.device.Serial, Began: time.Now(), Run: run, FlakyFails: o.flakyFails,
 		Detail: o.detail, Show: o.show, Slowest: o.slowest, Template: o.resultsTemplate, Shard: o.shard, Shards: o.shards}
 	say := human()
 	if o.shards > 0 {
@@ -274,6 +277,22 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 	if o.runner.Timings && o.runner.Scale > 0 && o.runner.Scale != 1 {
 		fmt.Fprintf(say, "default waits ×%v\n", o.runner.Scale)
 	}
+	files := report.ReadManifest(o.output)
+	whole := o.clean == report.CleanAll || o.clean == report.CleanAuto && !o.partial()
+	if whole {
+		if err := files.CleanAllFiles(o.output); err != nil {
+			fmt.Fprintf(say, "couldn't remove the files of earlier runs: %v\n", err)
+		}
+		_ = files.Save(o.output)
+	}
+	unfinished := *sum
+	for _, f := range flows {
+		unfinished.Outcomes = append(unfinished.Outcomes, report.Outcome{Flow: f})
+	}
+	for _, file := range o.results { // so that a run that is killed leaves results that say so
+		_ = unfinished.Unfinished().Write(file)
+	}
+	setup := setupStreak{}
 	folders := map[string]int{}
 	var row streak
 	stop := ""    // why the rest won't run
@@ -292,17 +311,24 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 			if folders[strings.ToLower(name)]++; folders[strings.ToLower(name)] > 1 { // two flows with one name
 				name = fmt.Sprintf("%s_%d", name, folders[strings.ToLower(name)])
 			}
+			if o.clean != report.CleanNone && !whole {
+				if err := files.Clean(o.output, report.Identity(f)); err != nil {
+					fmt.Fprintf(say, "  couldn't remove the files of %s's earlier runs: %v\n", f.Name, err)
+				}
+			}
+			var wrote []string
 			s.index, s.of, s.mark = i+1, len(flows), nil
 			s.reporter.(*console).begin(i+1, len(flows), f.Name)
 			stream(report.Started(f, i+1, len(flows)))
 			for try := 0; ; try++ {
-				result := s.runner.Run(ctx, f, flow.Attempt{Out: o.output, Flow: name, Try: try})
+				result := s.runner.Run(ctx, f, flow.Attempt{Out: o.output, Flow: name, Try: try, Run: run})
 				if result.Err == nil && o.keep == suite.KeepFailed { // what is kept is to see why it failed
 					if err := flow.Remove(o.output, result.Files); err != nil {
 						fmt.Printf("  couldn't remove the files of the attempt: %v\n", err)
 					}
 					result.Recordings = nil
 				}
+				wrote = append(wrote, result.Files...)
 				out.Judge(ctx, result)
 				out.Mark = s.mark
 				for _, e := range report.Tried(&out, i+1, len(flows)) {
@@ -329,11 +355,20 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 					fmt.Fprintf(say, "  failed, retry %d of %d: %v\n", try+1, out.Retries, out.Err)
 				}
 			}
+			files.Note(o.output, report.Identity(f), f.Name, f.Path, run, wrote)
+			if err := files.Save(o.output); err != nil {
+				fmt.Fprintf(say, "  couldn't write %s: %v\n", filepath.ToSlash(report.FilesFile(o.output)), err)
+			}
 			switch {
 			case ctx.Err() != nil:
 				stop = "interrupted"
 			case stop == "" && out.Status == report.Failed && o.failFast:
 				stop = "--fail-fast, after " + f.Name
+			case stop == "" && !o.keepGoing:
+				if why := setup.after(&out); why != "" {
+					stop = why
+					sum.Stopped = stop
+				}
 			}
 		}
 		sum.Outcomes = append(sum.Outcomes, out)
@@ -381,6 +416,41 @@ func (s *session) runAll(ctx context.Context, flows []*flow.Flow, title string) 
 		err = errors.Join(err, emit(sum.Outcome(exitOf(failed))))
 	}
 	return errors.Join(err, failed)
+}
+
+// setupStreak notices the first flows of a run all failing alike, at one step with one message: what
+// they share, such as a login or the app's start, is broken, and the rest would fail the same way.
+type setupStreak struct {
+	signature string
+	count     int
+	over      bool // a flow passed, or failed otherwise
+}
+
+// setupRow is how many of the first flows failing alike stop the run.
+const setupRow = 3
+
+func (r *setupStreak) after(o *report.Outcome) string {
+	if r.over {
+		return ""
+	}
+	sig := o.Signature()
+	if sig == "" || r.count > 0 && sig != r.signature {
+		r.over = true
+		return ""
+	}
+	r.signature = sig
+	if r.count++; r.count >= setupRow {
+		r.over = true
+		return fmt.Sprintf("setup: the first %d flows all failed alike, at %s; fix that first (--keep-going runs them all)", r.count, sig)
+	}
+	return ""
+}
+
+// partial says whether the run is of some flows only, or of a part of them: then --clean auto removes only
+// the files of the flows that run, as each starts.
+func (o *options) partial() bool {
+	return len(o.only) > 0 || len(o.include) > 0 || len(o.exclude) > 0 || o.rerunFailed || o.resume || o.starts != nil ||
+		o.shards > 0 || o.since != "" || o.onFail == onFailHold
 }
 
 // stream prints an event, with --format ndjson.

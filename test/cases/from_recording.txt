@@ -52,5 +52,16 @@ a video ........................................................................
     "failure": null
   }
 }
+-- file .rayo/files.json --
+{
+  "<dir>/flow.yaml": {
+    "name": "case",
+    "file": "flow.yaml",
+    "run": "<run>",
+    "files": [
+      "case_clip.mp4"
+    ]
+  }
+}
 -- file .rayo/history.jsonl --
 {"run":"<run>","flow":"<dir>/flow.yaml","name":"case","status":"PARTIAL","at":""}

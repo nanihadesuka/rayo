@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -229,9 +231,14 @@ func run(t *testing.T, input string) string {
 			return nil
 		}
 		data, err := os.ReadFile(p)
-		part("file "+name, string(bytes.TrimPrefix(data, []byte("\x89"))))
+		part("file "+masked(name), string(bytes.TrimPrefix(data, []byte("\x89"))))
 		return err
 	})
+	for _, name := range slices.Sorted(maps.Keys(inputs)) { // what rayo removed
+		if _, err := os.Stat(filepath.Join(dir, name)); errors.Is(err, fs.ErrNotExist) {
+			part("removed "+name, "\n")
+		}
+	}
 	return b.String()
 }
 

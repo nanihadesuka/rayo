@@ -1,0 +1,20 @@
+-- the same, but the flow says record: false, so only its own recording is made --
+-- args --
+check s.suite.yaml
+-- s.suite.yaml --
+output: { video: true }
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+record: false
+---
+- startRecording: seeding
+- stopRecording
+==== out ====
+-- exit --
+0
+-- stdout --
+1 flow is fine
+  a  a.yaml  retries: 1
+a run writes to .rayo, keeps the files of every try, with a video of each flow
+such as .rayo/a_failure.png, and of a retry .rayo/a_retry1_logcat.txt

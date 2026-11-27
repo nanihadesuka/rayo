@@ -247,7 +247,10 @@ What a try leaves in --output (default .rayo)
   <flow>_requests.txt   the calls to the backend
   <flow>.mp4            the video, with record: true
   failed.json           what failed, for rayo explain and --rerun-failed; always written
-  --name-template says how they are named, --artifacts which kinds are written.
+  files.json            which run wrote which file, for each flow
+  running.json          while a run writes to it; a second run into the folder is refused
+  --name-template says how they are named ({run} is the run's id), --artifacts which kinds are written,
+  --clean auto removes the files of earlier runs; rayo status says if every flow passed, in any run.
 
 The device was lost
   rayo devices; if it isn't listed, restart the emulator or reconnect it, then rayo test --rerun-failed.

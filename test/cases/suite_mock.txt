@@ -146,6 +146,20 @@ bye {"timeout":5000}
     }
   }
 }
+-- file .rayo/files.json --
+{
+  "<dir>/tests/own.yaml": {
+    "name": "own",
+    "file": "tests/own.yaml",
+    "run": "<run>",
+    "files": [
+      "own_failure.png",
+      "own_screen.txt",
+      "own_logcat.txt",
+      "own_requests.txt"
+    ]
+  }
+}
 -- file .rayo/history.jsonl --
 {"run":"<run>","flow":"<dir>/tests/a.yaml","name":"a","status":"PASS","at":""}
 {"run":"<run>","flow":"<dir>/tests/b.yaml","name":"b","status":"PASS","at":""}

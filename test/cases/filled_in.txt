@@ -504,6 +504,89 @@ a screen, swiped 1
     }
   }
 }
+-- file .rayo/files.json --
+{
+  "<dir>/a.yaml": {
+    "name": "a",
+    "file": "a.yaml",
+    "run": "<run>",
+    "files": [
+      "a_failure.png",
+      "a_screen.txt",
+      "a_logcat.txt"
+    ]
+  },
+  "<dir>/b.yaml": {
+    "name": "b",
+    "file": "b.yaml",
+    "run": "<run>",
+    "files": [
+      "b_failure.png",
+      "b_screen.txt",
+      "b_logcat.txt"
+    ]
+  },
+  "<dir>/c.yaml": {
+    "name": "c",
+    "file": "c.yaml",
+    "run": "<run>",
+    "files": [
+      "c_failure.png",
+      "c_screen.txt",
+      "c_logcat.txt"
+    ]
+  },
+  "<dir>/d.yaml": {
+    "name": "d",
+    "file": "d.yaml",
+    "run": "<run>",
+    "files": [
+      "d_failure.png",
+      "d_screen.txt",
+      "d_logcat.txt"
+    ]
+  },
+  "<dir>/e.yaml": {
+    "name": "e",
+    "file": "e.yaml",
+    "run": "<run>",
+    "files": [
+      "e_failure.png",
+      "e_screen.txt",
+      "e_logcat.txt"
+    ]
+  },
+  "<dir>/f.yaml": {
+    "name": "f",
+    "file": "f.yaml",
+    "run": "<run>",
+    "files": [
+      "f_failure.png",
+      "f_screen.txt",
+      "f_logcat.txt"
+    ]
+  },
+  "<dir>/g.yaml": {
+    "name": "g",
+    "file": "g.yaml",
+    "run": "<run>",
+    "files": [
+      "g_failure.png",
+      "g_screen.txt",
+      "g_logcat.txt"
+    ]
+  },
+  "<dir>/h.yaml": {
+    "name": "h",
+    "file": "h.yaml",
+    "run": "<run>",
+    "files": [
+      "h_failure.png",
+      "h_screen.txt",
+      "h_logcat.txt"
+    ]
+  }
+}
 -- file .rayo/g_failure.png --
 PNG...
 -- file .rayo/g_logcat.txt --

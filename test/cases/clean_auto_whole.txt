@@ -1,0 +1,49 @@
+-- clean auto: a whole run begins with none of the files of earlier runs --
+-- args --
+test s.suite.yaml
+-- s.suite.yaml --
+output: { clean: auto }
+flows: [a.yaml, b.yaml]
+-- a.yaml --
+appId: a.b
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+-- .rayo/a_old.mp4 --
+old video of a
+-- .rayo/b_old.mp4 --
+old video of b
+-- .rayo/mine.txt --
+not rayo's: kept
+-- .rayo/files.json --
+{
+  "$DIR/a.yaml": {"name": "a", "file": "a.yaml", "run": "20260101T000000-0001", "files": ["a_old.mp4"]},
+  "$DIR/gone.yaml": {"name": "gone", "file": "gone.yaml", "run": "20260101T000000-0001", "files": ["b_old.mp4"]}
+}
+==== out ====
+-- exit --
+0
+-- stdout --
+[1/2] PASS a  # s
+[2/2] PASS b  # s
+
+TOTAL 2: 2 passed, 0 failed  # s
+-- device --
+adb exec:i=0; while pgrep -f 'rayo[.]Agent' >/dev/null; do i=$((i+1)); [ $i -gt 50 ] && exit; sleep 0.2; done; echo gone; ls /data/local/tmp/rayo-<hash>.jar 2>/dev/null
+adb exec:trap '' HUP; CLASSPATH=/data/local/tmp/rayo-<hash>.jar exec app_process /system/bin rayo.Agent
+noAnimations {"timeout":10000}
+key {"code":4,"timeout":15000}
+key {"code":4,"timeout":15000}
+bye {"timeout":5000}
+-- file .rayo/history.jsonl --
+{"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"PASS","at":""}
+{"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}
+-- removed .rayo/a_old.mp4 --
+
+-- removed .rayo/b_old.mp4 --
+
+-- removed .rayo/files.json --
+

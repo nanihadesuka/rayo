@@ -245,6 +245,7 @@ func Schemas() map[string]func() []byte {
 		"hierarchy": file(Hierarchy{}, "What rayo hierarchy prints, --format json"),
 		"mocks":     file(Notes{}, "What rayo mocks prints, --format json"),
 		"explain":   file(Explained{}, "What rayo explain prints, --format json"),
+		"status":    file(SuiteState{}, "What rayo status prints, --format json"),
 		"event":     file(Event{}, "A line of rayo test --format ndjson"),
 		"errors":    file(Errors{}, "What rayo prints, --format json, if it can't do what was asked"),
 	}

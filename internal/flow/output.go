@@ -14,9 +14,11 @@ type Attempt struct {
 	Out  string // the output folder
 	Flow string // its name, which no other flow of the run has
 	Try  int    // 0 for the first
+	Run  string // the run's id, for {run}; empty outside a run
 }
 
-// DefaultTemplate is how the files of an attempt are named, all in one folder.
+// DefaultTemplate is how the files of an attempt are named, all in one folder. {run}, the run's id, may
+// be added to tell the files of runs apart.
 const DefaultTemplate = "{flow}_{attempt}_{kind}.{ext}"
 
 // The kinds of file an attempt writes.
@@ -72,7 +74,7 @@ func FileName(template string, a Attempt, kind, ext string) string {
 	if a.Try > 0 {
 		attempt = fmt.Sprintf("retry%d", a.Try)
 	}
-	fill := strings.NewReplacer("{flow}", a.Flow, "{attempt}", attempt, "{kind}", kind, "{ext}", ext).Replace
+	fill := strings.NewReplacer("{flow}", a.Flow, "{attempt}", attempt, "{kind}", kind, "{ext}", ext, "{run}", a.Run).Replace
 	if template == "" {
 		template = DefaultTemplate
 	}

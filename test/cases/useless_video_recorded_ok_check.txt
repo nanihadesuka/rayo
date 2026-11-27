@@ -30,5 +30,16 @@ adb exec:cat /data/local/tmp/rayo-<pid>.mp4; rm -f /data/local/tmp/rayo-<pid>.mp
 bye {"timeout":5000}
 -- file .rayo/a.mp4 --
 a video ....................................................................................................
+-- file .rayo/files.json --
+{
+  "<dir>/a.yaml": {
+    "name": "a",
+    "file": "a.yaml",
+    "run": "<run>",
+    "files": [
+      "a.mp4"
+    ]
+  }
+}
 -- file .rayo/history.jsonl --
 {"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"PASS","at":""}

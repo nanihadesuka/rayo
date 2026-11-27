@@ -1,0 +1,15 @@
+-- status: green after all passed --
+-- args --
+status a.yaml
+-- a.yaml --
+appId: a.b
+---
+- back
+-- .rayo/history.jsonl --
+{"run":"20260101T000000-0001","flow":"$DIR/a.yaml","name":"a","status":"FLAKY","at":""}
+==== out ====
+-- exit --
+0
+-- stdout --
+  FLAKY   a  run <run>
+1 of 1 passed the last time they ran, from 1 run(s): green

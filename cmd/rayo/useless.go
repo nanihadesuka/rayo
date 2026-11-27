@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -33,6 +34,13 @@ func (o *options) checkKept() error {
 func (o *options) checkUseful(flows []*flow.Flow) error {
 	if slices.Contains(o.runner.Artifacts, flow.Video) && !o.records(flows) {
 		return errors.New("artifacts has video, but no flow is recorded: set record: true in the suite, record: true in a flow, or use startRecording; see rayo help suite")
+	}
+	if o.runner.Recording != nil && o.runner.Recording.On {
+		for _, f := range flows {
+			if (f.Recording == nil || f.Recording.On) && f.RecordsElsewhere() {
+				return fmt.Errorf("--video (or the suite's output: { video: true }) records each flow whole, and %s starts a recording of its own, startRecording with a path: only one can go on at a time, so every try would fail. Leave out --video, give the flow record: false in its header, or use startRecording without a path", f.Name)
+			}
+		}
 	}
 	if o.retries == 0 && o.flakyFails {
 		return errors.New("--flaky-fails-build with --retries 0: without a retry no flow can be flaky")

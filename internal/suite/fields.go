@@ -288,7 +288,7 @@ var Fields = []schema.Field[Suite]{
 			s.CA = n.Value
 			return nil
 		}},
-	{Name: "output", Takes: "a folder, or a mapping", About: "What a run writes, and where: a folder, or folder, keep, video, artifacts and nameTemplate, see [What is kept](#what-is-kept)", Default: "`.rayo` where rayo runs",
+	{Name: "output", Takes: "a folder, or a mapping", About: "What a run writes, and where: a folder, or folder, keep, clean, video, artifacts and nameTemplate, see [What is kept](#what-is-kept)", Default: "`.rayo` where rayo runs",
 		Schema: schema.AnyOf(schema.Type("string"), schema.Of(OutputFields)), Read: func(s *Suite, n *yaml.Node) error {
 			if n.Kind == yaml.ScalarNode {
 				s.Output.Folder = n.Value
@@ -339,6 +339,7 @@ var OutputFields = []schema.Field[Output]{
 	schema.TextField("folder", "folder", "Where everything goes; `--output` overrides it", func(o *Output) *string { return &o.Folder }).Optional("`.rayo` where rayo runs"),
 	schema.NumberField("screensBefore", "0 to 20", "The screen after each of the last steps that passed, saved with a failure as `screens-before.txt`: how the app got there, such as a dialog that came and went; each costs a read of the screen. `--screens-before` overrides it", 0, 20, func(o *Output, v int) { o.ScreensBefore = v }).Optional("0"),
 	choiceField("keep", "The files of every try (`all`), only of the tries that failed (`failed`), or none; `--keep` overrides it", func(o *Output) *string { return &o.Keep }, KeepAll, KeepFailed, KeepNone).Optional("`all`"),
+	choiceField("clean", "Whether the files of earlier runs are removed: not at all (`none`); a whole run begins with none and a partial one (`--only`, `--rerun-failed`, `--resume`, `--on-fail hold`, tags, `--shard`, `--since`) removes a flow's files as it starts (`auto`); every run begins with none (`all`). Only files rayo wrote, as `files.json` lists them; `--clean` overrides it", func(o *Output) *string { return &o.Clean }, report.Cleans...).Optional("`none`"),
 	{Name: "video", Takes: "`true` or `false`", About: "A video of each flow whose header doesn't say `record`; `--video` overrides it", Default: "`false`", Schema: schema.Type("boolean"), Read: func(o *Output, n *yaml.Node) error {
 		o.Video = new(bool)
 		return schema.FlagField("", "", func(b *bool) *bool { return b }).Read(o.Video, n)
@@ -353,7 +354,7 @@ var OutputFields = []schema.Field[Output]{
 			}
 			return nil
 		}},
-	{Name: "nameTemplate", Takes: "a template", About: "How the files are named in the folder; `--name-template` overrides it",
+	{Name: "nameTemplate", Takes: "a template", About: "How the files are named in the folder: `{flow}`, `{attempt}`, `{kind}` and `{ext}`, and `{run}`, the run's id, to tell runs apart; `--name-template` overrides it",
 		Schema: schema.Type("string"), Default: "`" + flow.DefaultTemplate + "`", Read: func(o *Output, n *yaml.Node) error {
 			if n.Kind != yaml.ScalarNode {
 				return errors.New("takes a template")

@@ -91,6 +91,7 @@ type Output struct {
 	Video         *bool    // nil if not said
 	Artifacts     []string // nil if not said
 	NameTemplate  string   // empty if not said
+	Clean         string   // empty if not said
 	ScreensBefore int      // 0 if not said
 }
 

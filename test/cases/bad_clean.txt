@@ -1,0 +1,15 @@
+-- bad clean --
+-- args --
+check s.suite.yaml
+-- s.suite.yaml --
+output: { clean: sometimes }
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+2
+-- stderr --
+error: s.suite.yaml:1: output: clean: takes none, auto, all, not "sometimes"

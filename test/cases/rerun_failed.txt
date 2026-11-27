@@ -29,3 +29,5 @@ key {"code":4,"timeout":15000}
 bye {"timeout":5000}
 -- file .rayo/history.jsonl --
 {"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}
+-- removed .rayo/failed.json --
+

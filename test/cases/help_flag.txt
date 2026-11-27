@@ -38,8 +38,10 @@ Options of test:
   --mock-state <a=s,b=t>     with --resume or --from, the scenarios' states to begin with, over those of the last run
   --video                    a video of each flow whose header doesn't say record, as output: { video: true } (suite: output.video)
   --keep <when>              the files of every try (all, default), only of the tries that failed, or none (suite: output.keep)
+  --clean <when>             remove the files of earlier runs: none (default), keeps them; auto, a whole run begins with none, a partial one removes a flow's as it starts; all, every run begins with none (suite: output.clean)
   --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all) (suite: output.artifacts)
   --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext}) (suite: output.nameTemplate)
+  --ignore-lock              run even if another rayo seems to write to the output folder, as when its running.json was left by one that is gone
   --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files (suite: detail)
   --failure-window <seconds> a failure's log and calls begin this long before the failing step (default 10) (suite: failureWindow)
   --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated (suite: results)

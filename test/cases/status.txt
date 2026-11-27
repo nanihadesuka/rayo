@@ -1,0 +1,33 @@
+-- status merges the newest run of each flow: a, fixed in a partial run, is green; c never ran --
+-- args --
+status s.suite.yaml
+-- s.suite.yaml --
+flows: [a.yaml, b.yaml, c.yaml]
+-- a.yaml --
+appId: a.b
+---
+- back
+-- b.yaml --
+appId: a.b
+---
+- back
+-- c.yaml --
+appId: a.b
+---
+- back
+-- .rayo/history.jsonl --
+{"run":"20260101T000000-0001","flow":"$DIR/a.yaml","name":"a","status":"FAIL","at":"a.yaml:3"}
+{"run":"20260101T000000-0001","flow":"$DIR/b.yaml","name":"b","status":"PASS","at":""}
+{"run":"20260101T010000-0002","flow":"$DIR/a.yaml","name":"a","status":"PASS","at":""}
+-- .rayo/files.json --
+{"$DIR/a.yaml": {"name": "a", "file": "a.yaml", "run": "20260101T010000-0002", "files": ["a.mp4"]}}
+==== out ====
+-- exit --
+1
+-- stdout --
+  PASS    a  run <run>
+  PASS    b  run <run>
+  NEVER   c
+2 of 3 passed the last time they ran, from 2 run(s): not green
+-- stderr --
+error: 1 of 3 flows haven't passed the last time they ran

@@ -89,5 +89,17 @@ a video ........................................................................
     }
   }
 }
+-- file .rayo/files.json --
+{
+  "<dir>/c.yaml": {
+    "name": "c",
+    "file": "c.yaml",
+    "run": "<run>",
+    "files": [
+      "c-logcat.txt",
+      "c.mp4"
+    ]
+  }
+}
 -- file .rayo/history.jsonl --
 {"run":"<run>","flow":"<dir>/c.yaml","name":"c","status":"FAIL","at":"c.yaml:3"}

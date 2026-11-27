@@ -166,6 +166,20 @@ a screen
     "failure": null
   }
 }
+-- file e2e/results/files.json --
+{
+  "<dir>/e2e/b/flow.yaml": {
+    "name": "b",
+    "file": "e2e/b/flow.yaml",
+    "run": "<run>",
+    "files": [
+      "b_failure.png",
+      "b_screen.txt",
+      "b_logcat.txt",
+      "b_requests.txt"
+    ]
+  }
+}
 -- file e2e/results/history.jsonl --
 {"run":"<run>","flow":"<dir>/e2e/b/flow.yaml","name":"b","status":"FAIL","at":"e2e/shared/sub.yaml:3"}
 -- file e2e/results/results.txt --

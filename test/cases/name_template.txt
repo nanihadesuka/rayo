@@ -60,6 +60,30 @@ a video ........................................................................
 a video ....................................................................................................
 -- file .rayo/b/shots/home.png --
 PNG...
+-- file .rayo/files.json --
+{
+  "<dir>/a.yaml": {
+    "name": "a",
+    "file": "a.yaml",
+    "run": "<run>",
+    "files": [
+      "a/failure.png",
+      "a/screen.txt",
+      "a/logcat.txt",
+      "a/a.mp4",
+      "a_retry1/a_retry1.mp4"
+    ]
+  },
+  "<dir>/b.yaml": {
+    "name": "b",
+    "file": "b.yaml",
+    "run": "<run>",
+    "files": [
+      "b/shots/home.png",
+      "b/b.mp4"
+    ]
+  }
+}
 -- file .rayo/history.jsonl --
 {"run":"<run>","flow":"<dir>/a.yaml","name":"a","status":"FLAKY","at":""}
 {"run":"<run>","flow":"<dir>/b.yaml","name":"b","status":"PASS","at":""}

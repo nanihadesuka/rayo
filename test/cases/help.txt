@@ -11,6 +11,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
   rayo explain [<run folder, .zip or suite>] [<flow>]  why the flows of the last run failed, in a few lines
+  rayo status [options] <flow, folder or suite>... whether each flow passed the last time it ran, in any run
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo live [options] <suite> <flow>               the same, with the suite's env, output and CA
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
@@ -51,7 +52,7 @@ Options of test and check: which flows
 Options of hierarchy and do
   --find <text>              of the screen, only the elements most like it, instead of all
 
-Options of test, live, do and explain
+Options of test, live, do, explain and status
   --output <folder>          where failures and screenshots go (default .rayo) (suite: output.folder)
 
 Options of test and live
@@ -93,10 +94,12 @@ Options of test: from where, after a fix; see rayo help resume
 Options of test and check: what is written, as the suite's output
   --video                    a video of each flow whose header doesn't say record, as output: { video: true } (suite: output.video)
   --keep <when>              the files of every try (all, default), only of the tries that failed, or none (suite: output.keep)
+  --clean <when>             remove the files of earlier runs: none (default), keeps them; auto, a whole run begins with none, a partial one removes a flow's as it starts; all, every run begins with none (suite: output.clean)
   --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all) (suite: output.artifacts)
   --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext}) (suite: output.nameTemplate)
 
 Options of test: what comes out
+  --ignore-lock              run even if another rayo seems to write to the output folder, as when its running.json was left by one that is gone
   --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files (suite: detail)
   --failure-window <seconds> a failure's log and calls begin this long before the failing step (default 10) (suite: failureWindow)
   --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated (suite: results)
@@ -151,5 +154,5 @@ Options of do
   --timeout <duration>       how long to wait for the answer, such as 30s (default as long as it takes); the session goes on
   --discard                  with .quit, end even if steps were not saved
 
-Options of test, check, explain, devices, hierarchy, do and mocks
+Options of test, check, explain, status, devices, hierarchy, do and mocks
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs (suite: format)

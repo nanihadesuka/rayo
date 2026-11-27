@@ -42,6 +42,7 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo test [options] <flow, folder or suite>...   run flows; a suite is a *.suite.yaml
   rayo check <flow, folder or suite>...            check flows without a device, and say which would run
   rayo explain [<run folder, .zip or suite>] [<flow>]  why the flows of the last run failed, in a few lines
+  rayo status [options] <flow, folder or suite>... whether each flow passed the last time it ran, in any run
   rayo live [options] <flow>                       write a flow as it runs, command by command
   rayo live [options] <suite> <flow>               the same, with the suite's env, output and CA
   rayo do [options] <commands>                     send commands to the live session; rayo do .help
@@ -82,7 +83,7 @@ Options of test and check: which flows
 Options of hierarchy and do
   --find <text>              of the screen, only the elements most like it, instead of all
 
-Options of test, live, do and explain
+Options of test, live, do, explain and status
   --output <folder>          where failures and screenshots go (default .rayo) (suite: output.folder)
 
 Options of test and live
@@ -124,10 +125,12 @@ Options of test: from where, after a fix; see rayo help resume
 Options of test and check: what is written, as the suite's output
   --video                    a video of each flow whose header doesn't say record, as output: { video: true } (suite: output.video)
   --keep <when>              the files of every try (all, default), only of the tries that failed, or none (suite: output.keep)
+  --clean <when>             remove the files of earlier runs: none (default), keeps them; auto, a whole run begins with none, a partial one removes a flow's as it starts; all, every run begins with none (suite: output.clean)
   --artifacts <a,b>          the kinds of file written: video, screenshot, logcat, screen, requests (default all) (suite: output.artifacts)
   --name-template <template> how the files are named in the output folder (default {flow}_{attempt}_{kind}.{ext}) (suite: output.nameTemplate)
 
 Options of test: what comes out
+  --ignore-lock              run even if another rayo seems to write to the output folder, as when its running.json was left by one that is gone
   --detail <how much>        printed: brief, the verdict of a failure; normal (default), also why, where, the nearest elements and the calls, and every step of a single flow; full, also the screen, every step, and whole files (suite: detail)
   --failure-window <seconds> a failure's log and calls begin this long before the failing step (default 10) (suite: failureWindow)
   --results <file>           write the results: .txt, .json, .xml (JUnit) or .md; may be repeated (suite: results)
@@ -182,7 +185,7 @@ Options of do
   --timeout <duration>       how long to wait for the answer, such as 30s (default as long as it takes); the session goes on
   --discard                  with .quit, end even if steps were not saved
 
-Options of test, check, explain, devices, hierarchy, do and mocks
+Options of test, check, explain, status, devices, hierarchy, do and mocks
   --format <how>             human (default); json, for a program, see rayo schema; ndjson, the same on one line, and for test an event a line as it runs (suite: format)
 ```
 
@@ -1251,7 +1254,7 @@ flows:
 | `unmocked` | a mapping | Calls without a mock that don't fail the flow, see [Calls not worth mocking](#calls-not-worth-mocking) (default: none: each fails the flow) |
 | `capture` | a mapping | How a capture calls the backend and becomes mocks, as the options of the same names, which win, see [Capturing a suite's flow](#capturing-a-suites-flow) |
 | `ca` | folder | `--ca` overrides it: the CA the proxy signs with, its ca.pem and ca-key.pem, relative to the suite; `rayo ca new` makes one, see [Mocks of a suite](#mocks-of-a-suite) (default: `.rayo/ca` next to the suite or above it, up to the repository's root; else `~/.rayo`) |
-| `output` | a folder, or a mapping | What a run writes, and where: a folder, or folder, keep, video, artifacts and nameTemplate, see [What is kept](#what-is-kept) (default: `.rayo` where rayo runs) |
+| `output` | a folder, or a mapping | What a run writes, and where: a folder, or folder, keep, clean, video, artifacts and nameTemplate, see [What is kept](#what-is-kept) (default: `.rayo` where rayo runs) |
 | `results` | a file or a list | `--results` replaces them all: `.txt`, `.json`, `.xml` (JUnit) or `.md`, see [Results](#results) |
 | `detail` | `brief`, `normal`, `full` | `--detail` overrides it: how much is printed, see [Results](#results) (default: `normal`) |
 | `failureWindow` | seconds, from 1 | `--failure-window` overrides it: a failure's log and calls begin this long before the failing step, see [Failures](#failures) (default: 10) |
@@ -1993,6 +1996,23 @@ rayo test --format ndjson all.suite.yaml | jq -c 'select(.event == "stepFailed")
 
 ---
 
+### Status
+
+`rayo status` says, for each flow, how it went the last time it ran into the output folder, whichever run
+that was, from `history.jsonl`: after fixing 2 of 14 flows and running only those, whether all 14 are green
+now, and the run each one's files come from (`files.json`). It takes what `rayo test` takes: flows, a folder or a suite.
+
+```
+rayo status all.suite.yaml
+  PASS    login     run 20261127T101500-1a2b
+  PARTIAL checkout  run 20261127T103000-3c4d  (only part of it ran: run it whole)
+  NEVER   refund
+1 of 3 passed the last time they ran, from 2 run(s): not green
+```
+
+`PASS` and `FLAKY` count as passed; `PARTIAL` doesn't, as only part of the flow ran; `NEVER` never ran into the
+folder. It exits `0` when every flow passed, else `1`. `--format json` prints the same, see `rayo schema status`.
+
 ## Live sessions
 
 Write a test by running it, a command at a time. Good for other programs too: they see what each
@@ -2205,9 +2225,26 @@ output: { folder: out, keep: failed, video: true }
 |---|---|---|
 | `folder`, `--output` | a folder, relative to the suite (default `.rayo` where rayo runs) | Where everything goes |
 | `video`, `--video` | `true` or `false` (default `false`) | A video of each flow whose header doesn't say `record`, see [Recording a whole flow](#recording-a-whole-flow) |
+| `clean`, `--clean` | `none` (default), `auto`, `all` | The files of earlier runs. `none` keeps them beside the new. `auto`: a whole run begins with none; a partial one (`--only`, tags, `--rerun-failed`, `--resume`, `--from`, `--on-fail hold`, `--shard`, `--since`) removes a flow's files only as that flow starts, so a held flow's stay until its retry and the other flows' are untouched. `all`: every run begins with none. Only the files `files.json` lists are removed, never one rayo didn't write |
 | `keep`, `--keep` | `all` (default), `failed`, `none` | `all`: the files of every try. `failed`: the files of a try that passed are removed, also its videos and screenshots; a try that failed keeps its own, even if a retry then passes. `none` writes none. `failed.json` and the [results](#results) are always written |
 | `artifacts`, `--artifacts` | `video`, `screenshot`, `logcat`, `screen`, `requests` (default all) | The kinds of file written; `screenshot` is also that of `takeScreenshot` |
-| `nameTemplate`, `--name-template` | `{flow}`, `{attempt}`, `{kind}` and `{ext}` (default `{flow}_{attempt}_{kind}.{ext}`) | How the files are named in `<output>`. `{attempt}` is empty for the first try, then `retry1`..., `{kind}` is `failure`, `screen`, `logcat`, `requests`, a screenshot's name, and empty for the flow's video; the `_` or `-` around what is empty goes. A `/` makes folders, and a part of the path left without a name takes the try's |
+| `nameTemplate`, `--name-template` | `{flow}`, `{attempt}`, `{kind}` and `{ext}`, and `{run}` if wanted (default `{flow}_{attempt}_{kind}.{ext}`) | How the files are named in `<output>`. `{run}` is the run's id, as in the results, such as `{run}/{flow}_{attempt}_{kind}.{ext}` for a folder each run. `{attempt}` is empty for the first try, then `retry1`..., `{kind}` is `failure`, `screen`, `logcat`, `requests`, a screenshot's name, and empty for the flow's video; the `_` or `-` around what is empty goes. A `/` makes folders, and a part of the path left without a name takes the try's |
+
+Which run wrote which file is in `<output>/files.json`: for each flow, the id of its last run and the files
+it wrote (`files`), and with `clean: none` those of its earlier runs still there (`older`). The `recordings`
+of each flow are also in the `.json` [results](#results), so `rayo check` notes when `results` has no `.json`.
+
+While a run writes to a folder, `<output>/running.json` says its id, pid and device. A second `rayo test` into the
+same folder is refused with the pid of the first, unless `--ignore-lock`. A run that was killed leaves it: the next
+says so. The `.json`, `.xml`, `.md` and `.txt` results are written as the run begins, each flow `INTERRUPTED`, and
+again as it ends; so a killed run leaves results that say so, not those of an earlier run.
+
+A video of each flow (`video: true` or `--video`) and a flow that records to a file of its own (`startRecording: <path>`,
+also in a flow it runs) can't go together, as only one recording goes on at a time: `rayo check` and `rayo test`
+refuse it before the device is touched. Give the flow `record: false`, or use `startRecording` without a path.
+
+When the first 3 flows of a run all fail alike, at the same step with the same message, what they share, such as a login,
+is broken: the run stops, `STOPPED setup: ...`, and the rest are `NOT_RUN`; `--keep-going` runs them all.
 
 What would change nothing is an error, before the run, and `rayo check` says the same of a suite:
 `video` in `artifacts` when no flow is recorded (`video: true`, `record: true` in a flow, or `startRecording`),

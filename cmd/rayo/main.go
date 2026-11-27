@@ -28,7 +28,7 @@ import (
 	"github.com/nanihadesuka/rayo/internal/suite"
 )
 
-const version = "3.5.1"
+const version = "3.6.0"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -82,6 +82,7 @@ func (o *options) written(group *suite.Suite) {
 			o.into(group.Relative(g.Folder))
 		}
 		o.keep = cmp.Or(o.keep, g.Keep)
+		o.clean = cmp.Or(o.clean, g.Clean)
 		o.runner.NameTemplate = cmp.Or(o.runner.NameTemplate, g.NameTemplate)
 		o.runner.ScreensBefore = cmp.Or(o.runner.ScreensBefore, g.ScreensBefore)
 		if o.runner.Artifacts == nil {
@@ -91,6 +92,7 @@ func (o *options) written(group *suite.Suite) {
 	}
 	o.into("")
 	o.keep = cmp.Or(o.keep, suite.KeepAll)
+	o.clean = cmp.Or(o.clean, report.CleanNone)
 	o.runner.Recording = &flow.Recording{On: video}
 }
 
@@ -129,6 +131,8 @@ func run(ctx context.Context, command string, args []string) error {
 		return check(args)
 	case cmdExplain:
 		return explain(args)
+	case cmdStatus:
+		return status(args)
 	case cmdLive:
 		return runLive(ctx, args)
 	case cmdDo:
@@ -280,6 +284,9 @@ func check(args []string) error {
 	}
 	if len(results) > 0 {
 		fmt.Println("results:", filepath.ToSlash(strings.Join(results, ", ")))
+		if !slices.ContainsFunc(results, func(f string) bool { format, _ := report.FormatOf(f); return format == report.JSON }) {
+			fmt.Println("note: results has no .json, which lists each flow's recordings and files with the run's id; add one, such as results.json")
+		}
 	}
 	if len(env) > 0 {
 		fmt.Println("env, over each flow's own:", pairs(env))
@@ -434,6 +441,15 @@ func test(ctx context.Context, args []string) (err error) {
 		return ofDevice(err)
 	}
 	picked := time.Since(began)
+	o.runID = runID()
+	stale, err := report.Take(o.output, report.Lock{Run: o.runID, Device: d.Serial}, alive, o.ignoreLock)
+	if err != nil {
+		return err
+	}
+	defer report.Release(o.output)
+	if stale != nil && stale.Run != "" {
+		fmt.Fprintf(human(), "note: run %s (pid %d) didn't finish: it was killed, so its results, if any, say INTERRUPTED\n", stale.Run, stale.Pid)
+	}
 	if group != nil {
 		if err := group.Install(d, o.steps(flows) && printing == report.Human); err != nil {
 			return ofDevice(err)
@@ -824,7 +840,7 @@ func printSchema(args []string) error {
 		_, err := os.Stdout.Write(makers[args[0]]())
 		return err
 	}
-	return errors.New("rayo schema takes flow, suite, results, check, explain, devices, hierarchy, do, mocks, event or errors")
+	return errors.New("rayo schema takes flow, suite, results, check, explain, status, devices, hierarchy, do, mocks, event or errors")
 }
 
 // helpJSON is all of it, for programs and the documentation's page.

@@ -1,0 +1,20 @@
+-- check says results without a .json have no list of the files --
+-- args --
+check s.suite.yaml
+-- s.suite.yaml --
+results: [out.xml, out.md]
+flows: [a.yaml]
+-- a.yaml --
+appId: a.b
+---
+- back
+==== out ====
+-- exit --
+0
+-- stdout --
+1 flow is fine
+  a  a.yaml  retries: 1
+a run writes to .rayo, keeps the files of every try, with a video only of flows whose header says record
+such as .rayo/a_failure.png, and of a retry .rayo/a_retry1_logcat.txt
+results: out.xml, out.md
+note: results has no .json, which lists each flow's recordings and files with the run's id; add one, such as results.json
