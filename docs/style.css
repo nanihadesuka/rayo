@@ -114,6 +114,7 @@ details.command .badge { margin: 0; font-style: normal; flex: none }
 .step p { margin: 0 0 8px; color: var(--soft) }
 .step pre { font-size: .84em }
 .center { text-align: center; margin: 18px 0 30px }
+.group { margin: 1.6em 0 .2em; font-size: 1.15rem }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 1.2em 0 }
 .card { padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; color: inherit }
 .card:hover, .onward:hover { border-color: var(--accent); text-decoration: none }

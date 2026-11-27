@@ -274,6 +274,7 @@ function pageHtml(p) {
 }
 
 function home() {
+  const group = (title, cards) => `<h2 class="group">${title}</h2><div class="cards">${cards.join('')}</div>`
   const feature = (to, title, text) => `<a class="card" href="${to}"><b>${title}</b><span>${text}</span></a>`
   const step = (n, title, html) => `<div class="step"><h3><span class="number">${n}</span>${title}</h3>${html}</div>`
   return `<div class="hero"><img src="icon.svg" width="120" height="120" alt=""><h1>rayo</h1>
@@ -283,17 +284,35 @@ function home() {
     step(1, 'Download', '<p>One file for Windows, macOS or Linux. It only needs adb.</p>' + codeBlock('rayo devices', '') + '<p>Then see what is on screen:</p>' + codeBlock('rayo hierarchy', '')) +
     step(2, 'Write', codeBlock('appId: com.example.app\n---\n- launchApp: { clearState: true }\n- tapOn: Log in\n- inputText: me@example.com\n- assertVisible: "Welcome.*"', 'yaml', 'login.yaml')) +
     step(3, 'Run', codeBlock('$ rayo test --emulator login.yaml\n  ✓ launchApp clearState  812 ms\n  ✓ tapOn Log in  95 ms\n  ✓ inputText me@example.com  41 ms\n  ✓ assertVisible Welcome.*  388 ms\n[1/1] PASS login  1.4 s', '')) +
-    `</div><p class="center"><a href="#/example">See a full example: tests, mocks, a suite and its results →</a></p><div class="cards">${[
-      feature('#/mocking', 'Mock backend', 'Built in: states, slow or broken networks. Or capture the real one'),
-      feature(place('REFERENCE.md', 'setlocation'), 'Location and trips', 'Put the device anywhere, or move it along a route'),
-      feature('#/suites', 'Suites', 'Many tests together, with retries and screen sizes'),
-      feature('#/suites/recording-a-whole-flow', 'Videos', 'A small one of each test, or of some steps'),
-      feature('#/results', 'Honest results', 'Why, where, whose fault, the screen and the calls. rayo explain says it again later'),
-      feature(place('REFERENCE.md', 'flaky-flows'), 'Flaky, not hidden', 'A test that only passed on a retry is shown as flaky'),
-      feature('#/programs', 'CI and AI agents', 'JSON output and exit codes that say what went wrong'),
+    `</div><p class="center"><a href="#/example">See a full example: tests, mocks, a suite and its results →</a></p>${group('Testing', [
+      feature('#/flows', 'Fast, not flaky', 'Waits on the device itself and reacts to the screen, without fixed pauses'),
+      feature('#/live', 'Live sessions', 'Write a test while it runs, by hand or from another program'),
+      feature('#/suites', 'Suites', 'Many tests together, with tags, screen sizes and settings in one file'),
+      feature(place('REFERENCE.md', 'flaky-flows') || '#/results', 'Retries, flaky shown', 'A test that only passed on a retry is shown as flaky, not hidden'),
+    ])}${group('Mocking', [
+      feature('#/mocking', 'Mock backend', 'Built in: states, slow or broken networks; a call without a mock says which came nearest'),
+      feature(place('REFERENCE.md', 'capture') || '#/mocking', 'Capture', 'Run once on the real backend, and its answers become mocks: REST and GraphQL'),
+      feature(place('REFERENCE.md', 'updating-mocks') || '#/mocking', 'Update mocks', 'See what the backend changed, take only what you want, or fail CI when behind'),
+      feature(place('MOCKING.md', 'two-ways-to-connect-the-app') || '#/mocking', 'Interceptor or proxy', 'A few lines in the debug build, or no code at all'),
+    ])}${group('Debugging', [
+      feature('#/results', 'Failure analysis', 'Why, where, the screen, the calls, the crash, and whose fault it is'),
+      feature(place('REFERENCE.md', 'explain') || '#/results', 'rayo explain', 'Why the last run failed, in a few lines'),
+      feature(place('REFERENCE.md', 'blame') || '#/results', 'Stops early', 'When the device or the app is what fails'),
       feature(place('GUIDE.md', 'run-only-some-tests') || '#/recipes', 'Run only what changed', '--changed-only runs the tests whose files or mocks changed'),
-      feature('#/live', 'Live', 'Write a test while it runs'),
-    ].join('')}</div>`
+    ])}${group('Reporting', [
+      feature(place('REFERENCE.md', 'results') || '#/results', 'Results', 'Text, JSON, JUnit or Markdown'),
+      feature('#/suites/recording-a-whole-flow', 'Videos', 'A small one of each test, or of some steps'),
+      feature('#/programs', 'CI and scripts', 'JSON output and exit codes that say what went wrong'),
+      feature(place('REFERENCE.md', 'ai-agents') || '#/programs', 'AI agents', 'rayo skills add: a skill for Claude Code and Codex'),
+    ])}${group('More', [
+      feature(`${repository}/releases/latest`, 'One executable', 'Windows, Linux or macOS. Only adb; nothing installed on the device'),
+      feature(place('REFERENCE.md', 'setlocation') || '#/flows', 'Location and trips', 'Put the device anywhere, or move it along a route'),
+      feature(place('REFERENCE.md', 'camera') || '#/flows', 'Device control', 'Camera QR codes, permissions, airplane mode, rotation, size and font'),
+    ])}${group('Compatibility', [
+      feature(place('REFERENCE.md', 'limitations') || '#/flows', 'Maestro', 'Existing Maestro flows run with little to no change'),
+      feature(place('REFERENCE.md', 'mock-files') || '#/mocking', 'WireMock', 'Stub mappings, with their scenarios, load as they are'),
+      feature(place('REFERENCE.md', 'capture') || '#/mocking', 'mitmproxy, Charles, browsers', 'HAR files become mocks: rayo mocks import'),
+    ])}`
 }
 
 // --- Moving around ---
