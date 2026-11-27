@@ -46,42 +46,52 @@ TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s
 
 ## Features
 
-- **Compatible with existing tools.**
+- **Testing**
+  - **Fast execution:** built exclusively for Android, rayo synchronizes with the device's UI state directly
+    instead of relying on fixed sleeps or polling delays.
+  - **[Live sessions](REFERENCE.md#live-sessions):** build a test interactively while it runs on the device,
+    either manually or driven by an external program.
+  - **Test organization:** suites, scripting, tags, randomized execution order, and [JSON schemas](schema)
+    for editor autocompletion and validation.
+  - **[Retries and flaky detection](REFERENCE.md#retries):** failed tests can be retried, and
+    [flaky tests](REFERENCE.md#flaky-flows) are reported separately.
+- **Mocking**
+  - **[Built-in mock server](MOCKING.md):** supports stateful scenarios and simulated network latency or failures.
+    Any unmatched request fails the test and reports the closest matching stub.
+  - **[Traffic capture](REFERENCE.md#capture):** record responses from the real backend and turn them into mocks.
+    REST requests are matched on body content, [GraphQL](REFERENCE.md#graphql) requests on operation name and
+    variables, independent of call order.
+  - **[Mock updates](REFERENCE.md#updating-mocks):** diff your mocks against the live backend, apply changes
+    selectively, or use `--check` to fail CI when mocks are out of date.
+  - **[Two connection modes](MOCKING.md#two-ways-to-connect-the-app):** a small interceptor in the app's debug
+    build, or a device-wide proxy that needs no code changes.
+- **Debugging**
+  - **Failure analysis:** each failure reports its cause and location, the screen state, network calls and
+    crash logs, and whether the test, the app or the device is at fault.
+  - **[Explain](REFERENCE.md#explain):** `rayo explain` summarizes why the last run failed.
+  - **Fix as it fails:** hold a run at a failure, fix the files, and retry from the failing step without
+    rerunning the whole flow.
+  - **[Early abort](REFERENCE.md#blame):** the run stops early when the device or the app itself is at fault.
+- **Reporting**
+  - **[Result formats](REFERENCE.md#results):** text, JSON, JUnit or Markdown.
+  - **[Video recording](REFERENCE.md#startrecording-stoprecording):** compact screen recordings per test or for
+    specific steps.
+  - **[Automation friendly](REFERENCE.md#for-a-program):** machine-readable JSON output and well-defined exit
+    codes for CI pipelines, scripts and AI agents.
+- **More**
+  - **Single binary:** a self-contained executable for Windows, Linux and macOS. The only dependency is `adb`;
+    nothing is installed on the device.
+  - **Location simulation:** [`setLocation`](REFERENCE.md#setlocation) sets a fixed GPS position, and
+    [`travel`](REFERENCE.md#travel) moves the device along a route at a realistic speed, with no app changes.
+  - **Device control:** camera QR code injection, runtime permissions, airplane mode, screen rotation,
+    display size and font scale.
+  - **AI agent skill:** `rayo skills add` installs a skill for Claude Code and Codex covering writing,
+    running, mocking and fixing tests.
+- **Compatibility**
   - **Maestro:** existing Maestro flows run with little to no modification, using the same YAML commands,
     parameter names and default behaviors.
   - **WireMock:** stub mappings, including stateful scenarios, are loaded as-is.
   - **mitmproxy, Charles and browser dev tools:** HAR exports can be imported and converted into mocks.
-- **Fast execution.** Built exclusively for Android, rayo synchronizes with the device's UI state directly
-  instead of relying on fixed sleeps or polling delays.
-- **Single binary.** A self-contained executable for Windows, Linux and macOS. The only dependency is `adb`;
-  nothing is installed on the device.
-- **[Built-in mock server](MOCKING.md).** Supports stateful scenarios and simulated network latency or failures.
-  Any unmatched request fails the test and reports the closest matching stub.
-- **[Traffic capture](REFERENCE.md#capture).** Record responses from the real backend and turn them into mocks.
-  REST requests are matched on body content, [GraphQL](REFERENCE.md#graphql) requests on operation name and
-  variables, independent of call order.
-- **[Mock updates](REFERENCE.md#updating-mocks).** Diff your mocks against the live backend, apply changes
-  selectively, or use `--check` to fail CI when mocks are out of date.
-- **Location simulation.** [`setLocation`](REFERENCE.md#setlocation) sets a fixed GPS position, and
-  [`travel`](REFERENCE.md#travel) moves the device along a route at a realistic speed. Works with any app,
-  no code changes needed.
-- **[Video recording](REFERENCE.md#startrecording-stoprecording).** Compact screen recordings per test or for
-  specific steps.
-- **[Live sessions](REFERENCE.md#live-sessions).** Build a test interactively while it runs on the device,
-  either manually or driven by an external program.
-- **[Detailed results](REFERENCE.md#results).** Reports in text, JSON, JUnit or Markdown, including the failure
-  cause and location, screen state, network calls, crash logs and failure attribution (test, app or device).
-  [`rayo explain`](REFERENCE.md#explain) shows the last report again.
-- **[Retries and flaky detection](REFERENCE.md#retries).** Failed tests can be retried, and
-  [flaky tests](REFERENCE.md#flaky-flows) are reported separately. The run [aborts early](REFERENCE.md#blame)
-  when the device or the app itself is at fault.
-- **[Automation friendly](REFERENCE.md#for-a-program).** Machine-readable JSON output and well-defined exit
-  codes for CI pipelines, scripts and AI agents. `rayo skills add` installs a skill for Claude Code and
-  Codex covering writing, running, mocking and fixing tests.
-- **Device control.** Camera QR code injection, runtime permissions, airplane mode, screen rotation, display
-  size and font scale.
-- **Test organization.** Scripting, tags, randomized execution order, and [JSON schemas](schema) for editor
-  autocompletion and validation.
 
 ## Start
 
