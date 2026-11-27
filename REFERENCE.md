@@ -53,6 +53,9 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo mocks check <folder>                        mappings that never answer, and bodies no mapping uses
   rayo ca new [<folder>]                           a CA for the project, in .rayo/ca, to commit with the flows
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
+  rayo skills add [options]                        the rayo skill, for Claude Code and Codex: how to write, run, fix and mock
+  rayo skills remove [options]                     take it out
+  rayo skills list [options]                       where it is, and whether it is of this version
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
   rayo help search <word>...                       the lines of all the help that have the words
@@ -67,6 +70,9 @@ Topics, rayo help <topic>
   hold                       fix failing flows as they fail: hold the run at a failure, fix the files, run again from there, go on
   record-mocks               record mocks from the real backend
   connect-mocks              connect the app to the mocks: interceptor or proxy
+  interceptor                the interceptor's code, for the app's debug build
+  mock-in-flows              use mocks in a flow: answer, change state, break the network, check the calls
+  device                     pretend location, trips, camera, airplane mode, rotation, permissions
   run-in-ci                  run in a CI
   recipes                    short answers: video, logcat, reset, log in, deeplink, what a run leaves
   limits                     limitations and gotchas
@@ -178,6 +184,10 @@ Options of explain
 Options of mocks
   --only <a,b>               the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)
   --prune                    also take out the mocks that weren't called
+
+Options of skills
+  --agent <a,b>              only for these: claude, codex (default every one found)
+  --project <folder>         in a project's .claude or .codex, not your home's
 
 Options of do
   --screen[=changes]         also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave

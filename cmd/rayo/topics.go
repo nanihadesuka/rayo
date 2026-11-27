@@ -209,6 +209,59 @@ Can change the app, one HTTP client: interceptor. Can't change it, or an SDK cal
 A host the app pins, or doesn't trust rayo's CA for, fails the flow at once: its calls never reach the real one.
 Both use the same mock folders. Code and details: MOCKING.md, "Two ways to connect the app".
 `},
+	{"interceptor", "the interceptor's code, for the app's debug build", `OkHttp, in src/debug only: https://host/path goes to http://127.0.0.1:8080/host/path when a test says so.
+
+  object MockRedirect : Interceptor {
+    @Volatile var on = false
+    override fun intercept(chain: Interceptor.Chain): Response {
+      val request = chain.request()
+      if (!on) return chain.proceed(request)
+      val url = request.url.newBuilder().scheme("http").host("127.0.0.1").port(8080)
+        .encodedPath("/${request.url.host}${request.url.encodedPath}").build()
+      return chain.proceed(request.newBuilder().url(url).build())
+    }
+  }
+
+Add it with addInterceptor(MockRedirect), and turn it on before the first call, from the flow's
+launchApp: { arguments: { mock: true } }:
+
+  MockRedirect.on = intent.getBooleanExtra("mock", false)
+
+Allow cleartext to 127.0.0.1, in src/debug, with android:networkSecurityConfig="@xml/network_security_config":
+
+  <network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+      <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+  </network-security-config>
+
+Other clients (Ktor, Retrofit on OkHttp) do the same: rewrite the URL to 127.0.0.1:8080/<host><path>.
+`},
+	{"mock-in-flows", "use mocks in a flow: answer, change state, break the network, check the calls", `mock: in the header loads a folder or file in WireMock's format: mappings/ and __files/.
+
+  - mock: overrides.json                                     more mocks, for this flow; they win over the folder
+  - mock: { request: { method: POST, urlPathPattern: ".*/pay" }, response: { status: 503 } }
+  - mockState: { booking: booked }                           move a scenario to a state
+  - network: offline                                         or { delay: 2s }, { fail: 500, path: ".*/pay" }
+  - waitForRequest: { method: POST, path: ".*/session" }     wait until the app makes a call
+  - assertRequest: { path: ".*/pay", times: 1 }              exactly so many calls by now; 0 for none
+
+  rayo mocks check mock                                      mappings that never answer, bodies no mapping uses
+
+A call without a mock fails the flow, and says which mapping came nearest; the suite's unmocked: or
+--ignore-unmocked lets some through. rayo help <command> has the keys of each; MOCKING.md all of it.
+`},
+	{"device", "pretend location, trips, camera, airplane mode, rotation, permissions", `  - setLocation: { latitude: 40.4168, longitude: -3.7038 }     stay at a place (Android 12+)
+  - travel: { points: ["40.41,-3.70", "40.45,-3.69"], speed: 15 }  move along them, metres a second
+  - camera: qr.png                                              what an emulator's camera sees
+  - setAirplaneMode: enabled
+  - setOrientation: LANDSCAPE_LEFT                              until the flow ends
+  - setPermissions: { permissions: { camera: allow } }
+  - launchApp: { permissions: { all: deny } }
+
+A suite's device: { size: 1080x2400, dpi: 420, darkMode: true } sets the screen and theme for every flow.
+They work with any app, without changing it. rayo help <command> has the keys of each.
+`},
 	{"run-in-ci", "run in a CI", `Any CI with an emulator. The exit code isn't 0 if a flow fails, and .xml results are JUnit.
 
 One suite holds the settings; the CI's command changes only what differs, with the option of the same name:

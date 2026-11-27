@@ -89,6 +89,10 @@ type options struct {
 	// Of mocks.
 	take  []string
 	prune bool
+
+	// Of skills.
+	agents  []string
+	project string
 }
 
 // option is all there is to know about one: to add one, add it to the table below.
@@ -125,10 +129,11 @@ const (
 	cmdMocks     = "mocks"
 	cmdExplain   = "explain"
 	cmdStatus    = "status"
+	cmdSkills    = "skills"
 )
 
 // commandNames are rayo's own, as rayo help <command> takes them.
-var commandNames = []string{cmdTest, cmdCheck, cmdExplain, cmdStatus, cmdLive, cmdDo, cmdHierarchy, cmdDevices, cmdCA, cmdMocks, "schema"}
+var commandNames = []string{cmdTest, cmdCheck, cmdExplain, cmdStatus, cmdLive, cmdDo, cmdHierarchy, cmdDevices, cmdCA, cmdMocks, cmdSkills, "schema"}
 
 func flag(name, about string, at func(o *options) *bool) option {
 	return option{name: name, about: about, set: func(o *options, _ string) error { *at(o) = true; return nil }}
@@ -457,6 +462,10 @@ var sections = []section{
 		list("only", "the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)", func(o *options) *[]string { return &o.take }),
 		flag("prune", "also take out the mocks that weren't called", func(o *options) *bool { return &o.prune }),
 	}},
+	{[]string{cmdSkills}, "", []option{
+		list("agent", "only for these: claude, codex (default every one found)", func(o *options) *[]string { return &o.agents }),
+		text("project", "folder", "in a project's .claude or .codex, not your home's", func(o *options) *string { return &o.project }),
+	}},
 	{[]string{cmdDo}, "", []option{
 		{name: "screen", value: "changes", optional: true, about: "also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave", set: func(o *options, v string) error {
 			if v != "" && v != "changes" {
@@ -506,6 +515,9 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo mocks check <folder>                        mappings that never answer, and bodies no mapping uses
   rayo ca new [<folder>]                           a CA for the project, in .rayo/ca, to commit with the flows
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
+  rayo skills add [options]                        the rayo skill, for Claude Code and Codex: how to write, run, fix and mock
+  rayo skills remove [options]                     take it out
+  rayo skills list [options]                       where it is, and whether it is of this version
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
   rayo help search <word>...                       the lines of all the help that have the words

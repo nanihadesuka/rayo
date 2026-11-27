@@ -76,7 +76,8 @@ TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s
   [flaky tests](REFERENCE.md#flaky-flows) are reported separately. The run [aborts early](REFERENCE.md#blame)
   when the device or the app itself is at fault.
 - **[Automation friendly](REFERENCE.md#for-a-program).** Machine-readable JSON output and well-defined exit
-  codes for CI pipelines, scripts and AI agents.
+  codes for CI pipelines, scripts and AI agents. `rayo skills add` installs a skill for Claude Code and
+  Codex covering writing, running, mocking and fixing tests.
 - **Device control.** Camera QR code injection, runtime permissions, airplane mode, screen rotation, display
   size and font scale.
 - **Test organization.** Scripting, tags, randomized execution order, and [JSON schemas](schema) for editor
@@ -107,6 +108,7 @@ Or build it, with Go: `bash build.sh`.
 | `rayo mocks import flows.har mock` | Make mocks of mitmproxy's, a browser's or Charles' calls |
 | `rayo mocks check mock` | Mappings that never answer, and bodies no mapping uses |
 | `rayo test --shard 2/4 all.suite.yaml` | Run a quarter of the tests, on each of 4 CI machines |
+| `rayo skills add` | Install the rayo skill for Claude Code and Codex |
 | `rayo help agents` | How a script or an AI agent should use rayo |
 | `rayo help` | Everything else |
 

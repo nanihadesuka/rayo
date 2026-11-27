@@ -83,6 +83,9 @@ New here, or driving rayo from a program? Start with: rayo help agents
   rayo mocks check <folder>                        mappings that never answer, and bodies no mapping uses
   rayo ca new [<folder>]                           a CA for the project, in .rayo/ca, to commit with the flows
   rayo ca export <file>                            the certificate the proxy signs with, for the app's debug build
+  rayo skills add [options]                        the rayo skill, for Claude Code and Codex: how to write, run, fix and mock
+  rayo skills remove [options]                     take it out
+  rayo skills list [options]                       where it is, and whether it is of this version
   rayo help <command>                              what a command takes, of a flow or of rayo; or <command> --help
   rayo help <topic>                                flow, suite, json, all (everything on one page), or a topic below
   rayo help search <word>...                       the lines of all the help that have the words
@@ -97,6 +100,9 @@ Topics, rayo help <topic>
   hold                       fix failing flows as they fail: hold the run at a failure, fix the files, run again from there, go on
   record-mocks               record mocks from the real backend
   connect-mocks              connect the app to the mocks: interceptor or proxy
+  interceptor                the interceptor's code, for the app's debug build
+  mock-in-flows              use mocks in a flow: answer, change state, break the network, check the calls
+  device                     pretend location, trips, camera, airplane mode, rotation, permissions
   run-in-ci                  run in a CI
   recipes                    short answers: video, logcat, reset, log in, deeplink, what a run leaves
   limits                     limitations and gotchas
@@ -208,6 +214,10 @@ Options of explain
 Options of mocks
   --only <a,b>               the changes whose name has one of these, such as graphql:Wallet or GET /profile (default all)
   --prune                    also take out the mocks that weren't called
+
+Options of skills
+  --agent <a,b>              only for these: claude, codex (default every one found)
+  --project <folder>         in a project's .claude or .codex, not your home's
 
 Options of do
   --screen[=changes]         also what is on screen afterwards; --screen=changes, only the lines that appeared (+) or went (-) since the screen the session last gave
@@ -1177,6 +1187,65 @@ The app's calls have to reach rayo to be mocked or captured. Two ways:
 Can change the app, one HTTP client: interceptor. Can't change it, or an SDK calls on its own: proxy.
 A host the app pins, or doesn't trust rayo's CA for, fails the flow at once: its calls never reach the real one.
 Both use the same mock folders. Code and details: MOCKING.md, "Two ways to connect the app".
+.fi
+.SH THE INTERCEPTOR'S CODE, FOR THE APP'S DEBUG BUILD
+.nf
+OkHttp, in src/debug only: https://host/path goes to http://127.0.0.1:8080/host/path when a test says so.
+
+  object MockRedirect : Interceptor {
+    @Volatile var on = false
+    override fun intercept(chain: Interceptor.Chain): Response {
+      val request = chain.request()
+      if (!on) return chain.proceed(request)
+      val url = request.url.newBuilder().scheme("http").host("127.0.0.1").port(8080)
+        .encodedPath("/${request.url.host}${request.url.encodedPath}").build()
+      return chain.proceed(request.newBuilder().url(url).build())
+    }
+  }
+
+Add it with addInterceptor(MockRedirect), and turn it on before the first call, from the flow's
+launchApp: { arguments: { mock: true } }:
+
+  MockRedirect.on = intent.getBooleanExtra("mock", false)
+
+Allow cleartext to 127.0.0.1, in src/debug, with android:networkSecurityConfig="@xml/network_security_config":
+
+  <network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+      <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+  </network-security-config>
+
+Other clients (Ktor, Retrofit on OkHttp) do the same: rewrite the URL to 127.0.0.1:8080/<host><path>.
+.fi
+.SH USE MOCKS IN A FLOW: ANSWER, CHANGE STATE, BREAK THE NETWORK, CHECK THE CALLS
+.nf
+mock: in the header loads a folder or file in WireMock's format: mappings/ and __files/.
+
+  - mock: overrides.json                                     more mocks, for this flow; they win over the folder
+  - mock: { request: { method: POST, urlPathPattern: ".*/pay" }, response: { status: 503 } }
+  - mockState: { booking: booked }                           move a scenario to a state
+  - network: offline                                         or { delay: 2s }, { fail: 500, path: ".*/pay" }
+  - waitForRequest: { method: POST, path: ".*/session" }     wait until the app makes a call
+  - assertRequest: { path: ".*/pay", times: 1 }              exactly so many calls by now; 0 for none
+
+  rayo mocks check mock                                      mappings that never answer, bodies no mapping uses
+
+A call without a mock fails the flow, and says which mapping came nearest; the suite's unmocked: or
+--ignore-unmocked lets some through. rayo help <command> has the keys of each; MOCKING.md all of it.
+.fi
+.SH PRETEND LOCATION, TRIPS, CAMERA, AIRPLANE MODE, ROTATION, PERMISSIONS
+.nf
+  - setLocation: { latitude: 40.4168, longitude: -3.7038 }     stay at a place (Android 12+)
+  - travel: { points: ["40.41,-3.70", "40.45,-3.69"], speed: 15 }  move along them, metres a second
+  - camera: qr.png                                              what an emulator's camera sees
+  - setAirplaneMode: enabled
+  - setOrientation: LANDSCAPE_LEFT                              until the flow ends
+  - setPermissions: { permissions: { camera: allow } }
+  - launchApp: { permissions: { all: deny } }
+
+A suite's device: { size: 1080x2400, dpi: 420, darkMode: true } sets the screen and theme for every flow.
+They work with any app, without changing it. rayo help <command> has the keys of each.
 .fi
 .SH RUN IN A CI
 .nf

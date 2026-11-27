@@ -160,6 +160,8 @@ func run(ctx context.Context, command string, args []string) error {
 		return commandCA(args)
 	case cmdMocks:
 		return applyMocks(args)
+	case cmdSkills:
+		return commandSkills(args)
 	case "version", "--version", "-v":
 		fmt.Println("rayo " + version)
 		return nil
