@@ -41,6 +41,9 @@ const HoldHelp = `  .why                    the failure again: why, where, and t
   .help
 `
 
+// DefaultHold is how long a flow is held with no command before it is left failed and the run goes on.
+const DefaultHold = 15 * time.Minute
+
 // HoldParams are of every flow a run holds.
 type HoldParams struct {
 	Output  string        // folder of the session, where rayo do finds it
@@ -117,7 +120,7 @@ func Hold(ctx context.Context, p HoldParams, s *flow.Session, f *flow.Flow, fail
 	}
 	idle := p.Timeout
 	if idle <= 0 {
-		idle = time.Hour
+		idle = DefaultHold
 	}
 	for {
 		var q Request

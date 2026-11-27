@@ -66,6 +66,7 @@ type options struct {
 	app          string
 	mocks        []string
 	noRun, serve bool
+	idle         time.Duration // 0 for the default
 
 	// Of do.
 	screen, screenChanges bool
@@ -268,7 +269,7 @@ var sections = []section{
 		}},
 		flag("continuous", "run again whenever a file changes", func(o *options) *bool { return &o.continuous }).withShort("c"),
 		choice("on-fail", "what", "go-on (default): retry it as allowed, then the next flow; hold: keep the flow where it failed, the app as it is, until rayo do says how to go on, so that it is fixed in its files and run again from there; see rayo help hold", func(o *options) *string { return &o.onFail }, onFailGoOn, onFailHold),
-		{name: "hold-timeout", value: "duration", about: "with --on-fail hold, leave a flow failed if no command comes for this long, such as 20m (default 1h)", set: func(o *options, v string) error {
+		{name: "hold-timeout", value: "duration", about: "with --on-fail hold, leave a flow failed if no command comes for this long, such as 1h (default 15m)", set: func(o *options, v string) error {
 			d, err := time.ParseDuration(v)
 			if err != nil || d <= 0 {
 				return fmt.Errorf("--hold-timeout takes how long, such as 20m, not %q", v)
@@ -434,6 +435,14 @@ var sections = []section{
 		list("mock", "its mocks, relative to it", func(o *options) *[]string { return &o.mocks }),
 		flag("no-run", "don't begin by running the steps it has", func(o *options) *bool { return &o.noRun }),
 		flag("serve", "only take commands from rayo do, until .quit", func(o *options) *bool { return &o.serve }),
+		{name: "idle-timeout", value: "duration", about: "end the session if no command comes for this long, such as 1h; steps not saved are printed (default 10m)", set: func(o *options, v string) error {
+			d, err := time.ParseDuration(v)
+			if err != nil || d <= 0 {
+				return fmt.Errorf("--idle-timeout takes how long, such as 30m, not %q", v)
+			}
+			o.idle = d
+			return nil
+		}},
 	}},
 	{[]string{cmdExplain}, "", []option{
 		flag("latest", "only the flows of the newest run in failed.json, not those still there from earlier ones", func(o *options) *bool { return &o.latest }),

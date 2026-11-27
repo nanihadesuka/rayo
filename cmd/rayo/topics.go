@@ -173,7 +173,7 @@ What happens
   - If the flow checks less after the fix than when it failed (fewer asserts, more optional), the
     results say WEAKENED: a fix that checks less isn't one.
   - .mark keeps app-bug, test-bug or flaky in the results and in failed.json, with why.
-  - With no command for an hour (--hold-timeout), the flow is left failed and the run goes on.
+  - With no command for 15 minutes (--hold-timeout), the flow is left failed and the run goes on.
   - --format ndjson has a held event, with the session's folder.
 
 Gotchas

@@ -107,9 +107,10 @@ type Params struct {
 	Path   string // of the flow
 	App    string // of a new one
 	Mocks  []string
-	Output string // folder for failures, and to be found by Ask
-	NoRun  bool   // not the steps it has
-	Serve  bool   // only for Ask
+	Output string        // folder for failures, and to be found by Ask
+	NoRun  bool          // not the steps it has
+	Serve  bool          // only for Ask
+	Idle   time.Duration // with no command for this long, it ends; 0 for DefaultIdle
 }
 
 // Start prepares the device; what it returns last ends it.
@@ -151,9 +152,15 @@ func Run(ctx context.Context, p Params, start Start) error {
 	return err
 }
 
-const idle = time.Hour // until a session no one uses ends
+// DefaultIdle is how long a session no one uses lasts: it holds the device, and a program that forgot
+// it would keep it from everyone else.
+const DefaultIdle = 10 * time.Minute
 
 func (l *live) talk(ctx context.Context, p Params, f *flow.Flow) error {
+	idle := p.Idle
+	if idle <= 0 {
+		idle = DefaultIdle
+	}
 	requests := make(chan Request)
 	closeServer, err := listen(p.Output, requests)
 	if err != nil {
@@ -191,7 +198,10 @@ func (l *live) talk(ctx context.Context, p Params, f *flow.Flow) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-time.After(idle):
-			fmt.Println("no one has used it for an hour")
+			fmt.Printf("no command for %s, so the session ends (--idle-timeout keeps it longer)\n", idle)
+			if n := len(l.unsaved); n > 0 { // said, so that they can be written by hand
+				fmt.Printf("%s not saved:\n%s", steps(n), strings.Join(l.unsaved, ""))
+			}
 			return nil
 		}
 		name, _, _ := strings.Cut(strings.TrimSpace(q.Text), " ")

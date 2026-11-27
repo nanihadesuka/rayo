@@ -616,7 +616,7 @@ func runLive(ctx context.Context, args []string) error {
 	if err := o.findCA(nil, true); err != nil {
 		return err
 	}
-	p := live.Params{Path: o.args[0], App: o.app, Mocks: o.mocks, Output: o.output, NoRun: o.noRun, Serve: o.serve}
+	p := live.Params{Path: o.args[0], App: o.app, Mocks: o.mocks, Output: o.output, NoRun: o.noRun, Serve: o.serve, Idle: o.idle}
 	return live.Run(ctx, p, func(reporter flow.Reporter) (*flow.Runner, func(), error) {
 		d, err := adb.Pick(o.device, o.emulator)
 		if err != nil {

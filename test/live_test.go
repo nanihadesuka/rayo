@@ -152,3 +152,44 @@ func TestLiveServed(t *testing.T) {
 		t.Error("left the port forwarded")
 	}
 }
+
+// A session no one uses ends by itself, and says the steps that weren't saved, so a program that
+// forgot it doesn't keep the device.
+func TestLiveIdle(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "flow.yaml"), "appId: a.b\n---\n- tapOn: first\n")
+	d := startDevice(t, "emulator-5554\tdevice\n", false)
+	server := d.command(dir, "live", "--serve", "--idle-timeout", "2s", "flow.yaml")
+	var printed bytes.Buffer
+	server.Stdout, server.Stderr = &printed, &printed
+	if err := server.Start(); err != nil {
+		t.Fatal(err)
+	}
+	ended := make(chan error, 1)
+	go func() { ended <- server.Wait() }()
+	defer func() { _ = server.Process.Kill() }()
+	for limit := time.Now().Add(10 * time.Second); ; time.Sleep(20 * time.Millisecond) {
+		if _, err := os.Stat(filepath.Join(dir, ".rayo", "live.json")); err == nil {
+			break
+		}
+		if time.Now().After(limit) {
+			t.Fatal("it didn't start")
+		}
+	}
+	if out, err := d.command(dir, "do", "- tapOn: later").CombinedOutput(); err != nil {
+		t.Fatalf("%v\n%s", err, out)
+	}
+	select {
+	case err := <-ended:
+		if err != nil {
+			t.Errorf("%v\n%s", err, printed.String())
+		}
+	case <-time.After(15 * time.Second):
+		t.Fatalf("it didn't end\n%s", printed.String())
+	}
+	for _, want := range []string{"no command for 2s, so the session ends", "1 step not saved:", "- tapOn: later"} {
+		if !strings.Contains(printed.String(), want) {
+			t.Errorf("no %q in\n%s", want, printed.String())
+		}
+	}
+}

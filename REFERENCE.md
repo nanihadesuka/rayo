@@ -113,7 +113,7 @@ Options of test: how they run
   --screens-before <n>       keep the screen after each of the last n steps that passed, and save them with a failure as screens-before.txt: how the app got there; each costs a read of the screen (default 0) (suite: output.screensBefore)
   -c, --continuous           run again whenever a file changes
   --on-fail <what>           go-on (default): retry it as allowed, then the next flow; hold: keep the flow where it failed, the app as it is, until rayo do says how to go on, so that it is fixed in its files and run again from there; see rayo help hold
-  --hold-timeout <duration>  with --on-fail hold, leave a flow failed if no command comes for this long, such as 20m (default 1h)
+  --hold-timeout <duration>  with --on-fail hold, leave a flow failed if no command comes for this long, such as 1h (default 15m)
 
 Options of test: from where, after a fix; see rayo help resume
   --resume                   each flow that failed last time, from the step that failed, with the app as it is and the mocks' scenarios as they were then
@@ -167,6 +167,7 @@ Options of live
   --mock <a,b>               its mocks, relative to it
   --no-run                   don't begin by running the steps it has
   --serve                    only take commands from rayo do, until .quit
+  --idle-timeout <duration>  end the session if no command comes for this long, such as 1h; steps not saved are printed (default 10m)
 
 Options of explain
   --latest                   only the flows of the newest run in failed.json, not those still there from earlier ones
@@ -2044,7 +2045,7 @@ be left out.
 Each call answers when the steps have run; its exit code is 1 if one failed, see [Exit codes](#exit-codes).
 
 ```
-rayo live --serve --emulator tests/new/flow.yaml &     # until .quit, or an hour unused
+rayo live --serve --emulator tests/new/flow.yaml &     # until .quit, or 10 minutes unused (--idle-timeout)
 rayo do .screen
 rayo do --screen '- tapOn: { id: login }'
 rayo do --format json - < steps.yaml
@@ -2168,7 +2169,7 @@ suite's output folder by itself; typed commands work too.
 
 A flow fixed while held is `PARTIAL`, not `PASS`: it stays in `failed.json` and `rayo test --rerun-failed`
 runs it whole. If it checks less than when it failed, fewer asserts or more `optional` steps, its warnings
-say `WEAKENED`. With no command for an hour, or `--hold-timeout`, the flow is left failed and the run goes on.
+say `WEAKENED`. With no command for 15 minutes, or `--hold-timeout`, the flow is left failed and the run goes on.
 `rayo do --format json` answers with `held`: the flow, `at`, and `fixed` once its steps passed.
 
 ### Failures
