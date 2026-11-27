@@ -46,47 +46,28 @@ TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s
 
 ## Features
 
-### 🔁 Compatible with Maestro and WireMock
-
-- **Maestro flows run almost 100% untouched.** Same YAML commands (`launchApp`, `tapOn`, `inputText`,
-  `extendedWaitUntil`, …), same names and defaults. Point rayo at your existing flows and go.
-- **WireMock mocks load as they are.** Same mapping format, states included.
-- **mitmproxy, browser or Charles traffic** becomes mocks: `rayo mocks import flows.har mock`.
-
-### ⚡ Fast and simple
-
+- **Maestro compatible.** Maestro flows run almost 100% untouched: same commands, names and defaults.
+- **WireMock compatible.** WireMock mocks load as they are, states included.
+- **mitmproxy compatible.** HAR files of mitmproxy's, a browser's or Charles' calls become mocks.
 - **Fast.** Made for Android only: it waits on the device itself and reacts to the screen, without fixed pauses.
 - **One executable.** Windows, Linux or macOS. It only needs adb, and installs nothing on the device.
-
-### 🧩 Mocking the backend
-
-- **[Mock backend](MOCKING.md) built in.** States, slow or broken networks; a call without a mock fails
-  the test, and says which mock came nearest.
-- **[Capture](REFERENCE.md#capture).** Run once on the real backend, and its answers become mocks, matched
-  as WireMock's recorder does: REST by body too, and [GraphQL](REFERENCE.md#graphql) by operation and
-  variables, so the order doesn't matter; dates and what you name left out.
-- **[Update mocks](REFERENCE.md#updating-mocks).** See what the backend changed since, take only the changes
-  you want, or fail CI with `--check` when the mocks are behind.
-
-### 📱 Device control
-
-- **Pretend location and trips.** [`setLocation`](REFERENCE.md#setlocation) puts the device anywhere;
-  [`travel`](REFERENCE.md#travel) moves it along a route at a real speed. For any app, without changing it.
-- **[Videos](REFERENCE.md#startrecording-stoprecording)**, small, of each test or some steps.
-- QR for the camera, permissions, airplane mode, screen rotation, size and font.
-
-### ✍️ Writing tests
-
-- **[Live](REFERENCE.md#live-sessions).** Write a test while it runs, by hand or from another program.
-- Scripts, tags, random order, and [schemas](schema) for your editor.
-
-### 📊 Results you can trust
-
-- **[Honest results](REFERENCE.md#results)** as text, JSON, JUnit or Markdown: why, where, the screen, the calls,
-  the crash, and whose fault it is. [`rayo explain`](REFERENCE.md#explain) repeats it later.
-- **[Retries](REFERENCE.md#retries)**, with [flaky](REFERENCE.md#flaky-flows) tests shown as such, and it
-  [stops early](REFERENCE.md#blame) if the device or the app is what fails.
+- **[Mock backend](MOCKING.md).** Built in, with states and slow or broken networks. A call without a mock
+  fails the test, and says which mock came nearest.
+- **[Capture](REFERENCE.md#capture).** Run once on the real backend, and its answers become mocks. REST is
+  matched by body too, [GraphQL](REFERENCE.md#graphql) by operation and variables.
+- **[Update mocks](REFERENCE.md#updating-mocks).** See what the backend changed, take only what you want, or
+  fail CI with `--check` when the mocks are behind.
+- **Location and trips.** [`setLocation`](REFERENCE.md#setlocation) puts the device anywhere;
+  [`travel`](REFERENCE.md#travel) moves it along a route at a real speed, for any app.
+- **[Videos](REFERENCE.md#startrecording-stoprecording).** Small recordings of each test, or of some steps.
+- **[Live sessions](REFERENCE.md#live-sessions).** Write a test while it runs, by hand or from another program.
+- **[Results](REFERENCE.md#results).** Text, JSON, JUnit or Markdown: why, where, the screen, the calls, the
+  crash and whose fault it is. [`rayo explain`](REFERENCE.md#explain) repeats it later.
+- **[Retries](REFERENCE.md#retries).** [Flaky](REFERENCE.md#flaky-flows) tests shown as such; it
+  [stops early](REFERENCE.md#blame) when the device or the app is what fails.
 - **[For programs](REFERENCE.md#for-a-program).** JSON output and clear exit codes, for CI, scripts and AI agents.
+- **Device settings.** QR for the camera, permissions, airplane mode, screen rotation, size and font.
+- **Organizing tests.** Scripts, tags, random order, and [schemas](schema) for your editor.
 
 ## Start
 
