@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -20,7 +21,7 @@ func TestHold(t *testing.T) {
 	write(t, filepath.Join(dir, "c.yaml"), "appId: a.b\n---\n- tapOn: { id: missing }\n")
 	d := startDevice(t, "emulator-5554\tdevice\n", false)
 	run := d.command(dir, "test", "--on-fail", "hold", "all.suite.yaml")
-	var printed bytes.Buffer
+	var printed lockedBuffer
 	run.Stdout, run.Stderr = &printed, &printed
 	if err := run.Start(); err != nil {
 		t.Fatal(err)
@@ -29,14 +30,17 @@ func TestHold(t *testing.T) {
 	go func() { ended <- run.Wait() }()
 	defer func() { _ = run.Process.Kill() }()
 	door := filepath.Join(dir, "results", "live.json")
-	await := func(gone bool) {
+	// The next flow can be held again before a poll sees live.json gone, so it waits for the flow by name.
+	await := func(flow string) {
 		t.Helper()
 		for limit := time.Now().Add(15 * time.Second); ; time.Sleep(20 * time.Millisecond) {
-			if _, err := os.Stat(door); (err == nil) != gone {
+			var held struct{ Held struct{ Flow string } }
+			out, _ := d.command(dir, "do", "--format", "json", ".why").Output()
+			if json.Unmarshal(out, &held) == nil && held.Held.Flow == flow {
 				return
 			}
 			if time.Now().After(limit) {
-				t.Fatalf("no hold\n%s", printed.String())
+				t.Fatalf("no hold of %s\n%s", flow, printed.String())
 			}
 		}
 	}
@@ -58,7 +62,7 @@ func TestHold(t *testing.T) {
 		}
 	}
 
-	await(false)
+	await("a")
 	has(do(0, ".why"), "a failed at tapOn missing: not on screen", "at: a.yaml:6", "nor anything like it")
 	var a struct {
 		OK   bool
@@ -85,15 +89,13 @@ func TestHold(t *testing.T) {
 	}
 	has(do(0, ".continue"), "going on")
 
-	await(true)
-	await(false)
+	await("b")
 	has(do(0, ".why"), "b failed at tapOn missing", "at: b.yaml:4")
 	has(do(1, ".mark bug"), ".mark takes app-bug, test-bug, flaky")
 	has(do(0, ".mark app-bug it never shows"), "marked app-bug")
 	has(do(0, ".skip"), "left failed")
 
-	await(true)
-	await(false)
+	await("c")
 	has(do(0, ".abort"), "no more flows run")
 	select {
 	case err := <-ended:
@@ -123,7 +125,7 @@ func TestHoldWeakened(t *testing.T) {
 	write(t, filepath.Join(dir, "a.yaml"), "appId: a.b\n---\n- tapOn: first\n- assertVisible: { id: missing }\n- assertVisible: last\n")
 	d := startDevice(t, "emulator-5554\tdevice\n", false)
 	run := d.command(dir, "test", "--on-fail", "hold", "a.yaml")
-	var printed bytes.Buffer
+	var printed lockedBuffer
 	run.Stdout, run.Stderr = &printed, &printed
 	if err := run.Start(); err != nil {
 		t.Fatal(err)
@@ -152,4 +154,22 @@ func TestHoldWeakened(t *testing.T) {
 	if !strings.Contains(printed.String(), "PARTIAL") || !strings.Contains(printed.String(), "WEAKENED") {
 		t.Errorf("%s", printed.String())
 	}
+}
+
+// A buffer the run writes to while the test reads it.
+type lockedBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *lockedBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *lockedBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
 }

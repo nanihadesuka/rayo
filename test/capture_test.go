@@ -1,7 +1,6 @@
 package test
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -100,7 +99,7 @@ func TestCaptureLive(t *testing.T) {
 	write(t, filepath.Join(dir, "flow.yaml"), failing)
 	d := startDevice(t, "emulator-5554\tdevice\n", false)
 	server := d.command(dir, "live", "--serve", "--capture", "got", "--capture-from", s.URL, "flow.yaml")
-	var printed bytes.Buffer
+	var printed lockedBuffer
 	server.Stdout, server.Stderr = &printed, &printed
 	if err := server.Start(); err != nil {
 		t.Fatal(err)

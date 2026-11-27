@@ -1,7 +1,6 @@
 package test
 
 import (
-	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -61,7 +60,7 @@ func TestLiveServed(t *testing.T) {
 		t.Fatalf("%v\n%s", err, out)
 	}
 	server := d.command(dir, "live", "--serve", "flow.yaml")
-	var printed bytes.Buffer
+	var printed lockedBuffer
 	server.Stdout, server.Stderr = &printed, &printed
 	if err := server.Start(); err != nil {
 		t.Fatal(err)
@@ -160,7 +159,7 @@ func TestLiveIdle(t *testing.T) {
 	write(t, filepath.Join(dir, "flow.yaml"), "appId: a.b\n---\n- tapOn: first\n")
 	d := startDevice(t, "emulator-5554\tdevice\n", false)
 	server := d.command(dir, "live", "--serve", "--idle-timeout", "2s", "flow.yaml")
-	var printed bytes.Buffer
+	var printed lockedBuffer
 	server.Stdout, server.Stderr = &printed, &printed
 	if err := server.Start(); err != nil {
 		t.Fatal(err)
