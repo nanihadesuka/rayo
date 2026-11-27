@@ -20,8 +20,10 @@ func failedAt(line int, msg string) *report.Outcome {
 
 func TestSetupStreak(t *testing.T) {
 	var s setupStreak
-	if s.after(failedAt(3, "x")) != "" || s.after(failedAt(3, "x")) != "" {
-		t.Fatal("stopped too soon")
+	for range setupRow - 1 {
+		if s.after(failedAt(3, "x")) != "" {
+			t.Fatal("stopped too soon")
+		}
 	}
 	why := s.after(failedAt(3, "x"))
 	if !strings.HasPrefix(why, "setup: the first 3 flows") || !strings.Contains(why, "login.yaml:3") {
