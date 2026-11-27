@@ -46,11 +46,11 @@ TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s
 
 ## Features
 
-- **Maestro compatible.** Existing Maestro flows run with little to no modification: rayo implements the same
-  YAML commands, parameter names and default behaviors.
-- **WireMock compatible.** WireMock stub mappings, including stateful scenarios, are loaded as-is.
-- **mitmproxy compatible.** HAR exports from mitmproxy, browser dev tools or Charles can be imported and
-  converted into mocks.
+- **Compatible with existing tools.**
+  - **Maestro:** existing Maestro flows run with little to no modification, using the same YAML commands,
+    parameter names and default behaviors.
+  - **WireMock:** stub mappings, including stateful scenarios, are loaded as-is.
+  - **mitmproxy, Charles and browser dev tools:** HAR exports can be imported and converted into mocks.
 - **Fast execution.** Built exclusively for Android, rayo synchronizes with the device's UI state directly
   instead of relying on fixed sleeps or polling delays.
 - **Single binary.** A self-contained executable for Windows, Linux and macOS. The only dependency is `adb`;
