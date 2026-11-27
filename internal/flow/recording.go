@@ -39,9 +39,14 @@ type video struct {
 	conn net.Conn
 	out  *bufio.Reader
 	pid  int
-	on   string // file on the device
-	to   string // and here
+	on   string    // file on the device
+	to   string    // and here
+	at   time.Time // it began
 }
+
+// shortestVideo is how long a recording lasts at least: stopped sooner, the device's recorder may not
+// have written its file yet, and there is no video at all.
+const shortestVideo = time.Second
 
 // recordingPath is where a video goes: the default has the attempt's name, which no other has.
 func (r *Runner) recordingPath(path string) string {
@@ -66,7 +71,7 @@ func (r *Runner) startRecording(to string) error {
 		}
 		return fmt.Errorf("a recording to %s is going on", filepath.ToSlash(r.video.to))
 	}
-	v := &video{on: fmt.Sprintf("/data/local/tmp/rayo-%d.mp4", os.Getpid()), to: to}
+	v := &video{on: fmt.Sprintf("/data/local/tmp/rayo-%d.mp4", os.Getpid()), to: to, at: time.Now()}
 	var err error
 	// Before Android 11 or so it can't go on for over three minutes.
 	if v.conn, err = r.device.Open("exec:l=180; screenrecord --help 2>&1 | grep -q 'remove the time limit' && l=1800; " +
@@ -100,6 +105,7 @@ func (r *Runner) stopRecording() error {
 	}
 	r.video = nil
 	defer v.conn.Close()
+	time.Sleep(shortestVideo - time.Since(v.at))
 	_, err := r.device.Exec(fmt.Sprintf("kill -INT %d 2>/dev/null", v.pid))
 	if err != nil {
 		return err

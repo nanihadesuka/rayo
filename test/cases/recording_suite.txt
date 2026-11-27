@@ -86,11 +86,11 @@ bye {"timeout":5000}
         "seconds": #
       },
       {
-        "name": "b",
+        "name": "c",
         "seconds": #
       },
       {
-        "name": "c",
+        "name": "b",
         "seconds": #
       }
     ],
