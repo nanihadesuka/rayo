@@ -46,28 +46,41 @@ TOTAL 3: 1 passed, 1 flaky, 1 failed, 2 retried  68.3 s
 
 ## Features
 
-- **Maestro compatible.** Maestro flows run almost 100% untouched: same commands, names and defaults.
-- **WireMock compatible.** WireMock mocks load as they are, states included.
-- **mitmproxy compatible.** HAR files of mitmproxy's, a browser's or Charles' calls become mocks.
-- **Fast.** Made for Android only: it waits on the device itself and reacts to the screen, without fixed pauses.
-- **One executable.** Windows, Linux or macOS. It only needs adb, and installs nothing on the device.
-- **[Mock backend](MOCKING.md).** Built in, with states and slow or broken networks. A call without a mock
-  fails the test, and says which mock came nearest.
-- **[Capture](REFERENCE.md#capture).** Run once on the real backend, and its answers become mocks. REST is
-  matched by body too, [GraphQL](REFERENCE.md#graphql) by operation and variables.
-- **[Update mocks](REFERENCE.md#updating-mocks).** See what the backend changed, take only what you want, or
-  fail CI with `--check` when the mocks are behind.
-- **Location and trips.** [`setLocation`](REFERENCE.md#setlocation) puts the device anywhere;
-  [`travel`](REFERENCE.md#travel) moves it along a route at a real speed, for any app.
-- **[Videos](REFERENCE.md#startrecording-stoprecording).** Small recordings of each test, or of some steps.
-- **[Live sessions](REFERENCE.md#live-sessions).** Write a test while it runs, by hand or from another program.
-- **[Results](REFERENCE.md#results).** Text, JSON, JUnit or Markdown: why, where, the screen, the calls, the
-  crash and whose fault it is. [`rayo explain`](REFERENCE.md#explain) repeats it later.
-- **[Retries](REFERENCE.md#retries).** [Flaky](REFERENCE.md#flaky-flows) tests shown as such; it
-  [stops early](REFERENCE.md#blame) when the device or the app is what fails.
-- **[For programs](REFERENCE.md#for-a-program).** JSON output and clear exit codes, for CI, scripts and AI agents.
-- **Device settings.** QR for the camera, permissions, airplane mode, screen rotation, size and font.
-- **Organizing tests.** Scripts, tags, random order, and [schemas](schema) for your editor.
+- **Maestro compatible.** Existing Maestro flows run with little to no modification: rayo implements the same
+  YAML commands, parameter names and default behaviors.
+- **WireMock compatible.** WireMock stub mappings, including stateful scenarios, are loaded as-is.
+- **mitmproxy compatible.** HAR exports from mitmproxy, browser dev tools or Charles can be imported and
+  converted into mocks.
+- **Fast execution.** Built exclusively for Android, rayo synchronizes with the device's UI state directly
+  instead of relying on fixed sleeps or polling delays.
+- **Single binary.** A self-contained executable for Windows, Linux and macOS. The only dependency is `adb`;
+  nothing is installed on the device.
+- **[Built-in mock server](MOCKING.md).** Supports stateful scenarios and simulated network latency or failures.
+  Any unmatched request fails the test and reports the closest matching stub.
+- **[Traffic capture](REFERENCE.md#capture).** Record responses from the real backend and turn them into mocks.
+  REST requests are matched on body content, [GraphQL](REFERENCE.md#graphql) requests on operation name and
+  variables, independent of call order.
+- **[Mock updates](REFERENCE.md#updating-mocks).** Diff your mocks against the live backend, apply changes
+  selectively, or use `--check` to fail CI when mocks are out of date.
+- **Location simulation.** [`setLocation`](REFERENCE.md#setlocation) sets a fixed GPS position, and
+  [`travel`](REFERENCE.md#travel) moves the device along a route at a realistic speed. Works with any app,
+  no code changes needed.
+- **[Video recording](REFERENCE.md#startrecording-stoprecording).** Compact screen recordings per test or for
+  specific steps.
+- **[Live sessions](REFERENCE.md#live-sessions).** Build a test interactively while it runs on the device,
+  either manually or driven by an external program.
+- **[Detailed results](REFERENCE.md#results).** Reports in text, JSON, JUnit or Markdown, including the failure
+  cause and location, screen state, network calls, crash logs and failure attribution (test, app or device).
+  [`rayo explain`](REFERENCE.md#explain) shows the last report again.
+- **[Retries and flaky detection](REFERENCE.md#retries).** Failed tests can be retried, and
+  [flaky tests](REFERENCE.md#flaky-flows) are reported separately. The run [aborts early](REFERENCE.md#blame)
+  when the device or the app itself is at fault.
+- **[Automation friendly](REFERENCE.md#for-a-program).** Machine-readable JSON output and well-defined exit
+  codes for CI pipelines, scripts and AI agents.
+- **Device control.** Camera QR code injection, runtime permissions, airplane mode, screen rotation, display
+  size and font scale.
+- **Test organization.** Scripting, tags, randomized execution order, and [JSON schemas](schema) for editor
+  autocompletion and validation.
 
 ## Start
 
