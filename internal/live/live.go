@@ -154,7 +154,7 @@ func Run(ctx context.Context, p Params, start Start) error {
 
 // DefaultIdle is how long a session no one uses lasts: it holds the device, and a program that forgot
 // it would keep it from everyone else.
-const DefaultIdle = 10 * time.Minute
+const DefaultIdle = 5 * time.Minute
 
 func (l *live) talk(ctx context.Context, p Params, f *flow.Flow) error {
 	idle := p.Idle

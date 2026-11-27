@@ -42,7 +42,7 @@ const HoldHelp = `  .why                    the failure again: why, where, and t
 `
 
 // DefaultHold is how long a flow is held with no command before it is left failed and the run goes on.
-const DefaultHold = 15 * time.Minute
+const DefaultHold = 5 * time.Minute
 
 // HoldParams are of every flow a run holds.
 type HoldParams struct {
