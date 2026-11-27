@@ -164,8 +164,10 @@ func (x Failure) next() []string {
 		list = append(list, "the device failed, not the flow: rayo devices says if it is there and ready; then rayo test --rerun-failed")
 	case x.Blame == flow.App || x.Cause == flow.AppCrashed:
 		list = append(list, "the app crashed or hung: that is the app's to fix, not the flow's; crash: and the logcat file say where")
-	case x.Cause == flow.NotOnScreen:
+	case x.Cause == flow.NotOnScreen && len(x.Nearest) > 0:
 		list = append(list, "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another")
+	case x.Cause == flow.NotOnScreen:
+		list = append(list, "the element isn't on screen, nor anything like it: the screen is likely another; the screen file, or .screen while held, says what is there")
 	case x.Cause == flow.UnmockedCall:
 		list = append(list, "the app called what has no mock: add one, or leave it out with unmocked: ignore")
 	case x.Cause == flow.Timeout:

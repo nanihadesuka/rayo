@@ -45,3 +45,13 @@ func TestWindow(t *testing.T) {
 		t.Errorf("window:\n%s\nwant\n%s", got, want)
 	}
 }
+
+// What the agent says of a selector is looked for by its text, not as JSON.
+func TestWantedSelector(t *testing.T) {
+	if got := wanted(errors.New(`not on screen: {"text":"Pay now"}`)); got != "Pay now" {
+		t.Errorf("%q", got)
+	}
+	if got := wanted(errors.New("not on screen: missing")); got != "missing" {
+		t.Errorf("%q", got)
+	}
+}

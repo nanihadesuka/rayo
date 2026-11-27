@@ -2,6 +2,7 @@ package flow
 
 import (
 	"cmp"
+	"encoding/json"
 	"regexp"
 	"slices"
 	"strings"
@@ -59,10 +60,24 @@ func causeOf(err error, f *Failure) string {
 // wanted is what a step that failed looked for, from its error: "not on screen: Pay" is Pay.
 func wanted(err error) string {
 	text := err.Error()
-	if i := strings.LastIndex(text, NotOnScreen+": "); i >= 0 {
-		return strings.TrimSpace(strings.SplitN(text[i+len(NotOnScreen)+2:], "\n", 2)[0])
+	i := strings.LastIndex(text, NotOnScreen+": ")
+	if i < 0 {
+		return ""
 	}
-	return ""
+	want := strings.TrimSpace(strings.SplitN(text[i+len(NotOnScreen)+2:], "\n", 2)[0])
+	var sel map[string]any // a selector, as the agent says it: what it has of text
+	if strings.HasPrefix(want, "{") && json.Unmarshal([]byte(want), &sel) == nil {
+		var parts []string
+		for _, k := range []string{"text", "id"} {
+			if v, ok := sel[k].(string); ok {
+				parts = append(parts, v)
+			}
+		}
+		if len(parts) > 0 {
+			return strings.Join(parts, " ")
+		}
+	}
+	return want
 }
 
 var bounds = regexp.MustCompile(`\s+\[-?\d+,-?\d+\]\[-?\d+,-?\d+\]\s*$`)

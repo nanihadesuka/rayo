@@ -729,6 +729,9 @@ func runDo(args []string) error {
 		return errors.New("--ignore-screen needs --screen")
 	}
 	text := strings.Join(o.args, "\n")
+	if strings.HasPrefix(strings.TrimSpace(o.args[0]), ".") { // rayo do .find Pay: one command, as typed
+		text = strings.Join(o.args, " ")
+	}
 	if o.discard {
 		if strings.TrimSpace(text) != ".quit" {
 			return errors.New("--discard is of .quit")

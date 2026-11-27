@@ -59,7 +59,7 @@ func TestHold(t *testing.T) {
 	}
 
 	await(false)
-	has(do(0, ".why"), "a failed at tapOn missing: not on screen", "at: a.yaml:6", "nearest: has what is most like it")
+	has(do(0, ".why"), "a failed at tapOn missing: not on screen", "at: a.yaml:6", "nor anything like it")
 	var a struct {
 		OK   bool
 		Held struct {
@@ -74,6 +74,7 @@ func TestHold(t *testing.T) {
 	has(do(1, ".continue"), ".continue goes on once the flow's steps pass")
 	has(do(0, ".probe 2"), "0 of 2 passed", "it always fails as it is")
 	has(do(0, ".diff"), "the screen is as it was")
+	has(do(0, ".find", "a"), "a screen") // its words as one command
 	has(do(1, ".retry"), "not on screen: missing")
 	has(do(1, ".nope"), "unknown .nope")
 	// A line above it, and the step itself changed: it is found by its place among the file's steps.

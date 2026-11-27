@@ -134,7 +134,7 @@ a screen
       "scenarios": [],
       "trail": [],
       "next": [
-        "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another",
+        "the element isn't on screen, nor anything like it: the screen is likely another; the screen file, or .screen while held, says what is there",
         "after a fix, rayo test --resume <the suite or flow you ran> goes on from c.yaml:3, mocks as then; rayo help resume",
         "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
       ]
@@ -374,7 +374,7 @@ a screen
           "scenarios": [],
           "trail": [],
           "next": [
-            "the element isn't on screen: nearest: has what is most like it; fix the selector, or the step before it if the screen is another",
+            "the element isn't on screen, nor anything like it: the screen is likely another; the screen file, or .screen while held, says what is there",
             "after a fix, rayo test --resume <the suite or flow you ran> goes on from c.yaml:3, mocks as then; rayo help resume",
             "or fix it as it fails: rayo test --on-fail hold <the suite or flow>; rayo help hold"
           ]
